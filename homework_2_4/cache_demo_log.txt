@@ -1,0 +1,10 @@
+First get: expected miss
+value=None
+Second get: expected hit
+value=cached answer
+Different temperature: expected miss
+value=None
+stats={'hits': 1, 'misses': 2, 'hit_rate_percent': 33.33, 'size': 1, 'ttl_sec': 2}
+After TTL: expected miss
+value=None
+stats={'hits': 1, 'misses': 3, 'hit_rate_percent': 25.0, 'size': 0, 'ttl_sec': 2}
