@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
+from support_copilot.config import load_settings
+
 try:
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - optional convenience dependency
@@ -346,58 +348,57 @@ class RobustLLMClient:
 
     @classmethod
     def from_env(cls, env_path: str | os.PathLike[str] | None = None) -> "RobustLLMClient":
-        if load_dotenv is not None and env_path is not None:
-            load_dotenv(env_path, override=False)
+        settings = load_settings(env_path)
 
-        timeout_sec = env_float("LLM_TIMEOUT_SEC", 60.0)
+        timeout_sec = settings.llm_timeout_sec
         providers: list[ProviderConfig] = []
 
-        openai_api_key = env_str("OPENAI_API_KEY")
-        openai_model = env_str("OPENAI_MODEL")
+        openai_api_key = settings.openai_api_key
+        openai_model = settings.openai_model
         if openai_api_key and openai_model:
             providers.append(
                 ProviderConfig(
                     name="openai",
                     api_key=openai_api_key,
                     base_url=normalize_openai_base_url(
-                        env_str("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+                        settings.openai_base_url,
                         provider="openai",
                     ),
                     model=openai_model,
-                    input_price_per_1m=env_float("OPENAI_INPUT_PRICE_PER_1M", 0.0),
-                    output_price_per_1m=env_float("OPENAI_OUTPUT_PRICE_PER_1M", 0.0),
+                    input_price_per_1m=settings.openai_input_price_per_1m,
+                    output_price_per_1m=settings.openai_output_price_per_1m,
                     timeout_sec=timeout_sec,
                     max_tokens_param="max_completion_tokens",
                 )
             )
 
-        openrouter_api_key = env_str("OPENROUTER_API_KEY")
-        openrouter_model = env_str("OPENROUTER_MODEL")
+        openrouter_api_key = settings.openrouter_api_key
+        openrouter_model = settings.openrouter_model
         if openrouter_api_key and openrouter_model:
             providers.append(
                 ProviderConfig(
                     name="openrouter",
                     api_key=openrouter_api_key,
                     base_url=normalize_openai_base_url(
-                        env_str("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+                        settings.openrouter_base_url,
                         provider="openrouter",
                     ),
                     model=openrouter_model,
-                    input_price_per_1m=env_float("OPENROUTER_INPUT_PRICE_PER_1M", 0.0),
-                    output_price_per_1m=env_float("OPENROUTER_OUTPUT_PRICE_PER_1M", 0.0),
+                    input_price_per_1m=settings.openrouter_input_price_per_1m,
+                    output_price_per_1m=settings.openrouter_output_price_per_1m,
                     timeout_sec=timeout_sec,
                     max_tokens_param="max_tokens",
                 )
             )
 
-        ollama_model = env_str("OLLAMA_MODEL") or first_csv_item(env_str("OLLAMA_MODELS"))
+        ollama_model = settings.selected_ollama_model
         if ollama_model:
             providers.append(
                 ProviderConfig(
                     name="ollama",
-                    api_key=env_str("OLLAMA_API_KEY", "ollama"),
+                    api_key=settings.ollama_api_key,
                     base_url=normalize_openai_base_url(
-                        env_str("OLLAMA_OPENAI_BASE_URL") or env_str("OLLAMA_BASE_URL", "http://localhost:11434"),
+                        settings.ollama_openai_compatible_base_url,
                         provider="ollama",
                     ),
                     model=ollama_model,
@@ -417,13 +418,13 @@ class RobustLLMClient:
 
         return cls(
             providers=providers,
-            max_retries=env_int("ROBUST_LLM_MAX_RETRIES", 5),
-            base_backoff_sec=env_float("ROBUST_LLM_BASE_BACKOFF_SEC", 1.0),
-            max_backoff_sec=env_float("ROBUST_LLM_MAX_BACKOFF_SEC", 16.0),
-            max_jitter_sec=env_float("ROBUST_LLM_MAX_JITTER_SEC", 0.25),
-            circuit_failure_threshold=env_int("ROBUST_LLM_CIRCUIT_FAILURES", 3),
-            circuit_cooldown_sec=env_float("ROBUST_LLM_CIRCUIT_COOLDOWN_SEC", 60.0),
-            rate_limit_per_minute=env_int("ROBUST_LLM_RATE_LIMIT_PER_MINUTE", 0),
+            max_retries=settings.robust_llm_max_retries,
+            base_backoff_sec=settings.robust_llm_base_backoff_sec,
+            max_backoff_sec=settings.robust_llm_max_backoff_sec,
+            max_jitter_sec=settings.robust_llm_max_jitter_sec,
+            circuit_failure_threshold=settings.robust_llm_circuit_failures,
+            circuit_cooldown_sec=settings.robust_llm_circuit_cooldown_sec,
+            rate_limit_per_minute=settings.robust_llm_rate_limit_per_minute,
         )
 
     def chat(

@@ -22,6 +22,10 @@ Support Copilot — внутренний ИИ-ассистент для техн
 можно было подключать к одному приложению, а папки `homework_*` оставались
 учебными wrappers и demo-материалами.
 
+Настройки провайдеров, API-ключи, модели, цены и таймауты читаются из `.env`
+через `support_copilot/config.py` на базе `pydantic-settings`. Секреты не
+хранятся в коде; `.env.example` содержит только имена переменных.
+
 Из папки `HelpDesk_Assistant`:
 
 ```powershell
@@ -32,6 +36,18 @@ Real mode:
 
 ```powershell
 python -m support_copilot --real
+```
+
+Function Calling mode с доменным tool `search_knowledge_base`:
+
+```powershell
+python -m support_copilot --tools
+```
+
+Real Function Calling mode:
+
+```powershell
+python -m support_copilot --real --tools
 ```
 
 ## Какую задачу решает проект
@@ -154,3 +170,25 @@ Vision API. Отдельный `vision_assistant.py` оставлен как hel
 - `vision_assistant.py` — helper для анализа изображения через Vision API;
 - `README.md` — команды запуска и настройки `.env`;
 - основной запуск: `python -m support_copilot --real`, затем команда `/image`.
+
+## Домашнее задание 3.1: Function Calling
+
+Добавлен доменный tool `search_knowledge_base(query, product)` для поиска по
+локальной базе знаний Support Copilot. Реализован полный цикл OpenAI-compatible
+Function Calling: JSON Schema, model request с `tools`, парсинг `tool_calls`,
+выполнение Python-handler, возврат `role: tool` в историю и второй запрос за
+финальным ответом.
+Real-provider настройки для этого режима также берутся из `support_copilot/config.py`.
+
+Основной CLI тоже умеет запускать этот режим:
+
+```powershell
+python -m support_copilot --tools
+```
+
+Материалы ДЗ находятся в `homework_3_1/`:
+
+- `run_tool_call_demo.py` — offline demo и real mode через `.env`;
+- `README.md` — описание tool, запуск и 3 наблюдения;
+- `results/tool_call_demo.jsonl` — структурированный лог последнего demo-запуска;
+- `results/demo_summary.md` — краткая таблица результатов.

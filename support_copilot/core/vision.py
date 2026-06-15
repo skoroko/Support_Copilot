@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from support_copilot.config import load_settings
+from support_copilot.prompts.loader import load_prompt_file
+
 try:
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - optional for offline demo
@@ -33,18 +36,7 @@ EXAMPLES_DIR = PROJECT_ROOT / "homework_2_6" / "examples"
 DEFAULT_ENV_PATH = PROJECT_ROOT / ".env"
 DEFAULT_LOG_PATH = PACKAGE_ROOT / "results" / "vision_demo_log.txt"
 
-SYSTEM_PROMPT = """\
-Ты Support Copilot Vision, помощник инженера техподдержки MIDAS.
-Отвечай на русском языке. Анализируй изображение как вложение к обращению:
-скриншот ошибки, интерфейс продукта, график, расчетную схему или фото.
-Не выдумывай скрытые данные, версии продукта, регламенты и гарантии.
-Если изображение не дает достаточно данных, перечисли, что нужно запросить.
-Формат ответа:
-1. Что видно
-2. Возможная проблема
-3. Что запросить у пользователя
-4. Нужно ли эскалировать
-"""
+SYSTEM_PROMPT = load_prompt_file("vision_system_v1.txt").strip()
 
 DEMO_CASES = [
     {
@@ -318,32 +310,30 @@ def load_vision_config(
     *,
     allow_generic_model: bool = True,
 ) -> VisionConfig:
-    if load_dotenv is not None:
-        load_dotenv(DEFAULT_ENV_PATH, override=False)
+    settings = load_settings(DEFAULT_ENV_PATH)
 
-    provider = (provider_override or env_str("VISION_PROVIDER", "openai")).lower()
-    timeout_sec = env_float("VISION_TIMEOUT_SEC", env_float("LLM_TIMEOUT_SEC", 60.0))
-    max_tokens = env_int("VISION_MAX_TOKENS", 1200)
-    generic_model = env_str("VISION_MODEL") if allow_generic_model else ""
+    provider = (provider_override or settings.vision_provider).lower()
+    timeout_sec = settings.vision_timeout_sec
+    max_tokens = settings.vision_max_tokens
+    generic_model = settings.vision_model if allow_generic_model else ""
 
     if provider == "openai":
-        api_key = env_str("OPENAI_API_KEY")
-        base_url = env_str("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        model = env_str("OPENAI_VISION_MODEL") or generic_model or env_str("OPENAI_MODEL")
+        api_key = settings.openai_api_key
+        base_url = settings.openai_base_url
+        model = settings.openai_vision_model or generic_model or settings.openai_model
         max_tokens_param = "max_completion_tokens"
     elif provider == "openrouter":
-        api_key = env_str("OPENROUTER_API_KEY")
-        base_url = env_str("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        model = env_str("OPENROUTER_VISION_MODEL") or generic_model or env_str("OPENROUTER_MODEL")
+        api_key = settings.openrouter_api_key
+        base_url = settings.openrouter_base_url
+        model = settings.openrouter_vision_model or generic_model or settings.openrouter_model
         max_tokens_param = "max_tokens"
     elif provider == "ollama":
-        api_key = env_str("OLLAMA_API_KEY", "ollama")
-        base_url = env_str("OLLAMA_OPENAI_BASE_URL") or env_str("OLLAMA_BASE_URL", "http://localhost:11434")
+        api_key = settings.ollama_api_key
+        base_url = settings.ollama_openai_compatible_base_url
         model = (
-            env_str("OLLAMA_VISION_MODEL")
+            settings.ollama_vision_model
             or generic_model
-            or env_str("OLLAMA_MODEL")
-            or first_csv_item(env_str("OLLAMA_MODELS"))
+            or settings.selected_ollama_model
         )
         max_tokens_param = "max_tokens"
     else:
