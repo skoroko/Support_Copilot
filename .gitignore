@@ -4,3 +4,4 @@ __pycache__/
 *.log
 
 agents.md
+docs/architecture.pdf

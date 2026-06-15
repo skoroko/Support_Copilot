@@ -55,6 +55,15 @@ class _SettingsFields(BaseModel):
     robust_llm_circuit_cooldown_sec: float = 60.0
     robust_llm_rate_limit_per_minute: int = 0
 
+    async_llm_concurrency: int = 5
+    async_llm_sdk_timeout_sec: float = 30.0
+    async_llm_business_timeout_sec: float = 15.0
+    async_llm_max_retries: int = 3
+
+    llm_cache_ttl_seconds: int = 3600
+    llm_cache_prompt_version: str = "support-copilot-prompt-v1"
+    llm_cache_service_facts_version: str = "service-facts-v1"
+
     vision_provider: str = "openai"
     vision_model: str = ""
     openai_vision_model: str = ""
@@ -138,6 +147,13 @@ def _fallback_settings(env_path: str | os.PathLike[str] | None) -> SupportCopilo
         robust_llm_circuit_failures=_env_int("ROBUST_LLM_CIRCUIT_FAILURES", 3),
         robust_llm_circuit_cooldown_sec=_env_float("ROBUST_LLM_CIRCUIT_COOLDOWN_SEC", 60.0),
         robust_llm_rate_limit_per_minute=_env_int("ROBUST_LLM_RATE_LIMIT_PER_MINUTE", 0),
+        async_llm_concurrency=_env_int("ASYNC_LLM_CONCURRENCY", 5),
+        async_llm_sdk_timeout_sec=_env_float("ASYNC_LLM_SDK_TIMEOUT_SEC", 30.0),
+        async_llm_business_timeout_sec=_env_float("ASYNC_LLM_BUSINESS_TIMEOUT_SEC", 15.0),
+        async_llm_max_retries=_env_int("ASYNC_LLM_MAX_RETRIES", 3),
+        llm_cache_ttl_seconds=_env_int("LLM_CACHE_TTL_SECONDS", 3600),
+        llm_cache_prompt_version=_env_str("LLM_CACHE_PROMPT_VERSION", "support-copilot-prompt-v1"),
+        llm_cache_service_facts_version=_env_str("LLM_CACHE_SERVICE_FACTS_VERSION", "service-facts-v1"),
         vision_provider=_env_str("VISION_PROVIDER", "openai"),
         vision_model=_env_str("VISION_MODEL"),
         openai_vision_model=_env_str("OPENAI_VISION_MODEL"),
@@ -164,4 +180,3 @@ def load_settings(env_path: str | os.PathLike[str] | None = DEFAULT_ENV_PATH) ->
     if env_path is not None:
         kwargs["_env_file"] = str(env_path)
     return SupportCopilotSettings(**kwargs)
-

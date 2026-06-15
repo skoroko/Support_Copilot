@@ -30,7 +30,7 @@ flowchart LR
         Orchestrator[Оркестратор диалога]
         Prompt[Загрузка prompt и service facts]
         Policy[Классификация, эскалация, tool calling]
-        CacheAside[Cache-Aside перед LLM]
+        CacheAside["Cache-Aside перед LLM<br/>TTL: 3600s<br/>key: sha256(model+messages+temperature+prompt_version+service_facts_version)"]
         Cost[Метрики usage, cost, latency]
     end
 

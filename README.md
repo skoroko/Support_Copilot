@@ -204,3 +204,26 @@ Breaker на провайдерах, fallback chain, ADR по паттерну �
 
 - `docs/architecture.md` — основной архитектурный паспорт и ADR;
 - `docs/litellm/config.yaml` — пример LiteLLM Proxy config без секретов.
+
+## Домашнее задание 3.3: async LLM и SSE
+
+Добавлен асинхронный LLM-клиент поверх `AsyncOpenAI`: `complete`,
+`batch_chat`, `stream_chat`, instance-level `Semaphore`, SDK retry
+`max_retries=3`, timeout бизнес-логики и per-request logging. Также добавлен
+FastAPI SSE endpoint `/chat/stream` и benchmark sync sequential vs async batch.
+
+Команды:
+
+```powershell
+python scripts/benchmark.py
+uvicorn support_copilot.api:app --reload --port 8000
+curl -N -X POST http://localhost:8000/chat/stream -H "Content-Type: application/json" -d "{\"prompt\":\"Что такое event loop?\"}"
+```
+
+Материалы:
+
+- `homework_3_3/README.md` — краткая инструкция для проверки ДЗ;
+- `support_copilot/infrastructure/async_llm.py` — `AsyncLLMClient`;
+- `support_copilot/api.py` — FastAPI + SSE;
+- `scripts/benchmark.py` — benchmark;
+- `scripts/benchmark_results.md` — результат локального demo-бенчмарка.
