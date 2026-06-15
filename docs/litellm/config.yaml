@@ -1,0 +1,60 @@
+# LiteLLM proxy config for Support Copilot experiments.
+# No real secrets are stored here. Set all keys and model strings through env.
+#
+# Expected model env examples:
+#   SUPPORT_COPILOT_OPENAI_LITELLM_MODEL=openai/<checked-openai-model-id>
+#   SUPPORT_COPILOT_OPENROUTER_LITELLM_MODEL=openai/<openrouter-model-id>
+#   SUPPORT_COPILOT_OLLAMA_LITELLM_MODEL=ollama/qwen3:1.7b
+#
+# Start:
+#   litellm --config docs/litellm/config.yaml --detailed_debug
+#
+# Request:
+#   POST http://localhost:4000/v1/chat/completions
+#   {"model":"support-copilot-primary","messages":[{"role":"user","content":"..."}]}
+
+model_list:
+  - model_name: support-copilot-primary
+    litellm_params:
+      model: os.environ/SUPPORT_COPILOT_OPENAI_LITELLM_MODEL
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: os.environ/OPENAI_BASE_URL
+      rpm: 30
+      tpm: 40000
+
+  - model_name: support-copilot-secondary
+    litellm_params:
+      model: os.environ/SUPPORT_COPILOT_OPENROUTER_LITELLM_MODEL
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: os.environ/OPENROUTER_BASE_URL
+      rpm: 30
+      tpm: 40000
+
+  - model_name: support-copilot-local
+    litellm_params:
+      model: os.environ/SUPPORT_COPILOT_OLLAMA_LITELLM_MODEL
+      api_base: os.environ/OLLAMA_BASE_URL
+      api_key: os.environ/OLLAMA_API_KEY
+      rpm: 10
+      tpm: 10000
+
+litellm_settings:
+  drop_params: true
+  set_verbose: true
+  num_retries: 2
+  request_timeout: 30
+  allowed_fails: 3
+  cooldown_time: 60
+  fallbacks:
+    - support-copilot-primary:
+        - support-copilot-secondary
+        - support-copilot-local
+
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_pre_call_check: true
+  timeout: 30
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+

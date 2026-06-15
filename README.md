@@ -192,3 +192,15 @@ python -m support_copilot --tools
 - `README.md` — описание tool, запуск и 3 наблюдения;
 - `results/tool_call_demo.jsonl` — структурированный лог последнего demo-запуска;
 - `results/demo_summary.md` — краткая таблица результатов.
+
+## Домашнее задание 3.2: архитектура ИИ-приложения
+
+Подготовлен архитектурный паспорт проекта для следующих модулей: 4 слоя
+Gateway / Service / LLM / Data, request flow, Cache-Aside перед LLM, Circuit
+Breaker на провайдерах, fallback chain, ADR по паттерну взаимодействия, отказоустойчивость,
+таблица failure points, нагрузочные assumptions и решение по LiteLLM.
+
+Материалы:
+
+- `docs/architecture.md` — основной архитектурный паспорт и ADR;
+- `docs/litellm/config.yaml` — пример LiteLLM Proxy config без секретов.
