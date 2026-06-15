@@ -1,0 +1,21 @@
+{
+  "cloud_model": "gpt-5.4-mini",
+  "local_model_primary": "qwen3:1.7b",
+  "assumptions": {
+    "requests_per_day": 300.0,
+    "avg_input_tokens": 900.0,
+    "avg_output_tokens": 350.0,
+    "cache_hit_rate": 0.35,
+    "openai_input_price_per_1m": 0.75,
+    "openai_cached_input_price_per_1m": 0.075,
+    "openai_output_price_per_1m": 4.5
+  },
+  "monthly_cost": {
+    "monthly_requests": 9000.0,
+    "monthly_input_tokens": 8100000.0,
+    "monthly_output_tokens": 3150000.0,
+    "cloud_cost_no_cache_usd": 20.25,
+    "cloud_cost_with_cache_usd": 18.34,
+    "cache_savings_usd": 1.91
+  }
+}

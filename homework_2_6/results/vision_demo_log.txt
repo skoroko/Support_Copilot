@@ -1,0 +1,68 @@
+Vision scenario through Support Copilot CLI
+Updated: 2026-06-15
+Mode: real CLI, streaming enabled
+
+Run command:
+python -m support_copilot --real --stream
+
+CLI command:
+/image ".\homework_2_6\examples\func.png" | Что это за функция?
+
+Current provider chain after configuration update:
+1. OpenAI: gpt-5.4-mini
+2. OpenRouter: nex-agi/nex-n2-pro:free
+3. Ollama: gemma3:4b
+
+Earlier observed fallback:
+OpenRouter accepted the request but returned an empty streamed answer with finish_reason=length.
+After reconfiguration, OpenAI is the primary Vision provider, so the expected final source is vision:openai without needing OpenRouter first.
+
+Real CLI output example:
+
+Вы: /image ".\homework_2_6\examples\func.png" | Что это за функция?
+1. **Что видно**
+На скриншоте открыто окно **«Создать/Изменить функцию»** в MIDAS.
+Выбрана **общая функция** `General Function грунт1 [F:4]`.
+Судя по таблице и графику, это **зависимость одной величины от другой**:
+- **Независимая**: `Температура`
+- **Зависимая**: `Внезамерз / ...` (название обрезано, но видно, что это параметр,
+  связанный с вне-мерзлым/внезамерзшим состоянием или коэффициентом)
+
+То есть это **табличная функция с графиком**, где значения задаются по точкам и
+затем используются в расчётах модели.
+
+2. **Возможная проблема**
+Если вопрос про выделенную область, то это **не ошибка**, а **таблица значений функции**.
+Красной рамкой отмечены строки, где задаются пары значений:
+- по оси X — температура,
+- по оси Y — соответствующее значение функции.
+
+По графику видно, что функция почти постоянна при низких температурах и резко
+возрастает ближе к 0 °C. Это похоже на температурную зависимость материала/грунта.
+
+3. **Что запросить у пользователя**
+Если нужно точно объяснить назначение функции, стоит уточнить:
+- **в каком разделе модели она используется**;
+- **какой именно параметр скрыт в правом столбце** (название обрезано на скриншоте);
+- **что именно вы хотите понять**:
+  - смысл функции,
+  - как её редактировать,
+  - как она влияет на расчёт,
+  - почему график такой формы.
+
+4. **Нужно ли эскалировать**
+**Нет, пока не нужно.**
+По скриншоту это обычная пользовательская функция/таблица свойств. Эскалация нужна
+только если есть:
+- ошибка при расчёте,
+- функция не применяется,
+- значения не сохраняются,
+- график/таблица отображаются некорректно.
+
+Источник: vision:openai
+
+Notes:
+- Vision is no longer submitted as a separate three-image demo.
+- The current user-facing workflow is the main CLI command `/image`.
+- With `--stream`, real Vision answers are printed token-by-token.
+- Runtime sessions are appended to `support_copilot/results/session_log.txt`.

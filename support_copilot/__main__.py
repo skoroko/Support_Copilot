@@ -1,7 +1,8 @@
-"""Run Support Copilot as `python -m support_copilot`."""
+from __future__ import annotations
 
-from .cli import main
+from support_copilot.cli import main
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

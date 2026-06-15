@@ -1,0 +1,56 @@
+Command:
+python .\homework_2_3\demo_retry_fallback.py
+
+Retry + fallback demo
+================================================================================
+Provider used: openrouter
+Model: env-openrouter-model
+Unavailable: False
+Prompt tokens: 420
+Completion tokens: 86
+Cost USD: 0.00013560
+
+Answer
+--------------------------------------------------------------------------------
+Категория: technical_issue
+Приоритет: medium
+Черновик ответа: запросите версию продукта, текст ошибки, лог расчета и шаги воспроизведения.
+Эскалация: нет, пока не собраны базовые диагностические данные.
+
+Retry log
+--------------------------------------------------------------------------------
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=429 message=rate limit
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=retry_scheduled delay=1.10s message=retryable error 429
+2026-06-15T15:34:37+00:00 provider=openai attempt=2 code=500 message=internal server error
+2026-06-15T15:34:37+00:00 provider=openai attempt=2 code=retry_scheduled delay=2.10s message=retryable error 500
+2026-06-15T15:34:37+00:00 provider=openai attempt=3 code=timeout message=request timed out
+2026-06-15T15:34:37+00:00 provider=openai attempt=3 code=retry_scheduled delay=4.10s message=retryable error timeout
+2026-06-15T15:34:37+00:00 provider=openai attempt=4 code=502 message=bad gateway
+2026-06-15T15:34:37+00:00 provider=openai attempt=4 code=retry_scheduled delay=8.10s message=retryable error 502
+2026-06-15T15:34:37+00:00 provider=openai attempt=5 code=429 message=rate limit again
+2026-06-15T15:34:37+00:00 provider=openai attempt=5 code=retry_scheduled delay=16.10s message=retryable error 429
+2026-06-15T15:34:37+00:00 provider=openai attempt=6 code=503 message=service unavailable
+2026-06-15T15:34:37+00:00 provider=openai attempt=6 code=provider_failed message=retry budget exhausted
+2026-06-15T15:34:37+00:00 provider=openrouter attempt=1 code=504 message=gateway timeout
+2026-06-15T15:34:37+00:00 provider=openrouter attempt=1 code=retry_scheduled delay=1.10s message=retryable error 504
+2026-06-15T15:34:37+00:00 provider=openrouter attempt=2 code=success message=provider returned response
+
+Usage summary
+--------------------------------------------------------------------------------
+openai: prompt=0, completion=0, total=0, cost_usd=0.00000000
+openrouter: prompt=420, completion=86, total=506, cost_usd=0.00013560
+
+Circuit breaker demo
+================================================================================
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=500 message=server error A
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=provider_failed message=retry budget exhausted
+2026-06-15T15:34:37+00:00 provider=fallback attempt=0 code=service_unavailable message=all providers failed or were skipped
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=500 message=server error B
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=provider_failed message=retry budget exhausted
+2026-06-15T15:34:37+00:00 provider=fallback attempt=0 code=service_unavailable message=all providers failed or were skipped
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=500 message=server error C
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=provider_failed message=retry budget exhausted
+2026-06-15T15:34:37+00:00 provider=openai attempt=1 code=circuit_opened message=provider skipped for 60s
+2026-06-15T15:34:37+00:00 provider=fallback attempt=0 code=service_unavailable message=all providers failed or were skipped
+2026-06-15T15:34:37+00:00 provider=openai attempt=0 code=circuit_open message=provider skipped for 60.0s
+2026-06-15T15:34:37+00:00 provider=fallback attempt=0 code=service_unavailable message=all providers failed or were skipped

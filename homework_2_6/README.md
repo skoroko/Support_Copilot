@@ -1,47 +1,78 @@
-# ДЗ 2.6: мультимодальный Vision API
+# Homework 2.6A - Vision In Support Copilot CLI
 
-Вариант A: анализ изображений.
+Цель: добавить мультимодальный сценарий в накопительный Support Copilot, а не
+делать отдельный одноразовый прогон тестовых картинок.
 
-Что реализовано:
+## Основной способ запуска
 
-- прием пути к изображению от пользователя;
-- кодирование изображения в base64 data URL;
-- отправка в OpenAI-compatible Vision API через `POST /chat/completions`;
-- текстовый ответ на русском языке для инженера поддержки;
-- лог работы программы;
-- примеры входных изображений в `homework_2_6/examples/`.
-
-## Переменные окружения
-
-Секреты хранятся в `.env`, не в коде:
-
-```env
-OPENAI_API_KEY=...
-OPENAI_BASE_URL=https://api.openai.com/v1
-VISION_MODEL=<актуальная vision-capable модель из официальной документации>
-VISION_TEMPERATURE=0.2
-VISION_MAX_TOKENS=500
-VISION_DETAIL=auto
-```
-
-`VISION_MODEL` должен быть OpenAI-compatible model id, который поддерживает
-изображения. CLI не подставляет текстовую `OPENAI_MODEL`, чтобы случайно не
-отправить изображение в модель без Vision-поддержки.
-
-## Запуск через Vision API
+Vision-сценарий теперь доступен в общем CLI из ДЗ 2.5:
 
 ```powershell
-python homework_2_6/vision_image_analysis.py homework_2_6/examples/conv.png --question "Что видно на изображении?" --log-file homework_2_6/demo_log.txt
-python homework_2_6/vision_image_analysis.py homework_2_6/examples/func.png --question "Какая проблема показана?" --log-file homework_2_6/demo_log.txt
+python -m support_copilot --real
 ```
 
-CLI не выводит API-ключ и не пишет base64 изображения в лог.
-
-Тот же Vision-сценарий подключен к общему CLI из ДЗ 2.5:
+Внутри CLI:
 
 ```text
-/image homework_2_6/examples/conv.png Что видно на скриншоте?
+/image ".\homework_2_6\examples\ошибка расчета.jpg" | Опиши ошибку и подскажи, что запросить у пользователя.
 ```
 
-Если CLI уже запущен, не вставляйте строку `python -m support_copilot` в `you>`.
-Сначала выйдите командой `/quit`, затем запускайте новую команду в PowerShell.
+Команда `/image`:
+
+- принимает путь к PNG/JPEG-файлу;
+- кодирует изображение в base64 data URL;
+- отправляет его в OpenAI-compatible Vision API в real mode;
+- при запуске CLI с `--stream` выводит real Vision-ответ по токенам;
+- при пустом ответе или ошибке пробует следующий настроенный Vision-провайдер;
+- в offline mode дает локальный шаблонный ответ без сетевого вызова;
+- добавляет текстовый результат анализа в историю CLI;
+- отражается в `/stats` как `image requests`.
+
+## Настройки `.env`
+
+Fallback-цепочка Vision в CLI:
+
+```text
+OpenAI -> OpenRouter -> Ollama
+```
+
+Для OpenAI как основного провайдера:
+
+```dotenv
+VISION_PROVIDER=openai
+VISION_MODEL=gpt-5.4-mini
+OPENAI_VISION_MODEL=gpt-5.4-mini
+VISION_TIMEOUT_SEC=60
+VISION_MAX_TOKENS=1200
+```
+
+Для OpenRouter fallback:
+
+```dotenv
+OPENROUTER_VISION_MODEL=nex-agi/nex-n2-pro:free
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+Для Ollama fallback:
+
+```dotenv
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_VISION_MODEL=gemma3:4b
+```
+
+Модель должна поддерживать вход `text+image -> text`. `OPENROUTER_MODEL` и
+`OPENAI_MODEL` относятся к обычному текстовому CLI, а `VISION_MODEL`,
+`OPENROUTER_VISION_MODEL` и `OPENAI_VISION_MODEL` - к анализу изображений.
+
+## Вспомогательный скрипт
+
+`vision_assistant.py` сохранен как wrapper на `support_copilot.core.vision` и
+одиночный smoke-test:
+
+```powershell
+python .\homework_2_6\vision_assistant.py --real --image ".\homework_2_6\examples\func.png" --question "Что видно на графике?"
+```
+
+Для сдачи накопительного проекта предпочтителен запуск через
+`python -m support_copilot` и команду `/image`.

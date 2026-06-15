@@ -1,0 +1,20 @@
+[
+  {
+    "provider": "ollama",
+    "model": "qwen3:1.7b",
+    "tasks": 21,
+    "accuracy": 0.318,
+    "avg_ttft_sec": 5.47,
+    "avg_throughput_tok_sec": 258.81,
+    "errors": 0
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.4-mini",
+    "tasks": 21,
+    "accuracy": 0.763,
+    "avg_ttft_sec": 0.994,
+    "avg_throughput_tok_sec": 168.58,
+    "errors": 0
+  }
+]

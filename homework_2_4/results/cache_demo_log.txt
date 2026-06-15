@@ -1,0 +1,55 @@
+Command:
+python .\homework_2_4\demo_cache.py
+
+In-memory LLMCache demo
+================================================================================
+1. First read before set: None
+   stats: {
+  "hits": 0,
+  "misses": 1,
+  "writes": 0,
+  "entries": 0,
+  "expired": 0,
+  "hit_rate_percent": 0.0
+}
+2. Stored key: 6676279beee895232e03cf08e20fd745b77c9f270c125e68225132134018df0c
+3. Second read after set: {
+  "answer": "Запросите версию продукта, текст ошибки, лог расчета и шаги воспроизведения. До проверки инженером не обещайте исправление.",
+  "category": "technical_issue",
+  "priority": "medium"
+}
+   stats: {
+  "hits": 1,
+  "misses": 1,
+  "writes": 1,
+  "entries": 1,
+  "expired": 0,
+  "hit_rate_percent": 50.0
+}
+4. Read with different temperature: None
+   stats: {
+  "hits": 1,
+  "misses": 2,
+  "writes": 1,
+  "entries": 1,
+  "expired": 0,
+  "hit_rate_percent": 33.33
+}
+5. Read with different prompt version: None
+   stats: {
+  "hits": 1,
+  "misses": 3,
+  "writes": 1,
+  "entries": 1,
+  "expired": 0,
+  "hit_rate_percent": 25.0
+}
+6. Read after TTL expiry: None
+   stats: {
+  "hits": 1,
+  "misses": 4,
+  "writes": 1,
+  "entries": 0,
+  "expired": 1,
+  "hit_rate_percent": 20.0
+}
