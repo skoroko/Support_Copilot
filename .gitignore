@@ -3,3 +3,4 @@ __pycache__/
 *.py[cod]
 *.log
 homework_1_4/results/
+agents.md
