@@ -7,11 +7,14 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_MODELS = ["qwen3:1.7b", "smollm2:1.7b", "gemma3:1b"]
+ROOT = Path(__file__).resolve().parent
+DEFAULT_RESULTS_DIR = ROOT / "results"
 
 
 @dataclass(frozen=True)
@@ -148,6 +151,7 @@ def ensure_models_available(base_url: str, models: list[str]) -> None:
 
 def chat(base_url: str, model: str, prompt: str) -> tuple[str, float]:
     started_at = time.perf_counter()
+    user_prompt = "/no_think\n" + prompt if "qwen" in model.lower() else prompt
     payload = {
         "model": model,
         "messages": [
@@ -158,7 +162,7 @@ def chat(base_url: str, model: str, prompt: str) -> tuple[str, float]:
                     "кратко и по делу."
                 ),
             },
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": user_prompt},
         ],
         "stream": False,
         "options": {"temperature": 0.2, "num_predict": 220},
@@ -234,7 +238,7 @@ def validate_structured_output(payload: dict[str, Any]) -> None:
         raise ValueError("Field needs_human must be boolean")
 
 
-def print_table(rows: list[dict[str, Any]]) -> None:
+def format_table(rows: list[dict[str, Any]]) -> str:
     headers = [
         "model",
         "task",
@@ -248,10 +252,29 @@ def print_table(rows: list[dict[str, Any]]) -> None:
         for header in headers:
             widths[header] = max(widths[header], len(str(row[header])))
 
-    print(" | ".join(header.ljust(widths[header]) for header in headers))
-    print("-+-".join("-" * widths[header] for header in headers))
+    lines = [
+        " | ".join(header.ljust(widths[header]) for header in headers),
+        "-+-".join("-" * widths[header] for header in headers),
+    ]
     for row in rows:
-        print(" | ".join(str(row[header]).ljust(widths[header]) for header in headers))
+        lines.append(" | ".join(str(row[header]).ljust(widths[header]) for header in headers))
+    return "\n".join(lines)
+
+
+def save_results(results_dir: Path, rows: list[dict[str, Any]], structured: dict[str, Any], log_text: str) -> None:
+    results_dir.mkdir(exist_ok=True)
+    (results_dir / "benchmark_results.json").write_text(
+        json.dumps(
+            {
+                "benchmark": rows,
+                "structured_output": structured,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    (results_dir / "benchmark_log.txt").write_text(log_text, encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:
@@ -279,6 +302,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Запустить только structured output.",
     )
+    parser.add_argument(
+        "--results-dir",
+        default=str(DEFAULT_RESULTS_DIR),
+        help=f"Папка для сохранения результатов. По умолчанию: {DEFAULT_RESULTS_DIR}",
+    )
     return parser.parse_args()
 
 
@@ -291,14 +319,22 @@ def main() -> int:
         required_models.append(args.structured_model)
     ensure_models_available(args.ollama_url, required_models)
 
+    rows: list[dict[str, Any]] = []
+    log_parts: list[str] = []
+
     if not args.structured_only:
         rows = run_benchmark(args.ollama_url, args.models)
+        table = format_table(rows)
+        log_parts.extend(["Benchmark results", "", table, ""])
         print("\nBenchmark results\n")
-        print_table(rows)
+        print(table)
 
     structured = run_structured_output(args.ollama_url, args.structured_model)
+    structured_text = json.dumps(structured, ensure_ascii=False, indent=2)
+    log_parts.extend(["Structured output", "", structured_text, ""])
     print("\nStructured output\n")
-    print(json.dumps(structured, ensure_ascii=False, indent=2))
+    print(structured_text)
+    save_results(Path(args.results_dir), rows, structured, "\n".join(log_parts))
     return 0
 
 

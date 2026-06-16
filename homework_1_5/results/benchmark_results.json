@@ -1,0 +1,397 @@
+[
+  {
+    "provider": "HuggingFace Pipeline",
+    "model": "cointegrated/rubert-tiny-sentiment-balanced",
+    "license": "not specified",
+    "accuracy": 0.6,
+    "avg_latency_sec": 0.0111,
+    "predictions": [
+      {
+        "case_id": "case_01_negative_delay",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0677,
+        "raw_label": "negative",
+        "score": 0.9481,
+        "text": "Третий день жду ответ от поддержки, из-за этого стоит работа. Очень недоволен сервисом."
+      },
+      {
+        "case_id": "case_02_positive_fast_help",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0038,
+        "raw_label": "positive",
+        "score": 0.7376,
+        "text": "Инженер быстро помог разобраться с лицензией, спасибо за понятные инструкции."
+      },
+      {
+        "case_id": "case_03_neutral_question",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.0032,
+        "raw_label": "neutral",
+        "score": 0.9981,
+        "text": "Подскажите, где скачать установщик и какую версию выбрать для учебной лицензии?"
+      },
+      {
+        "case_id": "case_04_negative_crash",
+        "expected": "negative",
+        "predicted": "neutral",
+        "latency_sec": 0.0036,
+        "raw_label": "neutral",
+        "score": 0.5593,
+        "text": "После обновления проект не открывается, ошибка повторяется, решение не предложили."
+      },
+      {
+        "case_id": "case_05_positive_docs",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0074,
+        "raw_label": "positive",
+        "score": 0.9663,
+        "text": "Документация помогла решить проблему с импортом, все заработало."
+      },
+      {
+        "case_id": "case_06_neutral_logs",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.0054,
+        "raw_label": "neutral",
+        "score": 0.9125,
+        "text": "Отправляю лог-файл и скриншот ошибки для диагностики."
+      },
+      {
+        "case_id": "case_07_negative_license",
+        "expected": "negative",
+        "predicted": "neutral",
+        "latency_sec": 0.0063,
+        "raw_label": "neutral",
+        "score": 0.6922,
+        "text": "Ключ снова не активируется, инструкции не помогли, ситуация критичная."
+      },
+      {
+        "case_id": "case_08_positive_callback",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0042,
+        "raw_label": "positive",
+        "score": 0.7895,
+        "text": "Спасибо, специалист перезвонил и подробно объяснил, что нужно исправить в модели."
+      },
+      {
+        "case_id": "case_09_neutral_escalation",
+        "expected": "neutral",
+        "predicted": "negative",
+        "latency_sec": 0.0049,
+        "raw_label": "negative",
+        "score": 0.515,
+        "text": "Прошу передать обращение старшему инженеру, потому что вопрос связан с расчетной схемой."
+      },
+      {
+        "case_id": "case_10_negative_tone",
+        "expected": "negative",
+        "predicted": "neutral",
+        "latency_sec": 0.0047,
+        "raw_label": "neutral",
+        "score": 0.6203,
+        "text": "Ответ был слишком общий и не решил проблему, пришлось искать решение самостоятельно."
+      }
+    ]
+  },
+  {
+    "provider": "HuggingFace Pipeline",
+    "model": "blanchefort/rubert-base-cased-sentiment",
+    "license": "not specified",
+    "accuracy": 0.6,
+    "avg_latency_sec": 0.0329,
+    "predictions": [
+      {
+        "case_id": "case_01_negative_delay",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0753,
+        "raw_label": "NEGATIVE",
+        "score": 0.7517,
+        "text": "Третий день жду ответ от поддержки, из-за этого стоит работа. Очень недоволен сервисом."
+      },
+      {
+        "case_id": "case_02_positive_fast_help",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0296,
+        "raw_label": "POSITIVE",
+        "score": 0.9771,
+        "text": "Инженер быстро помог разобраться с лицензией, спасибо за понятные инструкции."
+      },
+      {
+        "case_id": "case_03_neutral_question",
+        "expected": "neutral",
+        "predicted": "negative",
+        "latency_sec": 0.0283,
+        "raw_label": "NEGATIVE",
+        "score": 0.7516,
+        "text": "Подскажите, где скачать установщик и какую версию выбрать для учебной лицензии?"
+      },
+      {
+        "case_id": "case_04_negative_crash",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.028,
+        "raw_label": "NEGATIVE",
+        "score": 0.7515,
+        "text": "После обновления проект не открывается, ошибка повторяется, решение не предложили."
+      },
+      {
+        "case_id": "case_05_positive_docs",
+        "expected": "positive",
+        "predicted": "neutral",
+        "latency_sec": 0.0282,
+        "raw_label": "NEUTRAL",
+        "score": 0.8254,
+        "text": "Документация помогла решить проблему с импортом, все заработало."
+      },
+      {
+        "case_id": "case_06_neutral_logs",
+        "expected": "neutral",
+        "predicted": "negative",
+        "latency_sec": 0.0284,
+        "raw_label": "NEGATIVE",
+        "score": 0.7517,
+        "text": "Отправляю лог-файл и скриншот ошибки для диагностики."
+      },
+      {
+        "case_id": "case_07_negative_license",
+        "expected": "negative",
+        "predicted": "neutral",
+        "latency_sec": 0.0272,
+        "raw_label": "NEUTRAL",
+        "score": 0.7348,
+        "text": "Ключ снова не активируется, инструкции не помогли, ситуация критичная."
+      },
+      {
+        "case_id": "case_08_positive_callback",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0277,
+        "raw_label": "POSITIVE",
+        "score": 0.981,
+        "text": "Спасибо, специалист перезвонил и подробно объяснил, что нужно исправить в модели."
+      },
+      {
+        "case_id": "case_09_neutral_escalation",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.0279,
+        "raw_label": "NEUTRAL",
+        "score": 0.8202,
+        "text": "Прошу передать обращение старшему инженеру, потому что вопрос связан с расчетной схемой."
+      },
+      {
+        "case_id": "case_10_negative_tone",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0285,
+        "raw_label": "NEGATIVE",
+        "score": 0.7516,
+        "text": "Ответ был слишком общий и не решил проблему, пришлось искать решение самостоятельно."
+      }
+    ]
+  },
+  {
+    "provider": "HuggingFace Pipeline",
+    "model": "tabularisai/multilingual-sentiment-analysis",
+    "license": "cc-by-nc-4.0",
+    "accuracy": 0.9,
+    "avg_latency_sec": 0.0208,
+    "predictions": [
+      {
+        "case_id": "case_01_negative_delay",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0551,
+        "raw_label": "Negative",
+        "score": 0.7897,
+        "text": "Третий день жду ответ от поддержки, из-за этого стоит работа. Очень недоволен сервисом."
+      },
+      {
+        "case_id": "case_02_positive_fast_help",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0181,
+        "raw_label": "Positive",
+        "score": 0.8735,
+        "text": "Инженер быстро помог разобраться с лицензией, спасибо за понятные инструкции."
+      },
+      {
+        "case_id": "case_03_neutral_question",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.0184,
+        "raw_label": "Neutral",
+        "score": 0.8849,
+        "text": "Подскажите, где скачать установщик и какую версию выбрать для учебной лицензии?"
+      },
+      {
+        "case_id": "case_04_negative_crash",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0166,
+        "raw_label": "Negative",
+        "score": 0.75,
+        "text": "После обновления проект не открывается, ошибка повторяется, решение не предложили."
+      },
+      {
+        "case_id": "case_05_positive_docs",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 0.0162,
+        "raw_label": "Positive",
+        "score": 0.8949,
+        "text": "Документация помогла решить проблему с импортом, все заработало."
+      },
+      {
+        "case_id": "case_06_neutral_logs",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.017,
+        "raw_label": "Neutral",
+        "score": 0.9278,
+        "text": "Отправляю лог-файл и скриншот ошибки для диагностики."
+      },
+      {
+        "case_id": "case_07_negative_license",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0176,
+        "raw_label": "Negative",
+        "score": 0.8353,
+        "text": "Ключ снова не активируется, инструкции не помогли, ситуация критичная."
+      },
+      {
+        "case_id": "case_08_positive_callback",
+        "expected": "positive",
+        "predicted": "neutral",
+        "latency_sec": 0.0167,
+        "raw_label": "Neutral",
+        "score": 0.5462,
+        "text": "Спасибо, специалист перезвонил и подробно объяснил, что нужно исправить в модели."
+      },
+      {
+        "case_id": "case_09_neutral_escalation",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 0.016,
+        "raw_label": "Neutral",
+        "score": 0.7661,
+        "text": "Прошу передать обращение старшему инженеру, потому что вопрос связан с расчетной схемой."
+      },
+      {
+        "case_id": "case_10_negative_tone",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 0.0165,
+        "raw_label": "Negative",
+        "score": 0.9192,
+        "text": "Ответ был слишком общий и не решил проблему, пришлось искать решение самостоятельно."
+      }
+    ]
+  },
+  {
+    "provider": "OpenRouter",
+    "model": "openai/gpt-oss-120b:free",
+    "accuracy": 1.0,
+    "avg_latency_sec": 3.2853,
+    "predictions": [
+      {
+        "case_id": "case_01_negative_delay",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 4.7814,
+        "raw_label": "{\"sentiment\":\"negative\"}",
+        "score": 0.0,
+        "text": "Третий день жду ответ от поддержки, из-за этого стоит работа. Очень недоволен сервисом."
+      },
+      {
+        "case_id": "case_02_positive_fast_help",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 2.2337,
+        "raw_label": "{\"sentiment\":\"positive\"}",
+        "score": 0.0,
+        "text": "Инженер быстро помог разобраться с лицензией, спасибо за понятные инструкции."
+      },
+      {
+        "case_id": "case_03_neutral_question",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 2.4573,
+        "raw_label": "{\"sentiment\":\"neutral\"}",
+        "score": 0.0,
+        "text": "Подскажите, где скачать установщик и какую версию выбрать для учебной лицензии?"
+      },
+      {
+        "case_id": "case_04_negative_crash",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 1.9759,
+        "raw_label": "{\"sentiment\":\"negative\"}",
+        "score": 0.0,
+        "text": "После обновления проект не открывается, ошибка повторяется, решение не предложили."
+      },
+      {
+        "case_id": "case_05_positive_docs",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 3.3943,
+        "raw_label": "{\"sentiment\":\"positive\"}",
+        "score": 0.0,
+        "text": "Документация помогла решить проблему с импортом, все заработало."
+      },
+      {
+        "case_id": "case_06_neutral_logs",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 5.0035,
+        "raw_label": "{\"sentiment\":\"neutral\"}",
+        "score": 0.0,
+        "text": "Отправляю лог-файл и скриншот ошибки для диагностики."
+      },
+      {
+        "case_id": "case_07_negative_license",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 1.4631,
+        "raw_label": "{\"sentiment\":\"negative\"}",
+        "score": 0.0,
+        "text": "Ключ снова не активируется, инструкции не помогли, ситуация критичная."
+      },
+      {
+        "case_id": "case_08_positive_callback",
+        "expected": "positive",
+        "predicted": "positive",
+        "latency_sec": 2.9569,
+        "raw_label": "{\"sentiment\":\"positive\"}",
+        "score": 0.0,
+        "text": "Спасибо, специалист перезвонил и подробно объяснил, что нужно исправить в модели."
+      },
+      {
+        "case_id": "case_09_neutral_escalation",
+        "expected": "neutral",
+        "predicted": "neutral",
+        "latency_sec": 2.0817,
+        "raw_label": "{\"sentiment\":\"neutral\"}",
+        "score": 0.0,
+        "text": "Прошу передать обращение старшему инженеру, потому что вопрос связан с расчетной схемой."
+      },
+      {
+        "case_id": "case_10_negative_tone",
+        "expected": "negative",
+        "predicted": "negative",
+        "latency_sec": 6.5055,
+        "raw_label": "{\"sentiment\":\"negative\"}",
+        "score": 0.0,
+        "text": "Ответ был слишком общий и не решил проблему, пришлось искать решение самостоятельно."
+      }
+    ]
+  }
+]

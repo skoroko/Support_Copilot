@@ -90,4 +90,8 @@ Structured output возвращает JSON с полями:
 `ollama pull <model>`.
 
 Для сдачи ДЗ нужно запустить benchmark локально и приложить скриншот или лог
-вывода.
+вывода. В текущем прогоне результаты уже сохранены в:
+
+- `results/benchmark_log.txt` - текстовый лог benchmark;
+- `results/benchmark_results.json` - JSON с метриками и structured output;
+- `results/benchmark_summary.md` - итоговая таблица и вывод для проверки.

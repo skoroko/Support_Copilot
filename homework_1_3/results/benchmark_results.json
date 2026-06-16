@@ -1,0 +1,83 @@
+{
+  "benchmark": [
+    {
+      "model": "support-copilot-qwen3-1.7b:latest",
+      "task": "classification",
+      "latency_sec": 2.7,
+      "approx_chars_per_sec": 0.0,
+      "quality_score": 0.0,
+      "answer_preview": ""
+    },
+    {
+      "model": "support-copilot-qwen3-1.7b:latest",
+      "task": "summary",
+      "latency_sec": 2.24,
+      "approx_chars_per_sec": 53.2,
+      "quality_score": 0.67,
+      "answer_preview": "Клиент не может активировать лицензию на новом ноутбуке из-за сломанного старого. Просит проверить возможность переноса"
+    },
+    {
+      "model": "support-copilot-qwen3-1.7b:latest",
+      "task": "escalation",
+      "latency_sec": 2.17,
+      "approx_chars_per_sec": 48.4,
+      "quality_score": 0.33,
+      "answer_preview": "да   Перепроверка на наличие повторяющихся ошибок и необходимости вмешательства специалиста второй линии."
+    },
+    {
+      "model": "smollm2:1.7b",
+      "task": "classification",
+      "latency_sec": 6.79,
+      "approx_chars_per_sec": 20.8,
+      "quality_score": 0.33,
+      "answer_preview": "Escalation: User reports that after project update, the application does not open and displays error code 500, requiring immediate attention."
+    },
+    {
+      "model": "smollm2:1.7b",
+      "task": "summary",
+      "latency_sec": 1.53,
+      "approx_chars_per_sec": 120.5,
+      "quality_score": 0.67,
+      "answer_preview": "1. Клиент не может активировать лицензию на новом ноутбуке, старый ноутбук сломан и доступ к нему нет. 2. Нужно понять, можно ли перенести лицензию и запрашиват"
+    },
+    {
+      "model": "smollm2:1.7b",
+      "task": "escalation",
+      "latency_sec": 0.92,
+      "approx_chars_per_sec": 113.7,
+      "quality_score": 0.33,
+      "answer_preview": "Да. Одно предложение причины: Потеря данных в том этапе импорта, когда соединение с сервером остановится."
+    },
+    {
+      "model": "gemma3:1b",
+      "task": "classification",
+      "latency_sec": 0.67,
+      "approx_chars_per_sec": 83.0,
+      "quality_score": 1.0,
+      "answer_preview": "Technical - Появилась ошибка 500, требуется диагностика."
+    },
+    {
+      "model": "gemma3:1b",
+      "task": "summary",
+      "latency_sec": 0.99,
+      "approx_chars_per_sec": 226.1,
+      "quality_score": 1.0,
+      "answer_preview": "Здравствуйте! Понимаем, что у клиента возникли проблемы с активацией лицензии на новый ноутбук из-за поврежденного старого. Нам нужно выяснить возможность перен"
+    },
+    {
+      "model": "gemma3:1b",
+      "task": "escalation",
+      "latency_sec": 0.7,
+      "approx_chars_per_sec": 142.0,
+      "quality_score": 0.33,
+      "answer_preview": "Да. Необходимо эскалировать специалисте второго уровня для диагностики и решения проблемы с данными."
+    }
+  ],
+  "structured_output": {
+    "category": "escalation",
+    "priority": "high",
+    "summary": "Ошибка 500 при открытии MIDAS после обновления. Проблема повторяется, требуется подключение специалиста.",
+    "needs_human": true,
+    "suggested_action": "Подключить специалиста для диагностики и решения проблемы"
+  }
+}
