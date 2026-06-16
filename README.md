@@ -298,3 +298,34 @@ docker compose exec redis redis-cli ping
 - `app/routers/health.py` — liveness `/health` и readiness `/ready`;
 - `homework_3_5/TEACHER_CHECK.md` — краткая сводка для преподавателя;
 - `tests/test_docker_config.py` — offline-проверка Docker/Compose контракта.
+
+## Домашнее задание 3.6: Observability ИИ-приложений
+
+К FastAPI-сервису добавлен observability-слой: Phoenix в Docker Compose,
+OpenAI auto-instrumentation через OpenInference, JSON-логи через `structlog`,
+`request_id` в contextvars и PII-маскирование prompt preview перед записью в лог.
+
+Запуск:
+
+```powershell
+docker compose up -d --build
+```
+
+Проверка:
+
+```powershell
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
+curl http://localhost:6006
+docker compose logs app
+```
+
+Материалы:
+
+- `app/observability/tracing.py` — Phoenix/OpenInference setup;
+- `app/observability/logging.py` — structlog JSON logging и contextvars;
+- `app/observability/pii.py` — regex-маскирование EMAIL, PHONE_RU, CARD, INN, PASSPORT;
+- `compose.yaml` — сервис `phoenix`, volume `phoenix-data`, endpoint для `app`;
+- `docs/observability/README.md` — описание того, что видно в Phoenix;
+- `homework_3_6/TEACHER_CHECK.md` — краткая сводка для преподавателя;
+- `tests/test_observability.py` — unit-тесты PII и безопасного LLM-лога.

@@ -12,7 +12,10 @@ services:
       APP_REDIS_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
     depends_on:
+      phoenix:
+        condition: service_started
       redis:
         condition: service_healthy
     healthcheck:
@@ -38,5 +41,17 @@ services:
       retries: 3
     restart: unless-stopped
 
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "6006:6006"
+      - "4317:4317"
+    environment:
+      PHOENIX_WORKING_DIR: /data
+    volumes:
+      - phoenix-data:/data
+    restart: unless-stopped
+
 volumes:
   redis_data: {}
+  phoenix-data: {}

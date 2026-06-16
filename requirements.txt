@@ -13,3 +13,8 @@ uvicorn>=0.30.0
 
 # Redis backend for FastAPI chat cache and optional RedisLLMCache.
 redis>=5.0.0
+
+# Observability for homework 3.6.
+structlog>=24.0.0
+arize-phoenix-otel>=0.8.0
+openinference-instrumentation-openai>=0.1.0

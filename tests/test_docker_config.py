@@ -24,7 +24,10 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("COPY --from=builder --chown=appuser:appuser /app /app", dockerfile)
         self.assertIn("USER appuser", dockerfile)
         self.assertIn("EXPOSE 8000", dockerfile)
-        self.assertIn('CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]', dockerfile)
+        self.assertIn(
+            'CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]',
+            dockerfile,
+        )
 
     def test_compose_has_app_redis_healthchecks_and_no_redis_ports(self) -> None:
         compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
@@ -32,13 +35,21 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("image: llm-service:v1", compose)
         self.assertIn("ports:\n      - \"8000:8000\"", compose)
         self.assertIn("APP_REDIS_URL: redis://redis:6379/0", compose)
+        self.assertIn("PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006", compose)
         self.assertIn("condition: service_healthy", compose)
+        self.assertIn("condition: service_started", compose)
         self.assertIn("http://localhost:8000/ready", compose)
         self.assertIn("image: redis:7.4-alpine", compose)
         self.assertIn("redis_data:/data", compose)
         self.assertIn('test: ["CMD", "redis-cli", "ping"]', compose)
         redis_section = compose.split("  redis:", maxsplit=1)[1].split("volumes:", maxsplit=1)[0]
         self.assertNotIn("ports:", redis_section)
+        self.assertIn("image: arizephoenix/phoenix:latest", compose)
+        self.assertIn('"6006:6006"', compose)
+        self.assertIn('"4317:4317"', compose)
+        self.assertIn("PHOENIX_WORKING_DIR: /data", compose)
+        self.assertIn("phoenix-data:/data", compose)
+        self.assertIn("phoenix-data: {}", compose)
 
     def test_dockerignore_excludes_secrets_tests_and_python_artifacts(self) -> None:
         dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")

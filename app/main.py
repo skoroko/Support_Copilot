@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -15,6 +14,8 @@ from openai import AsyncOpenAI
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import LLMAuthError, LLMError, LLMRateLimitError, LLMTimeoutError
+from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
+from app.observability.tracing import setup_tracing
 from app.routers import chat, health, models
 
 try:
@@ -23,8 +24,7 @@ except ImportError:  # pragma: no cover - local tests can run without redis pack
     Redis = None
 
 
-logger = logging.getLogger("llm-service")
-logging.basicConfig(level=logging.INFO)
+logger = get_logger("llm-service")
 
 
 class InMemoryAsyncCache:
@@ -63,7 +63,8 @@ async def _maybe_close(obj: Any) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    logger.setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
+    setup_logging(settings.log_level)
+    setup_tracing()
     app.state.settings = settings
     app.state.openai = AsyncOpenAI(
         api_key=settings.llm.openai_api_key.get_secret_value(),
@@ -104,32 +105,31 @@ app.add_middleware(
 
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    clear_request_context()
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+    user_id = request.headers.get("X-User-ID")
     request.state.request_id = request_id
+    bind_request_context(
+        request_id=request_id,
+        user_id=user_id,
+        path=request.url.path,
+        method=request.method,
+    )
     start = time.perf_counter()
     status_code = 500
     try:
         response = await call_next(request)
         status_code = response.status_code
-        response.headers["X-Request-ID"] = request_id
+        response.headers["x-request-id"] = request_id
         return response
     finally:
         duration_ms = (time.perf_counter() - start) * 1000
         logger.info(
-            "http.request request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
-            request_id,
-            request.method,
-            request.url.path,
-            status_code,
-            duration_ms,
-            extra={
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "status": status_code,
-                "duration_ms": duration_ms,
-            },
+            "http_request_completed",
+            status_code=status_code,
+            latency_ms=round(duration_ms, 2),
         )
+        clear_request_context()
 
 
 @app.exception_handler(LLMError)
