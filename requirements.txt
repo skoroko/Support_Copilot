@@ -11,5 +11,5 @@ sse-starlette>=2.0.0
 tenacity>=8.2.0
 uvicorn>=0.30.0
 
-# Optional backend for RedisLLMCache.
+# Redis backend for FastAPI chat cache and optional RedisLLMCache.
 redis>=5.0.0

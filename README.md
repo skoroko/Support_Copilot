@@ -227,3 +227,39 @@ curl -N -X POST http://localhost:8000/chat/stream -H "Content-Type: application/
 - `support_copilot/api.py` — FastAPI + SSE;
 - `scripts/benchmark.py` — benchmark;
 - `scripts/benchmark_results.md` — результат локального demo-бенчмарка.
+
+## Домашнее задание 3.4: FastAPI LLM Service
+
+Собран отдельный FastAPI-сервис `app.main:app` с dependency injection, lifespan
+инициализацией `AsyncOpenAI` и Redis-compatible cache, middleware для
+`X-Request-ID`, обработчиками ошибок, OpenAPI examples/responses и четырьмя
+эндпоинтами: `/health`, `/models`, `/chat`, `/chat/stream`.
+
+Запуск из папки `HelpDesk_Assistant`:
+
+```powershell
+uvicorn app.main:app --reload --port 8000
+```
+
+Проверка без LLM-вызова:
+
+```powershell
+curl http://localhost:8000/health
+curl http://localhost:8000/models
+```
+
+Проверка chat API при настроенном `OPENAI_API_KEY`:
+
+```powershell
+curl -X POST http://localhost:8000/chat -H "Content-Type: application/json" -d "{\"messages\":[{\"role\":\"user\",\"content\":\"Как проверить срок действия лицензии?\"}],\"temperature\":0.2,\"max_tokens\":500}"
+curl -N -X POST http://localhost:8000/chat/stream -H "Content-Type: application/json" -d "{\"messages\":[{\"role\":\"user\",\"content\":\"Сформулируй короткий ответ клиенту.\"}],\"temperature\":0.2,\"max_tokens\":500}"
+```
+
+Материалы:
+
+- `homework_3_4/README.md` — инструкция запуска и проверки;
+- `homework_3_4/TEACHER_CHECK.md` — краткая сводка для преподавателя;
+- `app/main.py` — FastAPI app, lifespan, middleware, exception handlers;
+- `app/services/llm.py` — `LLMService` с complete, stream и cache-aside;
+- `app/deps/providers.py` — FastAPI DI providers без глобальных клиентов;
+- `tests/test_app_fastapi.py`, `tests/test_app_llm_service.py` — offline-тесты.
