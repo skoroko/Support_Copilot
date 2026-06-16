@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.core.exceptions import LLMAuthError
-from app.deps.providers import get_llm_service
+from app.deps.providers import get_cache, get_llm_service
 from app.main import app
 from app.schemas.chat import ChatDelta, ChatResponse, Usage
 
@@ -34,6 +34,16 @@ class FakeAuthFailService:
         raise LLMAuthError("LLM provider authentication failed")
 
 
+class FakeReadyCache:
+    async def ping(self) -> bool:
+        return True
+
+
+class FakeDownCache:
+    async def ping(self) -> bool:
+        raise TimeoutError("redis unavailable")
+
+
 class FastAPIAppTests(unittest.TestCase):
     def setUp(self) -> None:
         os.environ["OPENAI_API_KEY"] = "sk-test"
@@ -54,6 +64,27 @@ class FastAPIAppTests(unittest.TestCase):
         self.assertEqual(health.headers["X-Request-ID"], "req-test")
         self.assertEqual(models.status_code, 200)
         self.assertTrue(any(item["id"] == "gpt-5.4-mini" for item in models.json()))
+
+    def test_ready_returns_200_when_redis_ping_succeeds(self) -> None:
+        app.dependency_overrides[get_cache] = lambda: FakeReadyCache()
+
+        with TestClient(app) as client:
+            response = client.get("/ready")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "redis": "up"})
+
+    def test_ready_returns_503_when_redis_ping_fails_but_health_stays_200(self) -> None:
+        app.dependency_overrides[get_cache] = lambda: FakeDownCache()
+
+        with TestClient(app) as client:
+            ready = client.get("/ready")
+            health = client.get("/health")
+
+        self.assertEqual(ready.status_code, 503)
+        self.assertEqual(ready.json(), {"status": "degraded", "redis": "down"})
+        self.assertEqual(health.status_code, 200)
+        self.assertEqual(health.json(), {"status": "ok"})
 
     def test_chat_returns_json_response(self) -> None:
         with TestClient(app) as client:

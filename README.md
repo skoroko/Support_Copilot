@@ -263,3 +263,38 @@ curl -N -X POST http://localhost:8000/chat/stream -H "Content-Type: application/
 - `app/services/llm.py` — `LLMService` с complete, stream и cache-aside;
 - `app/deps/providers.py` — FastAPI DI providers без глобальных клиентов;
 - `tests/test_app_fastapi.py`, `tests/test_app_llm_service.py` — offline-тесты.
+
+## Домашнее задание 3.5: Docker и контейнеризация
+
+FastAPI-сервис из 3.4 упакован в Docker: добавлен multi-stage `Dockerfile` на
+`python:3.13-slim-bookworm` с установкой зависимостей через `uv`, runtime-слоем
+без root-пользователя и запуском `uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+Также добавлен `compose.yaml` со связкой `app + redis`, healthcheck-ами,
+`depends_on: service_healthy` и named volume для Redis.
+
+Запуск стека:
+
+```powershell
+Copy-Item .env.example .env
+# заполнить OPENAI_API_KEY в .env
+docker compose up -d --build
+```
+
+Проверка:
+
+```powershell
+docker compose ps
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
+docker compose exec app id
+docker compose exec redis redis-cli ping
+```
+
+Материалы:
+
+- `Dockerfile` — multi-stage image, `uv`, non-root `appuser`, exec-form CMD;
+- `.dockerignore` — исключает `.env`, `.git`, tests, cache и лишние артефакты;
+- `compose.yaml` — сервисы `app` и `redis`, healthcheck-и и volume;
+- `app/routers/health.py` — liveness `/health` и readiness `/ready`;
+- `homework_3_5/TEACHER_CHECK.md` — краткая сводка для преподавателя;
+- `tests/test_docker_config.py` — offline-проверка Docker/Compose контракта.

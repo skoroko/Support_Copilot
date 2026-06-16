@@ -38,6 +38,9 @@ class InMemoryAsyncCache:
         self._values[key] = value
         return True
 
+    async def ping(self) -> bool:
+        return True
+
     async def close(self) -> None:
         self._values.clear()
 
@@ -60,6 +63,7 @@ async def _maybe_close(obj: Any) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    logger.setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
     app.state.settings = settings
     app.state.openai = AsyncOpenAI(
         api_key=settings.llm.openai_api_key.get_secret_value(),

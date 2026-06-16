@@ -51,6 +51,7 @@ class _SettingsFields(BaseModel):
         default_factory=lambda: ["*"],
         validation_alias=AliasChoices("APP_CORS_ORIGINS", "CORS_ORIGINS"),
     )
+    log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL", "APP_LOG_LEVEL"))
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -128,4 +129,5 @@ def get_settings() -> Settings:
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
+        log_level=os.getenv("LOG_LEVEL") or os.getenv("APP_LOG_LEVEL") or "INFO",
     )
