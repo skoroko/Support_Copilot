@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --python /app/.venv/bin/python -r requirements.txt
 
 COPY app ./app
+COPY bot ./bot
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 
