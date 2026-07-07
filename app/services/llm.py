@@ -33,13 +33,21 @@ class LLMService:
         self.cache = cache
         self.settings = settings
 
-    async def complete(self, req: ChatRequest, *, system_prompt: str = "", canary: str = "") -> ChatResponse:
+    async def complete(
+        self,
+        req: ChatRequest,
+        *,
+        system_prompt: str = "",
+        canary: str = "",
+        security_enabled: bool = True,
+    ) -> ChatResponse:
         cache_key = self._cache_key(req)
         raw_prompt = self._prompt_text(req)
         cached = await self._cache_get(cache_key)
         if cached is not None:
             response = ChatResponse.model_validate_json(cached)
-            response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
+            if security_enabled:
+                response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
             cached_response = response.model_copy(update={"cached": True})
             self._log_llm_response(
                 req=req,
@@ -56,7 +64,7 @@ class LLMService:
                 model=model,
                 messages=[message.model_dump() for message in req.messages],
                 temperature=req.temperature,
-                max_tokens=req.max_tokens,
+                **self._token_limit_kwargs(model, req.max_tokens),
             )
         except RateLimitError as exc:
             raise LLMRateLimitError("LLM provider rate limit exceeded") from exc
@@ -69,19 +77,27 @@ class LLMService:
 
         latency_ms = (time.perf_counter() - started) * 1000
         response = ChatResponse.from_openai(raw_response, requested_model=model, cached=False)
-        response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
+        if security_enabled:
+            response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
         await self._cache_set(cache_key, response.model_dump_json())
         self._log_llm_response(req=req, response=response, raw_prompt=raw_prompt, latency_ms=latency_ms)
         return response
 
-    async def stream(self, req: ChatRequest, *, system_prompt: str = "", canary: str = "") -> AsyncIterator[ChatDelta]:
+    async def stream(
+        self,
+        req: ChatRequest,
+        *,
+        system_prompt: str = "",
+        canary: str = "",
+        security_enabled: bool = True,
+    ) -> AsyncIterator[ChatDelta]:
         model = req.model or self.settings.llm.default_model
         try:
             stream = await self.openai.chat.completions.create(
                 model=model,
                 messages=[message.model_dump() for message in req.messages],
                 temperature=req.temperature,
-                max_tokens=req.max_tokens,
+                **self._token_limit_kwargs(model, req.max_tokens),
                 stream=True,
                 stream_options={"include_usage": True},
             )
@@ -101,7 +117,10 @@ class LLMService:
                 delta = first_choice.get("delta") if isinstance(first_choice, dict) else getattr(first_choice, "delta", None)
                 content = delta.get("content", "") if isinstance(delta, dict) else getattr(delta, "content", "")
                 if content:
-                    yield ChatDelta(content=self._filter_text(str(content), system_prompt="", canary=canary))
+                    text = str(content)
+                    if security_enabled:
+                        text = self._filter_text(text, system_prompt="", canary=canary)
+                    yield ChatDelta(content=text)
 
         except RateLimitError as exc:
             raise LLMRateLimitError("LLM provider rate limit exceeded") from exc
@@ -123,6 +142,11 @@ class LLMService:
 
     def _prompt_text(self, req: ChatRequest) -> str:
         return "\n".join(message.content for message in req.messages if message.role in {"system", "user"})
+
+    def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
+        if model.startswith("gpt-5"):
+            return {"max_completion_tokens": max_tokens}
+        return {"max_tokens": max_tokens}
 
     def _log_llm_response(
         self,

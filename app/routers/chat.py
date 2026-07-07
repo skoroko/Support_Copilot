@@ -31,6 +31,9 @@ router = APIRouter(tags=["chat"])
     responses=RESPONSES,
 )
 async def complete_chat(req: ChatRequest, service: LLMServiceDep, request: Request) -> ChatResponse:
+    if not _security_enabled(request):
+        return await service.complete(req, security_enabled=False)
+
     _validate_chat_input(req)
     system_prompt, canary = _security_context(request)
     secured_req = _with_security_system_prompt(req, system_prompt)
@@ -43,6 +46,17 @@ async def complete_chat(req: ChatRequest, service: LLMServiceDep, request: Reque
     responses=RESPONSES,
 )
 async def stream_chat(req: ChatRequest, service: LLMServiceDep, request: Request) -> StreamingResponse:
+    if not _security_enabled(request):
+        async def insecure_events() -> AsyncIterator[str]:
+            async for delta in service.stream(req.model_copy(update={"stream": True}), security_enabled=False):
+                if delta.usage is not None:
+                    yield f"data: {json.dumps({'usage': delta.usage.model_dump()}, ensure_ascii=False)}\n\n"
+                elif delta.content is not None:
+                    yield f"data: {delta.content}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(insecure_events(), media_type="text/event-stream")
+
     _validate_chat_input(req)
     system_prompt, canary = _security_context(request)
     secured_req = _with_security_system_prompt(req.model_copy(update={"stream": True}), system_prompt)
@@ -56,6 +70,11 @@ async def stream_chat(req: ChatRequest, service: LLMServiceDep, request: Request
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream")
+
+
+def _security_enabled(request: Request) -> bool:
+    settings = getattr(request.app.state, "settings", None)
+    return bool(getattr(settings, "security_enabled", True))
 
 
 def _validate_chat_input(req: ChatRequest) -> None:

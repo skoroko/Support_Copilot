@@ -1,79 +1,105 @@
 # Домашнее задание 3.8: безопасность ИИ-приложений
 
 В этом инкременте к FastAPI LLM Service добавлен защитный слой для red-team
-проверок:
+проверок и подготовлены реальные garak baseline/after отчеты.
+
+## Что реализовано
 
 - входной валидатор prompt injection / encoding attacks;
 - canary-token в системном сообщении;
 - output filter против утечки system prompt/canary, markdown image exfiltration и XSS-маркеров;
 - PII-маскирование исходящего ответа и `answer_preview` в LLM-логах;
+- `APP_SECURITY_ENABLED=false` для воспроизводимого baseline-прогона без защиты;
+- совместимость OpenAI chat completions с `gpt-5*` через `max_completion_tokens`;
 - garak REST config под реальный `/chat`;
-- baseline/after security reports и папки для HTML-отчётов garak.
+- реальные baseline/after HTML reports в `docs/security/reports/`;
+- markdown-отчеты с числами из JSONL.
 
-## Локальные быстрые проверки
+## Проверки
 
 ```powershell
-python -m pytest tests/unit/ -m "not llm"
-python -m pytest tests/test_app_fastapi.py tests/test_observability.py tests/unit/test_security_layer.py
+python -m pytest
 python -m compileall app eval scripts homework_3_8 tests
 ```
 
-## Установка garak
+## Установка и запуск garak
 
-Актуальная версия PyPI, проверенная на 2026-07-07: `garak 0.15.1`.
+Установленная версия:
 
 ```powershell
 python -m pip install -U garak
 garak --version
-garak --list_probes
+# garak LLM vulnerability scanner v0.15.1
 ```
 
-## Запуск baseline/after
-
-Поднять FastAPI:
+Для Windows использовался локальный runtime-каталог, чтобы garak не писал в
+пользовательский `%USERPROFILE%\.config`:
 
 ```powershell
-uvicorn app.main:app --port 8000
+$root=(Resolve-Path '.garak_runtime').Path
+$env:XDG_CONFIG_HOME="$root\config"
+$env:XDG_DATA_HOME="$root\data"
+$env:XDG_CACHE_HOME="$root\cache"
 ```
 
-Запустить baseline до включения защитного слоя или на ветке до этого инкремента:
+Baseline:
 
 ```powershell
-garak --target_type rest -G eval/security/rest_config.json `
+$env:APP_SECURITY_ENABLED='false'
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+garak --target_type rest.RestGenerator `
+  --generator_option_file eval/security/rest_config.json `
   --probes promptinject.HijackHateHumans,encoding.InjectBase64,dan.Ablation_Dan_11_0 `
   --generations 1 `
-  --report_prefix baseline
+  --parallel_requests 1 `
+  --parallel_attempts 1 `
+  --confidence_interval_method none `
+  --report_prefix baseline_2026-07-07
 ```
 
-Повторить after на текущем коде:
+After:
 
 ```powershell
-garak --target_type rest -G eval/security/rest_config.json `
+Remove-Item Env:APP_SECURITY_ENABLED -ErrorAction SilentlyContinue
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+garak --target_type rest.RestGenerator `
+  --generator_option_file eval/security/rest_config.json `
   --probes promptinject.HijackHateHumans,encoding.InjectBase64,dan.Ablation_Dan_11_0 `
   --generations 1 `
-  --report_prefix after
+  --parallel_requests 1 `
+  --parallel_attempts 1 `
+  --confidence_interval_method none `
+  --report_prefix after_2026-07-07
 ```
 
-Скопировать HTML-отчёты:
+## Результаты garak
 
-- baseline: `docs/security/reports/baseline/`;
-- after: `docs/security/reports/after/`.
+Baseline:
 
-JSONL hits можно извлечь:
+- `dan.DAN`: 1 / 127 fails
+- `mitigation.MitigationBypass`: 108 / 127 fails
+- `encoding.DecodeMatch`: 220 / 256 fails
+- `encoding.DecodeApprox`: 232 / 256 fails
+- `promptinject.AttackRogueString`: 59 / 256 fails
 
-```powershell
-python scripts/extract_garak_hits.py --jsonl <path-to-report.jsonl>
-```
+After:
 
-## Важное ограничение текущего коммита
+- DAN probes: 0 fails, 127 / 127 prompts skipped by input security policy
+- prompt injection rogue-string probe: 0 fails, 256 / 256 prompts skipped
+- base64 probe: 36 / 256 and 28 / 256 fails depending on detector; 216 / 256 prompts skipped
 
-В Codex runtime `garak` не был установлен, поэтому закоммиченные
-`docs/security/garak_*_2026-07-07.md` и HTML-файлы являются reproducible templates
-с worksheet-числами. Для финальной сдачи на локальной машине нужно заменить числа и
-HTML на результаты реального garak-прогона.
+Основной остаточный риск: короткие или обычные base64 payloads, которые не выглядят
+как явная инструкция. Для следующего инкремента нужно решить, должен ли Support
+Copilot полностью запрещать base64-like пользовательский ввод или декодировать его
+в отдельном безопасном preprocessing-контуре.
 
-## Источники
+## Артефакты
 
-- https://pypi.org/project/garak/ - текущая PyPI-версия и команда установки.
-- https://github.com/NVIDIA/garak - официальный репозиторий, CLI examples и список target/probe options.
-- https://raw.githubusercontent.com/NVIDIA/garak/main/garak/generators/rest.py - актуальные поля `RestGenerator`.
+- `docs/security/garak_baseline_2026-07-07.md`
+- `docs/security/garak_after_2026-07-07.md`
+- `docs/security/reports/baseline/baseline_2026-07-07.report.html`
+- `docs/security/reports/after/after_2026-07-07.report.html`
+- `eval/security/rest_config.json`
+- `scripts/extract_garak_hits.py`

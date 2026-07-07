@@ -99,6 +99,8 @@ class LLMServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second.content, first.content)
         self.assertEqual(openai.completions.calls, 1)
         self.assertEqual(cache.last_ttl, 123)
+        self.assertEqual(openai.completions.last_kwargs["max_completion_tokens"], 500)
+        self.assertNotIn("max_tokens", openai.completions.last_kwargs)
 
     async def test_stream_yields_text_chunks_and_final_usage(self) -> None:
         openai = FakeOpenAI()
@@ -111,6 +113,7 @@ class LLMServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(chunks[-1].usage.total_tokens, 10)
         self.assertTrue(openai.completions.last_kwargs["stream"])
         self.assertEqual(openai.completions.last_kwargs["stream_options"], {"include_usage": True})
+        self.assertEqual(openai.completions.last_kwargs["max_completion_tokens"], 500)
 
 
 if __name__ == "__main__":

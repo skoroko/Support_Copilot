@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
 from app.core.config import Settings, get_settings
-from app.core.exceptions import LLMAuthError, LLMError, LLMRateLimitError, LLMTimeoutError
+from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
 from app.routers import chat, health, models
@@ -144,6 +144,8 @@ async def llm_error_handler(_request: Request, exc: LLMError) -> JSONResponse:
         status_code = 504
     elif isinstance(exc, LLMAuthError):
         status_code = 502
+    elif isinstance(exc, LLMOutputBlockedError):
+        status_code = 400
     else:
         status_code = 502
     return JSONResponse(

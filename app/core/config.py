@@ -52,6 +52,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("APP_CORS_ORIGINS", "CORS_ORIGINS"),
     )
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL", "APP_LOG_LEVEL"))
+    security_enabled: bool = Field(default=True, validation_alias=AliasChoices("APP_SECURITY_ENABLED"))
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -130,4 +131,5 @@ def get_settings() -> Settings:
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
         log_level=os.getenv("LOG_LEVEL") or os.getenv("APP_LOG_LEVEL") or "INFO",
+        security_enabled=(os.getenv("APP_SECURITY_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}),
     )

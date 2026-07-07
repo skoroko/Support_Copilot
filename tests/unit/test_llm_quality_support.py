@@ -68,7 +68,14 @@ class FakeOpenAI:
 
 
 class StubLLMService:
-    async def complete(self, _req: ChatRequest, *, system_prompt: str = "", canary: str = "") -> ChatResponse:
+    async def complete(
+        self,
+        _req: ChatRequest,
+        *,
+        system_prompt: str = "",
+        canary: str = "",
+        security_enabled: bool = True,
+    ) -> ChatResponse:
         return ChatResponse(
             content="Ответ dependency override",
             model="stub-model",

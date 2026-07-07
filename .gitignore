@@ -5,3 +5,6 @@ __pycache__/
 
 agents.md
 docs/architecture.pdf
+
+# Local garak runtime cache and reports before curated copies are moved to docs/security.
+.garak_runtime/

@@ -12,17 +12,20 @@ ATYPICAL_UNICODE_RATIO_LIMIT: Final[float] = 0.35
 
 
 INJECTION_PATTERNS: Final[list[re.Pattern[str]]] = [
-    re.compile(r"\bignore\s+(all\s+)?(previous|prior|above|system)\s+instructions?\b", re.IGNORECASE),
+    re.compile(r"\bignore\s+(all\s+|any\s+)?(previous|prior|above|system)\s+instructions?\b", re.IGNORECASE),
+    re.compile(r"\bignore\s+(all\s+|any\s+)?previous\s+and\s+following\s+instructions?\b", re.IGNORECASE),
     re.compile(r"\bdisregard\s+(the\s+)?(system|previous|above)\b", re.IGNORECASE),
     re.compile(r"\byou\s+are\s+now\s+(a|an|the|dan|do anything now)\b", re.IGNORECASE),
     re.compile(r"\bforget\s+(everything|all|previous|your rules)\b", re.IGNORECASE),
     re.compile(r"\b(jailbroken|developer mode|godmode|do anything now|DAN)\b", re.IGNORECASE),
     re.compile(r"\b(reveal|print|repeat|show)\s+(the\s+)?(system prompt|hidden instructions|developer message)\b", re.IGNORECASE),
+    re.compile(r"\bstop\s+everything\b.*\b(just\s+)?(print|say)\b", re.IGNORECASE | re.DOTALL),
     re.compile(r"\bno\s+takesies\s+backsies\b", re.IGNORECASE),
 ]
 
 ENCODING_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\b(base64|rot13|morse|decode this|atob\(|btoa\()", re.IGNORECASE),
+    re.compile(r"(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{6,}={1,2}(?![A-Za-z0-9+/_=-])"),
     re.compile(r"\b[A-Za-z0-9+/]{48,}={0,2}\b"),
 ]
 
