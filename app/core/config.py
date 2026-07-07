@@ -4,7 +4,7 @@ import json
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
 
@@ -53,6 +53,28 @@ class _SettingsFields(BaseModel):
     )
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL", "APP_LOG_LEVEL"))
     security_enabled: bool = Field(default=True, validation_alias=AliasChoices("APP_SECURITY_ENABLED"))
+    chat_repository: Literal["json", "postgres"] = Field(default="json", validation_alias=AliasChoices("CHAT_REPOSITORY"))
+    chat_storage_dir: Path = Field(default=Path("./var/chats"), validation_alias=AliasChoices("CHAT_STORAGE_DIR"))
+    chat_database_url: str = Field(
+        default="postgresql+asyncpg://support:support@localhost:5432/support_copilot",
+        validation_alias=AliasChoices("CHAT_DATABASE_URL", "DATABASE_URL"),
+    )
+    chat_context_strategy: Literal["sliding", "hybrid"] = Field(
+        default="sliding",
+        validation_alias=AliasChoices("CHAT_CONTEXT_STRATEGY"),
+    )
+    chat_context_window: int = Field(default=10, gt=0, validation_alias=AliasChoices("CHAT_CONTEXT_WINDOW"))
+    chat_model_context_tokens: int = Field(
+        default=128_000,
+        gt=0,
+        validation_alias=AliasChoices("CHAT_MODEL_CONTEXT_TOKENS"),
+    )
+    chat_response_tokens: int = Field(default=500, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
+    chat_safety_margin_tokens: int = Field(
+        default=500,
+        ge=0,
+        validation_alias=AliasChoices("CHAT_SAFETY_MARGIN_TOKENS"),
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -132,4 +154,16 @@ def get_settings() -> Settings:
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
         log_level=os.getenv("LOG_LEVEL") or os.getenv("APP_LOG_LEVEL") or "INFO",
         security_enabled=(os.getenv("APP_SECURITY_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}),
+        chat_repository=os.getenv("CHAT_REPOSITORY") or "json",
+        chat_storage_dir=Path(os.getenv("CHAT_STORAGE_DIR") or "./var/chats"),
+        chat_database_url=(
+            os.getenv("CHAT_DATABASE_URL")
+            or os.getenv("DATABASE_URL")
+            or "postgresql+asyncpg://support:support@localhost:5432/support_copilot"
+        ),
+        chat_context_strategy=os.getenv("CHAT_CONTEXT_STRATEGY") or "sliding",
+        chat_context_window=int(os.getenv("CHAT_CONTEXT_WINDOW") or 10),
+        chat_model_context_tokens=int(os.getenv("CHAT_MODEL_CONTEXT_TOKENS") or 128_000),
+        chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 500),
+        chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
     )

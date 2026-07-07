@@ -11,12 +11,15 @@ services:
     environment:
       APP_REDIS_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
+      CHAT_DATABASE_URL: postgresql+asyncpg://support:support@postgres:5432/support_copilot
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
     depends_on:
       phoenix:
         condition: service_started
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     healthcheck:
       test:
@@ -41,6 +44,23 @@ services:
       retries: 3
     restart: unless-stopped
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: support_copilot
+      POSTGRES_USER: support
+      POSTGRES_PASSWORD: support
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support -d support_copilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   phoenix:
     image: arizephoenix/phoenix:latest
     ports:
@@ -54,4 +74,5 @@ services:
 
 volumes:
   redis_data: {}
+  postgres_data: {}
   phoenix-data: {}

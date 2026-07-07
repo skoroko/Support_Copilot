@@ -18,6 +18,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --python /app/.venv/bin/python -r requirements.txt
 
 COPY app ./app
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 
 FROM python:3.13-slim-bookworm AS runtime
 
