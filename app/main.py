@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import inspect
+import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -17,6 +18,7 @@ from app.core.exceptions import LLMAuthError, LLMError, LLMRateLimitError, LLMTi
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
 from app.routers import chat, health, models
+from app.services.security.output_filter import build_security_system_prompt
 
 try:
     from redis.asyncio import Redis
@@ -66,6 +68,8 @@ async def lifespan(app: FastAPI):
     setup_logging(settings.log_level)
     setup_tracing()
     app.state.settings = settings
+    app.state.canary = f"CANARY_{secrets.token_hex(4)}"
+    app.state.security_system_prompt = build_security_system_prompt(app.state.canary)
     app.state.openai = AsyncOpenAI(
         api_key=settings.llm.openai_api_key.get_secret_value(),
         timeout=settings.llm.request_timeout,
@@ -146,6 +150,15 @@ async def llm_error_handler(_request: Request, exc: LLMError) -> JSONResponse:
         status_code=status_code,
         content={"error": {"code": exc.code, "message": exc.message}},
     )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONResponse:
+    if isinstance(exc.detail, dict) and "code" in exc.detail:
+        content = {"error": exc.detail}
+    else:
+        content = {"error": {"code": "http_error", "message": str(exc.detail)}}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
 
 @app.exception_handler(RequestValidationError)

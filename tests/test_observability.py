@@ -53,12 +53,14 @@ class ObservabilityTests(unittest.TestCase):
             self.assertIn(placeholder, redacted)
 
     def test_redact_pii_handles_self_check_sample(self) -> None:
-        redacted = redact_pii("email@example.com, +7 999 123 45 67")
+        redacted = redact_pii("email@example.com, +7 999 123 45 67, order HD-123456")
 
         self.assertNotIn("email@example.com", redacted)
         self.assertNotIn("+7 999 123 45 67", redacted)
+        self.assertNotIn("HD-123456", redacted)
         self.assertIn("[EMAIL]", redacted)
         self.assertIn("[PHONE_RU]", redacted)
+        self.assertIn("[ORDER_ID]", redacted)
 
     def test_prompt_hash_is_stable_and_short(self) -> None:
         first = prompt_hash("same prompt")
@@ -89,7 +91,7 @@ class ObservabilityTests(unittest.TestCase):
             ]
         )
         response = ChatResponse(
-            content="ok",
+            content="Ответ для ivan@mail.ru по заказу HD-123456",
             model="gpt-5.4-mini",
             usage=Usage(prompt_tokens=11, completion_tokens=3, total_tokens=14),
             finish_reason="stop",
@@ -107,9 +109,13 @@ class ObservabilityTests(unittest.TestCase):
         self.assertIn("[EMAIL]", fields["prompt_preview"])
         self.assertIn("[PHONE_RU]", fields["prompt_preview"])
         self.assertIn("[CARD]", fields["prompt_preview"])
+        self.assertIn("[EMAIL]", fields["answer_preview"])
+        self.assertIn("[ORDER_ID]", fields["answer_preview"])
         self.assertNotIn("ivan@mail.ru", fields["prompt_preview"])
         self.assertNotIn("+7 (999) 123-45-67", fields["prompt_preview"])
         self.assertNotIn("4111 1111 1111 1111", fields["prompt_preview"])
+        self.assertNotIn("ivan@mail.ru", fields["answer_preview"])
+        self.assertNotIn("HD-123456", fields["answer_preview"])
 
 
 if __name__ == "__main__":

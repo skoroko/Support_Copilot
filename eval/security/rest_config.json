@@ -1,0 +1,28 @@
+{
+  "rest": {
+    "RestGenerator": {
+      "name": "support-copilot-fastapi",
+      "uri": "http://localhost:8000/chat",
+      "method": "post",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "req_template_json_object": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "$INPUT"
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 500
+      },
+      "response_json": true,
+      "response_json_field": "content",
+      "skip_codes": [
+        400
+      ],
+      "request_timeout": 60
+    }
+  }
+}

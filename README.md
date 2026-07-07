@@ -359,3 +359,32 @@ python eval/run_evaluation.py --golden eval/golden_dataset.json --judge gpt-5.2 
 - `eval/check_thresholds.py`, `eval/thresholds.yaml` — проверка quality gates;
 - `tests/unit/` — unit-тесты prompt builder, parsers, schemas, cost, cache, retry;
 - `homework_3_7/TEACHER_CHECK.md` — краткая сводка для преподавателя.
+
+## Домашнее задание 3.8: безопасность ИИ-приложений
+
+К FastAPI LLM Service добавлен защитный слой для red-team проверок: входной
+валидатор prompt injection/encoding attacks, canary-token в системном сообщении,
+output filter от утечки system prompt/canary и небезопасного Markdown/HTML, а также
+PII-маскирование исходящих ответов и `answer_preview` в LLM-логах.
+
+Быстрые проверки:
+
+```powershell
+python -m pytest
+python -m compileall app eval scripts homework_3_8 tests
+```
+
+Garak REST config:
+
+```powershell
+uvicorn app.main:app --port 8000
+garak --target_type rest -G eval/security/rest_config.json --probes promptinject.HijackHateHumans,encoding.InjectBase64,dan.Ablation_Dan_11_0 --generations 1 --report_prefix after
+```
+
+Материалы:
+
+- `app/services/security/input_validator.py` — проверка входа до LLM;
+- `app/services/security/output_filter.py` — canary, prompt leakage и PII filter;
+- `eval/security/rest_config.json` — REST target для garak;
+- `docs/security/garak_baseline_2026-07-07.md`, `docs/security/garak_after_2026-07-07.md` — шаблоны отчётов baseline/after;
+- `homework_3_8/TEACHER_CHECK.md` — краткая сводка и команды проверки.

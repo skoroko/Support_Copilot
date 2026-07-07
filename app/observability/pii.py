@@ -10,6 +10,7 @@ PII_PATTERNS = {
     "CARD": re.compile(r"\b(?:\d{4}[\s\-]?){3}\d{4}\b"),
     "INN": re.compile(r"\b(?:\d{10}|\d{12})\b"),
     "PASSPORT": re.compile(r"\b\d{2}\s?\d{2}\s?\d{6}\b"),
+    "ORDER_ID": re.compile(r"\b(?:order|заказ\w*|договор\w*)[\s#:№-]*[A-ZА-Я0-9][A-ZА-Я0-9_-]{5,}\b", re.IGNORECASE),
 }
 
 

@@ -19,3 +19,7 @@ class LLMTimeoutError(LLMError):
 
 class LLMAuthError(LLMError):
     code = "llm_auth"
+
+
+class LLMOutputBlockedError(LLMError):
+    code = "llm_output_blocked"

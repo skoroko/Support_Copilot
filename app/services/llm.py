@@ -9,10 +9,11 @@ from typing import Any
 from openai import APITimeoutError, AuthenticationError, OpenAIError, RateLimitError
 
 from app.core.config import Settings
-from app.core.exceptions import LLMAuthError, LLMError, LLMRateLimitError, LLMTimeoutError
+from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash, redact_pii
 from app.schemas.chat import ChatDelta, ChatRequest, ChatResponse, Usage
+from app.services.security.output_filter import OutputFilterError, filter_output
 
 
 logger = get_logger("llm-service")
@@ -32,12 +33,13 @@ class LLMService:
         self.cache = cache
         self.settings = settings
 
-    async def complete(self, req: ChatRequest) -> ChatResponse:
+    async def complete(self, req: ChatRequest, *, system_prompt: str = "", canary: str = "") -> ChatResponse:
         cache_key = self._cache_key(req)
         raw_prompt = self._prompt_text(req)
         cached = await self._cache_get(cache_key)
         if cached is not None:
             response = ChatResponse.model_validate_json(cached)
+            response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
             cached_response = response.model_copy(update={"cached": True})
             self._log_llm_response(
                 req=req,
@@ -67,11 +69,12 @@ class LLMService:
 
         latency_ms = (time.perf_counter() - started) * 1000
         response = ChatResponse.from_openai(raw_response, requested_model=model, cached=False)
+        response = self._filter_response(response, system_prompt=system_prompt, canary=canary)
         await self._cache_set(cache_key, response.model_dump_json())
         self._log_llm_response(req=req, response=response, raw_prompt=raw_prompt, latency_ms=latency_ms)
         return response
 
-    async def stream(self, req: ChatRequest) -> AsyncIterator[ChatDelta]:
+    async def stream(self, req: ChatRequest, *, system_prompt: str = "", canary: str = "") -> AsyncIterator[ChatDelta]:
         model = req.model or self.settings.llm.default_model
         try:
             stream = await self.openai.chat.completions.create(
@@ -98,7 +101,7 @@ class LLMService:
                 delta = first_choice.get("delta") if isinstance(first_choice, dict) else getattr(first_choice, "delta", None)
                 content = delta.get("content", "") if isinstance(delta, dict) else getattr(delta, "content", "")
                 if content:
-                    yield ChatDelta(content=str(content))
+                    yield ChatDelta(content=self._filter_text(str(content), system_prompt="", canary=canary))
 
         except RateLimitError as exc:
             raise LLMRateLimitError("LLM provider rate limit exceeded") from exc
@@ -130,6 +133,7 @@ class LLMService:
         latency_ms: float,
     ) -> None:
         redacted_prompt = redact_pii(raw_prompt)
+        redacted_answer = redact_pii(response.content)
         logger.info(
             "llm_request_completed",
             model=response.model or req.model or self.settings.llm.default_model,
@@ -139,8 +143,21 @@ class LLMService:
             finish_reason=response.finish_reason,
             prompt_hash=prompt_hash(raw_prompt),
             prompt_preview=redacted_prompt[:120],
+            answer_preview=redacted_answer[:120],
             cached=response.cached,
         )
+
+    def _filter_response(self, response: ChatResponse, *, system_prompt: str, canary: str) -> ChatResponse:
+        filtered = self._filter_text(response.content, system_prompt=system_prompt, canary=canary)
+        if filtered == response.content:
+            return response
+        return response.model_copy(update={"content": filtered})
+
+    def _filter_text(self, text: str, *, system_prompt: str, canary: str) -> str:
+        try:
+            return filter_output(text, system_prompt=system_prompt, canary=canary)
+        except OutputFilterError as exc:
+            raise LLMOutputBlockedError("LLM output blocked by security filter") from exc
 
     async def _cache_get(self, key: str) -> str | None:
         try:
