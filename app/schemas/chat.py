@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.observability.pii import redact_pii
+
+
+MAX_CHAT_MESSAGE_LENGTH = 8000
 
 
 def _read_field(value: Any, name: str, default: Any = None) -> Any:
@@ -13,7 +18,17 @@ def _read_field(value: Any, name: str, default: Any = None) -> Any:
 
 class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant", "tool"]
-    content: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=MAX_CHAT_MESSAGE_LENGTH)
+
+    @field_validator("content")
+    @classmethod
+    def content_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("message content must not be blank")
+        return value
+
+    def __repr_args__(self):
+        return [("role", self.role), ("content", redact_pii(self.content))]
 
 
 class ChatRequest(BaseModel):

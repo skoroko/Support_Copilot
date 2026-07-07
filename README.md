@@ -329,3 +329,33 @@ docker compose logs app
 - `docs/observability/README.md` — описание того, что видно в Phoenix;
 - `homework_3_6/TEACHER_CHECK.md` — краткая сводка для преподавателя;
 - `tests/test_observability.py` — unit-тесты PII и безопасного LLM-лога.
+
+## Домашнее задание 3.7: тестирование и оценка качества ИИ-приложений
+
+К FastAPI-сервису добавлен отдельный evaluation-слой рядом с `tests/`: golden
+dataset на 22 Support Copilot кейса, быстрые unit-тесты вокруг LLM-логики,
+ручной LLM-as-judge runner и threshold checker для решения "можно/нельзя
+релизить" после смены prompt или модели.
+
+Быстрые проверки без сети и ключей:
+
+```powershell
+python -m pytest tests/unit/ -m "not llm"
+python eval/run_evaluation.py --offline-smoke --out eval/runs/2026-07-07.json
+python eval/check_thresholds.py eval/runs/2026-07-07.json
+```
+
+Реальный evaluation-прогон:
+
+```powershell
+uvicorn app.main:app --port 8000
+python eval/run_evaluation.py --golden eval/golden_dataset.json --judge gpt-5.2 --out eval/runs/2026-07-07.json
+```
+
+Материалы:
+
+- `eval/golden_dataset.json` — versioned golden dataset;
+- `eval/run_evaluation.py` — G-Eval style reason-then-score runner;
+- `eval/check_thresholds.py`, `eval/thresholds.yaml` — проверка quality gates;
+- `tests/unit/` — unit-тесты prompt builder, parsers, schemas, cost, cache, retry;
+- `homework_3_7/TEACHER_CHECK.md` — краткая сводка для преподавателя.
