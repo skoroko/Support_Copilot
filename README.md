@@ -388,3 +388,15 @@ garak --target_type rest -G eval/security/rest_config.json --probes promptinject
 - `eval/security/rest_config.json` — REST target для garak;
 - `docs/security/garak_baseline_2026-07-07.md`, `docs/security/garak_after_2026-07-07.md` — шаблоны отчётов baseline/after;
 - `homework_3_8/TEACHER_CHECK.md` — краткая сводка и команды проверки.
+
+## Домашнее задание 4.3: мультимодальность и streaming
+
+Связка FastAPI backend + Telegram bot расширена единым multipart endpoint для
+текста, фото, голоса и PDF/DOCX. Изображения передаются в основной multimodal
+chat-вызов, аудио транскрибируется без FFmpeg, документы извлекаются на backend,
+а готовый `media_refs.part` сохраняется в истории. Бот использует нативный
+`sendMessageDraft`, singleton `httpx.AsyncClient` и защищённый `/notify` для
+проактивных сообщений.
+
+Материалы и команды проверки: `homework_4_3/README.md` и
+`homework_4_3/TEACHER_CHECK.md`.

@@ -95,7 +95,7 @@ def _cors_origins() -> list[str]:
 
 app = FastAPI(
     title="Support Copilot LLM Service",
-    version="0.4.1",
+    version="0.4.3",
     description="FastAPI wrapper for async Support Copilot LLM calls.",
     lifespan=lifespan,
 )

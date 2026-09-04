@@ -51,6 +51,7 @@ class PostgresChatRepository:
                 chat_id=message.chat_id,
                 role=message.role,
                 content=message.content,
+                media_refs=message.media_refs,
                 tokens=message.tokens,
                 created_at=message.created_at,
             )

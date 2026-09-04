@@ -8,6 +8,7 @@ from uuid import UUID
 import tiktoken
 
 from app.chat.domain import Chat, ChatMessage
+from app.chat.media import media_to_part
 from app.chat.repository import ChatRepository
 from app.core.config import Settings
 from app.observability.logging import get_logger
@@ -19,7 +20,7 @@ DEFAULT_SAFETY_MARGIN_TOKENS = 500
 
 logger = get_logger("chat-service")
 
-ChatMLMessage = dict[str, str]
+ChatMLMessage = dict[str, Any]
 
 
 class ChatNotFoundError(ValueError):
@@ -31,7 +32,7 @@ def count_tokens(messages: Sequence[ChatMLMessage]) -> int:
     for message in messages:
         total += 4
         total += _count_text_tokens(message.get("role", ""))
-        total += _count_text_tokens(message.get("content", ""))
+        total += _count_content_tokens(message.get("content", ""))
     return total
 
 
@@ -51,6 +52,24 @@ def _count_text_tokens(text: str) -> int:
     if encoding is not None:
         return len(encoding.encode(text))
     return max(1, (len(text) + 3) // 4)
+
+
+def _count_content_tokens(content: Any) -> int:
+    if isinstance(content, str):
+        return _count_text_tokens(content)
+    if not isinstance(content, list):
+        return _count_text_tokens(str(content))
+
+    total = 0
+    for part in content:
+        if not isinstance(part, dict):
+            total += _count_text_tokens(str(part))
+        elif part.get("type") == "text":
+            total += _count_text_tokens(str(part.get("text", "")))
+        elif part.get("type") == "image_url":
+            # Conservative base estimate; exact image tokens depend on model and dimensions.
+            total += 255
+    return total
 
 
 def fit_to_budget(messages: Sequence[ChatMLMessage], budget: int) -> list[ChatMLMessage]:
@@ -73,7 +92,14 @@ class SlidingWindowContextStrategy:
         if chat.system_prompt:
             messages.append({"role": "system", "content": chat.system_prompt})
         for message in history[-self.history_limit :]:
-            messages.append({"role": message.role, "content": message.content})
+            content: Any = message.content
+            media_part = (message.media_refs or {}).get("part")
+            if message.role == "user" and isinstance(media_part, dict):
+                content = [
+                    {"type": "text", "text": message.content},
+                    media_part,
+                ]
+            messages.append({"role": message.role, "content": content})
         return messages
 
 
@@ -100,7 +126,20 @@ class ChatService:
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         return await self.repository.list_messages(chat_id, limit)
 
-    async def send_message(self, chat_id: UUID, user_content: str) -> AsyncIterator[str]:
+    async def process_media(self, media: Any) -> dict[str, Any]:
+        return await media_to_part(
+            media,
+            client=self.llm_client,
+            transcription_model=self.settings.transcription_model,
+        )
+
+    async def send_message(
+        self,
+        chat_id: UUID,
+        user_content: str,
+        *,
+        media_refs: dict[str, Any] | None = None,
+    ) -> AsyncIterator[str]:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
             raise ChatNotFoundError(f"Chat {chat_id} not found")
@@ -109,7 +148,20 @@ class ChatService:
             chat_id=chat_id,
             role="user",
             content=user_content,
-            tokens=count_tokens([{"role": "user", "content": user_content}]),
+            media_refs=media_refs,
+            tokens=count_tokens(
+                [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_content},
+                            media_refs["part"],
+                        ]
+                        if media_refs and isinstance(media_refs.get("part"), dict)
+                        else user_content,
+                    }
+                ]
+            ),
         )
         await self.repository.append_message(chat_id, user_message)
 
@@ -129,6 +181,7 @@ class ChatService:
                 model=self.settings.llm.default_model,
                 messages=messages,
                 stream=True,
+                stream_options={"include_usage": True},
                 temperature=0.2,
                 **self._token_limit_kwargs(self.settings.llm.default_model, self.settings.chat_response_tokens),
             )
@@ -156,6 +209,21 @@ class ChatService:
 
     async def clear_history(self, chat_id: UUID) -> None:
         await self.repository.soft_delete_messages(chat_id)
+
+    async def append_system_message(self, chat_id: UUID, content: str) -> Chat:
+        chat = await self.repository.get_chat(chat_id)
+        if chat is None:
+            raise ChatNotFoundError(f"Chat {chat_id} not found")
+        await self.repository.append_message(
+            chat_id,
+            ChatMessage(
+                chat_id=chat_id,
+                role="assistant",
+                content=content,
+                tokens=count_tokens([{"role": "assistant", "content": content}]),
+            ),
+        )
+        return chat
 
     def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
         if model.startswith("gpt-5"):

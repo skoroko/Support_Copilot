@@ -75,6 +75,12 @@ class _SettingsFields(BaseModel):
         ge=0,
         validation_alias=AliasChoices("CHAT_SAFETY_MARGIN_TOKENS"),
     )
+    transcription_model: str = Field(default="whisper-1", validation_alias=AliasChoices("TRANSCRIPTION_MODEL"))
+    bot_url: str = Field(default="http://bot:9000", validation_alias=AliasChoices("BOT_URL"))
+    internal_token: SecretStr = Field(
+        default=SecretStr("replace-with-internal-token"),
+        validation_alias=AliasChoices("INTERNAL_TOKEN"),
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -166,4 +172,7 @@ def get_settings() -> Settings:
         chat_model_context_tokens=int(os.getenv("CHAT_MODEL_CONTEXT_TOKENS") or 128_000),
         chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 500),
         chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
+        transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
+        bot_url=os.getenv("BOT_URL") or "http://bot:9000",
+        internal_token=SecretStr(os.getenv("INTERNAL_TOKEN") or "replace-with-internal-token"),
     )

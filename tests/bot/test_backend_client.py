@@ -38,10 +38,15 @@ async def test_send_message_parses_sse_frames() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "POST"
         assert request.url.path == f"/chats/{chat_id}/messages"
+        assert request.headers["content-type"].startswith("application/x-www-form-urlencoded")
         return httpx.Response(
             200,
             headers={"content-type": "text/event-stream"},
-            content=b"data: Pri\n\ndata: vet\n\ndata: [DONE]\n\n",
+            content=(
+                b'data: {"type":"token","delta":"Pri"}\n\n'
+                b'data: {"type":"token","delta":"vet"}\n\n'
+                b'data: {"type":"done"}\n\n'
+            ),
         )
 
     transport = httpx.MockTransport(handler)
@@ -51,6 +56,32 @@ async def test_send_message_parses_sse_frames() -> None:
         chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
 
     assert chunks == ["Pri", "vet"]
+
+
+@pytest.mark.asyncio
+async def test_send_message_uses_multipart_for_media() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000457")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers["content-type"].startswith("multipart/form-data; boundary=")
+        body = request.read()
+        assert b'name="content"' in body
+        assert b"question" in body
+        assert b'name="media"; filename="image.png"' in body
+        assert b"image-bytes" in body
+        return httpx.Response(200, content=b'data: {"type":"done"}\n\n')
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
+        client = BackendClient("http://backend", client=http_client)
+        chunks = [
+            chunk
+            async for chunk in client.send_message(
+                chat_id, "question", media=b"image-bytes", mime="image/png"
+            )
+        ]
+
+    assert chunks == []
 
 
 @pytest.mark.asyncio
