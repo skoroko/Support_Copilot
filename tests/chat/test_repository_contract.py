@@ -70,6 +70,25 @@ async def test_append_message_and_list_messages_are_chronological(repository: Ch
 
 
 @pytest.mark.asyncio
+async def test_message_media_refs_round_trip(repository: ChatRepository) -> None:
+    chat = await repository.create_chat("owner", "telegram")
+    media_refs = {
+        "mime": "image/png",
+        "size": 3,
+        "filename": "screen.png",
+        "part": {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}},
+    }
+    await repository.append_message(
+        chat.id,
+        ChatMessage(chat_id=chat.id, role="user", content="image", media_refs=media_refs),
+    )
+
+    messages = await repository.list_messages(chat.id)
+
+    assert messages[0].media_refs == media_refs
+
+
+@pytest.mark.asyncio
 async def test_list_messages_limit_returns_last_n(repository: ChatRepository) -> None:
     chat = await repository.create_chat("owner", "web")
     started = datetime(2026, 1, 1, tzinfo=timezone.utc)

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import json
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage
+from app.chat.media import MediaExtractionError, MediaProcessingError, UnsupportedMediaTypeError
 from app.chat.service import ChatNotFoundError
+from app.deps.providers import SettingsDep
+from app.services.notifier import notify_user
 from app.services.security.input_validator import validate_input
 
 
@@ -25,8 +29,9 @@ class CreateChatOut(BaseModel):
     chat_id: UUID
 
 
-class MessageIn(BaseModel):
-    content: str = Field(min_length=1)
+class SystemMessageIn(BaseModel):
+    text: str = Field(min_length=1)
+    notify: bool = False
 
 
 @router.post("/chats", response_model=CreateChatOut)
@@ -55,20 +60,72 @@ async def list_messages(chat_id: UUID, chat_service: ChatServiceDep, limit: int 
 
 
 @router.post("/chats/{chat_id}/messages")
-async def send_message(chat_id: UUID, payload: MessageIn, chat_service: ChatServiceDep) -> StreamingResponse:
-    _validate_user_content(payload.content)
+async def send_message(
+    chat_id: UUID,
+    chat_service: ChatServiceDep,
+    content: str = Form(..., min_length=1),
+    media: UploadFile | None = File(None),
+) -> StreamingResponse:
+    _validate_user_content(content)
     if await chat_service.get_chat(chat_id) is None:
         raise _chat_not_found(chat_id)
 
+    media_refs = None
+    if media is not None:
+        try:
+            part = await chat_service.process_media(media)
+        except UnsupportedMediaTypeError as exc:
+            raise HTTPException(status_code=415, detail={"code": "unsupported_media_type", "message": str(exc)}) from exc
+        except (MediaExtractionError, MediaProcessingError) as exc:
+            raise HTTPException(status_code=422, detail={"code": "media_processing_failed", "message": str(exc)}) from exc
+        if part.get("type") == "text":
+            _validate_user_content(str(part.get("text", "")))
+        media_refs = {
+            "mime": media.content_type,
+            "size": media.size,
+            "filename": media.filename,
+            "part": part,
+        }
+
     async def events():
         try:
-            async for chunk in chat_service.send_message(chat_id, payload.content):
-                yield f"data: {chunk}\n\n"
-            yield "data: [DONE]\n\n"
+            stream = (
+                chat_service.send_message(chat_id, content)
+                if media_refs is None
+                else chat_service.send_message(chat_id, content, media_refs=media_refs)
+            )
+            async for chunk in stream:
+                payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
+                yield f"data: {payload}\n\n"
+            yield 'data: {"type":"done"}\n\n'
         except ChatNotFoundError as exc:
             raise _chat_not_found(chat_id) from exc
 
     return StreamingResponse(events(), media_type="text/event-stream")
+
+
+@router.post("/chats/{chat_id}/system-message")
+async def add_system_message(
+    chat_id: UUID,
+    payload: SystemMessageIn,
+    chat_service: ChatServiceDep,
+    settings: SettingsDep,
+) -> dict[str, str]:
+    try:
+        chat = await chat_service.append_system_message(chat_id, payload.text)
+    except ChatNotFoundError as exc:
+        raise _chat_not_found(chat_id) from exc
+
+    if payload.notify:
+        try:
+            telegram_chat_id = int(chat.owner_external_id)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "invalid_external_id", "message": "Chat owner_external_id is not a Telegram chat id."},
+            ) from exc
+        await notify_user(telegram_chat_id, payload.text, settings=settings)
+    return {"status": "ok"}
 
 
 @router.delete("/chats/{chat_id}/messages")

@@ -124,6 +124,7 @@ async def test_send_message_builds_context_streams_and_persists_assistant(tmp_pa
     assert llm.completions.last_kwargs["messages"][0] == {"role": "system", "content": "support system"}
     assert any(message["content"] == "Меня зовут Аня" for message in llm.completions.last_kwargs["messages"])
     assert any(message["content"] == "Как меня зовут?" for message in llm.completions.last_kwargs["messages"])
+    assert llm.completions.last_kwargs["stream_options"] == {"include_usage": True}
     stored = await repo.list_messages(chat.id)
     assert [message.role for message in stored] == ["user", "user", "assistant"]
     assert stored[-1].content == "Аня"
@@ -136,3 +137,23 @@ async def test_send_message_unknown_chat_raises(tmp_path: Path) -> None:
     with pytest.raises(ChatNotFoundError):
         [chunk async for chunk in service.send_message(UUID("00000000-0000-0000-0000-000000000000"), "hello")]
 
+
+@pytest.mark.asyncio
+async def test_media_part_is_restored_in_followup_context(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    part = {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "Что на фото?",
+            media_refs={"mime": "image/png", "size": 3, "filename": "x.png", "part": part},
+        )
+    ]
+
+    user_message = next(message for message in llm.completions.last_kwargs["messages"] if message["role"] == "user")
+    assert user_message["content"] == [{"type": "text", "text": "Что на фото?"}, part]

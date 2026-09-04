@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.handlers._common import BACKEND_ERROR_MESSAGE, BACKEND_EXCEPTIONS, get_telegram_chat_id
+from bot.handlers._common import BACKEND_EXCEPTIONS, backend_error_message, get_telegram_chat_id
 from bot.services.backend_client import BackendClient
 
 
@@ -22,8 +22,8 @@ async def cancel(message: Message, state: FSMContext) -> None:
 async def start(message: Message, backend: BackendClient) -> None:
     try:
         await get_telegram_chat_id(message, backend)
-    except BACKEND_EXCEPTIONS:
-        await message.answer(BACKEND_ERROR_MESSAGE)
+    except BACKEND_EXCEPTIONS as exc:
+        await message.answer(backend_error_message(exc))
         return
 
     await message.answer(
@@ -50,8 +50,8 @@ async def clear(message: Message, backend: BackendClient) -> None:
     try:
         chat_id = await get_telegram_chat_id(message, backend)
         await backend.clear_messages(chat_id)
-    except BACKEND_EXCEPTIONS:
-        await message.answer(BACKEND_ERROR_MESSAGE)
+    except BACKEND_EXCEPTIONS as exc:
+        await message.answer(backend_error_message(exc))
         return
 
     await message.answer("История очищена.")
