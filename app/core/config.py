@@ -102,6 +102,24 @@ class _SettingsFields(BaseModel):
         default=PROJECT_ROOT / "app" / "moderation" / "moderation_keywords.yaml",
         validation_alias=AliasChoices("MODERATION_KEYWORDS_PATH"),
     )
+    qdrant_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("QDRANT_URL"),
+    )
+    qdrant_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("QDRANT_API_KEY"),
+    )
+    qdrant_collection: str = Field(
+        default="documents",
+        min_length=1,
+        validation_alias=AliasChoices("QDRANT_COLLECTION"),
+    )
+    embedding_dim: int = Field(
+        default=1024,
+        gt=0,
+        validation_alias=AliasChoices("EMBEDDING_DIM"),
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -228,4 +246,12 @@ def get_settings() -> Settings:
             os.getenv("MODERATION_KEYWORDS_PATH")
             or PROJECT_ROOT / "app" / "moderation" / "moderation_keywords.yaml"
         ),
+        qdrant_url=os.getenv("QDRANT_URL") or None,
+        qdrant_api_key=(
+            SecretStr(os.environ["QDRANT_API_KEY"])
+            if os.getenv("QDRANT_API_KEY")
+            else None
+        ),
+        qdrant_collection=os.getenv("QDRANT_COLLECTION") or "documents",
+        embedding_dim=int(os.getenv("EMBEDDING_DIM") or 1024),
     )

@@ -422,3 +422,15 @@ Telegram-бот получил router-level проверку `BOT_ADMIN_IDS`, к
 Выбор `text-embedding-3-large` с 1024 dimensions и расчёт стоимости индексации
 60 документов описаны в `homework_5_1/README.md`; краткая проверка - в
 `homework_5_1/TEACHER_CHECK.md`.
+
+## Домашнее задание 5.2: векторное хранилище Qdrant
+
+В Compose добавлен Qdrant 1.14 с API key, named volume и healthcheck. Приложение
+использует один `AsyncQdrantClient` из lifespan, проверяет коллекцию размерности
+1024 и создаёт HNSW/payload indexes. Идемпотентный загрузчик индексирует 120
+учебных фрагментов Support Copilot с детерминированными UUID, а отдельный
+эксперимент сравнивает Cosine/Dot и проверяет строковый, datetime и составной
+payload-фильтры.
+
+Материалы и команды проверки: `homework_5_2/README.md`,
+`homework_5_2/TEACHER_CHECK.md` и `docs/vector_store.md`.
