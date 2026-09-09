@@ -81,6 +81,27 @@ class _SettingsFields(BaseModel):
         default=SecretStr("replace-with-internal-token"),
         validation_alias=AliasChoices("INTERNAL_TOKEN"),
     )
+    admin_token: SecretStr = Field(
+        default=SecretStr("replace-with-admin-token"),
+        validation_alias=AliasChoices("ADMIN_TOKEN"),
+    )
+    moderation_enabled: bool = Field(default=True, validation_alias=AliasChoices("MODERATION_ENABLED"))
+    moderation_openai_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("MODERATION_OPENAI_ENABLED"),
+    )
+    moderation_model: str = Field(
+        default="omni-moderation-latest",
+        validation_alias=AliasChoices("MODERATION_MODEL"),
+    )
+    moderation_thresholds: dict[str, float] = Field(
+        default_factory=dict,
+        validation_alias=AliasChoices("MODERATION_THRESHOLDS"),
+    )
+    moderation_keywords_path: Path = Field(
+        default=PROJECT_ROOT / "app" / "moderation" / "moderation_keywords.yaml",
+        validation_alias=AliasChoices("MODERATION_KEYWORDS_PATH"),
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -96,6 +117,27 @@ class _SettingsFields(BaseModel):
                 return [str(item).strip() for item in parsed if str(item).strip()]
             return [item.strip() for item in stripped.split(",") if item.strip()]
         raise TypeError("cors_origins must be a list, JSON array, or comma-separated string")
+
+    @field_validator("moderation_thresholds", mode="before")
+    @classmethod
+    def parse_moderation_thresholds(cls, value: Any) -> dict[str, float]:
+        if value is None or value == "":
+            return {}
+        if isinstance(value, dict):
+            return {str(key): float(score) for key, score in value.items()}
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith("{"):
+                parsed = json.loads(stripped)
+                return {str(key): float(score) for key, score in parsed.items()}
+            result: dict[str, float] = {}
+            for item in stripped.split(","):
+                if not item.strip():
+                    continue
+                name, score = item.split("=", 1)
+                result[name.strip()] = float(score.strip())
+            return result
+        raise TypeError("MODERATION_THRESHOLDS must be JSON or category=score pairs")
 
     @field_validator("openai_api_key")
     @classmethod
@@ -175,4 +217,15 @@ def get_settings() -> Settings:
         transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
         bot_url=os.getenv("BOT_URL") or "http://bot:9000",
         internal_token=SecretStr(os.getenv("INTERNAL_TOKEN") or "replace-with-internal-token"),
+        admin_token=SecretStr(os.getenv("ADMIN_TOKEN") or "replace-with-admin-token"),
+        moderation_enabled=(os.getenv("MODERATION_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}),
+        moderation_openai_enabled=(
+            os.getenv("MODERATION_OPENAI_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+        ),
+        moderation_model=os.getenv("MODERATION_MODEL") or "omni-moderation-latest",
+        moderation_thresholds=os.getenv("MODERATION_THRESHOLDS") or "{}",
+        moderation_keywords_path=Path(
+            os.getenv("MODERATION_KEYWORDS_PATH")
+            or PROJECT_ROOT / "app" / "moderation" / "moderation_keywords.yaml"
+        ),
     )

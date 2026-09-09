@@ -400,3 +400,25 @@ chat-вызов, аудио транскрибируется без FFmpeg, до
 
 Материалы и команды проверки: `homework_4_3/README.md` и
 `homework_4_3/TEACHER_CHECK.md`.
+
+## Домашнее задание 4.4: production-обвязка
+
+Backend расширен двухслойной модерацией, защищёнными admin endpoints,
+24-часовой статистикой, feedback-хранилищем и очередью Telegram-рассылок.
+Telegram-бот получил router-level проверку `BOT_ADMIN_IDS`, команды `/stats`,
+`/users`, `/broadcast`, кнопки 👍/👎 и фоновую обработку очереди. Compose запускает
+`app + bot + postgres` одной командой, применяет миграции и сохраняет PostgreSQL
+в named volume `pg-data`.
+
+Материалы и команды проверки: `homework_4_4/README.md` и
+`homework_4_4/TEACHER_CHECK.md`.
+
+## Домашнее задание 5.1: эмбеддинги и семантический поиск
+
+Добавлен переиспользуемый OpenAI embedding-сервис с публичным `embed_texts`,
+батчингом, L2-нормализацией, точной проверкой token limit, retry только для
+временных ошибок и постоянным SQLite-кешем, который инвалидируется при смене
+модели или размерности. Mini-benchmark содержит 8 предметных русскоязычных пар.
+Выбор `text-embedding-3-large` с 1024 dimensions и расчёт стоимости индексации
+60 документов описаны в `homework_5_1/README.md`; краткая проверка - в
+`homework_5_1/TEACHER_CHECK.md`.

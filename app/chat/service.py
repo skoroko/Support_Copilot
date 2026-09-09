@@ -2,21 +2,26 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Sequence
 from functools import lru_cache
+import time
 from typing import Any
 from uuid import UUID
 
 import tiktoken
 
 from app.chat.domain import Chat, ChatMessage
+from app.chat.feedback import FeedbackService, FeedbackValue, MessageFeedback
 from app.chat.media import media_to_part
 from app.chat.repository import ChatRepository
 from app.core.config import Settings
+from app.moderation.models import ModerationResult
+from app.moderation.service import ModerationService
 from app.observability.logging import get_logger
 
 
 DEFAULT_CONTEXT_TOKENS = 128_000
 DEFAULT_RESPONSE_TOKENS = 500
 DEFAULT_SAFETY_MARGIN_TOKENS = 500
+MODERATION_OUTPUT_REPLACEMENT = "Не могу показать ответ — он мог нарушить правила"
 
 logger = get_logger("chat-service")
 
@@ -25,6 +30,12 @@ ChatMLMessage = dict[str, Any]
 
 class ChatNotFoundError(ValueError):
     pass
+
+
+class ModerationBlockedError(ValueError):
+    def __init__(self, result: ModerationResult) -> None:
+        super().__init__("Message blocked by moderation")
+        self.result = result
 
 
 def count_tokens(messages: Sequence[ChatMLMessage]) -> int:
@@ -104,10 +115,25 @@ class SlidingWindowContextStrategy:
 
 
 class ChatService:
-    def __init__(self, repository: ChatRepository, llm_client: Any, settings: Settings) -> None:
+    def __init__(
+        self,
+        repository: ChatRepository,
+        llm_client: Any,
+        settings: Settings,
+        moderation_service: ModerationService | None = None,
+    ) -> None:
         self.repository = repository
         self.llm_client = llm_client
         self.settings = settings
+        self.moderation = moderation_service or ModerationService(
+            keywords_path=settings.moderation_keywords_path,
+            client=llm_client,
+            enabled=settings.moderation_enabled,
+            openai_enabled=settings.moderation_openai_enabled,
+            model=settings.moderation_model,
+            thresholds=settings.moderation_thresholds,
+        )
+        self.feedback = FeedbackService(repository)
         if settings.chat_context_strategy != "sliding":
             raise ValueError("Only CHAT_CONTEXT_STRATEGY=sliding is implemented in homework 4.1")
         self.context_strategy = SlidingWindowContextStrategy(settings.chat_context_window)
@@ -133,16 +159,28 @@ class ChatService:
             transcription_model=self.settings.transcription_model,
         )
 
+    async def ensure_input_allowed(self, chat_id: UUID, content: str) -> ModerationResult:
+        result = await self.moderation.check_input(content)
+        await self._record_moderation(chat_id, "input", result)
+        if not result.allowed:
+            raise ModerationBlockedError(result)
+        return result
+
     async def send_message(
         self,
         chat_id: UUID,
         user_content: str,
         *,
         media_refs: dict[str, Any] | None = None,
+        input_moderated: bool = False,
     ) -> AsyncIterator[str]:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
             raise ChatNotFoundError(f"Chat {chat_id} not found")
+
+        if not input_moderated:
+            moderation_content = self._moderation_content(user_content, media_refs)
+            await self.ensure_input_allowed(chat_id, moderation_content)
 
         user_message = ChatMessage(
             chat_id=chat_id,
@@ -175,7 +213,7 @@ class ChatService:
         messages = fit_to_budget(messages, max(1, budget))
 
         assistant_parts: list[str] = []
-        completed = False
+        started_at = time.perf_counter()
         try:
             stream = await self.llm_client.chat.completions.create(
                 model=self.settings.llm.default_model,
@@ -190,22 +228,34 @@ class ChatService:
                 if not content:
                     continue
                 assistant_parts.append(content)
-                yield content
-            completed = True
-        finally:
+        except Exception:
             if assistant_parts:
-                assistant_content = "".join(assistant_parts)
-                if not completed:
-                    logger.warning("chat_stream_interrupted", chat_id=str(chat_id))
-                await self.repository.append_message(
-                    chat_id,
-                    ChatMessage(
-                        chat_id=chat_id,
-                        role="assistant",
-                        content=assistant_content,
-                        tokens=count_tokens([{"role": "assistant", "content": assistant_content}]),
-                    ),
-                )
+                logger.warning("chat_stream_interrupted", chat_id=str(chat_id))
+            raise
+
+        generated_content = "".join(assistant_parts)
+        output_result = await self.moderation.check_output(generated_content)
+        await self._record_moderation(chat_id, "output", output_result)
+        if output_result.allowed:
+            visible_parts = assistant_parts
+            visible_content = generated_content
+        else:
+            visible_parts = [MODERATION_OUTPUT_REPLACEMENT]
+            visible_content = MODERATION_OUTPUT_REPLACEMENT
+
+        if visible_content:
+            await self.repository.append_message(
+                chat_id,
+                ChatMessage(
+                    chat_id=chat_id,
+                    role="assistant",
+                    content=visible_content,
+                    tokens=count_tokens([{"role": "assistant", "content": visible_content}]),
+                    latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+                ),
+            )
+        for part in visible_parts:
+            yield part
 
     async def clear_history(self, chat_id: UUID) -> None:
         await self.repository.soft_delete_messages(chat_id)
@@ -224,6 +274,26 @@ class ChatService:
             ),
         )
         return chat
+
+    async def submit_feedback(
+        self,
+        chat_id: UUID,
+        message_id: UUID,
+        value: FeedbackValue,
+    ) -> MessageFeedback:
+        return await self.feedback.save(chat_id, message_id, value)
+
+    async def _record_moderation(self, chat_id: UUID, direction: str, result: ModerationResult) -> None:
+        recorder = getattr(self.repository, "record_moderation", None)
+        if recorder is not None:
+            await recorder(chat_id, direction, result)
+
+    @staticmethod
+    def _moderation_content(user_content: str, media_refs: dict[str, Any] | None) -> str:
+        media_part = (media_refs or {}).get("part")
+        if isinstance(media_part, dict) and media_part.get("type") == "text":
+            return f"{user_content}\n{media_part.get('text', '')}".strip()
+        return user_content
 
     def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
         if model.startswith("gpt-5"):

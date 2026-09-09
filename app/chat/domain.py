@@ -16,6 +16,7 @@ class ChatMessage(BaseModel):
     content: str
     media_refs: dict[str, Any] | None = None
     tokens: int | None = None
+    latency_ms: float | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

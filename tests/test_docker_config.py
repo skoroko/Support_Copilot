@@ -33,7 +33,7 @@ class DockerConfigTests(unittest.TestCase):
         compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
 
         self.assertIn("image: llm-service:v1", compose)
-        self.assertIn("ports:\n      - \"8000:8000\"", compose)
+        self.assertIn('ports:\n      - "${APP_HOST_PORT:-18000}:8000"', compose)
         self.assertIn("APP_REDIS_URL: redis://redis:6379/0", compose)
         self.assertIn("PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006", compose)
         self.assertIn("condition: service_healthy", compose)
@@ -50,6 +50,11 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("PHOENIX_WORKING_DIR: /data", compose)
         self.assertIn("phoenix-data:/data", compose)
         self.assertIn("phoenix-data: {}", compose)
+        self.assertIn("CHAT_REPOSITORY: postgres", compose)
+        self.assertIn("alembic upgrade head", compose)
+        self.assertIn("pg-data:/var/lib/postgresql/data", compose)
+        self.assertIn("pg-data: {}", compose)
+        self.assertIn("${BOT_HOST_PORT:-19000}:9000", compose)
 
     def test_dockerignore_excludes_secrets_tests_and_python_artifacts(self) -> None:
         dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")

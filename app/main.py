@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
+from app.admin import routes as admin_routes
 from app.chat import routes as chat_routes
 from app.core.config import Settings, get_settings
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
@@ -95,7 +96,7 @@ def _cors_origins() -> list[str]:
 
 app = FastAPI(
     title="Support Copilot LLM Service",
-    version="0.4.3",
+    version="0.4.4",
     description="FastAPI wrapper for async Support Copilot LLM calls.",
     lifespan=lifespan,
 )
@@ -179,4 +180,5 @@ async def validation_error_handler(_request: Request, exc: RequestValidationErro
 app.include_router(health.router)
 app.include_router(models.router)
 app.include_router(chat.router)
+app.include_router(admin_routes.router)
 app.include_router(chat_routes.router)

@@ -5,7 +5,13 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from bot.handlers._common import BACKEND_EXCEPTIONS, backend_error_message, get_telegram_chat_id, stream_to_chat
+from bot.handlers._common import (
+    BACKEND_EXCEPTIONS,
+    backend_error_message,
+    get_telegram_chat_id,
+    response_feedback_markup,
+    stream_to_chat,
+)
 from bot.keyboards.inline import SUPPORT_TOPICS, topics_kb
 from bot.services.backend_client import BackendClient
 from bot.states import AskFlow
@@ -47,7 +53,11 @@ async def ask_question(message: Message, state: FSMContext, backend: BackendClie
 
     try:
         chat_id = await get_telegram_chat_id(message, backend)
-        await stream_to_chat(message, backend.send_message(chat_id, prompt))
+        await stream_to_chat(
+            message,
+            backend.send_message(chat_id, prompt),
+            reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
+        )
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))
     finally:

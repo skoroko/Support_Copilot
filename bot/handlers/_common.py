@@ -3,14 +3,15 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from uuid import UUID
 
 import httpx
 from aiogram.enums import ChatAction
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
-from aiogram.types import Message
+from aiogram.types import InlineKeyboardMarkup, Message
 
+from bot.keyboards.inline import feedback_kb
 from bot.services.backend_client import BackendClient
 
 
@@ -27,6 +28,14 @@ def backend_error_message(exc: httpx.HTTPError) -> str:
     if isinstance(exc, httpx.ReadTimeout):
         return "Ответ занимает слишком долго. Попробуйте ещё раз позже."
     if isinstance(exc, httpx.HTTPStatusError):
+        if exc.response.status_code == 403:
+            try:
+                payload = exc.response.json()
+                error = payload.get("error", payload.get("detail", {}))
+            except ValueError:
+                error = {}
+            if error.get("code") == "moderation_blocked":
+                return "Не могу обработать этот запрос — он мог нарушить правила."
         if exc.response.status_code == 429:
             return "Слишком много запросов, подождите минуту."
         if exc.response.status_code >= 500:
@@ -46,7 +55,17 @@ async def _typing(message: Message, stop: asyncio.Event) -> None:
             continue
 
 
-async def stream_to_chat(message: Message, tokens: AsyncIterator[str]) -> str:
+def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKeyboardMarkup | None:
+    message_id = backend.last_response_message_id(chat_id)
+    return feedback_kb(message_id) if message_id is not None else None
+
+
+async def stream_to_chat(
+    message: Message,
+    tokens: AsyncIterator[str],
+    *,
+    reply_markup_factory: Callable[[], InlineKeyboardMarkup | None] | None = None,
+) -> str:
     draft_id = uuid.uuid4().int & 0xFFFFFFFF
     buffer = ""
     last_draft_at = 0.0
@@ -73,7 +92,11 @@ async def stream_to_chat(message: Message, tokens: AsyncIterator[str]) -> str:
         await typing_task
 
     final_text = buffer or "Backend вернул пустой ответ."
-    await message.bot.send_message(chat_id=message.chat.id, text=final_text)
+    reply_markup = reply_markup_factory() if reply_markup_factory is not None else None
+    if reply_markup is None:
+        await message.bot.send_message(chat_id=message.chat.id, text=final_text)
+    else:
+        await message.bot.send_message(chat_id=message.chat.id, text=final_text, reply_markup=reply_markup)
     return buffer
 
 
