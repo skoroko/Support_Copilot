@@ -446,3 +446,20 @@ embedding, `query_points` и Chat Completions в коллекции
 
 Материалы и команды проверки: `homework_5_3/README.md`,
 `homework_5_3/TEACHER_CHECK.md`, `homework_5_3/questions.json` и `docs/rag.md`.
+
+## Домашнее задание 5.4: chunking и оптимизация retrieval
+
+Для десяти документов подготовлен golden dataset на 28 вопросов и реализовано
+сравнение `fixed`, `recursive`, `semantic` chunking в отдельных коллекциях
+Qdrant. Эксперимент считает Hit Rate@5, MRR@10, Recall@10, статистику chunks и
+latency, сравнивает локальный `BAAI/bge-reranker-v2-m3` до/после и проверяет
+четыре конфигурации `chunk_size/overlap/top-K`.
+
+По локальному воспроизводимому прогону выбрана конфигурация
+`recursive/512/64/top-K=10`: Hit Rate@5 `0.929`, MRR@10 `0.771`, Recall@10
+`0.750`. BGE повысил MRR@10 до `0.839`, но CPU latency сделала его опциональным
+этапом.
+
+Материалы и команды проверки: `homework_5_4/README.md`,
+`homework_5_4/TEACHER_CHECK.md`, `tests/eval/retrieval_dataset.json` и
+`docs/chunking_experiment.md`.

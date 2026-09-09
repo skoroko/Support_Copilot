@@ -137,9 +137,24 @@ class _SettingsFields(BaseModel):
         gt=0,
         validation_alias=AliasChoices("RAG_EMBEDDING_DIMENSIONS", "EMBEDDING_DIMENSIONS"),
     )
+    rag_chunk_strategy: Literal["fixed", "recursive", "semantic"] = Field(
+        default="recursive",
+        validation_alias=AliasChoices("RAG_CHUNK_STRATEGY"),
+    )
     rag_chunk_size: int = Field(default=512, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
     rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
-    rag_top_k: int = Field(default=3, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
+    rag_top_k: int = Field(default=10, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
+    rag_reranker_model: str = Field(
+        default="BAAI/bge-reranker-v2-m3",
+        min_length=1,
+        validation_alias=AliasChoices("RAG_RERANKER_MODEL"),
+    )
+    rag_reranker_device: str = Field(default="", validation_alias=AliasChoices("RAG_RERANKER_DEVICE"))
+    rag_reranker_batch_size: int = Field(
+        default=4,
+        gt=0,
+        validation_alias=AliasChoices("RAG_RERANKER_BATCH_SIZE"),
+    )
     rag_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias=AliasChoices("RAG_MIN_SCORE"))
     rag_collection: str = Field(default="rag_block_03", min_length=1, validation_alias=AliasChoices("RAG_COLLECTION"))
     rag_baremetal_collection: str = Field(
@@ -296,9 +311,13 @@ def get_settings() -> Settings:
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
+        rag_chunk_strategy=os.getenv("RAG_CHUNK_STRATEGY") or "recursive",
         rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 512),
         rag_chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP") or 64),
-        rag_top_k=int(os.getenv("RAG_TOP_K") or 3),
+        rag_top_k=int(os.getenv("RAG_TOP_K") or 10),
+        rag_reranker_model=os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-v2-m3",
+        rag_reranker_device=os.getenv("RAG_RERANKER_DEVICE") or "",
+        rag_reranker_batch_size=int(os.getenv("RAG_RERANKER_BATCH_SIZE") or 4),
         rag_min_score=float(os.getenv("RAG_MIN_SCORE") or 0.35),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_block_03",
         rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",

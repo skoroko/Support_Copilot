@@ -29,6 +29,8 @@ llama-index==0.14.24
 llama-index-vector-stores-qdrant==0.10.3
 llama-index-readers-file==0.7.0
 pylibmspack==0.4.0
+sentence-transformers>=5.0.0,<6.0.0
+numpy>=1.26.0
 
 # Redis backend for FastAPI chat cache and optional RedisLLMCache.
 redis>=5.0.0
