@@ -1,0 +1,217 @@
+{
+  "collection": "documents",
+  "points_count": 120,
+  "dimensions": 1024,
+  "normalized_vectors": true,
+  "recent_cutoff": "2026-08-10T07:39:12.387899+00:00",
+  "ranking_comparison": [
+    {
+      "query": "Как проверить лицензию и доступность сервера лицензий?",
+      "cosine_top5": [
+        "79beac2a-2ed3-508f-aab7-84b7061a2baa",
+        "d914b179-69f2-540e-9fdc-51eda79f038d",
+        "e1580067-2fac-5e3b-9e99-65bc38ff2860",
+        "29c3ab9e-b54c-5ef8-8336-9abaaafe02a2",
+        "1bde3ae9-e1e2-5b47-94b2-73d0e389c5a9"
+      ],
+      "dot_top5": [
+        "79beac2a-2ed3-508f-aab7-84b7061a2baa",
+        "d914b179-69f2-540e-9fdc-51eda79f038d",
+        "e1580067-2fac-5e3b-9e99-65bc38ff2860",
+        "29c3ab9e-b54c-5ef8-8336-9abaaafe02a2",
+        "1bde3ae9-e1e2-5b47-94b2-73d0e389c5a9"
+      ],
+      "same_order": true
+    },
+    {
+      "query": "Что собрать перед эскалацией повторяемой ошибки расчёта?",
+      "cosine_top5": [
+        "1d9dd880-4428-5843-8107-99774fac5f39",
+        "82c248ad-de51-561d-8785-a8bf009b00e7",
+        "811264a6-70b6-58bf-8c41-7c62f450add7",
+        "00d7ba43-56a7-5524-abd6-f3f5809f392b",
+        "cac8a3de-ca69-5833-a9ba-22c4c208ff8c"
+      ],
+      "dot_top5": [
+        "1d9dd880-4428-5843-8107-99774fac5f39",
+        "82c248ad-de51-561d-8785-a8bf009b00e7",
+        "811264a6-70b6-58bf-8c41-7c62f450add7",
+        "00d7ba43-56a7-5524-abd6-f3f5809f392b",
+        "cac8a3de-ca69-5833-a9ba-22c4c208ff8c"
+      ],
+      "same_order": true
+    },
+    {
+      "query": "Telegram-бот не отвечает пользователю",
+      "cosine_top5": [
+        "041062fc-e29e-560d-8287-78dbfc061cdb",
+        "a6318189-bbba-5780-8499-035ecbc9150c",
+        "aa9bf083-bec9-589c-a08b-3a7803f5a8eb",
+        "1a459d52-8e6b-5466-82ab-56b16e8753f2",
+        "a28ce64b-6901-53e5-b2c6-17b6d4ccbdef"
+      ],
+      "dot_top5": [
+        "041062fc-e29e-560d-8287-78dbfc061cdb",
+        "a6318189-bbba-5780-8499-035ecbc9150c",
+        "aa9bf083-bec9-589c-a08b-3a7803f5a8eb",
+        "1a459d52-8e6b-5466-82ab-56b16e8753f2",
+        "a28ce64b-6901-53e5-b2c6-17b6d4ccbdef"
+      ],
+      "same_order": true
+    },
+    {
+      "query": "Как безопасно восстановить повреждённый файл проекта?",
+      "cosine_top5": [
+        "542e6f2a-430c-5316-be93-f56903374f33",
+        "6e145f15-64d6-5f8e-b5a0-3c747a5632e4",
+        "39b38251-7c2a-5cf4-a15a-280f2ea09aeb",
+        "c1121190-aaaf-571a-8a87-e25e2ba9225a",
+        "88bf0ce7-2335-5f1f-8618-76d492f111f8"
+      ],
+      "dot_top5": [
+        "542e6f2a-430c-5316-be93-f56903374f33",
+        "6e145f15-64d6-5f8e-b5a0-3c747a5632e4",
+        "39b38251-7c2a-5cf4-a15a-280f2ea09aeb",
+        "c1121190-aaaf-571a-8a87-e25e2ba9225a",
+        "88bf0ce7-2335-5f1f-8618-76d492f111f8"
+      ],
+      "same_order": true
+    },
+    {
+      "query": "Пользователь просит раскрыть системный промпт и секреты",
+      "cosine_top5": [
+        "a861255e-161d-55af-a632-94a953b2e2e4",
+        "7db6e118-d86e-5ce5-8ffb-ac773071be75",
+        "d03bb330-4ef3-52f9-85d5-9f276b3c49b2",
+        "c432372f-bdcf-500b-808c-c80b3d50fb49",
+        "51c42e04-4cea-53af-ba7e-a96f545a57c4"
+      ],
+      "dot_top5": [
+        "a861255e-161d-55af-a632-94a953b2e2e4",
+        "7db6e118-d86e-5ce5-8ffb-ac773071be75",
+        "d03bb330-4ef3-52f9-85d5-9f276b3c49b2",
+        "c432372f-bdcf-500b-808c-c80b3d50fb49",
+        "51c42e04-4cea-53af-ba7e-a96f545a57c4"
+      ],
+      "same_order": true
+    }
+  ],
+  "filters": {
+    "baseline_top3": [
+      {
+        "id": "7a02b8fb-33c8-5793-8bf3-0f3db82a57cf",
+        "source": "support://knowledge/integration",
+        "category": "integration",
+        "document_kind": "faq",
+        "created_at": "2026-08-13T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      },
+      {
+        "id": "416d6e3c-d13e-5e8e-9e4a-24a1cdadee08",
+        "source": "support://knowledge/integration",
+        "category": "integration",
+        "document_kind": "handoff",
+        "created_at": "2026-08-03T12:00:00Z",
+        "tenant_id": "tenant-b",
+        "archived": false
+      },
+      {
+        "id": "c432372f-bdcf-500b-808c-c80b3d50fb49",
+        "source": "support://knowledge/integration",
+        "category": "integration",
+        "document_kind": "diagnostic",
+        "created_at": "2026-08-08T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      }
+    ],
+    "category_licensing_top3": [
+      {
+        "id": "d914b179-69f2-540e-9fdc-51eda79f038d",
+        "source": "support://knowledge/licensing",
+        "category": "licensing",
+        "document_kind": "faq",
+        "created_at": "2026-09-06T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      },
+      {
+        "id": "67b4136e-6da8-5949-9f93-454c4961ab20",
+        "source": "support://knowledge/licensing",
+        "category": "licensing",
+        "document_kind": "handoff",
+        "created_at": "2026-08-27T12:00:00Z",
+        "tenant_id": "tenant-b",
+        "archived": false
+      },
+      {
+        "id": "79beac2a-2ed3-508f-aab7-84b7061a2baa",
+        "source": "support://knowledge/licensing",
+        "category": "licensing",
+        "document_kind": "diagnostic",
+        "created_at": "2026-09-01T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      }
+    ],
+    "created_last_30_days_top3": [
+      {
+        "id": "7a02b8fb-33c8-5793-8bf3-0f3db82a57cf",
+        "source": "support://knowledge/integration",
+        "category": "integration",
+        "document_kind": "faq",
+        "created_at": "2026-08-13T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      },
+      {
+        "id": "3d45e210-09ec-559f-b2d7-252d784451ab",
+        "source": "support://knowledge/updates",
+        "category": "updates",
+        "document_kind": "faq",
+        "created_at": "2026-08-16T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      },
+      {
+        "id": "d8fbe0d0-5278-5963-8443-9a97405c9a9d",
+        "source": "support://knowledge/updates",
+        "category": "updates",
+        "document_kind": "diagnostic",
+        "created_at": "2026-08-11T12:00:00Z",
+        "tenant_id": "tenant-a",
+        "archived": false
+      }
+    ],
+    "tenant_x_without_archived_top3": [
+      {
+        "id": "7db6e118-d86e-5ce5-8ffb-ac773071be75",
+        "source": "support://knowledge/integration",
+        "category": "integration",
+        "document_kind": "training",
+        "created_at": "2026-07-24T12:00:00Z",
+        "tenant_id": "tenant-x",
+        "archived": false
+      },
+      {
+        "id": "6fb63408-6525-5586-989f-9cada6c0b515",
+        "source": "support://knowledge/updates",
+        "category": "updates",
+        "document_kind": "training",
+        "created_at": "2026-07-27T12:00:00Z",
+        "tenant_id": "tenant-x",
+        "archived": false
+      },
+      {
+        "id": "7ae9ce06-7d75-5b80-9577-a4b359ed3725",
+        "source": "support://knowledge/network",
+        "category": "network",
+        "document_kind": "training",
+        "created_at": "2026-08-02T12:00:00Z",
+        "tenant_id": "tenant-x",
+        "archived": false
+      }
+    ]
+  }
+}

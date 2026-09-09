@@ -55,6 +55,13 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("pg-data:/var/lib/postgresql/data", compose)
         self.assertIn("pg-data: {}", compose)
         self.assertIn("${BOT_HOST_PORT:-19000}:9000", compose)
+        self.assertIn("image: qdrant/qdrant:v1.14.0", compose)
+        self.assertIn('"127.0.0.1:${QDRANT_HTTP_PORT:-6333}:6333"', compose)
+        self.assertIn('"127.0.0.1:${QDRANT_GRPC_PORT:-6334}:6334"', compose)
+        self.assertIn("QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}", compose)
+        self.assertIn("qdrant_storage:/qdrant/storage", compose)
+        self.assertIn("qdrant_storage: {}", compose)
+        self.assertIn("bash -c 'echo > /dev/tcp/127.0.0.1/6333'", compose)
 
     def test_dockerignore_excludes_secrets_tests_and_python_artifacts(self) -> None:
         dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")

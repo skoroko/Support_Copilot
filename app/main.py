@@ -21,6 +21,7 @@ from app.observability.logging import bind_request_context, clear_request_contex
 from app.observability.tracing import setup_tracing
 from app.routers import chat, health, models
 from app.services.security.output_filter import build_security_system_prompt
+from app.services.vector_store import VectorStore
 
 try:
     from redis.asyncio import Redis
@@ -77,11 +78,27 @@ async def lifespan(app: FastAPI):
         timeout=settings.llm.request_timeout,
     )
     app.state.cache = _build_cache(settings)
+    app.state.vector_store = None
     try:
+        if settings.qdrant_url:
+            qdrant_api_key = (
+                settings.qdrant_api_key.get_secret_value()
+                if settings.qdrant_api_key
+                else None
+            )
+            app.state.vector_store = VectorStore(
+                url=settings.qdrant_url,
+                api_key=qdrant_api_key,
+                collection_name=settings.qdrant_collection,
+                embedding_dim=settings.embedding_dim,
+            )
+            await app.state.vector_store.ensure_collection()
         yield
     finally:
         await _maybe_close(app.state.openai)
         await _maybe_close(app.state.cache)
+        if app.state.vector_store is not None:
+            await app.state.vector_store.close()
         chat_engine = getattr(app.state, "chat_engine", None)
         if chat_engine is not None:
             await chat_engine.dispose()
@@ -96,7 +113,7 @@ def _cors_origins() -> list[str]:
 
 app = FastAPI(
     title="Support Copilot LLM Service",
-    version="0.4.4",
+    version="0.5.2",
     description="FastAPI wrapper for async Support Copilot LLM calls.",
     lifespan=lifespan,
 )
