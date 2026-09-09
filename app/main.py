@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.concurrency import run_in_threadpool
 from openai import AsyncOpenAI
 
 from app.admin import routes as admin_routes
@@ -19,7 +20,8 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
-from app.routers import chat, health, models
+from app.routers import chat, health, models, rag
+from app.services.rag import RAGConfig, RAGService
 from app.services.security.output_filter import build_security_system_prompt
 from app.services.vector_store import VectorStore
 
@@ -79,6 +81,7 @@ async def lifespan(app: FastAPI):
     )
     app.state.cache = _build_cache(settings)
     app.state.vector_store = None
+    app.state.rag_service = None
     try:
         if settings.qdrant_url:
             qdrant_api_key = (
@@ -93,12 +96,17 @@ async def lifespan(app: FastAPI):
                 embedding_dim=settings.embedding_dim,
             )
             await app.state.vector_store.ensure_collection()
+        if settings.rag_enabled:
+            app.state.rag_service = RAGService(RAGConfig.from_settings(settings))
+            await run_in_threadpool(app.state.rag_service.build)
         yield
     finally:
         await _maybe_close(app.state.openai)
         await _maybe_close(app.state.cache)
         if app.state.vector_store is not None:
             await app.state.vector_store.close()
+        if app.state.rag_service is not None:
+            await run_in_threadpool(app.state.rag_service.close)
         chat_engine = getattr(app.state, "chat_engine", None)
         if chat_engine is not None:
             await chat_engine.dispose()
@@ -113,7 +121,7 @@ def _cors_origins() -> list[str]:
 
 app = FastAPI(
     title="Support Copilot LLM Service",
-    version="0.5.2",
+    version="0.5.3",
     description="FastAPI wrapper for async Support Copilot LLM calls.",
     lifespan=lifespan,
 )
@@ -197,5 +205,6 @@ async def validation_error_handler(_request: Request, exc: RequestValidationErro
 app.include_router(health.router)
 app.include_router(models.router)
 app.include_router(chat.router)
+app.include_router(rag.router)
 app.include_router(admin_routes.router)
 app.include_router(chat_routes.router)

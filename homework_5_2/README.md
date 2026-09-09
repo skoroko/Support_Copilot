@@ -2,7 +2,7 @@
 
 Реализовано подключение Qdrant к накопительному проекту Support Copilot:
 
-- Docker-сервис Qdrant 1.14 с API key, named volume и TCP healthcheck;
+- Docker-сервис Qdrant 1.19 с API key, named volume и TCP healthcheck;
 - Pydantic-настройки URL, ключа, коллекции и размерности;
 - один async-клиент в FastAPI lifespan;
 - идемпотентная загрузка 120 предметных документов с UUID v5;
