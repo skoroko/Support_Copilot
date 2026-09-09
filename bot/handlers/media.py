@@ -5,7 +5,13 @@ from io import BytesIO
 from aiogram import F, Router
 from aiogram.types import Message
 
-from bot.handlers._common import BACKEND_EXCEPTIONS, backend_error_message, get_telegram_chat_id, stream_to_chat
+from bot.handlers._common import (
+    BACKEND_EXCEPTIONS,
+    backend_error_message,
+    get_telegram_chat_id,
+    response_feedback_markup,
+    stream_to_chat,
+)
 from bot.services.backend_client import BackendClient
 
 
@@ -35,7 +41,11 @@ async def _send_media(
     try:
         media = await _download(message, file_id)
         chat_id = await get_telegram_chat_id(message, backend)
-        await stream_to_chat(message, backend.send_message(chat_id, content, media=media, mime=mime))
+        await stream_to_chat(
+            message,
+            backend.send_message(chat_id, content, media=media, mime=mime),
+            reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
+        )
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))
 

@@ -9,6 +9,7 @@ import pytest
 import pytest_asyncio
 
 from app.chat.domain import ChatMessage
+from app.chat.feedback import MessageFeedback
 from app.chat.repositories.json_repo import JsonChatRepository
 from app.chat.repositories.pg_models import Base
 from app.chat.repositories.pg_repo import PostgresChatRepository
@@ -126,3 +127,31 @@ async def test_soft_delete_hides_old_messages_but_keeps_new_ones(repository: Cha
 @pytest.mark.asyncio
 async def test_get_unknown_chat_returns_none(repository: ChatRepository) -> None:
     assert await repository.get_chat(uuid4()) is None
+
+
+@pytest.mark.asyncio
+async def test_feedback_is_unique_per_owner_and_message(repository: ChatRepository) -> None:
+    chat = await repository.create_chat("owner", "telegram")
+    message = ChatMessage(chat_id=chat.id, role="assistant", content="answer", latency_ms=25.0)
+    await repository.append_message(chat.id, message)
+
+    await repository.save_feedback(MessageFeedback(message_id=message.id, owner_external_id="owner", value="up"))
+    await repository.save_feedback(MessageFeedback(message_id=message.id, owner_external_id="owner", value="down"))
+
+    stats = await repository.get_admin_stats()
+    assert stats.total_messages == 1
+    assert stats.active_users == 1
+    assert stats.feedback_up_ratio == 0.0
+    assert stats.avg_latency_ms == 25.0
+
+
+@pytest.mark.asyncio
+async def test_broadcast_queue_lifecycle(repository: ChatRepository) -> None:
+    item = await repository.enqueue_broadcast("Maintenance", "telegram")
+
+    pending = await repository.list_pending_broadcasts()
+    updated = await repository.update_broadcast_status(item.id, "sent")
+
+    assert [queued.id for queued in pending] == [item.id]
+    assert updated is not None and updated.status == "sent"
+    assert await repository.list_pending_broadcasts() == []

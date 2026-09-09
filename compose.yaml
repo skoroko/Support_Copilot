@@ -4,14 +4,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command:
+      - sh
+      - -c
+      - "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log"
     ports:
-      - "8000:8000"
+      - "${APP_HOST_PORT:-18000}:8000"
     env_file:
       - .env
     environment:
       APP_REDIS_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
       CHAT_DATABASE_URL: postgresql+asyncpg://support:support@postgres:5432/support_copilot
+      CHAT_REPOSITORY: postgres
+      BOT_URL: http://bot:9000
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
     depends_on:
@@ -51,7 +57,7 @@ services:
       dockerfile: Dockerfile
     command: ["python", "-m", "bot"]
     ports:
-      - "9000:9000"
+      - "${BOT_HOST_PORT:-19000}:9000"
     env_file:
       - .env
     environment:
@@ -68,10 +74,8 @@ services:
       POSTGRES_DB: support_copilot
       POSTGRES_USER: support
       POSTGRES_PASSWORD: support
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U support -d support_copilot"]
       interval: 10s
@@ -92,5 +96,5 @@ services:
 
 volumes:
   redis_data: {}
-  postgres_data: {}
+  pg-data: {}
   phoenix-data: {}

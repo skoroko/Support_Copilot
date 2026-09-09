@@ -9,8 +9,9 @@ from pydantic import BaseModel, Field
 
 from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage
+from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
 from app.chat.media import MediaExtractionError, MediaProcessingError, UnsupportedMediaTypeError
-from app.chat.service import ChatNotFoundError
+from app.chat.service import ChatNotFoundError, ModerationBlockedError
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
 from app.services.security.input_validator import validate_input
@@ -87,21 +88,65 @@ async def send_message(
             "part": part,
         }
 
+    moderation_content = content
+    media_part = (media_refs or {}).get("part")
+    if isinstance(media_part, dict) and media_part.get("type") == "text":
+        moderation_content = f"{content}\n{media_part.get('text', '')}".strip()
+    ensure_input_allowed = getattr(chat_service, "ensure_input_allowed", None)
+    input_moderated = ensure_input_allowed is not None
+    if ensure_input_allowed is not None:
+        try:
+            await ensure_input_allowed(chat_id, moderation_content)
+        except ModerationBlockedError as exc:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "moderation_blocked",
+                    "categories": exc.result.categories,
+                    "blocked_by": exc.result.blocked_by,
+                },
+            ) from exc
+
     async def events():
         try:
-            stream = (
-                chat_service.send_message(chat_id, content)
-                if media_refs is None
-                else chat_service.send_message(chat_id, content, media_refs=media_refs)
-            )
+            message_kwargs = {}
+            if media_refs is not None:
+                message_kwargs["media_refs"] = media_refs
+            if input_moderated:
+                message_kwargs["input_moderated"] = True
+            stream = chat_service.send_message(chat_id, content, **message_kwargs)
             async for chunk in stream:
                 payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
                 yield f"data: {payload}\n\n"
+            latest = await chat_service.list_messages(chat_id, limit=1)
+            message_id = str(latest[-1].id) if latest and latest[-1].role == "assistant" else None
+            if message_id is not None:
+                metadata = json.dumps({"type": "message", "message_id": message_id}, ensure_ascii=False)
+                yield f"data: {metadata}\n\n"
             yield 'data: {"type":"done"}\n\n'
         except ChatNotFoundError as exc:
             raise _chat_not_found(chat_id) from exc
 
     return StreamingResponse(events(), media_type="text/event-stream")
+
+
+@router.post(
+    "/chats/{chat_id}/messages/{message_id}/feedback",
+    response_model=MessageFeedback,
+)
+async def save_feedback(
+    chat_id: UUID,
+    message_id: UUID,
+    payload: FeedbackIn,
+    chat_service: ChatServiceDep,
+) -> MessageFeedback:
+    try:
+        return await chat_service.submit_feedback(chat_id, message_id, payload.value)
+    except FeedbackTargetNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "feedback_target_not_found", "message": str(exc)},
+        ) from exc
 
 
 @router.post("/chats/{chat_id}/system-message")

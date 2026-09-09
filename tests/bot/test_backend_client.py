@@ -45,6 +45,7 @@ async def test_send_message_parses_sse_frames() -> None:
             content=(
                 b'data: {"type":"token","delta":"Pri"}\n\n'
                 b'data: {"type":"token","delta":"vet"}\n\n'
+                b'data: {"type":"message","message_id":"00000000-0000-0000-0000-000000000999"}\n\n'
                 b'data: {"type":"done"}\n\n'
             ),
         )
@@ -56,6 +57,7 @@ async def test_send_message_parses_sse_frames() -> None:
         chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
 
     assert chunks == ["Pri", "vet"]
+    assert client.last_response_message_id(chat_id) == UUID("00000000-0000-0000-0000-000000000999")
 
 
 @pytest.mark.asyncio

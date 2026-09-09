@@ -1,0 +1,21 @@
+{
+  "run_date": "2026-09-09",
+  "mode": "offline-smoke",
+  "purpose": "Pipeline and persistent-cache verification only; not a semantic model-quality result.",
+  "benchmark_cases": 8,
+  "input_texts": 24,
+  "unique_texts": 22,
+  "first_cli_run": {
+    "cold_pass_provider_requests": 1,
+    "cold_pass_provider_texts": 22,
+    "cold_pass_seconds": 0.013309,
+    "after_restart_provider_requests": 0,
+    "after_restart_cache_hits": 24,
+    "after_restart_seconds": 0.003134
+  },
+  "second_cli_run": {
+    "provider_requests": 0,
+    "cache_hits": 24,
+    "seconds": 0.004519
+  }
+}

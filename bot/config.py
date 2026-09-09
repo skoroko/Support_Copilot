@@ -24,7 +24,16 @@ class BotSettings(BaseSettings):
     backend_url: str = Field(default="http://127.0.0.1:8000", validation_alias=AliasChoices("BACKEND_URL"))
     bot_admin_ids: list[int] = Field(default_factory=list, validation_alias=AliasChoices("BOT_ADMIN_IDS"))
     internal_token: SecretStr = Field(validation_alias=AliasChoices("INTERNAL_TOKEN"))
+    admin_token: SecretStr = Field(
+        default=SecretStr("replace-with-admin-token"),
+        validation_alias=AliasChoices("ADMIN_TOKEN"),
+    )
     bot_api_port: int = Field(default=9000, ge=1, le=65535, validation_alias=AliasChoices("BOT_API_PORT"))
+    broadcast_poll_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        validation_alias=AliasChoices("BROADCAST_POLL_SECONDS"),
+    )
 
     @field_validator("backend_url")
     @classmethod
