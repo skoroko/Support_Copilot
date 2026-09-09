@@ -21,8 +21,14 @@ asyncpg>=0.29.0
 alembic>=1.13.0
 pypdf>=5.0.0
 python-docx>=1.1.0
-qdrant-client>=1.14.0,<1.16.0
+qdrant-client==1.19.0
 tqdm>=4.66.0
+
+# Homework 5.3: RAG framework, Qdrant adapter, file readers and CHM support.
+llama-index==0.14.24
+llama-index-vector-stores-qdrant==0.10.3
+llama-index-readers-file==0.7.0
+pylibmspack==0.4.0
 
 # Redis backend for FastAPI chat cache and optional RedisLLMCache.
 redis>=5.0.0

@@ -425,7 +425,7 @@ Telegram-бот получил router-level проверку `BOT_ADMIN_IDS`, к
 
 ## Домашнее задание 5.2: векторное хранилище Qdrant
 
-В Compose добавлен Qdrant 1.14 с API key, named volume и healthcheck. Приложение
+В Compose добавлен Qdrant 1.19 с API key, named volume и healthcheck. Приложение
 использует один `AsyncQdrantClient` из lifespan, проверяет коллекцию размерности
 1024 и создаёт HNSW/payload indexes. Идемпотентный загрузчик индексирует 120
 учебных фрагментов Support Copilot с детерминированными UUID, а отдельный
@@ -434,3 +434,15 @@ payload-фильтры.
 
 Материалы и команды проверки: `homework_5_2/README.md`,
 `homework_5_2/TEACHER_CHECK.md` и `docs/vector_store.md`.
+
+## Домашнее задание 5.3: RAG с LlamaIndex и без фреймворка
+
+Добавлен двуязычный корпус из десяти руководств GTS NX/Civil, включая отдельный
+загрузчик русской CHM-справки. Основная реализация использует LlamaIndex и
+коллекцию `rag_block_03`, а ручной baseline явно выполняет загрузку, chunking,
+embedding, `query_points` и Chat Completions в коллекции
+`rag_block_03_baremetal`. Endpoint `POST /rag/query` возвращает ответ, top score
+и три источника; индекс создаётся один раз в lifespan при `RAG_ENABLED=true`.
+
+Материалы и команды проверки: `homework_5_3/README.md`,
+`homework_5_3/TEACHER_CHECK.md`, `homework_5_3/questions.json` и `docs/rag.md`.

@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,6 +39,7 @@ class _SettingsFields(BaseModel):
         default=30.0,
         validation_alias=AliasChoices("LLM_REQUEST_TIMEOUT", "ASYNC_LLM_SDK_TIMEOUT_SEC", "LLM__REQUEST_TIMEOUT"),
     )
+    openai_base_url: str | None = Field(default=None, validation_alias=AliasChoices("OPENAI_BASE_URL"))
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         validation_alias=AliasChoices("APP_REDIS_URL", "REDIS_URL"),
@@ -120,6 +121,41 @@ class _SettingsFields(BaseModel):
         gt=0,
         validation_alias=AliasChoices("EMBEDDING_DIM"),
     )
+    rag_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_ENABLED"))
+    rag_data_dir: Path = Field(
+        default=PROJECT_ROOT / "data" / "rag-block-03",
+        validation_alias=AliasChoices("RAG_DATA_DIR"),
+    )
+    rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
+    rag_embedding_model: str = Field(
+        default="text-embedding-3-large",
+        min_length=1,
+        validation_alias=AliasChoices("RAG_EMBEDDING_MODEL", "EMBEDDING_MODEL"),
+    )
+    rag_embedding_dimensions: int = Field(
+        default=1024,
+        gt=0,
+        validation_alias=AliasChoices("RAG_EMBEDDING_DIMENSIONS", "EMBEDDING_DIMENSIONS"),
+    )
+    rag_chunk_size: int = Field(default=512, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
+    rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
+    rag_top_k: int = Field(default=3, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
+    rag_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias=AliasChoices("RAG_MIN_SCORE"))
+    rag_collection: str = Field(default="rag_block_03", min_length=1, validation_alias=AliasChoices("RAG_COLLECTION"))
+    rag_baremetal_collection: str = Field(
+        default="rag_block_03_baremetal",
+        min_length=1,
+        validation_alias=AliasChoices("RAG_BAREMETAL_COLLECTION"),
+    )
+    rag_rebuild_on_start: bool = Field(default=True, validation_alias=AliasChoices("RAG_REBUILD_ON_START"))
+
+    @model_validator(mode="after")
+    def validate_rag_chunking(self) -> "_SettingsFields":
+        if self.rag_chunk_overlap >= self.rag_chunk_size:
+            raise ValueError("RAG_CHUNK_OVERLAP must be smaller than RAG_CHUNK_SIZE")
+        if self.rag_collection == self.rag_baremetal_collection:
+            raise ValueError("RAG collections must be different")
+        return self
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -215,6 +251,7 @@ def get_settings() -> Settings:
         openai_api_key=SecretStr(api_key),
         default_model=os.getenv("APP_DEFAULT_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-5.4-mini",
         request_timeout=float(os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("ASYNC_LLM_SDK_TIMEOUT_SEC") or 30.0),
+        openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
@@ -254,4 +291,18 @@ def get_settings() -> Settings:
         ),
         qdrant_collection=os.getenv("QDRANT_COLLECTION") or "documents",
         embedding_dim=int(os.getenv("EMBEDDING_DIM") or 1024),
+        rag_enabled=(os.getenv("RAG_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
+        rag_data_dir=Path(os.getenv("RAG_DATA_DIR") or PROJECT_ROOT / "data" / "rag-block-03"),
+        rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
+        rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
+        rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
+        rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 512),
+        rag_chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP") or 64),
+        rag_top_k=int(os.getenv("RAG_TOP_K") or 3),
+        rag_min_score=float(os.getenv("RAG_MIN_SCORE") or 0.35),
+        rag_collection=os.getenv("RAG_COLLECTION") or "rag_block_03",
+        rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",
+        rag_rebuild_on_start=(
+            os.getenv("RAG_REBUILD_ON_START", "true").strip().lower() in {"1", "true", "yes", "on"}
+        ),
     )

@@ -1,0 +1,17 @@
+{
+  "network_calls": 0,
+  "source_files": 10,
+  "llamaindex_documents_or_pages": 1934,
+  "llamaindex_chunks_512_overlap_64": 3682,
+  "chunk_characters_with_overlap": 2986001,
+  "chm_pages_windows": 494,
+  "chm_pages_linux_container": 496,
+  "chm_replacement_characters": 0,
+  "pytest_passed": 132,
+  "pytest_skipped": 8,
+  "ruff": "passed",
+  "docker_image_build": "passed",
+  "docker_compose_config": "passed",
+  "external_evaluation": "completed_2026-09-09_after_explicit_authorization",
+  "external_evaluation_file": "rag_evaluation.json"
+}

@@ -2,7 +2,7 @@
 
 ## Конфигурация и архитектура
 
-Qdrant запускается сервисом `qdrant/qdrant:v1.14.0` в `compose.yaml`. HTTP/dashboard
+Qdrant запускается сервисом `qdrant/qdrant:v1.19.0` в `compose.yaml`. HTTP/dashboard
 доступен только с локального компьютера на `127.0.0.1:6333`, gRPC — на
 `127.0.0.1:6334`, данные сохраняются в named volume `qdrant_storage`. API key
 передаётся из `.env` как `QDRANT__SERVICE__API_KEY`; для подключения из другой
