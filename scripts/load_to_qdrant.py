@@ -46,6 +46,10 @@ class _OfflineEmbeddingsEndpoint:
                 sign = 1.0 if digest[4] & 1 else -1.0
                 vector[position] += sign * weight
             norm = math.sqrt(sum(value * value for value in vector))
+            if norm == 0.0:
+                digest = hashlib.sha256(text.strip().encode("utf-8")).digest()
+                vector[int.from_bytes(digest[:4], "big") % self.dimensions] = 1.0
+                norm = 1.0
             rows.append({"index": index, "embedding": [value / norm for value in vector]})
         return {"data": rows}
 
