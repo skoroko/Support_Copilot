@@ -13,7 +13,7 @@ from aiogram.enums import ChatAction, ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.types import InlineKeyboardMarkup, Message
 
-from bot.keyboards.inline import feedback_kb
+from bot.keyboards.inline import answer_kb
 from bot.services.backend_client import BackendClient
 
 
@@ -22,6 +22,7 @@ EDIT_DEBOUNCE_SECONDS = 0.8
 RESPONSE_PLACEHOLDER = "Готовлю ответ…"
 _INLINE_CODE_RE = re.compile(r"(`[^`\n]+`)")
 _BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
+_CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 
 
 async def get_telegram_chat_id(message: Message, backend: BackendClient) -> UUID:
@@ -63,7 +64,9 @@ async def _typing(message: Message, stop: asyncio.Event) -> None:
 
 def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKeyboardMarkup | None:
     message_id = backend.last_response_message_id(chat_id)
-    return feedback_kb(message_id) if message_id is not None else None
+    if message_id is None:
+        return None
+    return answer_kb(chat_id, message_id, len(backend.last_response_sources(chat_id)))
 
 
 async def stream_to_chat(
@@ -111,7 +114,7 @@ async def stream_to_chat(
 
     final_text = buffer or "Backend вернул пустой ответ."
     if sources_factory is not None:
-        final_text += _format_sources(sources_factory())
+        final_text += _format_cited_sources(final_text, sources_factory())
     final_html = _render_telegram_html(final_text)
     reply_markup = reply_markup_factory() if reply_markup_factory is not None else None
     if editable_response is not None:
@@ -162,16 +165,35 @@ async def _start_editable_response(message: Message) -> Message | None:
         return None
 
 
-def _format_sources(sources: list[dict]) -> str:
-    if not sources:
+def _format_cited_sources(answer: str, sources: list[dict]) -> str:
+    source_numbers = _cited_source_numbers(answer, len(sources))
+    if not source_numbers:
+        return ""
+    source_items = [(number, sources[number - 1]) for number in source_numbers]
+    return _format_source_items(source_items, heading="Источники")
+
+
+def format_all_sources(sources: list[dict]) -> str:
+    return _format_source_items(list(enumerate(sources, start=1)), heading="Все источники").removeprefix("\n\n")
+
+
+def _cited_source_numbers(answer: str, source_count: int) -> list[int]:
+    cited: set[int] = set()
+    for match in _CITATION_RE.finditer(answer):
+        cited.update(int(value.strip()) for value in match.group(1).split(","))
+    return [number for number in range(1, source_count + 1) if number in cited]
+
+
+def _format_source_items(source_items: list[tuple[int, dict]], *, heading: str) -> str:
+    if not source_items:
         return ""
     lines = []
-    for index, source in enumerate(sources[:5], start=1):
+    for index, source in source_items:
         file_name = str(source.get("file_name") or "источник")
         page = source.get("page")
         page_text = f", стр. {page}" if page is not None else ""
         lines.append(f"[{index}] {file_name}{page_text}")
-    return "\n\nИсточники:\n" + "\n".join(lines)
+    return f"\n\n{heading}:\n" + "\n".join(lines)
 
 
 def _render_telegram_html(text: str) -> str:

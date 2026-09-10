@@ -114,6 +114,14 @@ class BackendClient:
     def last_response_sources(self, chat_id: UUID | str) -> list[dict]:
         return [dict(source) for source in self._last_sources.get(str(chat_id), [])]
 
+    async def get_message_sources(self, chat_id: UUID | str, message_id: UUID | str) -> list[dict]:
+        response = await self._request_with_connect_retry(
+            "GET",
+            f"/chats/{chat_id}/messages/{message_id}/sources",
+        )
+        response.raise_for_status()
+        return self._sources_from_payload(response.json())
+
     async def save_feedback(
         self,
         chat_id: UUID | str,
@@ -121,10 +129,13 @@ class BackendClient:
         value: str,
         shown_sources: list[dict] | None = None,
     ) -> dict:
+        sources = shown_sources
+        if sources is None:
+            sources = self.last_response_sources(chat_id) or await self.get_message_sources(chat_id, message_id)
         response = await self._request_with_connect_retry(
             "POST",
             f"/chats/{chat_id}/messages/{message_id}/feedback",
-            json={"value": value, "shown_sources": shown_sources or self.last_response_sources(chat_id)},
+            json={"value": value, "shown_sources": sources},
         )
         response.raise_for_status()
         return response.json()

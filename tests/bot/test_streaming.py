@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 from aiogram.enums import ParseMode
 
-from bot.handlers._common import _render_telegram_html, stream_to_chat
+from bot.handlers._common import _render_telegram_html, format_all_sources, stream_to_chat
 
 
 async def token_stream():
@@ -46,17 +46,46 @@ async def test_stream_to_chat_appends_sources_shown_to_user() -> None:
         answer=AsyncMock(return_value=editable),
     )
 
+    async def cited_stream():
+        yield "Привет [1]"
+
     result = await stream_to_chat(
         message,
-        token_stream(),
+        cited_stream(),
         sources_factory=lambda: [{"file_name": "manual.pdf", "page": 7}],
     )
 
-    assert result == "Привет"
+    assert result == "Привет [1]"
     assert editable.edit_text.await_args_list[-1].args[0].endswith(
         "Источники:\n[1] manual.pdf, стр. 7"
     )
     assert editable.edit_text.await_args_list[-1].kwargs["parse_mode"] == ParseMode.HTML
+
+
+@pytest.mark.asyncio
+async def test_stream_to_chat_shows_only_sources_cited_with_original_numbers() -> None:
+    editable = SimpleNamespace(edit_text=AsyncMock())
+    bot = SimpleNamespace(send_chat_action=AsyncMock(), send_message_draft=AsyncMock())
+    message = SimpleNamespace(chat=SimpleNamespace(id=42), bot=bot, answer=AsyncMock(return_value=editable))
+    sources = [{"file_name": f"manual-{index}.pdf", "page": index} for index in range(1, 11)]
+
+    async def cited_stream():
+        yield "Ответ по [2] и [7]."
+
+    await stream_to_chat(message, cited_stream(), sources_factory=lambda: sources)
+
+    final_text = editable.edit_text.await_args_list[-1].args[0]
+    assert "Источники:\n[2] manual-2.pdf, стр. 2\n[7] manual-7.pdf, стр. 7" in final_text
+    assert "[1] manual-1.pdf" not in final_text
+    assert "[10] manual-10.pdf" not in final_text
+
+
+def test_format_all_sources_keeps_full_original_numbering() -> None:
+    sources = [{"file_name": f"manual-{index}.pdf", "page": index} for index in range(1, 4)]
+
+    assert format_all_sources(sources) == (
+        "Все источники:\n[1] manual-1.pdf, стр. 1\n[2] manual-2.pdf, стр. 2\n[3] manual-3.pdf, стр. 3"
+    )
 
 
 @pytest.mark.asyncio

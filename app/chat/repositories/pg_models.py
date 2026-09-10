@@ -34,6 +34,7 @@ class ChatMessageRow(Base):
     role: Mapped[str] = mapped_column(Text, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     media_refs: Mapped[dict | None] = mapped_column(JSON)
+    rag_sources: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     tokens: Mapped[int | None] = mapped_column(Integer)
     latency_ms: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

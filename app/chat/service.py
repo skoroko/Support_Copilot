@@ -11,7 +11,7 @@ from uuid import UUID
 import tiktoken
 
 from app.chat.domain import Chat, ChatMessage
-from app.chat.feedback import FeedbackService, FeedbackValue, MessageFeedback
+from app.chat.feedback import FeedbackService, FeedbackTargetNotFoundError, FeedbackValue, MessageFeedback
 from app.chat.media import media_to_part
 from app.chat.repository import ChatRepository
 from app.core.config import Settings
@@ -265,6 +265,7 @@ class ChatService:
                     chat_id=chat_id,
                     role="assistant",
                     content=visible_content,
+                    rag_sources=rag_sources if output_result.allowed else [],
                     tokens=count_tokens([{"role": "assistant", "content": visible_content}]),
                     latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
                 ),
@@ -301,6 +302,19 @@ class ChatService:
 
     def last_response_sources(self, chat_id: UUID) -> list[dict[str, Any]]:
         return [dict(source) for source in self._last_response_sources.get(chat_id, [])]
+
+    async def response_sources(self, chat_id: UUID, message_id: UUID) -> list[dict[str, Any]]:
+        """Return the sources persisted with one assistant response.
+
+        The Telegram callback carries compact chat/message identifiers, rather
+        than source JSON, so it still works after either process restarts.
+        """
+
+        chat = await self.repository.get_chat(chat_id)
+        message = await self.repository.get_message(chat_id, message_id)
+        if chat is None or message is None or message.role != "assistant":
+            raise FeedbackTargetNotFoundError(f"Assistant message {message_id} not found")
+        return self._citation_array(message.rag_sources)
 
     async def _record_moderation(self, chat_id: UUID, direction: str, result: ModerationResult) -> None:
         recorder = getattr(self.repository, "record_moderation", None)

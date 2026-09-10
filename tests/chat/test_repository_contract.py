@@ -90,6 +90,20 @@ async def test_message_media_refs_round_trip(repository: ChatRepository) -> None
 
 
 @pytest.mark.asyncio
+async def test_message_rag_sources_round_trip(repository: ChatRepository) -> None:
+    chat = await repository.create_chat("owner", "telegram")
+    sources = [{"id": "manual-7", "file_name": "manual.pdf", "page": 7, "score": 0.91}]
+    await repository.append_message(
+        chat.id,
+        ChatMessage(chat_id=chat.id, role="assistant", content="Ответ [1].", rag_sources=sources),
+    )
+
+    messages = await repository.list_messages(chat.id)
+
+    assert messages[0].rag_sources == sources
+
+
+@pytest.mark.asyncio
 async def test_list_messages_limit_returns_last_n(repository: ChatRepository) -> None:
     chat = await repository.create_chat("owner", "web")
     started = datetime(2026, 1, 1, tzinfo=timezone.utc)

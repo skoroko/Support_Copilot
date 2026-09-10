@@ -137,7 +137,7 @@ class FakeLLM:
 
 
 def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
-    llm = FakeLLM()
+    llm = FakeLLM("Ответ по базе [1] и [2].")
     service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
     service._retriever = FakeRetriever([0.91, 0.82, 0.73])
 
@@ -155,6 +155,12 @@ def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
     service._retriever = FakeRetriever([0.2, 0.1, 0.05])
     assert service.answer("Вопрос вне базы")["answer"] == NO_ANSWER
     assert len(llm.prompts) == 1
+
+
+def test_rag_does_not_append_all_retrieval_candidates_as_citations() -> None:
+    answer = "Ответ подтверждён источником [7]."
+
+    assert RAGService._ensure_citations(answer, [{"id": "one"}] * 10) == answer
 
 
 def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) -> None:

@@ -33,6 +33,10 @@ class FakeChatService:
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         return self.messages.get(chat_id, [])[-limit:]
 
+    async def response_sources(self, chat_id: UUID, message_id: UUID) -> list[dict]:
+        message = next((item for item in self.messages.get(chat_id, []) if item.id == message_id), None)
+        return list(message.rag_sources) if message is not None else []
+
     async def process_media(self, media) -> dict:
         return {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
 
@@ -178,3 +182,17 @@ def test_stream_emits_json_safe_sources_as_final_event(fake_chat_service: FakeCh
     assert '"snippet": "Первая строка\\nВторая строка"' in body
     assert body.index('data: {"type":"done"}') < body.index("event: sources")
     assert body.rstrip().endswith('data: {"sources": [{"id": "doc-1", "snippet": "Первая строка\\nВторая строка", "score": 0.91}]}')
+
+
+def test_response_sources_route_returns_persisted_assistant_sources(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    source = {"id": "manual-7", "file_name": "manual.pdf", "page": 7, "score": 0.91}
+    message = ChatMessage(chat_id=chat.id, role="assistant", content="Ответ [1].", rag_sources=[source])
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = [message]
+
+    with TestClient(app) as client:
+        response = client.get(f"/chats/{chat.id}/messages/{message.id}/sources")
+
+    assert response.status_code == 200
+    assert response.json() == {"sources": [source]}

@@ -39,6 +39,9 @@ class InMemoryRepository:
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         return self.messages.get(chat_id, [])[-limit:]
 
+    async def get_message(self, chat_id: UUID, message_id: UUID) -> ChatMessage | None:
+        return next((message for message in self.messages.get(chat_id, []) if message.id == message_id), None)
+
     async def soft_delete_messages(self, chat_id: UUID) -> None:
         self.messages[chat_id] = []
 
@@ -216,3 +219,6 @@ async def test_rag_uses_prior_history_and_exposes_shown_sources(tmp_path: Path) 
             "confident": True,
         }
     ]
+    stored = await repo.list_messages(chat.id)
+    assert stored[-1].rag_sources == service.last_response_sources(chat.id)
+    assert await service.response_sources(chat.id, stored[-1].id) == service.last_response_sources(chat.id)

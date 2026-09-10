@@ -62,6 +62,7 @@ class PostgresChatRepository:
                 role=message.role,
                 content=message.content,
                 media_refs=message.media_refs,
+                rag_sources=message.rag_sources,
                 tokens=message.tokens,
                 latency_ms=message.latency_ms,
                 created_at=message.created_at,

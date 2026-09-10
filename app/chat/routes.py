@@ -137,6 +137,21 @@ async def send_message(
     return StreamingResponse(events(), media_type="text/event-stream")
 
 
+@router.get("/chats/{chat_id}/messages/{message_id}/sources")
+async def get_response_sources(
+    chat_id: UUID,
+    message_id: UUID,
+    chat_service: ChatServiceDep,
+) -> dict[str, list[dict]]:
+    try:
+        return {"sources": await chat_service.response_sources(chat_id, message_id)}
+    except FeedbackTargetNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "feedback_target_not_found", "message": str(exc)},
+        ) from exc
+
+
 @router.post(
     "/chats/{chat_id}/messages/{message_id}/feedback",
     response_model=MessageFeedback,
