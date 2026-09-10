@@ -66,7 +66,7 @@ def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKey
     message_id = backend.last_response_message_id(chat_id)
     if message_id is None:
         return None
-    return answer_kb(chat_id, message_id, len(backend.last_response_sources(chat_id)))
+    return answer_kb(chat_id, message_id, source_document_count(backend.last_response_sources(chat_id)))
 
 
 async def stream_to_chat(
@@ -174,7 +174,16 @@ def _format_cited_sources(answer: str, sources: list[dict]) -> str:
 
 
 def format_all_sources(sources: list[dict]) -> str:
-    return _format_source_items(list(enumerate(sources, start=1)), heading="Все источники").removeprefix("\n\n")
+    return _format_source_items(list(enumerate(sources, start=1)), heading="Документы").removeprefix("\n\n")
+
+
+def source_document_count(sources: list[dict]) -> int:
+    return len(
+        {
+            str(source.get("file_name") or "источник").casefold()
+            for source in sources
+        }
+    )
 
 
 def _cited_source_numbers(answer: str, source_count: int) -> list[int]:
@@ -187,12 +196,30 @@ def _cited_source_numbers(answer: str, source_count: int) -> list[int]:
 def _format_source_items(source_items: list[tuple[int, dict]], *, heading: str) -> str:
     if not source_items:
         return ""
-    lines = []
+    grouped: dict[str, dict[str, object]] = {}
     for index, source in source_items:
         file_name = str(source.get("file_name") or "источник")
         page = source.get("page")
-        page_text = f", стр. {page}" if page is not None else ""
-        lines.append(f"[{index}] {file_name}{page_text}")
+        key = file_name.casefold()
+        group = grouped.setdefault(key, {"file_name": file_name, "numbers": [], "pages": []})
+        numbers = group["numbers"]
+        pages = group["pages"]
+        if isinstance(numbers, list):
+            numbers.append(index)
+        if page is not None and isinstance(pages, list) and page not in pages:
+            pages.append(page)
+
+    lines = []
+    for group in grouped.values():
+        numbers = group["numbers"]
+        pages = group["pages"]
+        citation = ", ".join(str(number) for number in numbers) if isinstance(numbers, list) else ""
+        page_text = (
+            f", стр. {', '.join(str(page) for page in pages)}"
+            if isinstance(pages, list) and pages
+            else ""
+        )
+        lines.append(f"[{citation}] {group['file_name']}{page_text}")
     return f"\n\n{heading}:\n" + "\n".join(lines)
 
 

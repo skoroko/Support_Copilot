@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from docx import Document as DocxDocument
 from llama_index.core.embeddings import MockEmbedding
+from llama_index.core import Document
 from qdrant_client import QdrantClient
 
 from app.services.ingestion import (
@@ -12,7 +13,10 @@ from app.services.ingestion import (
     ExternalDataTransferRequired,
     IngestionConfig,
     IngestionService,
+    _load_one_file,
     category_for_path,
+    infer_product,
+    product_for_path,
     supported_files,
     version_from_filename,
 )
@@ -135,6 +139,40 @@ def test_path_helpers_are_stable(tmp_path: Path) -> None:
     assert category_for_path(path, data_root=data) == "manuals"
     assert version_from_filename(path.name) == "3.2"
     assert supported_files(data) == [path.resolve()]
+
+
+def test_product_metadata_uses_explicit_product_markers_and_corpus_default(tmp_path: Path) -> None:
+    assert product_for_path(tmp_path / "03_midas GTS NX_elements.pdf") == "gts_nx"
+    assert product_for_path(tmp_path / "manuals" / "midas Civil guide.pdf") == "civil"
+    assert product_for_path(tmp_path / "manuals" / "midas NFX guide.pdf") == "nfx"
+    assert infer_product(["generic User Manual Chapter 5.pdf"], default_product="gts_nx") == "gts_nx"
+
+
+def test_pdf_page_numbers_are_preserved_before_metadata_enrichment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pdf = tmp_path / "GTS_NX_manual.pdf"
+    pdf.write_bytes(b"fixture")
+
+    class FakeDirectoryReader:
+        def __init__(self, **_kwargs: object) -> None:
+            pass
+
+        def load_data(self) -> list[Document]:
+            return [
+                Document(text="Первая страница"),
+                Document(text="Вторая страница"),
+                Document(text="Третья страница"),
+            ]
+
+    monkeypatch.setattr("app.services.ingestion.SimpleDirectoryReader", FakeDirectoryReader)
+
+    documents = _load_one_file(pdf, data_root=tmp_path)
+
+    assert [document.metadata["page"] for document in documents] == [1, 2, 3]
+    assert all(document.metadata["total_pages"] == 3 for document in documents)
+    assert all(document.metadata["product"] == "gts_nx" for document in documents)
 
 
 def test_chm_pages_can_be_materialized_as_safe_deterministic_html(tmp_path: Path) -> None:

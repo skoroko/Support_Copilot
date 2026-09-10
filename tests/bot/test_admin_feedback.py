@@ -34,8 +34,10 @@ def test_answer_keyboard_compacts_chat_and_message_ids_below_telegram_limit() ->
     message_id = UUID("00000000-0000-0000-0000-000000000123")
     markup = answer_kb(chat_id, message_id, source_count=10)
     callbacks = [button.callback_data for row in markup.inline_keyboard for button in row]
+    texts = [button.text for row in markup.inline_keyboard for button in row]
 
     assert len(callbacks) == 3
+    assert texts[0] == "📚 Документы (10)"
     assert all(callback is not None and len(callback.encode("utf-8")) <= 64 for callback in callbacks)
     assert callbacks[0].startswith("src:")
     assert decode_message_context(callbacks[0].removeprefix("src:")) == (chat_id, message_id)
