@@ -18,6 +18,7 @@ class RouteService:
         self.chat = Chat(owner_external_id="42", interface="telegram")
         self.message = ChatMessage(chat_id=self.chat.id, role="assistant", content="answer")
         self.send_calls = 0
+        self.shown_sources: list[dict] | None = None
 
     async def get_chat(self, chat_id: UUID) -> Chat | None:
         return self.chat if chat_id == self.chat.id else None
@@ -36,10 +37,22 @@ class RouteService:
         self.send_calls += 1
         yield "must not happen"
 
-    async def submit_feedback(self, chat_id: UUID, message_id: UUID, value: str) -> MessageFeedback:
+    async def submit_feedback(
+        self,
+        chat_id: UUID,
+        message_id: UUID,
+        value: str,
+        shown_sources: list[dict] | None = None,
+    ) -> MessageFeedback:
         assert chat_id == self.chat.id
         assert message_id == self.message.id
-        return MessageFeedback(message_id=message_id, owner_external_id="42", value=value)
+        self.shown_sources = shown_sources
+        return MessageFeedback(
+            message_id=message_id,
+            owner_external_id="42",
+            value=value,
+            shown_sources=shown_sources or [],
+        )
 
 
 def test_moderation_route_returns_403_before_llm() -> None:
@@ -72,3 +85,21 @@ def test_feedback_route_returns_saved_vote() -> None:
     assert response.status_code == 200
     assert response.json()["message_id"] == str(service.message.id)
     assert response.json()["value"] == "up"
+
+
+def test_feedback_route_saves_sources_shown_to_user() -> None:
+    service = RouteService()
+    sources = [{"id": "return-policy", "file_name": "returns.md", "score": 0.91}]
+    app.dependency_overrides[get_chat_service] = lambda: service
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                f"/chats/{service.chat.id}/messages/{service.message.id}/feedback",
+                json={"value": "down", "shown_sources": sources},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert service.shown_sources == sources
+    assert response.json()["shown_sources"] == sources

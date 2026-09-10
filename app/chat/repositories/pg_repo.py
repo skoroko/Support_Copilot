@@ -107,11 +107,16 @@ class PostgresChatRepository:
             message_id=feedback.message_id,
             owner_external_id=feedback.owner_external_id,
             value=feedback.value,
+            shown_sources=feedback.shown_sources,
             created_at=feedback.created_at,
         )
         statement = statement.on_conflict_do_update(
             constraint="uq_message_feedback_owner_message",
-            set_={"value": feedback.value, "created_at": feedback.created_at},
+            set_={
+                "value": feedback.value,
+                "shown_sources": feedback.shown_sources,
+                "created_at": feedback.created_at,
+            },
         )
         await self.session.execute(statement)
         await self.session.commit()

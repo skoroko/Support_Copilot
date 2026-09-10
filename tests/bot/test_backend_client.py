@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from uuid import UUID
 
 import httpx
@@ -47,6 +48,8 @@ async def test_send_message_parses_sse_frames() -> None:
                 b'data: {"type":"token","delta":"vet"}\n\n'
                 b'data: {"type":"message","message_id":"00000000-0000-0000-0000-000000000999"}\n\n'
                 b'data: {"type":"done"}\n\n'
+                b'event: sources\n'
+                b'data: {"sources":[{"id":"returns-1","snippet":"14 days","score":0.91}]}\n\n'
             ),
         )
 
@@ -58,6 +61,31 @@ async def test_send_message_parses_sse_frames() -> None:
 
     assert chunks == ["Pri", "vet"]
     assert client.last_response_message_id(chat_id) == UUID("00000000-0000-0000-0000-000000000999")
+    assert client.last_response_sources(chat_id) == [
+        {"id": "returns-1", "snippet": "14 days", "score": 0.91}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_save_feedback_includes_sources_from_last_sse_response() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000456")
+    message_id = UUID("00000000-0000-0000-0000-000000000999")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path.endswith(f"/messages/{message_id}/feedback")
+        assert json.loads(request.content) == {
+            "value": "up",
+            "shown_sources": [{"id": "returns-1", "score": 0.91}],
+        }
+        return httpx.Response(200, json={"value": "up"})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient("http://backend", client=http_client)
+        client._last_sources[str(chat_id)] = [{"id": "returns-1", "score": 0.91}]
+        response = await client.save_feedback(chat_id, message_id, "up")
+
+    assert response == {"value": "up"}
 
 
 @pytest.mark.asyncio

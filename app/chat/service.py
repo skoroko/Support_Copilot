@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Sequence
+import asyncio
+from collections.abc import AsyncIterator, Mapping, Sequence
 from functools import lru_cache
+import inspect
 import time
 from typing import Any
 from uuid import UUID
@@ -22,6 +24,7 @@ DEFAULT_CONTEXT_TOKENS = 128_000
 DEFAULT_RESPONSE_TOKENS = 500
 DEFAULT_SAFETY_MARGIN_TOKENS = 500
 MODERATION_OUTPUT_REPLACEMENT = "Не могу показать ответ — он мог нарушить правила"
+RAG_EMPTY_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 
 logger = get_logger("chat-service")
 
@@ -134,6 +137,7 @@ class ChatService:
             thresholds=settings.moderation_thresholds,
         )
         self.feedback = FeedbackService(repository)
+        self._last_response_sources: dict[UUID, list[dict[str, Any]]] = {}
         if settings.chat_context_strategy != "sliding":
             raise ValueError("Only CHAT_CONTEXT_STRATEGY=sliding is implemented in homework 4.1")
         self.context_strategy = SlidingWindowContextStrategy(settings.chat_context_window)
@@ -173,6 +177,7 @@ class ChatService:
         *,
         media_refs: dict[str, Any] | None = None,
         input_moderated: bool = False,
+        rag_service: Any | None = None,
     ) -> AsyncIterator[str]:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
@@ -204,6 +209,7 @@ class ChatService:
         await self.repository.append_message(chat_id, user_message)
 
         history = await self.repository.list_messages(chat_id, self.settings.chat_context_window)
+        retrieval_history = history[:-1]
         messages = self.context_strategy.build(chat, history)
         budget = (
             self.settings.chat_model_context_tokens
@@ -213,25 +219,32 @@ class ChatService:
         messages = fit_to_budget(messages, max(1, budget))
 
         assistant_parts: list[str] = []
+        rag_sources: list[dict[str, Any]] = []
         started_at = time.perf_counter()
-        try:
-            stream = await self.llm_client.chat.completions.create(
-                model=self.settings.llm.default_model,
-                messages=messages,
-                stream=True,
-                stream_options={"include_usage": True},
-                temperature=0.2,
-                **self._token_limit_kwargs(self.settings.llm.default_model, self.settings.chat_response_tokens),
-            )
-            async for chunk in stream:
-                content = self._chunk_content(chunk)
-                if not content:
-                    continue
-                assistant_parts.append(content)
-        except Exception:
-            if assistant_parts:
-                logger.warning("chat_stream_interrupted", chat_id=str(chat_id))
-            raise
+        if rag_service is not None:
+            rag_result = await self._answer_with_rag(rag_service, user_content, retrieval_history)
+            answer = str(rag_result.get("answer") or "").strip() or RAG_EMPTY_ANSWER
+            assistant_parts = [answer]
+            rag_sources = self._citation_array(rag_result.get("sources"))
+        else:
+            try:
+                stream = await self.llm_client.chat.completions.create(
+                    model=self.settings.llm.default_model,
+                    messages=messages,
+                    stream=True,
+                    stream_options={"include_usage": True},
+                    temperature=0.2,
+                    **self._token_limit_kwargs(self.settings.llm.default_model, self.settings.chat_response_tokens),
+                )
+                async for chunk in stream:
+                    content = self._chunk_content(chunk)
+                    if not content:
+                        continue
+                    assistant_parts.append(content)
+            except Exception:
+                if assistant_parts:
+                    logger.warning("chat_stream_interrupted", chat_id=str(chat_id))
+                raise
 
         generated_content = "".join(assistant_parts)
         output_result = await self.moderation.check_output(generated_content)
@@ -239,9 +252,11 @@ class ChatService:
         if output_result.allowed:
             visible_parts = assistant_parts
             visible_content = generated_content
+            self._last_response_sources[chat_id] = rag_sources
         else:
             visible_parts = [MODERATION_OUTPUT_REPLACEMENT]
             visible_content = MODERATION_OUTPUT_REPLACEMENT
+            self._last_response_sources[chat_id] = []
 
         if visible_content:
             await self.repository.append_message(
@@ -280,8 +295,12 @@ class ChatService:
         chat_id: UUID,
         message_id: UUID,
         value: FeedbackValue,
+        shown_sources: list[dict[str, Any]] | None = None,
     ) -> MessageFeedback:
-        return await self.feedback.save(chat_id, message_id, value)
+        return await self.feedback.save(chat_id, message_id, value, shown_sources)
+
+    def last_response_sources(self, chat_id: UUID) -> list[dict[str, Any]]:
+        return [dict(source) for source in self._last_response_sources.get(chat_id, [])]
 
     async def _record_moderation(self, chat_id: UUID, direction: str, result: ModerationResult) -> None:
         recorder = getattr(self.repository, "record_moderation", None)
@@ -310,3 +329,29 @@ class ChatService:
             return ""
         content = delta.get("content", "") if isinstance(delta, dict) else getattr(delta, "content", "")
         return str(content or "")
+
+    async def _answer_with_rag(
+        self,
+        rag_service: Any,
+        question: str,
+        history: Sequence[ChatMessage],
+    ) -> dict[str, Any]:
+        answer = getattr(rag_service, "answer", None)
+        if answer is None:
+            raise TypeError("RAG service must expose an answer method")
+        serialized_history = [message.model_dump(mode="json") for message in history]
+        if inspect.iscoroutinefunction(answer):
+            result = answer(question, history=serialized_history)
+        else:
+            result = await asyncio.to_thread(answer, question, history=serialized_history)
+        if inspect.isawaitable(result):
+            result = await result
+        if not isinstance(result, Mapping):
+            raise TypeError("RAG answer must be a mapping")
+        return dict(result)
+
+    @staticmethod
+    def _citation_array(value: Any) -> list[dict[str, Any]]:
+        if not isinstance(value, list):
+            return []
+        return [dict(source) for source in value if isinstance(source, Mapping)]

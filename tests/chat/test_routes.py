@@ -155,3 +155,21 @@ def test_system_message_is_saved_without_notification(fake_chat_service: FakeCha
 
     assert response.status_code == 200
     assert fake_chat_service.messages[chat.id][0].content == "Заявка обработана"
+
+
+def test_stream_emits_json_safe_sources_as_final_event(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    fake_chat_service.last_response_sources = lambda _chat_id: [  # type: ignore[attr-defined]
+        {"id": "doc-1", "snippet": "Первая строка\nВторая строка", "score": 0.91}
+    ]
+
+    with TestClient(app) as client:
+        response = client.post(f"/chats/{chat.id}/messages", data={"content": "Вопрос"})
+
+    body = response.text
+    assert "event: sources" in body
+    assert '"snippet": "Первая строка\\nВторая строка"' in body
+    assert body.index('data: {"type":"done"}') < body.index("event: sources")
+    assert body.rstrip().endswith('data: {"sources": [{"id": "doc-1", "snippet": "Первая строка\\nВторая строка", "score": 0.91}]}')

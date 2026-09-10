@@ -463,3 +463,21 @@ latency, сравнивает локальный `BAAI/bge-reranker-v2-m3` до/
 Материалы и команды проверки: `homework_5_4/README.md`,
 `homework_5_4/TEACHER_CHECK.md`, `tests/eval/retrieval_dataset.json` и
 `docs/chunking_experiment.md`.
+
+## Домашнее задание 5.5: корпоративный RAG-ассистент
+
+RAG собран в единый инкрементальный контур: 70 реальных файлов PDF/HTML/CHM
+загружаются через multi-format readers, обогащаются метаданными и индексируются
+`IngestionPipeline` с `SimpleDocumentStore` и `DocstoreStrategy.UPSERTS`.
+Повторный офлайн-прогон подтверждает идемпотентность: `0 changed, 1992
+unchanged`, без дублирования 3508 существующих чанков.
+
+Query pipeline выполняет retrieval `top_k=10`, optional BGE re-ranking до пяти
+фрагментов и score guard до вызова LLM. Ответ содержит цитаты `[1]`, `[2]` и
+структурированные sources. Postgres-история участвует в multi-turn retrieval,
+чат отправляет источники финальным SSE-событием, Telegram обновляет одно
+сообщение с debounce 0.8 секунды, а feedback сохраняет показанные источники.
+`POST /documents/upload` возвращает 202 и запускает background UPSERT.
+
+Материалы и команды проверки: `homework_5_5/README.md`,
+`homework_5_5/TEACHER_CHECK.md`, `docs/rag.md` и `docs/data_inventory.md`.
