@@ -140,8 +140,10 @@ python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline
 
 Telegram-бот читает этот же endpoint, создаёт одно сообщение и обновляет его
 через `editMessageText` с debounce 0.8 секунды, а после ответа показывает footer
-с именами файлов и страницами. Кнопки 👍/👎 сохраняют не только голос, но и
-показанный пользователю массив источников.
+с именами файлов и страницами. Финальная версия сообщения использует безопасный
+Telegram HTML: `**жирный текст**` превращается в bold, а `` `код` `` — в inline
+code; текст и имена файлов перед этим экранируются. Кнопки 👍/👎 сохраняют не
+только голос, но и показанный пользователю массив источников.
 
 ## Запуск
 
@@ -151,6 +153,17 @@ Copy-Item .env.example .env
 # QDRANT_API_KEY и после согласования включить RAG_ENABLED и transfer opt-in
 docker compose up -d --build
 ```
+
+Если коллекция уже заполнена (например, после отдельного запуска
+`scripts/ingest.py`), в `.env` укажите:
+
+```dotenv
+RAG_ENABLED=true
+RAG_INGEST_ON_START=false
+```
+
+Тогда приложение подключится к существующей `RAG_COLLECTION` без чтения
+корпуса и без отправки фрагментов документов в embedding-провайдер на старте.
 
 Compose поднимает `app`, `qdrant`, `redis`, `bot`, а также уже используемые
 Postgres и Phoenix. `data/`, docstore и Qdrant/Postgres/Redis volumes

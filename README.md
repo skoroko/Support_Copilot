@@ -442,7 +442,9 @@ payload-фильтры.
 коллекцию `rag_block_03`, а ручной baseline явно выполняет загрузку, chunking,
 embedding, `query_points` и Chat Completions в коллекции
 `rag_block_03_baremetal`. Endpoint `POST /rag/query` возвращает ответ, top score
-и три источника; индекс создаётся один раз в lifespan при `RAG_ENABLED=true`.
+и три источника. При `RAG_ENABLED=true` приложение по умолчанию выполняет
+инкрементальный UPSERT при старте; для уже подготовленной коллекции можно
+указать `RAG_INGEST_ON_START=false` и подключиться к ней без переиндексации.
 
 Материалы и команды проверки: `homework_5_3/README.md`,
 `homework_5_3/TEACHER_CHECK.md`, `homework_5_3/questions.json` и `docs/rag.md`.

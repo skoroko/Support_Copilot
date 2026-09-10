@@ -122,6 +122,10 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("EMBEDDING_DIM"),
     )
     rag_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_ENABLED"))
+    rag_ingest_on_start: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RAG_INGEST_ON_START"),
+    )
     rag_allow_external_data_transfer: bool = Field(
         default=False,
         validation_alias=AliasChoices("RAG_ALLOW_EXTERNAL_DATA_TRANSFER"),
@@ -339,6 +343,10 @@ def get_settings() -> Settings:
         qdrant_collection=os.getenv("QDRANT_COLLECTION") or "documents",
         embedding_dim=int(os.getenv("EMBEDDING_DIM") or 1024),
         rag_enabled=(os.getenv("RAG_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
+        rag_ingest_on_start=(
+            os.getenv("RAG_INGEST_ON_START", "true").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
         rag_allow_external_data_transfer=(
             os.getenv("RAG_ALLOW_EXTERNAL_DATA_TRANSFER", "false").strip().lower()
             in {"1", "true", "yes", "on"}
