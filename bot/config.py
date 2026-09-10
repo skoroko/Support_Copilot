@@ -45,11 +45,15 @@ class BotSettings(BaseSettings):
     def parse_admin_ids(cls, value: Any) -> list[int]:
         if value is None or value == "":
             return []
+        # pydantic-settings JSON-decodes a bare numeric environment value
+        # before field validators run, so a single Telegram id arrives as int.
+        if isinstance(value, int) and not isinstance(value, bool):
+            return [value]
         if isinstance(value, list):
             return [int(item) for item in value]
         if isinstance(value, str):
             return [int(item.strip()) for item in value.split(",") if item.strip()]
-        raise TypeError("BOT_ADMIN_IDS must be a comma-separated list of integers")
+        raise TypeError("BOT_ADMIN_IDS must be an integer or a comma-separated list of integers")
 
 
 @lru_cache(maxsize=1)
