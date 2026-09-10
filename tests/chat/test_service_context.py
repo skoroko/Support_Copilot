@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -71,6 +70,29 @@ class FakeLLM:
         completions = FakeCompletions()
         self.chat = type("Chat", (), {"completions": completions})()
         self.completions = completions
+
+
+class FakeRAG:
+    def __init__(self) -> None:
+        self.question: str | None = None
+        self.history: list[dict[str, Any]] | None = None
+
+    def answer(self, question: str, *, history: list[dict[str, Any]]) -> dict[str, Any]:
+        self.question = question
+        self.history = history
+        return {
+            "answer": "Для электроники действует отдельный срок возврата [1].",
+            "sources": [
+                {
+                    "id": "electronics-policy-1",
+                    "file_name": "returns.md",
+                    "page": 2,
+                    "score": 0.91,
+                    "snippet": "Электроника возвращается в течение 14 дней.",
+                    "confident": True,
+                }
+            ],
+        }
 
 
 def build_settings(tmp_path: Path) -> Settings:
@@ -157,3 +179,40 @@ async def test_media_part_is_restored_in_followup_context(tmp_path: Path) -> Non
 
     user_message = next(message for message in llm.completions.last_kwargs["messages"] if message["role"] == "user")
     assert user_message["content"] == [{"type": "text", "text": "Что на фото?"}, part]
+
+
+@pytest.mark.asyncio
+async def test_rag_uses_prior_history_and_exposes_shown_sources(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    rag = FakeRAG()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    await repo.append_message(chat.id, ChatMessage(chat_id=chat.id, role="user", content="Каков срок возврата?"))
+    await repo.append_message(
+        chat.id,
+        ChatMessage(chat_id=chat.id, role="assistant", content="Для большинства товаров — 14 дней."),
+    )
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(chat.id, "А для электроники?", rag_service=rag)
+    ]
+
+    assert chunks == ["Для электроники действует отдельный срок возврата [1]."]
+    assert rag.question == "А для электроники?"
+    assert [item["content"] for item in rag.history or []] == [
+        "Каков срок возврата?",
+        "Для большинства товаров — 14 дней.",
+    ]
+    assert llm.completions.last_kwargs is None
+    assert service.last_response_sources(chat.id) == [
+        {
+            "id": "electronics-policy-1",
+            "file_name": "returns.md",
+            "page": 2,
+            "score": 0.91,
+            "snippet": "Электроника возвращается в течение 14 дней.",
+            "confident": True,
+        }
+    ]

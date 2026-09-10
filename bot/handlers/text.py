@@ -24,6 +24,7 @@ async def handle_text(message: Message, backend: BackendClient) -> None:
             message,
             backend.send_message(chat_id, message.text or ""),
             reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
+            sources_factory=lambda: backend.last_response_sources(chat_id),
         )
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))

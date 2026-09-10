@@ -27,6 +27,7 @@ class BackendClient:
         self._max_connect_attempts = max(1, max_connect_attempts)
         self._chat_cache: dict[tuple[str, str], UUID] = {}
         self._last_message_ids: dict[str, UUID] = {}
+        self._last_sources: dict[str, list[dict]] = {}
         self._admin_headers = {"X-Admin-Token": admin_token} if admin_token else {}
 
     async def get_or_create_chat(self, owner_external_id: str, interface: str) -> UUID:
@@ -53,6 +54,8 @@ class BackendClient:
             files = {"media": (self._filename_for_mime(mime), media, mime or "application/octet-stream")}
 
         yielded_data = False
+        chat_key = str(chat_id)
+        self._last_sources[chat_key] = []
         for attempt in range(1, self._max_connect_attempts + 1):
             try:
                 async with self._client.stream(
@@ -63,13 +66,23 @@ class BackendClient:
                     timeout=STREAM_TIMEOUT,
                 ) as response:
                     response.raise_for_status()
+                    event_name = "message"
                     async for line in response.aiter_lines():
+                        if not line:
+                            event_name = "message"
+                            continue
+                        if line.startswith("event:"):
+                            event_name = line.removeprefix("event:").strip() or "message"
+                            continue
                         if not line.startswith("data:"):
                             continue
                         raw = line.removeprefix("data:").strip()
                         if not raw:
                             continue
                         payload = json.loads(raw)
+                        if event_name == "sources":
+                            self._last_sources[chat_key] = self._sources_from_payload(payload)
+                            continue
                         event_type = payload.get("type")
                         if event_type == "token":
                             yielded_data = True
@@ -82,7 +95,9 @@ class BackendClient:
                             message_id = payload.get("message_id")
                             if message_id:
                                 self._last_message_ids[str(chat_id)] = UUID(str(message_id))
-                            return
+                            # Keep reading: the server terminates the stream with
+                            # the named ``sources`` event after this legacy marker.
+                            continue
                     return
             except NETWORK_ERRORS:
                 if yielded_data or attempt >= self._max_connect_attempts:
@@ -96,11 +111,20 @@ class BackendClient:
     def last_response_message_id(self, chat_id: UUID | str) -> UUID | None:
         return self._last_message_ids.get(str(chat_id))
 
-    async def save_feedback(self, chat_id: UUID | str, message_id: UUID | str, value: str) -> dict:
+    def last_response_sources(self, chat_id: UUID | str) -> list[dict]:
+        return [dict(source) for source in self._last_sources.get(str(chat_id), [])]
+
+    async def save_feedback(
+        self,
+        chat_id: UUID | str,
+        message_id: UUID | str,
+        value: str,
+        shown_sources: list[dict] | None = None,
+    ) -> dict:
         response = await self._request_with_connect_retry(
             "POST",
             f"/chats/{chat_id}/messages/{message_id}/feedback",
-            json={"value": value},
+            json={"value": value, "shown_sources": shown_sources or self.last_response_sources(chat_id)},
         )
         response.raise_for_status()
         return response.json()
@@ -185,3 +209,10 @@ class BackendClient:
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document.docx",
         }
         return extensions.get((mime or "").lower(), "file.bin")
+
+    @staticmethod
+    def _sources_from_payload(payload: object) -> list[dict]:
+        values = payload.get("sources") if isinstance(payload, dict) else payload
+        if not isinstance(values, list):
+            return []
+        return [dict(source) for source in values if isinstance(source, dict)]

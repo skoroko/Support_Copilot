@@ -122,9 +122,17 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("EMBEDDING_DIM"),
     )
     rag_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_ENABLED"))
+    rag_allow_external_data_transfer: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("RAG_ALLOW_EXTERNAL_DATA_TRANSFER"),
+    )
     rag_data_dir: Path = Field(
-        default=PROJECT_ROOT / "data" / "rag-block-03",
+        default=PROJECT_ROOT / "data",
         validation_alias=AliasChoices("RAG_DATA_DIR"),
+    )
+    rag_docstore_path: Path = Field(
+        default=PROJECT_ROOT / "var" / "rag_ingestion_docstore.json",
+        validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
     rag_embedding_model: str = Field(
@@ -144,6 +152,10 @@ class _SettingsFields(BaseModel):
     rag_chunk_size: int = Field(default=512, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
     rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
     rag_top_k: int = Field(default=10, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
+    rag_reranker_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("RAG_RERANKER_ENABLED"),
+    )
     rag_reranker_model: str = Field(
         default="BAAI/bge-reranker-v2-m3",
         min_length=1,
@@ -155,14 +167,28 @@ class _SettingsFields(BaseModel):
         gt=0,
         validation_alias=AliasChoices("RAG_RERANKER_BATCH_SIZE"),
     )
-    rag_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias=AliasChoices("RAG_MIN_SCORE"))
+    rag_reranker_top_n: int = Field(
+        default=5,
+        gt=0,
+        validation_alias=AliasChoices("RAG_RERANKER_TOP_N"),
+    )
+    rag_min_score: float = Field(
+        default=0.45,
+        ge=0,
+        le=1,
+        validation_alias=AliasChoices("RAG_SCORE_THRESHOLD", "RAG_MIN_SCORE"),
+    )
+    rag_condense_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RAG_CONDENSE_ENABLED"),
+    )
     rag_collection: str = Field(default="rag_block_03", min_length=1, validation_alias=AliasChoices("RAG_COLLECTION"))
     rag_baremetal_collection: str = Field(
         default="rag_block_03_baremetal",
         min_length=1,
         validation_alias=AliasChoices("RAG_BAREMETAL_COLLECTION"),
     )
-    rag_rebuild_on_start: bool = Field(default=True, validation_alias=AliasChoices("RAG_REBUILD_ON_START"))
+    rag_rebuild_on_start: bool = Field(default=False, validation_alias=AliasChoices("RAG_REBUILD_ON_START"))
 
     @model_validator(mode="after")
     def validate_rag_chunking(self) -> "_SettingsFields":
@@ -222,6 +248,12 @@ class _SettingsFields(BaseModel):
             default_model=self.default_model,
             request_timeout=self.request_timeout,
         )
+
+    @property
+    def rag_score_threshold(self) -> float:
+        """Public Б5.5 name; ``rag_min_score`` remains for backward compatibility."""
+
+        return self.rag_min_score
 
 
 if BaseSettings is not None:
@@ -307,7 +339,14 @@ def get_settings() -> Settings:
         qdrant_collection=os.getenv("QDRANT_COLLECTION") or "documents",
         embedding_dim=int(os.getenv("EMBEDDING_DIM") or 1024),
         rag_enabled=(os.getenv("RAG_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
-        rag_data_dir=Path(os.getenv("RAG_DATA_DIR") or PROJECT_ROOT / "data" / "rag-block-03"),
+        rag_allow_external_data_transfer=(
+            os.getenv("RAG_ALLOW_EXTERNAL_DATA_TRANSFER", "false").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        rag_data_dir=Path(os.getenv("RAG_DATA_DIR") or PROJECT_ROOT / "data"),
+        rag_docstore_path=Path(
+            os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_ingestion_docstore.json"
+        ),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
@@ -315,13 +354,20 @@ def get_settings() -> Settings:
         rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 512),
         rag_chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP") or 64),
         rag_top_k=int(os.getenv("RAG_TOP_K") or 10),
+        rag_reranker_enabled=(
+            os.getenv("RAG_RERANKER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+        ),
         rag_reranker_model=os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-v2-m3",
         rag_reranker_device=os.getenv("RAG_RERANKER_DEVICE") or "",
         rag_reranker_batch_size=int(os.getenv("RAG_RERANKER_BATCH_SIZE") or 4),
-        rag_min_score=float(os.getenv("RAG_MIN_SCORE") or 0.35),
+        rag_reranker_top_n=int(os.getenv("RAG_RERANKER_TOP_N") or 5),
+        rag_min_score=float(os.getenv("RAG_SCORE_THRESHOLD") or os.getenv("RAG_MIN_SCORE") or 0.45),
+        rag_condense_enabled=(
+            os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+        ),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_block_03",
         rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",
         rag_rebuild_on_start=(
-            os.getenv("RAG_REBUILD_ON_START", "true").strip().lower() in {"1", "true", "yes", "on"}
+            os.getenv("RAG_REBUILD_ON_START", "false").strip().lower() in {"1", "true", "yes", "on"}
         ),
     )

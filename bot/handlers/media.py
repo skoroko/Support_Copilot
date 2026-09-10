@@ -45,6 +45,7 @@ async def _send_media(
             message,
             backend.send_message(chat_id, content, media=media, mime=mime),
             reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
+            sources_factory=lambda: backend.last_response_sources(chat_id),
         )
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -63,6 +63,7 @@ async def list_messages(chat_id: UUID, chat_service: ChatServiceDep, limit: int 
 @router.post("/chats/{chat_id}/messages")
 async def send_message(
     chat_id: UUID,
+    request: Request,
     chat_service: ChatServiceDep,
     content: str = Form(..., min_length=1),
     media: UploadFile | None = File(None),
@@ -114,6 +115,9 @@ async def send_message(
                 message_kwargs["media_refs"] = media_refs
             if input_moderated:
                 message_kwargs["input_moderated"] = True
+            rag_service = getattr(request.app.state, "rag_service", None)
+            if rag_service is not None:
+                message_kwargs["rag_service"] = rag_service
             stream = chat_service.send_message(chat_id, content, **message_kwargs)
             async for chunk in stream:
                 payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
@@ -124,6 +128,9 @@ async def send_message(
                 metadata = json.dumps({"type": "message", "message_id": message_id}, ensure_ascii=False)
                 yield f"data: {metadata}\n\n"
             yield 'data: {"type":"done"}\n\n'
+            sources = _last_response_sources(chat_service, chat_id)
+            sources_payload = json.dumps({"sources": sources}, ensure_ascii=False)
+            yield f"event: sources\ndata: {sources_payload}\n\n"
         except ChatNotFoundError as exc:
             raise _chat_not_found(chat_id) from exc
 
@@ -141,6 +148,13 @@ async def save_feedback(
     chat_service: ChatServiceDep,
 ) -> MessageFeedback:
     try:
+        if payload.shown_sources:
+            return await chat_service.submit_feedback(
+                chat_id,
+                message_id,
+                payload.value,
+                payload.shown_sources,
+            )
         return await chat_service.submit_feedback(chat_id, message_id, payload.value)
     except FeedbackTargetNotFoundError as exc:
         raise HTTPException(
@@ -200,3 +214,13 @@ def _validate_user_content(content: str) -> None:
             "rule": result.rule,
         },
     )
+
+
+def _last_response_sources(chat_service: object, chat_id: UUID) -> list[dict]:
+    get_sources = getattr(chat_service, "last_response_sources", None)
+    if not callable(get_sources):
+        return []
+    sources = get_sources(chat_id)
+    if not isinstance(sources, list):
+        return []
+    return [dict(source) for source in sources if isinstance(source, dict)]

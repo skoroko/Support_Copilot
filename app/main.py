@@ -20,7 +20,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
-from app.routers import chat, health, models, rag
+from app.routers import chat, documents, health, models, rag
 from app.services.rag import RAGConfig, RAGService
 from app.services.security.output_filter import build_security_system_prompt
 from app.services.vector_store import VectorStore
@@ -58,6 +58,20 @@ def _build_cache(settings: Settings) -> Any:
     return Redis.from_url(settings.redis_url, decode_responses=True)
 
 
+def _initialize_rag(settings: Settings) -> tuple[RAGService | None, str | None]:
+    """Build RAG without making an optional provider outage fatal to the API."""
+
+    service = RAGService(RAGConfig.from_settings(settings))
+    try:
+        service.build()
+    except Exception as exc:
+        error_type = type(exc).__name__
+        logger.warning("rag_startup_failed", error_type=error_type)
+        service.close()
+        return None, error_type
+    return service, None
+
+
 async def _maybe_close(obj: Any) -> None:
     close = getattr(obj, "close", None) or getattr(obj, "aclose", None)
     if close is None:
@@ -82,6 +96,8 @@ async def lifespan(app: FastAPI):
     app.state.cache = _build_cache(settings)
     app.state.vector_store = None
     app.state.rag_service = None
+    app.state.ingestion_service = None
+    app.state.rag_startup_error = None
     try:
         if settings.qdrant_url:
             qdrant_api_key = (
@@ -97,8 +113,12 @@ async def lifespan(app: FastAPI):
             )
             await app.state.vector_store.ensure_collection()
         if settings.rag_enabled:
-            app.state.rag_service = RAGService(RAGConfig.from_settings(settings))
-            await run_in_threadpool(app.state.rag_service.build)
+            app.state.rag_service, app.state.rag_startup_error = await run_in_threadpool(
+                _initialize_rag,
+                settings,
+            )
+            if app.state.rag_service is not None:
+                app.state.ingestion_service = app.state.rag_service.ingestion_service
         yield
     finally:
         await _maybe_close(app.state.openai)
@@ -121,7 +141,7 @@ def _cors_origins() -> list[str]:
 
 app = FastAPI(
     title="Support Copilot LLM Service",
-    version="0.5.3",
+    version="0.5.5",
     description="FastAPI wrapper for async Support Copilot LLM calls.",
     lifespan=lifespan,
 )
@@ -206,5 +226,6 @@ app.include_router(health.router)
 app.include_router(models.router)
 app.include_router(chat.router)
 app.include_router(rag.router)
+app.include_router(documents.router)
 app.include_router(admin_routes.router)
 app.include_router(chat_routes.router)

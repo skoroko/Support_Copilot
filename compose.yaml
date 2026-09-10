@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}
     command:
       - sh
       - -c
@@ -24,6 +26,11 @@ services:
       QDRANT_API_KEY: ${QDRANT_API_KEY}
       QDRANT_COLLECTION: ${QDRANT_COLLECTION:-documents}
       EMBEDDING_DIM: ${EMBEDDING_DIM:-1024}
+      RAG_DATA_DIR: /app/data
+      RAG_REBUILD_ON_START: "false"
+    volumes:
+      - ./data:/app/data
+      - ./var:/app/var
     depends_on:
       phoenix:
         condition: service_started
@@ -78,6 +85,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}
     command: ["python", "-m", "bot"]
     ports:
       - "${BOT_HOST_PORT:-19000}:9000"

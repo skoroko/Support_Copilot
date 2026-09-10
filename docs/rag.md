@@ -1,106 +1,157 @@
-# RAG для базы знаний GTS NX
+# Корпоративный RAG-ассистент Support Copilot
 
-## Конфигурация и версии
+## Архитектура ingestion
 
-Реализация использует отдельный корпус `data/rag-block-03` и две несовместимые по payload коллекции Qdrant. Настройки не захардкожены: модель LLM, модель и размерность embedding, параметры chunking, top-k, порог ответа, пути и имена коллекций задаются переменными окружения.
+```mermaid
+flowchart LR
+    A[Файлы в data/category] --> B[PDF / DOCX / HTML / MD readers]
+    U[POST /documents/upload] --> A
+    B --> C[Metadata enrichment]
+    C --> D[SentenceSplitter 512 / 64]
+    D --> E[OpenAI embeddings]
+    S[SimpleDocumentStore] --> F[IngestionPipeline UPSERTS]
+    E --> F
+    F --> Q[(Qdrant)]
+    F --> S
+```
 
-| Компонент | Зафиксированная версия / значение |
+`app/services/ingestion.py` поддерживает PDF, DOCX, HTML, Markdown, TXT и CHM.
+Для PDF используется `PyMuPDFReader`, для DOCX — `DocxReader`, для HTML —
+`HTMLTagReader`, для Markdown — `MarkdownReader`. Ошибка одного файла не
+останавливает пакет: файл получает суффикс `.failed`, а путь попадает в итоговую
+статистику и лог.
+
+Каждый документ получает метаданные:
+
+- `source` и `file_name` — имя исходного файла;
+- `file_path` — нормализованный путь;
+- `last_modified` и `created_at` — время из файловой системы;
+- `author` — автор из DOCX core properties, если заполнен;
+- `category` — первый каталог после `data/`;
+- `version` — версия вида `v2`, `2.1` или дата из имени файла.
+
+Технические поля пути и времени остаются доступными для фильтров и цитат, но
+исключены из embedding через `excluded_embed_metadata_keys`. Детерминированный
+document id и сохранённый `SimpleDocumentStore` позволяют
+`DocstoreStrategy.UPSERTS` переиндексировать только изменившиеся документы.
+Коллекция при старте приложения не удаляется.
+
+## Архитектура query и диалога
+
+```mermaid
+flowchart LR
+    Q[Вопрос] --> H{Есть история chat_id?}
+    P[(Postgres history)] --> H
+    H -->|да| C[Condense follow-up]
+    H -->|нет| R[Retrieve top_k=10]
+    C --> R
+    R --> X{BGE reranker включён?}
+    X -->|да| N[Top 5]
+    X -->|нет| N
+    N --> G{top cosine score >= threshold?}
+    G -->|нет| D[Честный ответ: данных нет]
+    G -->|да| L[LLM по контексту]
+    L --> A[Ответ с цитатами 1, 2]
+    D --> O[JSON / SSE]
+    A --> O
+    O --> T[Telegram editMessageText + feedback]
+```
+
+Retrieval и генерация разделены: сначала выбираются 10 кандидатов, затем
+опциональный `BAAI/bge-reranker-v2-m3` оставляет 5, после чего код проверяет
+максимальный cosine score. При низком score LLM не вызывается. Это дополняет
+системный prompt, который запрещает отвечать вне переданного контекста.
+
+Для короткого follow-up RAG объединяет последний пользовательский вопрос с
+уточнением. Поэтому пара «Каков срок возврата?» → «А для электроники?» идёт в
+retrieval как самостоятельный запрос, а полная история ответа по-прежнему
+хранится в Postgres.
+
+## Параметры Б5.4 и confidence threshold
+
+| Параметр | Значение |
 |---|---|
-| `llama-index` | `0.14.24` |
-| `llama-index-vector-stores-qdrant` | `0.10.3` |
-| `llama-index-readers-file` | `0.7.0` |
-| `qdrant-client` / Qdrant Server | `1.19.0` / `1.19.0` |
-| `pylibmspack` | `0.4.0` |
-| Embedding | `text-embedding-3-large`, 1024 dimensions |
-| Distance | Cosine |
-| LLM | `gpt-5.4-mini` |
-| Chunking | `512`, overlap `64` |
-| Retrieval | `top_k=3`, fallback threshold `0.35` |
-| LlamaIndex collection | `rag_block_03` |
-| Bare-metal collection | `rag_block_03_baremetal` |
+| Chunking | `recursive` / `SentenceSplitter` |
+| `chunk_size` | `512` токенов |
+| `chunk_overlap` | `64` токена |
+| Retrieval | `top_k=10` |
+| Re-ranker | optional `BAAI/bge-reranker-v2-m3`, `top_n=5` |
+| Embedding | `text-embedding-3-large`, 1024 dimensions, cosine |
+| `rag_score_threshold` | `0.45` |
 
-У коллекции LlamaIndex payload содержит служебное поле `_node_content`. Ручная реализация хранит плоский payload `text`, `source`, `chunk_index`, поэтому повторное использование коллекции из ДЗ 5.2 или общей коллекции для обеих реализаций привело бы к несовместимому контракту. Обе новые коллекции изолированы от `documents` из ДЗ 5.2.
+Значение `0.3` из задания является стартовым ориентиром для
+`text-embedding-3-small`. В проекте сохранена выбранная в Б5.1 модель
+`text-embedding-3-large` с 1024 измерениями. На прогоне Б5.3 релевантные top-1
+результаты начинались примерно с `0.611`, а запрос о несуществующих цене и SLA
+получал `0.403`. Поэтому для текущего корпуса выбран начальный порог `0.45`: он
+отсекает наблюдавшийся out-of-domain результат и сохраняет запас до минимального
+наблюдавшегося релевантного score. Порог задаётся через
+`RAG_SCORE_THRESHOLD` и должен повторно калиброваться на golden-наборе после
+смены модели или корпуса.
 
-## Корпус
+`sentence-transformers` вынесен в `requirements-reranker.txt`: при
+`RAG_RERANKER_ENABLED=false` Docker не загружает многогигабайтный CUDA/PyTorch
+стек. Если включить переменную, тот же `docker compose up -d --build`
+автоматически добавит re-ranker в образ без ручного `pip install`.
 
-| № | Документ | Язык | Назначение |
-|---:|---|---|---|
-| 1 | `02_User Manual_Chapter2_General Information.pdf` | EN | общая информация |
-| 2 | `03_User Manual_Chapter3_Geometry.pdf` | EN | геометрия |
-| 3 | `04_User Manual_Chapter4_Mesh.pdf` | EN | построение сетки |
-| 4 | `05_User Manual_Chapter5_Analysis Method.pdf` | EN | методы анализа |
-| 5 | `02_Пособие…Глава 2. Узел_Степень свободы_Система координат.pdf` | RU | узлы и степени свободы |
-| 6 | `03_Пособие…Глава 3. Элементы.pdf` | RU | конечные элементы |
-| 7 | `04_Пособие…Глава 4. Материалы.pdf` | RU | модели материалов |
-| 8 | `05_Пособие…Глава 5. Алгоритмы.pdf` | RU | нелинейные алгоритмы |
-| 9 | `GTS_NX 2021.chm` | RU | справочная система; отдельный `CHMReader` |
-| 10 | `Руководство по расчетам midas Civil 2020.pdf` | RU | намеренно нерелевантный документ |
+## Корпус и воспроизводимость
 
-`SimpleDirectoryReader` читает PDF/DOCX/MD/TXT и получает `.chm` через `CHMReader`. Загрузчик CHM безопасно перечисляет HTML-разделы, учитывает объявленную кодировку (в данном файле Windows-1251), удаляет script/style и создаёт отдельный LlamaIndex `Document` для каждой страницы. Для кириллических путей он делает временную ASCII-копию архива: это обход ограничения нативной библиотеки, а не изменение исходного документа. Локальный smoke-тест прочитал 494 содержательных страницы без символов замены; две страницы с несовместимыми именами пропущены изолированно.
+Фактическая разбивка находится в `docs/data_inventory.md`. Корпус содержит 70
+исходных файлов: 9 PDF, 60 безопасных HTML-разделов, извлечённых из реальной
+CHM-справки, и исходный CHM. Общий размер индексируемых файлов — 82 110 308
+байт. Это превышает требования 30 документов и checkpoint 50+.
 
-Полностью локальный прогон loader + splitter получил 1934 документа/страницы и 3682 чанка (2 986 001 символ с учётом overlap). В Linux-контейнере CHM-loader прочитал все 496 HTML-страниц без символов замены. Машиночитаемая сводка сохранена в `homework_5_3/results/offline_validation.json`.
-
-## Две реализации
-
-| Критерий | LlamaIndex (`app/services/rag.py`) | Bare metal (`app/services/rag_baremetal.py`) |
-|---|---|---|
-| Строк кода сервиса (ingestion + query, без импортов и CLI) | 106 | 153 |
-| Поддержка форматов из коробки | PDF, DOCX, MD, TXT и другие readers через `SimpleDirectoryReader` | Только явно реализованные PDF, DOCX, MD, TXT |
-| Что дописано для PDF/DOCX | Достаточно установить `llama-index-readers-file`; выбор reader автоматический | Явный обход страниц `pypdf` и абзацев `python-docx` |
-| Поддержка CHM | Общий `CHMReader` подключён через `file_extractor` | Тот же `CHMReader` вызывается вручную |
-| Что дописать для batch-ingestion / async | Настроить ingestion pipeline и async-методы LlamaIndex | Самостоятельно реализовать очереди, batching, rate limit и конкурентность |
-| Где удобнее дебажить `top_score` / `source_nodes` | `source_nodes` готовы, но часть преобразований скрыта фреймворком | Прозрачные `query_points`, payload и scores на каждом шаге |
-| Где гибче подменять re-ranker / chunker | Готовые интерфейсы и компоненты LlamaIndex | Полный контроль, но каждый контракт и интеграцию нужно писать и тестировать |
-| Embedding и хранилище | `OpenAIEmbedding`, `QdrantVectorStore`, `StorageContext` | `EmbeddingService`, `QdrantClient`, `PointStruct`, `upload_points` |
-| Генерация | Query engine в режиме `compact` | Явный `chat.completions.create` с `system + context + question` |
-
-Для дипломного проекта остаётся LlamaIndex-реализация: она уменьшает объём поддерживаемого инфраструктурного кода и даёт готовые расширения для loaders и retrieval. Ручная версия сохраняется как проверяемый baseline и помогает понимать фактический поток данных. Отдельные коллекции позволяют сравнивать варианты без миграции служебного payload. При переходе к production потребуется добавить ACL-фильтры, инкрементальную индексацию и наблюдаемость качества retrieval.
-
-## API и жизненный цикл
-
-`POST /rag/query` принимает только `{"question": "..."}` и возвращает `answer`, `top_score`, а также минимум три объекта `sources` с `text`, `source`, `score`. Endpoint отделён от `/chat`. При `RAG_ENABLED=true` индекс строится ровно один раз в FastAPI lifespan; повторный вызов `build()` идемпотентен. По умолчанию RAG выключен, потому что индексация отправляет фрагменты руководств внешнему embedding provider; включать его следует только после разрешения на такую передачу.
-
-## Согласованные проверочные вопросы
-
-Полные ожидаемые ответы, источники и гипотезы хранятся в `homework_5_3/questions.json`.
-
-| Тип | Вопрос | Ожидаемый top-1 / результат |
-|---|---|---|
-| прямой RU | Какие шесть степеней свободы используются в конструкционном расчёте GTS NX и как они соответствуют r, θ, z? | русская глава 2; DOF 1–3 — перемещения, 4–6 — повороты |
-| прямой EN→RU | Какие два типа объёмной сетки строит AUTO-SOLID и из каких элементов формируется гибридная сетка? | английская глава 4; tetra и hex-centered hybrid из hex/pyramid/tetra |
-| прямой EN→RU | Почему используется накопительная модель стадий, с какого состояния начинается расчёт и какие sets переключаются? | английская глава 5; in-situ, накопление истории, mesh/boundary/load/contact |
-| синтез | Почему недостаточно выбрать только 3D-элемент и что согласовать по элементу, материалу и алгоритму? | русские главы 3–5 в top-3; element + Mohr–Coulomb + convergence/bisection |
-| вне базы | Каковы цена поддержки GTS NX в РФ в 2026 году и SLA критических обращений? | честный fallback; сведений в корпусе нет |
-
-### Прогон 5 вопросов
-
-Реальный прогон выполнен 9 сентября 2026 года после явного разрешения владельца документов. Полные ответы, три найденных фрагмента и точные scores сохранены в `homework_5_3/results/rag_evaluation.json`. Оценка ниже относится к содержательной релевантности ответа; высокий cosine score сам по себе не означает, что контекст достаточен.
-
-| Backend | Тип / вопрос | Краткий фактический ответ | Top-1 source и score | Релевантность | Гипотеза и результат |
-|---|---|---|---|---|---|
-| LlamaIndex | хороший: 6 DOF | DOF 1–3 — перемещения r, θ, z; 4–6 — повороты | `02_Пособие…Глава 2…pdf`, 0.679 | Да, но неполно | Русская глава найдена top-1; примечание о поровом давлении пропущено, Civil попал в top-3 |
-| LlamaIndex | хороший: AUTO-SOLID | Тетраэдральная и преимущественно гексаэдральная; переход дают пирамиды | `GTS_NX 2021.chm::…3D(Auto-Solid).htm`, 0.682 | Да | CHM дал точный русскоязычный ответ; ожидаемый английский PDF не попал в top-3 |
-| LlamaIndex | хороший: стадии | Начальные природные напряжения; изменения накапливаются, перечислены активируемые данные | `GTS_NX 2021.chm::…Construction_Stage_Analysis.htm`, 0.681 | Частично | Релевантный раздел найден, но не раскрыты сохранение нагрузок и четыре типа sets в требуемой формулировке |
-| LlamaIndex | средний: нелинейный расчёт | Названы элемент, Мизес и Newton–Raphson | `03_Пособие…Глава 3…pdf`, 0.611 | Нет | Контекста top-3 не хватило: глава материалов потеряна, Civil занял одно место; Мора–Кулон и бисекция не найдены |
-| LlamaIndex | вне базы: цена/SLA | Сообщено, что сведений в базе нет | `GTS_NX 2021.chm::…System_Requirements.htm`, 0.403 | Да | LLM-fallback сработал корректно, хотя score был выше порога 0.35 |
-| Bare metal | хороший: 6 DOF | DOF 1–3 — перемещения r, θ, z; 4–6 — повороты | `02_Пособие…Глава 2…pdf#page=3`, 0.725 | Да, но неполно | Точная страница найдена top-1; примечание о поровом давлении пропущено, Civil попал в top-3 |
-| Bare metal | хороший: AUTO-SOLID | Тетраэдральная и гексаэдральная гибридная из hex/pyramid/tetra | `GTS_NX 2021.chm::…3D(Auto-Solid).htm`, 0.726 | Да | Точный CHM top-1, ожидаемый английский PDF найден вторым; межъязыковой поиск подтвердился |
-| Bare metal | хороший: стадии | Описана последовательность стадий и переключение элементов, нагрузок и границ | `GTS_NX 2021.chm::…Construction_Stage_Analysis.htm`, 0.723 | Частично | Релевантный раздел найден, но нет начальных напряжений, сохранения нагрузок и contact sets |
-| Bare metal | средний: нелинейный расчёт | Дан общий ответ об анизотропии и эквивалентно-линейном методе | `GTS_NX 2021.chm::…Analysis_Control_(Option).htm`, 0.631 | Нет | Все три ожидаемые русские главы потеряны; элемент, Мора–Кулон, критерии сходимости и бисекция не синтезированы |
-| Bare metal | вне базы: цена/SLA | Сообщено, что цены и SLA в контексте отсутствуют | `GTS_NX 2021.chm::…About_GTS.htm`, 0.454 | Да | LLM-fallback сработал корректно, несмотря на формально высокий score |
-
-Обе реализации подтвердили 2 полностью релевантных ответа, 2 частичных и 1 нерелевантный ответ; вопрос вне базы обработан корректно в обоих случаях. Bare-metal чаще возвращал более высокий cosine score, однако значения нельзя напрямую считать качеством ответа: способы chunking различаются. Главная обнаруженная проблема — `top_k=3` не обеспечивает покрытие трёх нужных глав для multi-document запроса; для следующего инкремента нужны query decomposition или расширенный retrieval с re-ranking.
-
-Команда прогона намеренно требует подтверждающий флаг и сохраняет полный машинно-читаемый результат:
+Офлайн-подготовка корпуса без сети:
 
 ```powershell
-python scripts/evaluate_rag.py --backend all --allow-external-data-transfer
+python scripts/download_data.py --from-chm "data/rag-block-03/GTS_NX 2021.chm" --output-dir data/gts_nx_help_html --limit 60
 ```
 
-Без флага скрипт завершится до индексации и ничего не отправит провайдеру.
-
-Одиночный самостоятельный запуск LlamaIndex-сервиса:
+Полностью локальная проверка ingestion:
 
 ```powershell
-python -m app.services.rag "Какие типы сетки строит AUTO-SOLID?" --allow-external-data-transfer
+python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline --dimensions 64 --docstore-path var/homework_5_5_docstore.json --offline-qdrant-path var/homework_5_5_qdrant
 ```
+
+На первом прогоне 10 сентября 2026 года получено `1992 changed`, 3508 чанков,
+ошибок нет. Повторный запуск дал `0 changed, 1992 unchanged, 0 failed` и не
+создал новых чанков.
+
+Для OpenAI ingestion нужно осознанно установить
+`RAG_ALLOW_EXTERNAL_DATA_TRANSFER=true`; без этого документы не отправляются
+внешнему провайдеру. Если embedding-провайдер недоступен, API продолжает
+работать, а `/rag/query` отвечает `503 rag_unavailable`: внешний сбой не
+запускает бесконечный restart loop всего приложения.
+
+## HTTP и Telegram
+
+| Endpoint | Назначение |
+|---|---|
+| `POST /rag/query` | Синхронный вопрос; optional history; ответ и sources |
+| `POST /chats/{id}/messages` | Диалоговый SSE: token, message, `event: sources`, done |
+| `POST /documents/upload` | PDF/DOCX/HTML/MD, сохранение в `data/`, ответ 202 и background UPSERT |
+| `POST /chats/{id}/messages/{mid}/feedback` | Оценка `up/down` вместе с показанными sources |
+
+Объект источника имеет поля `id`, `file_name`, `page`, `score`, `snippet` и
+`confident`. Ответ использует нумерованные ссылки `[1]`, `[2]`. SSE-токены
+сериализуются JSON, поэтому переносы строк не разрывают событие; массив
+источников отправляется отдельным финальным `event: sources` после legacy-маркера
+`done`.
+
+Telegram-бот читает этот же endpoint, создаёт одно сообщение и обновляет его
+через `editMessageText` с debounce 0.8 секунды, а после ответа показывает footer
+с именами файлов и страницами. Кнопки 👍/👎 сохраняют не только голос, но и
+показанный пользователю массив источников.
+
+## Запуск
+
+```powershell
+Copy-Item .env.example .env
+# заполнить OPENAI_API_KEY, TELEGRAM_BOT_TOKEN, INTERNAL_TOKEN,
+# QDRANT_API_KEY и после согласования включить RAG_ENABLED и transfer opt-in
+docker compose up -d --build
+```
+
+Compose поднимает `app`, `qdrant`, `redis`, `bot`, а также уже используемые
+Postgres и Phoenix. `data/`, docstore и Qdrant/Postgres/Redis volumes
+персистентны; ручные `docker exec` и `pip install` не нужны.

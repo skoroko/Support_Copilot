@@ -19,6 +19,8 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("UV_LINK_MODE=copy", dockerfile)
         self.assertIn("UV_PYTHON_DOWNLOADS=0", dockerfile)
         self.assertIn("COPY requirements.txt README.md .env.example ./", dockerfile)
+        self.assertIn("COPY requirements-reranker.txt ./", dockerfile)
+        self.assertIn("ARG INSTALL_RERANKER=false", dockerfile)
         self.assertIn("COPY app ./app", dockerfile)
         self.assertIn("useradd --create-home --uid 1000 appuser", dockerfile)
         self.assertIn("COPY --from=builder --chown=appuser:appuser /app /app", dockerfile)
@@ -61,6 +63,7 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}", compose)
         self.assertIn("qdrant_storage:/qdrant/storage", compose)
         self.assertIn("qdrant_storage: {}", compose)
+        self.assertIn("INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}", compose)
         self.assertIn("bash -c 'echo > /dev/tcp/127.0.0.1/6333'", compose)
 
     def test_dockerignore_excludes_secrets_tests_and_python_artifacts(self) -> None:

@@ -12,21 +12,34 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 
 @router.post("/query", response_model=RAGResponse, summary="Answer from the GTS NX knowledge base")
 async def query_rag(payload: RAGQuery, request: Request) -> RAGResponse:
-    validation = validate_input(payload.question)
-    if not validation.ok:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "security_input_blocked",
-                "message": "Request blocked by input security policy",
-                "rule": validation.rule,
-            },
-        )
+    for text in [
+        payload.question,
+        payload.standalone_question,
+        *(message.content for message in payload.history or [] if message.role == "user"),
+    ]:
+        if text is None:
+            continue
+        validation = validate_input(text)
+        if not validation.ok:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "security_input_blocked",
+                    "message": "Request blocked by input security policy",
+                    "rule": validation.rule,
+                },
+            )
     service = getattr(request.app.state, "rag_service", None)
     if service is None:
         raise HTTPException(
             status_code=503,
             detail={"code": "rag_unavailable", "message": "RAG is disabled or the index is not ready"},
         )
-    result = await run_in_threadpool(service.answer, payload.question)
+    kwargs = {}
+    if payload.history:
+        kwargs["history"] = payload.history
+    if payload.standalone_question:
+        kwargs["standalone_question"] = payload.standalone_question
+    method = getattr(service, "query", None) or service.answer
+    result = await run_in_threadpool(method, payload.question, **kwargs)
     return RAGResponse.model_validate(result)

@@ -14,8 +14,13 @@ RUN python -m venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY requirements.txt README.md .env.example ./
+COPY requirements-reranker.txt ./
+ARG INSTALL_RERANKER=false
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --python /app/.venv/bin/python -r requirements.txt
+    uv pip install --python /app/.venv/bin/python -r requirements.txt && \
+    if [ "$INSTALL_RERANKER" = "true" ]; then \
+        uv pip install --python /app/.venv/bin/python -r requirements-reranker.txt; \
+    fi
 
 COPY app ./app
 COPY bot ./bot

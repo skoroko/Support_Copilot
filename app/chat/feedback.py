@@ -12,12 +12,14 @@ FeedbackValue = Literal["up", "down"]
 
 class FeedbackIn(BaseModel):
     value: FeedbackValue
+    shown_sources: list[dict[str, Any]] = Field(default_factory=list, max_length=10)
 
 
 class MessageFeedback(BaseModel):
     message_id: UUID
     owner_external_id: str
     value: FeedbackValue
+    shown_sources: list[dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -34,6 +36,7 @@ class FeedbackService:
         chat_id: UUID,
         message_id: UUID,
         value: FeedbackValue,
+        shown_sources: list[dict[str, Any]] | None = None,
     ) -> MessageFeedback:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
@@ -46,5 +49,6 @@ class FeedbackService:
                 message_id=message_id,
                 owner_external_id=chat.owner_external_id,
                 value=value,
+                shown_sources=list(shown_sources or []),
             )
         )
