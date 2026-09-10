@@ -40,7 +40,7 @@ def answer_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int) ->
     token = encode_message_context(chat_id, message_id)
     builder = InlineKeyboardBuilder()
     if source_count > 0:
-        builder.button(text=f"📚 Все источники ({source_count})", callback_data=f"src:{token}")
+        builder.button(text=f"📚 Документы ({source_count})", callback_data=f"src:{token}")
     builder.button(text="👍", callback_data=f"fb:u:{token}")
     builder.button(text="👎", callback_data=f"fb:d:{token}")
     builder.adjust(1, 2) if source_count > 0 else builder.adjust(2)
@@ -52,7 +52,7 @@ def sources_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int) -
         return None
     builder = InlineKeyboardBuilder()
     builder.button(
-        text=f"📚 Все источники ({source_count})",
+        text=f"📚 Документы ({source_count})",
         callback_data=f"src:{encode_message_context(chat_id, message_id)}",
     )
     return builder.as_markup()

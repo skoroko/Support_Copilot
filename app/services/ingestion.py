@@ -46,6 +46,7 @@ EXCLUDED_EMBED_METADATA_KEYS = frozenset(
         "last_modified",
         "author",
         "category",
+        "product",
         "version",
         "page_label",
         "page",
@@ -54,6 +55,23 @@ EXCLUDED_EMBED_METADATA_KEYS = frozenset(
     }
 )
 _VERSION_RE = re.compile(r"(?ix)(?:^|[._\-\s])v(?:ersion)?[._\-\s]*(\d+(?:[._\-]\d+){0,3})(?=$|[._\-\s])")
+_PRODUCT_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("gts_nx", re.compile(r"(?i)(?:\bgts\s+nx\b|\bgtsnx\b)")),
+    ("fea_nx", re.compile(r"(?i)(?:\bfea\s+nx\b|\bfeanx\b)")),
+    ("civil", re.compile(r"(?i)\b(?:midas\s+)?civil\b")),
+    ("gen", re.compile(r"(?i)\b(?:midas\s+)?gen\b")),
+)
+_GENERIC_MIDAS_PRODUCT_RE = re.compile(r"(?i)\bmidas\s+([a-z0-9]+(?:\s+nx)?)\b")
+_PRODUCT_ALIASES = {
+    "gts": "gts_nx",
+    "gtsnx": "gts_nx",
+    "gts_nx": "gts_nx",
+    "fea": "fea_nx",
+    "feanx": "fea_nx",
+    "fea_nx": "fea_nx",
+    "midas_civil": "civil",
+    "midas_gen": "gen",
+}
 
 
 class ExternalDataTransferRequired(PermissionError):
@@ -105,6 +123,7 @@ class IngestionConfig:
     openai_base_url: str | None = None
     chunk_size: int = 512
     chunk_overlap: int = 64
+    default_product: str = "gts_nx"
     docstore_path: Path = PROJECT_ROOT / "var" / "ingestion_docstore.json"
 
     def __post_init__(self) -> None:
@@ -118,6 +137,8 @@ class IngestionConfig:
             raise ValueError("chunk_size must be positive")
         if self.chunk_overlap < 0 or self.chunk_overlap >= self.chunk_size:
             raise ValueError("chunk_overlap must be non-negative and smaller than chunk_size")
+        if not canonical_product(self.default_product):
+            raise ValueError("default_product must not be blank")
 
     @classmethod
     def from_settings(cls, settings: Any) -> "IngestionConfig":
@@ -150,6 +171,7 @@ class IngestionConfig:
             openai_base_url=getattr(settings, "openai_base_url", None),
             chunk_size=getattr(settings, "rag_chunk_size", 512),
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
+            default_product=getattr(settings, "rag_product", "gts_nx"),
             docstore_path=docstore_path,
         )
 
@@ -230,6 +252,37 @@ def version_from_filename(file_name: str) -> str:
     return match.group(1).replace("_", ".").replace("-", ".") if match else "unknown"
 
 
+def canonical_product(value: str | None) -> str:
+    """Return a stable product key suitable for metadata and filters."""
+
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(value or "").casefold()).strip("_")
+    return _PRODUCT_ALIASES.get(normalized, normalized)
+
+
+def infer_product(values: Iterable[object], *, default_product: str = "gts_nx") -> str:
+    """Infer a MIDAS product from metadata-like values.
+
+    Explicit product markers always win.  Files without a marker inherit the
+    configured corpus product, which keeps generic chapter names usable while
+    still separating documents explicitly labelled for Civil, FEA NX, etc.
+    """
+
+    evidence = " ".join(str(value) for value in values if value is not None)
+    searchable = re.sub(r"[_\\/\-.]+", " ", evidence)
+    for product, pattern in _PRODUCT_RULES:
+        if pattern.search(searchable):
+            return product
+    if match := _GENERIC_MIDAS_PRODUCT_RE.search(searchable):
+        return canonical_product(match.group(1))
+    return canonical_product(default_product) or "unknown"
+
+
+def product_for_path(path: Path, *, default_product: str = "gts_nx") -> str:
+    """Classify a source by product without depending on one exact filename."""
+
+    return infer_product(path.parts, default_product=default_product)
+
+
 def _optional_author(path: Path) -> str | None:
     try:
         if path.suffix.lower() == ".docx":
@@ -249,7 +302,13 @@ def _optional_author(path: Path) -> str | None:
     return None
 
 
-def enrich_metadata(document: Document, *, source_path: Path, data_root: Path) -> Document:
+def enrich_metadata(
+    document: Document,
+    *,
+    source_path: Path,
+    data_root: Path,
+    default_product: str = "gts_nx",
+) -> Document:
     """Attach stable citation metadata while excluding it from embeddings."""
 
     stat = source_path.stat()
@@ -262,6 +321,7 @@ def enrich_metadata(document: Document, *, source_path: Path, data_root: Path) -
             "created_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
             "last_modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
             "category": category_for_path(source_path, data_root=data_root),
+            "product": product_for_path(source_path, default_product=default_product),
             "version": version_from_filename(source_path.name),
         }
     )
@@ -295,7 +355,25 @@ def _file_extractors() -> dict[str, Any]:
     }
 
 
-def _load_one_file(path: Path, *, data_root: Path) -> list[Document]:
+def _preserve_pdf_page_metadata(documents: Sequence[Document], path: Path) -> None:
+    """Attach 1-based pages when PyMuPDF returns one Document per PDF page."""
+
+    if path.suffix.lower() != ".pdf":
+        return
+    total_pages = len(documents)
+    for page, document in enumerate(documents, start=1):
+        metadata = dict(document.metadata or {})
+        metadata["page"] = page
+        metadata.setdefault("total_pages", total_pages)
+        document.metadata = metadata
+
+
+def _load_one_file(
+    path: Path,
+    *,
+    data_root: Path,
+    default_product: str = "gts_nx",
+) -> list[Document]:
     reader = SimpleDirectoryReader(
         input_files=[path],
         file_extractor=_file_extractors(),
@@ -303,6 +381,7 @@ def _load_one_file(path: Path, *, data_root: Path) -> list[Document]:
         raise_on_error=True,
     )
     documents = reader.load_data()
+    _preserve_pdf_page_metadata(documents, path)
     nonempty = [
         document
         for document in documents
@@ -310,7 +389,15 @@ def _load_one_file(path: Path, *, data_root: Path) -> list[Document]:
     ]
     if not nonempty:
         raise DocumentLoadError(f"No readable text found in {path.name}")
-    return [enrich_metadata(document, source_path=path, data_root=data_root) for document in nonempty]
+    return [
+        enrich_metadata(
+            document,
+            source_path=path,
+            data_root=data_root,
+            default_product=default_product,
+        )
+        for document in nonempty
+    ]
 
 
 def _failed_path(path: Path) -> Path:
@@ -387,7 +474,13 @@ class IngestionService:
         failures: list[str] = []
         for path in source_files:
             try:
-                documents.extend(_load_one_file(path, data_root=self.config.data_dir))
+                documents.extend(
+                    _load_one_file(
+                        path,
+                        data_root=self.config.data_dir,
+                        default_product=self.config.default_product,
+                    )
+                )
             except Exception:
                 logger.exception("Could not load corpus file %s", path)
                 moved = _failed_path(path)

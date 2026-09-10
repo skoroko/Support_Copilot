@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+from difflib import SequenceMatcher
 import json
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Any, Callable, Mapping, Sequence
 
 from llama_index.core import VectorStoreIndex
@@ -14,7 +16,7 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance
 
-from app.services.ingestion import IngestionConfig, IngestionService
+from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
 from app.services.reranker import BGEReranker, RerankCandidate
 
 
@@ -26,6 +28,12 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 После каждого утверждения указывай ссылки на использованные фрагменты в формате [1], [2].
 """
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
+MAX_CONTEXT_SOURCES = 5
+MAX_CHUNKS_PER_FILE = 2
+MAX_RAW_CANDIDATES = 30
+RAW_CANDIDATE_MULTIPLIER = 3
+NEAR_DUPLICATE_RATIO = 0.9
+_CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 
 HistoryItem = Mapping[str, Any] | Any
 CondenseHook = Callable[[str, Sequence[HistoryItem]], str | None]
@@ -44,6 +52,7 @@ class RAGConfig:
     chunk_size: int = 512
     chunk_overlap: int = 64
     top_k: int = 10
+    target_product: str = "gts_nx"
     min_score: float = 0.3
     rerank_enabled: bool = False
     rerank_top_n: int = 5
@@ -64,6 +73,8 @@ class RAGConfig:
             raise ValueError("chunk_overlap must be smaller than chunk_size")
         if self.top_k < 3:
             raise ValueError("top_k must be at least 3")
+        if not canonical_product(self.target_product):
+            raise ValueError("target_product must not be blank")
         if self.rerank_top_n < 1:
             raise ValueError("rerank_top_n must be positive")
         if self.reranker_batch_size < 1:
@@ -103,6 +114,7 @@ class RAGConfig:
             chunk_size=getattr(settings, "rag_chunk_size", 512),
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             top_k=getattr(settings, "rag_top_k", 10),
+            target_product=getattr(settings, "rag_product", "gts_nx"),
             min_score=float(score_threshold),
             rerank_enabled=bool(
                 getattr(settings, "rag_reranker_enabled", getattr(settings, "rag_rerank_enabled", False))
@@ -187,7 +199,7 @@ class RAGService:
         )
         # Retrieval is deliberately separated from generation.  The score guard
         # below must run before an LLM sees any retrieved text.
-        self._retriever = self._index.as_retriever(similarity_top_k=self.config.top_k)
+        self._retriever = self._index.as_retriever(similarity_top_k=self._raw_candidate_limit())
         return self
 
     def answer(
@@ -210,8 +222,11 @@ class RAGService:
 
         self._require_external_transfer_allowed("embed a retrieval question")
         retrieval_question = self._standalone_question(question, history, standalone_question)
-        retrieved = list(self._retriever.retrieve(retrieval_question))[: self.config.top_k]
-        ranked = self._rerank(retrieval_question, retrieved)
+        retrieved = list(self._retriever.retrieve(retrieval_question))[: self._raw_candidate_limit()]
+        product_candidates = [item for item in retrieved if self._matches_target_product(item)]
+        diverse_candidates = self._diversify(product_candidates, limit=self._raw_candidate_limit())
+        ranked = self._rerank(retrieval_question, diverse_candidates)
+        ranked = self._diversify(ranked, limit=MAX_CONTEXT_SOURCES)
         sources = [self._source_from_node(item) for item in ranked]
         # Cosine similarity remains the confidence signal even when a
         # cross-encoder changes presentation order.  Cross-encoder scores are
@@ -277,6 +292,7 @@ class RAGService:
                     openai_base_url=self.config.openai_base_url,
                     chunk_size=self.config.chunk_size,
                     chunk_overlap=self.config.chunk_overlap,
+                    default_product=self.config.target_product,
                     docstore_path=docstore_path,
                 ),
                 client=self.client,
@@ -337,6 +353,71 @@ class RAGService:
         )
         return [source_nodes[int(candidate.doc_id)] for candidate in reranked]
 
+    def _matches_target_product(self, source_node: Any) -> bool:
+        """Filter both new product metadata and legacy payloads consistently."""
+
+        metadata = source_node.node.metadata or {}
+        explicit = canonical_product(str(metadata.get("product") or ""))
+        if explicit:
+            product = explicit
+        else:
+            product = infer_product(
+                (
+                    metadata.get("file_name"),
+                    metadata.get("source"),
+                    metadata.get("file_path"),
+                    metadata.get("category"),
+                ),
+                default_product=self.config.target_product,
+            )
+        return product == canonical_product(self.config.target_product)
+
+    def _raw_candidate_limit(self) -> int:
+        return min(MAX_RAW_CANDIDATES, max(MAX_CONTEXT_SOURCES, self.config.top_k * RAW_CANDIDATE_MULTIPLIER))
+
+    def _diversify(self, source_nodes: Sequence[Any], *, limit: int) -> list[Any]:
+        """Remove duplicate chunks and cap document dominance before the LLM."""
+
+        selected: list[Any] = []
+        selected_texts: list[str] = []
+        file_counts: dict[str, int] = {}
+        for source_node in source_nodes:
+            metadata = source_node.node.metadata or {}
+            source = str(
+                metadata.get("file_name")
+                or metadata.get("source")
+                or metadata.get("file_path")
+                or source_node.node.node_id
+            )
+            file_key = Path(source.partition("#page=")[0]).name.casefold()
+            if file_counts.get(file_key, 0) >= MAX_CHUNKS_PER_FILE:
+                continue
+            normalized_text = self._normalized_chunk_text(self._node_text(source_node))
+            if any(self._near_duplicate(normalized_text, previous) for previous in selected_texts):
+                continue
+            selected.append(source_node)
+            selected_texts.append(normalized_text)
+            file_counts[file_key] = file_counts.get(file_key, 0) + 1
+            if len(selected) >= limit:
+                break
+        return selected
+
+    @staticmethod
+    def _normalized_chunk_text(text: str) -> str:
+        return " ".join(re.findall(r"\w+", text.casefold()))
+
+    @staticmethod
+    def _near_duplicate(candidate: str, previous: str) -> bool:
+        if not candidate or not previous:
+            return candidate == previous
+        if candidate == previous:
+            return True
+        # Short snippets frequently share boilerplate while carrying a
+        # different key/value; exact matching is the safer rule for them.
+        if min(len(candidate), len(previous)) < 80:
+            return False
+        return SequenceMatcher(None, candidate, previous, autojunk=False).ratio() >= NEAR_DUPLICATE_RATIO
+
     def _standalone_question(
         self,
         question: str,
@@ -374,7 +455,8 @@ class RAGService:
         prompt = (
             f"{RAG_SYSTEM_PROMPT}\n\nКонтекст:\n{context}\n\n"
             f"Вопрос пользователя: {question}\n\n"
-            "Дай краткий проверяемый ответ. Используй только контекст и добавь ссылки [1], [2] к утверждениям."
+            f"Дай краткий проверяемый ответ. Используй только контекст и ссылайся только на "
+            f"существующие номера от [1] до [{len(sources)}]."
         )
         response = self._language_model().complete(prompt)
         answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
@@ -389,7 +471,17 @@ class RAGService:
         later resolves the citations that are already present in ``answer``.
         """
 
-        return answer
+        source_count = len(sources)
+
+        def keep_valid(match: re.Match[str]) -> str:
+            valid: list[int] = []
+            for raw_number in match.group(1).split(","):
+                number = int(raw_number.strip())
+                if 1 <= number <= source_count and number not in valid:
+                    valid.append(number)
+            return f"[{', '.join(str(number) for number in valid)}]" if valid else ""
+
+        return _CITATION_RE.sub(keep_valid, answer)
 
     @staticmethod
     def _history_value(item: HistoryItem, name: str, default: Any = None) -> Any:

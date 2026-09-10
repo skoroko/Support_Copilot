@@ -156,6 +156,7 @@ class _SettingsFields(BaseModel):
     rag_chunk_size: int = Field(default=512, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
     rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
     rag_top_k: int = Field(default=10, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
+    rag_product: str = Field(default="gts_nx", min_length=1, validation_alias=AliasChoices("RAG_PRODUCT"))
     rag_reranker_enabled: bool = Field(
         default=False,
         validation_alias=AliasChoices("RAG_RERANKER_ENABLED"),
@@ -362,6 +363,7 @@ def get_settings() -> Settings:
         rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 512),
         rag_chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP") or 64),
         rag_top_k=int(os.getenv("RAG_TOP_K") or 10),
+        rag_product=os.getenv("RAG_PRODUCT") or "gts_nx",
         rag_reranker_enabled=(
             os.getenv("RAG_RERANKER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
         ),

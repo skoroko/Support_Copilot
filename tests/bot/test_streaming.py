@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 from aiogram.enums import ParseMode
 
-from bot.handlers._common import _render_telegram_html, format_all_sources, stream_to_chat
+from bot.handlers._common import _render_telegram_html, format_all_sources, source_document_count, stream_to_chat
 
 
 async def token_stream():
@@ -84,8 +84,21 @@ def test_format_all_sources_keeps_full_original_numbering() -> None:
     sources = [{"file_name": f"manual-{index}.pdf", "page": index} for index in range(1, 4)]
 
     assert format_all_sources(sources) == (
-        "Все источники:\n[1] manual-1.pdf, стр. 1\n[2] manual-2.pdf, стр. 2\n[3] manual-3.pdf, стр. 3"
+        "Документы:\n[1] manual-1.pdf, стр. 1\n[2] manual-2.pdf, стр. 2\n[3] manual-3.pdf, стр. 3"
     )
+
+
+def test_format_all_sources_groups_same_document_and_keeps_citation_numbers() -> None:
+    sources = [
+        {"file_name": "GTS NX manual.pdf", "page": 3},
+        {"file_name": "other.pdf", "page": 9},
+        {"file_name": "GTS NX manual.pdf", "page": 7},
+    ]
+
+    assert format_all_sources(sources) == (
+        "Документы:\n[1, 3] GTS NX manual.pdf, стр. 3, 7\n[2] other.pdf, стр. 9"
+    )
+    assert source_document_count(sources) == 2
 
 
 @pytest.mark.asyncio

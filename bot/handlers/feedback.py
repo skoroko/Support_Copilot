@@ -5,7 +5,13 @@ from uuid import UUID
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
-from bot.handlers._common import BACKEND_EXCEPTIONS, _render_telegram_html, format_all_sources, get_telegram_chat_id
+from bot.handlers._common import (
+    BACKEND_EXCEPTIONS,
+    _render_telegram_html,
+    format_all_sources,
+    get_telegram_chat_id,
+    source_document_count,
+)
 from bot.keyboards.inline import decode_message_context, sources_kb
 from bot.services.backend_client import BackendClient
 
@@ -36,7 +42,9 @@ async def save_feedback(callback: CallbackQuery, backend: BackendClient) -> None
         await callback.answer("Не удалось сохранить оценку. Попробуйте позже.", show_alert=True)
         return
 
-    await callback.message.edit_reply_markup(reply_markup=sources_kb(chat_id, message_id, len(sources)))
+    await callback.message.edit_reply_markup(
+        reply_markup=sources_kb(chat_id, message_id, source_document_count(sources))
+    )
     await callback.answer("Спасибо за оценку!")
 
 

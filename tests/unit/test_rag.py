@@ -163,6 +163,116 @@ def test_rag_does_not_append_all_retrieval_candidates_as_citations() -> None:
     assert RAGService._ensure_citations(answer, [{"id": "one"}] * 10) == answer
 
 
+def test_rag_removes_citations_outside_final_source_list() -> None:
+    answer = "Подтверждено [1, 7], дополнение [0] и [2]."
+
+    assert RAGService._ensure_citations(answer, [{"id": "one"}, {"id": "two"}]) == (
+        "Подтверждено [1], дополнение  и [2]."
+    )
+
+
+def test_rag_filters_legacy_civil_payloads_and_keeps_generic_gts_manual(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(text="GTS NX degrees of freedom", metadata={"source": "03_midas GTS NX_elements.pdf"}),
+            score=0.91,
+        ),
+        NodeWithScore(
+            node=TextNode(text="Civil bridge calculation", metadata={"source": "midas Civil 2020.pdf"}),
+            score=0.89,
+        ),
+        NodeWithScore(
+            node=TextNode(text="Generic GTS chapter", metadata={"source": "05_User Manual_Chapter5.pdf"}),
+            score=0.87,
+        ),
+    ]
+    retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+    llm = FakeLLM("Ответ [1] и [2].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = retriever
+
+    result = service.answer("Какие степени свободы используются?")
+
+    assert [source["file_name"] for source in result["sources"]] == [
+        "03_midas GTS NX_elements.pdf",
+        "05_User Manual_Chapter5.pdf",
+    ]
+    assert "Civil bridge calculation" not in llm.prompts[0]
+
+
+def test_rag_limits_context_to_five_two_per_file_and_removes_duplicates(tmp_path: Path) -> None:
+    sources = [
+        ("manual-a.pdf", "identical fragment", 0.99),
+        ("manual-a.pdf", "second fragment", 0.98),
+        ("manual-a.pdf", "third fragment must be skipped", 0.97),
+        ("manual-b.pdf", "identical fragment", 0.96),
+        ("manual-b.pdf", "fourth unique fragment", 0.95),
+        ("manual-c.pdf", "fifth unique fragment", 0.94),
+        ("manual-d.pdf", "sixth unique fragment", 0.93),
+        ("manual-e.pdf", "seventh unique fragment", 0.92),
+    ]
+    nodes = [
+        NodeWithScore(
+            node=TextNode(text=text, metadata={"source": file_name}),
+            score=score,
+        )
+        for file_name, text, score in sources
+    ]
+    service = RAGService(
+        rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Вопрос")
+
+    assert len(result["sources"]) == 5
+    assert [source["file_name"] for source in result["sources"]].count("manual-a.pdf") == 2
+    assert [source["snippet"] for source in result["sources"]].count("identical fragment") == 1
+
+
+def test_expanded_raw_pool_recovers_five_contexts_after_product_and_file_caps(tmp_path: Path) -> None:
+    nodes = [
+        *[
+            NodeWithScore(
+                node=TextNode(text=f"Civil fragment {index}", metadata={"source": "midas Civil manual.pdf"}),
+                score=0.99 - index / 100,
+            )
+            for index in range(8)
+        ],
+        *[
+            NodeWithScore(
+                node=TextNode(text=f"Dominant GTS fragment {index}", metadata={"source": "GTS_NX dominant.pdf"}),
+                score=0.90 - index / 100,
+            )
+            for index in range(6)
+        ],
+        *[
+            NodeWithScore(
+                node=TextNode(text=f"Diverse GTS fragment {index}", metadata={"source": f"GTS_NX valid-{index}.pdf"}),
+                score=0.80 - index / 100,
+            )
+            for index in range(5)
+        ],
+    ]
+    service = RAGService(
+        rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Вопрос")
+
+    assert service._raw_candidate_limit() == 30
+    assert len(result["sources"]) == 5
+    assert all("Civil" not in source["file_name"] for source in result["sources"])
+    assert [source["file_name"] for source in result["sources"]].count("GTS_NX dominant.pdf") == 2
+    assert "GTS_NX valid-2.pdf" in [source["file_name"] for source in result["sources"]]
+
+
 def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) -> None:
     class FakeReranker:
         def __init__(self) -> None:
@@ -261,7 +371,7 @@ def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> Non
 
     result = service.answer("mesh")
 
-    assert len(result["sources"]) == config.top_k
+    assert len(result["sources"]) == 5
     assert result["answer"]
     assert service.build() is service
     service.close()
@@ -313,7 +423,7 @@ def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(t
         ingestion_service=existing_ingestion,
     ).build()
 
-    assert len(reused.answer("mesh")["sources"]) == base_config.top_k
+    assert len(reused.answer("mesh")["sources"]) == 5
     assert reused.ingestion_service is existing_ingestion
     reused.close()
 
