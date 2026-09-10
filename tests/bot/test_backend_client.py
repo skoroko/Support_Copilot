@@ -89,6 +89,33 @@ async def test_save_feedback_includes_sources_from_last_sse_response() -> None:
 
 
 @pytest.mark.asyncio
+async def test_message_sources_are_loaded_from_backend_when_bot_cache_is_empty() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000456")
+    message_id = UUID("00000000-0000-0000-0000-000000000999")
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.method == "GET":
+            return httpx.Response(200, json={"sources": [{"id": "returns-1", "score": 0.91}]})
+        assert json.loads(request.content) == {
+            "value": "down",
+            "shown_sources": [{"id": "returns-1", "score": 0.91}],
+        }
+        return httpx.Response(200, json={"value": "down"})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient("http://backend", client=http_client)
+        response = await client.save_feedback(chat_id, message_id, "down")
+
+    assert response == {"value": "down"}
+    assert calls == [
+        f"GET /chats/{chat_id}/messages/{message_id}/sources",
+        f"POST /chats/{chat_id}/messages/{message_id}/feedback",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_send_message_uses_multipart_for_media() -> None:
     chat_id = UUID("00000000-0000-0000-0000-000000000457")
 

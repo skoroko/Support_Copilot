@@ -382,12 +382,14 @@ class RAGService:
 
     @staticmethod
     def _ensure_citations(answer: str, sources: list[dict[str, Any]]) -> str:
-        if not sources or answer == NO_ANSWER:
-            return answer
-        numbered = " ".join(f"[{index}]" for index in range(1, len(sources) + 1))
-        if all(f"[{index}]" in answer for index in range(1, len(sources) + 1)):
-            return answer
-        return f"{answer}\n\nИсточники: {numbered}"
+        """Keep only citations the model actually used in its answer.
+
+        Retrieval may provide ten candidates, but appending references for all
+        of them falsely implies that each one supports the answer.  Telegram
+        later resolves the citations that are already present in ``answer``.
+        """
+
+        return answer
 
     @staticmethod
     def _history_value(item: HistoryItem, name: str, default: Any = None) -> Any:
