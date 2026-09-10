@@ -472,7 +472,10 @@ class IngestionService:
                     SentenceSplitter(
                         chunk_size=self.config.chunk_size,
                         chunk_overlap=self.config.chunk_overlap,
-                        include_metadata=False,
+                        # Keep citation fields on produced nodes.  They remain
+                        # excluded from embedding/LLM text by the per-document
+                        # exclusion lists set in ``enrich_metadata``.
+                        include_metadata=True,
                     ),
                     self._embedding_model(),
                 ],
