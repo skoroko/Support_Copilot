@@ -64,6 +64,14 @@ def test_loaders_and_metadata_cover_markdown_html_docx_and_txt(tmp_path: Path) -
     assert set(EXCLUDED_EMBED_METADATA_KEYS).issubset(
         next(node.excluded_embed_metadata_keys for node in stored_documents.values())
     )
+    points, _ = service._client.scroll(
+        "ingestion_test",
+        limit=10,
+        with_payload=True,
+        with_vectors=False,
+    )
+    assert points
+    assert all((point.payload or {}).get("file_name") for point in points)
 
 
 def test_second_ingest_is_idempotent_and_persists_docstore(tmp_path: Path) -> None:

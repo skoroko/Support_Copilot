@@ -27,9 +27,10 @@ docker compose config --quiet
 - feedback хранит показанные источники.
 
 Перед внешним ingestion требуется явный opt-in
-`RAG_ALLOW_EXTERNAL_DATA_TRANSFER=true`. Живой прогон с opt-in выполнен
-10 сентября 2026 года, но OpenAI остановил embedding-запрос ответом
-`403 unsupported_country_region_territory`; это ограничение провайдера, а не
-ошибка pipeline. API при таком сбое запускается в degraded-режиме, а
-`/rag/query` возвращает `503 rag_unavailable`. Полный офлайн-прогон выше
-проверяет ingestion без отправки данных в сеть.
+`RAG_ALLOW_EXTERNAL_DATA_TRANSFER=true`. Первый Docker-прогон 10 сентября
+2026 года получил от OpenAI `403 unsupported_country_region_territory`, при
+этом API корректно запустился в degraded-режиме. Повтор с Windows-хоста через
+доступный сетевой маршрут завершился успешно: `1992 changed`, 3508 чанков,
+0 ошибок; повторный запуск дал `0 changed, 1992 unchanged`. Контрольный запрос
+успешно прошёл embeddings, Qdrant retrieval и chat completion. Полный
+офлайн-прогон выше позволяет проверить ingestion без отправки данных в сеть.

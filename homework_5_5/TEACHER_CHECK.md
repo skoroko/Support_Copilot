@@ -23,6 +23,6 @@
 13. `compose.yaml` поднимает app, Qdrant, Redis и bot одной командой, сохраняя
     также существующие Postgres/Phoenix и персистентные данные.
 14. `docs/rag.md` содержит две Mermaid-схемы, параметры, threshold и endpoints.
-15. Живой OpenAI ingestion запускался с явным opt-in; региональный ответ
-    провайдера `403 unsupported_country_region_territory` корректно переводит
-    только RAG в degraded-режим, не останавливая FastAPI и Telegram-бота.
+15. Живой OpenAI ingestion выполнен с явным opt-in через доступный хостовый
+    маршрут: 3508 чанков, 0 ошибок; повторный запуск — 0 changed. Docker-маршрут
+    с региональным `403` корректно переводит только RAG в degraded-режим.
