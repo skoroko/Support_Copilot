@@ -27,6 +27,7 @@ services:
       QDRANT_COLLECTION: ${QDRANT_COLLECTION:-documents}
       EMBEDDING_DIM: ${EMBEDDING_DIM:-1024}
       RAG_DATA_DIR: /app/data
+      RAG_INGEST_ON_START: ${RAG_INGEST_ON_START:-true}
       RAG_REBUILD_ON_START: "false"
     volumes:
       - ./data:/app/data

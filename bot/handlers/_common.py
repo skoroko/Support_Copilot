@@ -4,10 +4,12 @@ import asyncio
 import time
 import uuid
 from collections.abc import AsyncIterator, Callable
+from html import escape
+import re
 from uuid import UUID
 
 import httpx
-from aiogram.enums import ChatAction
+from aiogram.enums import ChatAction, ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.types import InlineKeyboardMarkup, Message
 
@@ -18,6 +20,8 @@ from bot.services.backend_client import BackendClient
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
 EDIT_DEBOUNCE_SECONDS = 0.8
 RESPONSE_PLACEHOLDER = "Готовлю ответ…"
+_INLINE_CODE_RE = re.compile(r"(`[^`\n]+`)")
+_BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
 
 
 async def get_telegram_chat_id(message: Message, backend: BackendClient) -> UUID:
@@ -108,20 +112,34 @@ async def stream_to_chat(
     final_text = buffer or "Backend вернул пустой ответ."
     if sources_factory is not None:
         final_text += _format_sources(sources_factory())
+    final_html = _render_telegram_html(final_text)
     reply_markup = reply_markup_factory() if reply_markup_factory is not None else None
     if editable_response is not None:
         try:
             if reply_markup is None:
-                await editable_response.edit_text(final_text)
+                await editable_response.edit_text(final_html, parse_mode=ParseMode.HTML)
             else:
-                await editable_response.edit_text(final_text, reply_markup=reply_markup)
+                await editable_response.edit_text(
+                    final_html,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                )
             return buffer
         except TelegramAPIError:
             pass
     if reply_markup is None:
-        await message.bot.send_message(chat_id=message.chat.id, text=final_text)
+        await message.bot.send_message(
+            chat_id=message.chat.id,
+            text=final_html,
+            parse_mode=ParseMode.HTML,
+        )
     else:
-        await message.bot.send_message(chat_id=message.chat.id, text=final_text, reply_markup=reply_markup)
+        await message.bot.send_message(
+            chat_id=message.chat.id,
+            text=final_html,
+            parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup,
+        )
     return buffer
 
 
@@ -154,3 +172,23 @@ def _format_sources(sources: list[dict]) -> str:
         page_text = f", стр. {page}" if page is not None else ""
         lines.append(f"[{index}] {file_name}{page_text}")
     return "\n\nИсточники:\n" + "\n".join(lines)
+
+
+def _render_telegram_html(text: str) -> str:
+    """Render the small Markdown subset we request from the LLM as Telegram HTML.
+
+    Telegram does not understand Markdown unless a parse mode is explicitly
+    selected.  The streamed draft stays plain text because it is often
+    incomplete; only the final answer is converted.  Escaping happens before
+    inserting the two allowed tags, so generated text and document names
+    cannot introduce arbitrary Telegram HTML.
+    """
+
+    rendered: list[str] = []
+    for segment in _INLINE_CODE_RE.split(text):
+        if segment.startswith("`") and segment.endswith("`"):
+            rendered.append(f"<code>{escape(segment[1:-1])}</code>")
+            continue
+        escaped = escape(segment)
+        rendered.append(_BOLD_RE.sub(r"<b>\1</b>", escaped))
+    return "".join(rendered)

@@ -52,6 +52,7 @@ class RAGConfig:
     reranker_batch_size: int = 4
     condense_enabled: bool = True
     allow_external_data_transfer: bool = False
+    ingest_on_start: bool = True
     docstore_path: Path | None = None
     rebuild_on_start: bool = False
     openai_api_key: str | None = None
@@ -114,6 +115,7 @@ class RAGConfig:
             reranker_batch_size=int(getattr(settings, "rag_reranker_batch_size", 4)),
             condense_enabled=bool(getattr(settings, "rag_condense_enabled", True)),
             allow_external_data_transfer=bool(getattr(settings, "rag_allow_external_data_transfer", False)),
+            ingest_on_start=bool(getattr(settings, "rag_ingest_on_start", True)),
             docstore_path=docstore_path,
             rebuild_on_start=getattr(settings, "rag_rebuild_on_start", False),
             openai_api_key=openai_api_key.get_secret_value() if openai_api_key else None,
@@ -160,14 +162,23 @@ class RAGService:
     def build(self) -> "RAGService":
         if self._retriever is not None:
             return self
-        self._validate_corpus()
         if self.client is None:
-            self.client = QdrantClient(url=self.config.qdrant_url, api_key=self.config.qdrant_api_key, timeout=self.config.request_timeout)
+            self.client = QdrantClient(
+                url=self.config.qdrant_url,
+                api_key=self.config.qdrant_api_key,
+                timeout=self.config.request_timeout,
+            )
         # ``rag_rebuild_on_start`` is deliberately ignored here.  The homework
         # requires repeatable UPSERT ingestion, and deleting a shared
         # collection at application start would make that safety guarantee
         # impossible.
-        self._ingest_incrementally()
+        if self.config.ingest_on_start:
+            self._validate_corpus()
+            self._ingest_incrementally()
+        else:
+            # Keep the ingestion service available for later document uploads,
+            # but do not read the corpus or make embedding requests at startup.
+            self._ensure_ingestion_service()
         vector_store = QdrantVectorStore(client=self.client, collection_name=self.config.collection_name)
         self._validate_collection(self.config.collection_name)
         self._index = VectorStoreIndex.from_vector_store(
@@ -244,6 +255,12 @@ class RAGService:
             )
 
     def _ingest_incrementally(self) -> None:
+        self._ensure_ingestion_service().ingest(
+            self.config.data_dir,
+            allow_external_data_transfer=self.config.allow_external_data_transfer,
+        )
+
+    def _ensure_ingestion_service(self) -> Any:
         if self._ingestion_service is None:
             docstore_path = self.config.docstore_path or (
                 Path(__file__).resolve().parents[2] / "var" / "ingestion_docstore.json"
@@ -265,10 +282,7 @@ class RAGService:
                 client=self.client,
                 embed_model=self._embed_model,
             )
-        self._ingestion_service.ingest(
-            self.config.data_dir,
-            allow_external_data_transfer=self.config.allow_external_data_transfer,
-        )
+        return self._ingestion_service
 
     def _embedding_model(self) -> Any:
         if self._embed_model is None:

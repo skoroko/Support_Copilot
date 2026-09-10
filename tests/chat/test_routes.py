@@ -37,7 +37,12 @@ class FakeChatService:
         return {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
 
     async def send_message(
-        self, chat_id: UUID, user_content: str, *, media_refs: dict | None = None
+        self,
+        chat_id: UUID,
+        user_content: str,
+        *,
+        media_refs: dict | None = None,
+        rag_service=None,
     ) -> AsyncIterator[str]:
         self.messages[chat_id].append(
             ChatMessage(chat_id=chat_id, role="user", content=user_content, media_refs=media_refs)

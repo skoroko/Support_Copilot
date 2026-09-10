@@ -101,6 +101,12 @@ def test_rag_config_requires_overlap_and_separate_collections(tmp_path: Path) ->
         rag_config(tmp_path, baremetal_collection_name="rag_block_03")
 
 
+def test_rag_config_reads_ingest_on_start_setting() -> None:
+    config = RAGConfig.from_settings(SimpleNamespace(rag_ingest_on_start=False))
+
+    assert config.ingest_on_start is False
+
+
 class FakeRetriever:
     def __init__(self, scores: list[float]) -> None:
         self.questions: list[str] = []
@@ -255,7 +261,7 @@ def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> Non
     service.close()
 
 
-def test_llamaindex_build_reuses_existing_collection_with_incremental_ingestion(tmp_path: Path) -> None:
+def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(tmp_path: Path) -> None:
     for index in range(30):
         (tmp_path / f"document-{index}.txt").write_text(
             f"GTS NX document {index}: mesh and degrees of freedom.",
@@ -278,9 +284,14 @@ def test_llamaindex_build_reuses_existing_collection_with_incremental_ingestion(
         llm=MockLLM(max_tokens=32),
     ).build()
 
+    class IngestionMustNotRun:
+        def ingest(self, *_args: Any, **_kwargs: Any) -> None:
+            raise AssertionError("existing collection must not be ingested at startup")
+
+    existing_ingestion = IngestionMustNotRun()
     reused = RAGService(
         rag_config(
-            tmp_path,
+            tmp_path / "corpus-is-not-needed",
             collection_name="llamaindex_reuse_test",
             baremetal_collection_name="baremetal_reuse_test",
             embedding_dimensions=8,
@@ -288,13 +299,16 @@ def test_llamaindex_build_reuses_existing_collection_with_incremental_ingestion(
             chunk_overlap=16,
             min_score=0,
             rebuild_on_start=False,
+            ingest_on_start=False,
         ),
         client=client,
         embed_model=MockEmbedding(embed_dim=8),
         llm=MockLLM(max_tokens=32),
+        ingestion_service=existing_ingestion,
     ).build()
 
     assert len(reused.answer("mesh")["sources"]) == base_config.top_k
+    assert reused.ingestion_service is existing_ingestion
     reused.close()
 
 
