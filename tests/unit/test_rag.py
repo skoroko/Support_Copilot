@@ -597,6 +597,88 @@ def test_follow_up_builds_strict_lexical_query_from_current_constraint_and_prior
     )
 
 
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Расскажи мне про модель Мора-Кулона", "модель мора кулона"),
+        ("Что такое Мора-Кулон?", "мора кулон"),
+        ("Please tell me about Mohr Coulomb", "mohr coulomb"),
+    ],
+)
+def test_independent_lexical_query_removes_conversational_lead_ins(
+    tmp_path: Path,
+    question: str,
+    expected: str,
+) -> None:
+    service = RAGService(rag_config(tmp_path))
+    plan = service._retrieval_plan(question, None, None)
+
+    assert service._lexical_query(question, None, plan) == expected
+
+
+def test_fulltext_ranking_uses_dense_score_to_break_exact_entity_ties(tmp_path: Path) -> None:
+    modified = NodeWithScore(
+        node=TextNode(
+            id_="modified",
+            text="Модифицированная модель Мора-Кулона применяется для упрочняющихся грунтов.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.10,
+    )
+    classic = NodeWithScore(
+        node=TextNode(
+            id_="classic",
+            text="Модель Мора-Кулона применяется для моделирования поведения грунтов.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.38,
+    )
+
+    ranked = RAGService(rag_config(tmp_path))._rank_fulltext_evidence(
+        "Расскажи про модель Мора-Кулона",
+        [modified, classic],
+        retrieval_query="модель мора кулона",
+    )
+
+    assert ranked[0].node.node_id == "classic"
+
+
+def test_conversational_entity_query_accepts_strict_lexical_evidence_below_dense_threshold(
+    tmp_path: Path,
+) -> None:
+    dense = NodeWithScore(
+        node=TextNode(
+            text="Общие сведения о материалах.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.38,
+    )
+    classic = NodeWithScore(
+        node=TextNode(
+            id_="mohr-coulomb-classic",
+            text=(
+                "Модель Мора-Кулона используется для моделирования поведения "
+                "грунтовых оснований в нелинейных расчётах."
+            ),
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf", "page": 39},
+        ),
+        score=0.0,
+    )
+    service = RAGService(
+        rag_config(tmp_path, min_score=0.45, allow_external_data_transfer=True),
+        llm=FakeLLM("Модель описывает нелинейное поведение грунтов [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _query: [dense])
+    service._lexical_available = True
+    service._retrieve_lexical_candidates = lambda _query: [classic]  # type: ignore[method-assign]
+
+    result = service.answer("Расскажи мне про модель Мора-Кулона")
+
+    assert result["answer"] != NO_ANSWER
+    assert result["sources"][0]["id"] == "mohr-coulomb-classic"
+    assert result["sources"][0]["confident"] is True
+
+
 def test_lexical_context_focus_excludes_distant_neighbouring_section(tmp_path: Path) -> None:
     node = NodeWithScore(
         node=TextNode(

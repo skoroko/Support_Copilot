@@ -77,19 +77,36 @@ _LEXICAL_STOP_WORDS = {
     "какой",
     "на",
     "не",
+    "мне",
     "но",
     "о",
     "по",
+    "пожалуйста",
+    "про",
     "при",
     "с",
     "со",
     "что",
+    "такое",
+    "такую",
+    "таком",
     "это",
+    "about",
+    "describe",
+    "explain",
+    "please",
+    "tell",
     "gts",
     "midas",
     "nx",
 }
-_LEXICAL_IGNORED_PREFIXES = ("использ",)
+_LEXICAL_IGNORED_PREFIXES = (
+    "использ",
+    "объясн",
+    "опиш",
+    "поясн",
+    "расскаж",
+)
 _RUSSIAN_SUFFIXES = tuple(
     sorted(
         {
@@ -757,7 +774,8 @@ class RAGService:
             )
             terms.extend(cls._fulltext_terms(previous_user_question)[:2])
         unique = list(dict.fromkeys(terms))
-        return " ".join(unique) if len(unique) >= 3 else None
+        is_specific_pair = len(unique) == 2 and sum(map(len, unique)) >= 9
+        return " ".join(unique) if len(unique) >= 3 or is_specific_pair else None
 
     @staticmethod
     def _fulltext_terms(text: str) -> list[str]:
@@ -787,7 +805,7 @@ class RAGService:
         query_pairs = set(zip(query_terms, query_terms[1:]))
         current_terms = set(cls._lexical_terms(" ".join(cls._fulltext_terms(question))))
 
-        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, float, float, int]:
+        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, float, float, float, int]:
             index, source_node = indexed_node
             full_terms = cls._lexical_terms(cls._node_text(source_node))
             lead_terms = cls._lexical_terms(cls._node_text(source_node)[:400])
@@ -803,7 +821,15 @@ class RAGService:
                 pair_coverage = len(query_pairs.intersection(full_pairs)) / len(query_pairs)
             span = cls._minimum_cover_span(full_terms, query_unique)
             proximity = 1.0 / span if span is not None else 0.0
-            return full_coverage, current_lead_coverage, proximity, pair_coverage, -index
+            dense_score = float(source_node.score or 0.0)
+            return (
+                full_coverage,
+                current_lead_coverage,
+                proximity,
+                pair_coverage,
+                dense_score,
+                -index,
+            )
 
         return [
             source_node

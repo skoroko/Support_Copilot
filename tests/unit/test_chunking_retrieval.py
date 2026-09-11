@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_golden_retrieval_dataset_has_required_coverage() -> None:
     cases = load_retrieval_dataset(ROOT / "tests" / "eval" / "retrieval_dataset.json")
 
-    assert len(cases) == 29
+    assert len(cases) == 30
     assert all(1 <= len(case.relevant_doc_ids) <= 3 for case in cases)
     assert any(len(case.relevant_doc_ids) == 3 for case in cases)
     assert any("AUTO-SOLID" in case.question for case in cases)

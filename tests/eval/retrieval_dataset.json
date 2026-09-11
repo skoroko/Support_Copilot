@@ -45,6 +45,20 @@
     "relevant_doc_ids": ["04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf", "04_User Manual_Chapter4_Mesh.pdf", "GTS_NX 2021.chm"]
   },
   {
+    "question": "Расскажи мне про модель Мора-Кулона",
+    "relevant_doc_ids": ["04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf"],
+    "relevant_evidence": [
+      {
+        "doc_id": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "page": 39,
+        "printed_page": 168,
+        "contains_all": ["Модель Мора-Кулона", "поведения грунтовых", "нелинейных расчетах"]
+      }
+    ],
+    "expected_answer_contains_all": ["грунт"],
+    "expected_answer_excludes_all": ["модифицированная модель"]
+  },
+  {
     "question": "Чем модифицированная модель Мора–Кулона отличается от классической?",
     "relevant_doc_ids": ["04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf", "04_User Manual_Chapter4_Mesh.pdf"]
   },
