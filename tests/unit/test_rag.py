@@ -202,6 +202,79 @@ def test_rag_rejects_uncited_generated_answer() -> None:
     assert cited_sources == []
 
 
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "В предоставленном контексте сведений о стоимости нет. [1][2]",
+        "Информация о ценах в документах не указана. [1]",
+        "В базе знаний отсутствуют данные о стоимости лицензий. [2]",
+    ],
+)
+def test_rag_normalizes_paraphrased_abstention_and_removes_sources(answer: str) -> None:
+    grounded, cited_sources = RAGService._ground_answer(
+        answer,
+        [{"id": "one"}, {"id": "two"}],
+    )
+
+    assert grounded == NO_ANSWER
+    assert cited_sources == []
+
+
+def test_rag_keeps_factual_negative_statement_with_citation() -> None:
+    answer = "Твердотельные элементы не содержат вращательных степеней свободы. [1]"
+
+    grounded, cited_sources = RAGService._ground_answer(answer, [{"id": "solid"}])
+
+    assert grounded == answer
+    assert cited_sources == [{"id": "solid"}]
+
+
+def test_overview_question_uses_three_coherent_context_slots(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                id_=f"boundary-{index}",
+                text=f"Фрагмент {index} о граничных условиях.",
+                metadata={
+                    "source": "manual-shared.pdf" if index <= 2 else f"manual-{index}.pdf"
+                },
+            ),
+            score=0.9 - index / 100,
+        )
+        for index in range(1, 6)
+    ]
+    llm = FakeLLM("Связный обзор [1][2][3].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Расскажи про граничные условия")
+
+    assert len(result["sources"]) == 3
+    assert len({source["file_name"] for source in result["sources"]}) == 3
+    assert "Это широкий обзорный вопрос" in llm.prompts[0]
+    assert "Фрагмент 3" in llm.prompts[0]
+    assert "Фрагмент 2" not in llm.prompts[0]
+    assert "Фрагмент 4" in llm.prompts[0]
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Расскажи про граничные условия", True),
+        ("Что такое модель Мора-Кулона?", True),
+        ("Что ты знаешь о граничных условиях?", True),
+        ("What is Mohr Coulomb?", True),
+        ("Какие степени свободы используются?", False),
+        ("Чем отличается модифицированная модель?", False),
+    ],
+)
+def test_overview_question_detection(question: str, expected: bool) -> None:
+    assert RAGService._is_overview_question(question) is expected
+
+
 def test_rag_filters_legacy_civil_payloads_and_keeps_generic_gts_manual(tmp_path: Path) -> None:
     nodes = [
         NodeWithScore(
@@ -602,7 +675,9 @@ def test_follow_up_builds_strict_lexical_query_from_current_constraint_and_prior
     [
         ("Расскажи мне про модель Мора-Кулона", "модель мора кулона"),
         ("Что такое Мора-Кулон?", "мора кулон"),
+        ("Что ты знаешь о граничных условиях?", "граничных условиях"),
         ("Please tell me about Mohr Coulomb", "mohr coulomb"),
+        ("What is Mohr Coulomb?", "mohr coulomb"),
     ],
 )
 def test_independent_lexical_query_removes_conversational_lead_ins(
@@ -813,6 +888,7 @@ def test_hybrid_recall_reserves_exact_fulltext_evidence_missing_from_dense_resul
         ],
     )
 
+    assert len(result["sources"]) == 1
     assert result["sources"][0]["id"] == "plane-strain-exact"
     assert result["sources"][0]["page"] == 32
     assert result["sources"][0]["printed_page"] == 45

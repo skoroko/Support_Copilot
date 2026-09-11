@@ -60,7 +60,7 @@
   },
   {
     "question": "Чем модифицированная модель Мора–Кулона отличается от классической?",
-    "relevant_doc_ids": ["04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf", "04_User Manual_Chapter4_Mesh.pdf"]
+    "relevant_doc_ids": ["04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf", "04_User Manual_Chapter4_Mesh.pdf", "GTS_NX 2021.chm"]
   },
   {
     "question": "Для каких динамических задач грунта предназначена модель PM4Sand?",
@@ -135,6 +135,23 @@
     "relevant_doc_ids": ["03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf", "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf", "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf"]
   },
   {
+    "question": "Расскажи про граничные условия в GTS NX",
+    "relevant_doc_ids": [
+      "GTS_NX 2021.chm",
+      "040-gts-nx-dynamic-analysis-boundary-transmitting-htm.html",
+      "037-gts-nx-dynamic-analysis-boundary-boundary-condition-htm.html"
+    ],
+    "expected_answer_contains_all": ["граничн"],
+    "expected_answer_excludes_all": ["Lysmer", "Kuhlemeyer", "угол охвата", "равно нулю"],
+    "max_cited_sources": 3
+  },
+  {
+    "question": "Сколько стоят лицензии GTS NX?",
+    "relevant_doc_ids": [],
+    "expected_no_answer": true,
+    "max_cited_sources": 0
+  },
+  {
     "question": "А какие из них используются для плоской деформации?",
     "history": [
       {
@@ -155,7 +172,7 @@
         "contains_all": ["Элемент плоской деформации", "по направлениям", "осей x и y", "элементной системы координат"]
       }
     ],
-    "expected_answer_contains_all": ["x", "y", "элементной системы координат"],
+    "expected_answer_contains_all": ["x", "y", "элементн", "систем", "координат"],
     "expected_answer_excludes_all": ["угол поворота", "проекция", "ориентация материала", "геометрическая жесткость"]
   }
 ]

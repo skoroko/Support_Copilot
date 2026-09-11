@@ -16,10 +16,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.core.config import get_settings  # noqa: E402
-from app.services.rag import RAGConfig, RAGService  # noqa: E402
+from app.services.rag import NO_ANSWER, RAGConfig, RAGService  # noqa: E402
 from app.services.retrieval_eval import (  # noqa: E402
+    abstention_metrics,
     answer_evidence_metrics,
     answer_focus_metrics,
+    citation_focus_metrics,
     citation_provenance_metrics,
     load_retrieval_dataset,
     retrieval_metrics,
@@ -85,6 +87,13 @@ def evaluate(service: Any, dataset: Path) -> dict[str, Any]:
             **citation_provenance_metrics(cases, source_rankings),
             **answer_evidence_metrics(cases, answers),
             **answer_focus_metrics(cases, answers),
+            **abstention_metrics(
+                cases,
+                answers,
+                source_rankings,
+                no_answer_text=NO_ANSWER,
+            ),
+            **citation_focus_metrics(cases, source_rankings),
         },
         "results": rows,
     }

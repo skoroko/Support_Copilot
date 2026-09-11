@@ -12,8 +12,10 @@ from app.services.reranker import BGEReranker, RerankCandidate
 from app.services.retrieval_eval import (
     EvidencePredicate,
     RetrievalCase,
+    abstention_metrics,
     answer_evidence_metrics,
     answer_focus_metrics,
+    citation_focus_metrics,
     citation_provenance_metrics,
     evidence_metrics,
     load_retrieval_dataset,
@@ -29,8 +31,12 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_golden_retrieval_dataset_has_required_coverage() -> None:
     cases = load_retrieval_dataset(ROOT / "tests" / "eval" / "retrieval_dataset.json")
 
-    assert len(cases) == 30
-    assert all(1 <= len(case.relevant_doc_ids) <= 3 for case in cases)
+    assert len(cases) == 32
+    assert all(
+        1 <= len(case.relevant_doc_ids) <= 3 or case.expected_no_answer
+        for case in cases
+    )
+    assert any(case.expected_no_answer for case in cases)
     assert any(len(case.relevant_doc_ids) == 3 for case in cases)
     assert any("AUTO-SOLID" in case.question for case in cases)
     assert any(case.history for case in cases)
@@ -109,6 +115,47 @@ def test_answer_focus_metrics_reject_adjacent_topic_leakage() -> None:
         [case],
         ["Используются x и y; ориентация материала задаётся через угол поворота."],
     ) == {"answer_focus_rate": 0.0}
+
+
+def test_abstention_metrics_require_canonical_answer_without_sources() -> None:
+    case = RetrievalCase(
+        "Сколько стоит лицензия?",
+        (),
+        expected_no_answer=True,
+        max_cited_sources=0,
+    )
+    no_answer = "Нет сведений."
+
+    assert abstention_metrics(
+        [case],
+        [no_answer],
+        [[]],
+        no_answer_text=no_answer,
+    ) == {"answer_abstention_rate": 1.0}
+    assert abstention_metrics(
+        [case],
+        [f"{no_answer} [1]"],
+        [[{"file_name": "manual.pdf"}]],
+        no_answer_text=no_answer,
+    ) == {"answer_abstention_rate": 0.0}
+    assert citation_focus_metrics([case], [[]]) == {"citation_focus_rate": 1.0}
+    assert citation_focus_metrics(
+        [case],
+        [[{"file_name": "manual.pdf"}]],
+    ) == {"citation_focus_rate": 0.0}
+
+
+def test_retrieval_metrics_exclude_expected_abstentions() -> None:
+    cases = [
+        RetrievalCase("known", ("manual.pdf",)),
+        RetrievalCase("unknown", (), expected_no_answer=True),
+    ]
+
+    assert retrieval_metrics(cases, [["manual.pdf"], []]) == {
+        "hit_rate@5": 1.0,
+        "mrr@10": 1.0,
+        "recall@10": 1.0,
+    }
 
 
 def test_evidence_metrics_reject_wrong_chunk_from_the_right_document_and_page() -> None:
