@@ -30,6 +30,7 @@ class RetrievalCase:
     history: tuple[RetrievalHistoryItem, ...] = ()
     relevant_evidence: tuple[EvidencePredicate, ...] = ()
     expected_answer_contains_all: tuple[str, ...] = ()
+    expected_answer_excludes_all: tuple[str, ...] = ()
 
 
 def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[RetrievalCase]:
@@ -57,6 +58,11 @@ def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[Retri
             field="expected_answer_contains_all",
             index=index,
         )
+        excluded_answer_terms = _load_string_list(
+            item.get("expected_answer_excludes_all", []),
+            field="expected_answer_excludes_all",
+            index=index,
+        )
         cases.append(
             RetrievalCase(
                 question=question.strip(),
@@ -64,6 +70,7 @@ def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[Retri
                 history=history,
                 relevant_evidence=evidence,
                 expected_answer_contains_all=answer_terms,
+                expected_answer_excludes_all=excluded_answer_terms,
             )
         )
     return cases
@@ -225,6 +232,28 @@ def answer_evidence_metrics(
         for case, answer in evaluated
     )
     return {"answer_evidence_rate": passed / len(evaluated)}
+
+
+def answer_focus_metrics(
+    cases: Sequence[RetrievalCase],
+    answers: Sequence[str],
+) -> dict[str, float]:
+    """Measure whether answers avoid explicitly labelled adjacent-topic leakage."""
+
+    if not cases or len(cases) != len(answers):
+        raise ValueError("cases and answers must be non-empty and have equal length")
+    evaluated = [
+        (case, answer)
+        for case, answer in zip(cases, answers, strict=True)
+        if case.expected_answer_excludes_all
+    ]
+    if not evaluated:
+        return {"answer_focus_rate": 0.0}
+    passed = sum(
+        all(term.casefold() not in answer.casefold() for term in case.expected_answer_excludes_all)
+        for case, answer in evaluated
+    )
+    return {"answer_focus_rate": passed / len(evaluated)}
 
 
 def citation_provenance_metrics(

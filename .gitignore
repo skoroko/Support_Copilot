@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.log
 var/
+homework_5_5/results/
 
 agents.md
 docs/architecture.pdf

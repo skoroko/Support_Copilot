@@ -53,6 +53,8 @@ flowchart LR
     H -->|нет| R[До 30 raw candidates]
     H -->|самостоятельный вопрос| R
     C --> F[RRF merge полного union]
+    H --> FT[Строгий full-text recall]
+    FT --> F
     F --> PF
     R --> PF[Product filter: только GTS NX]
     PF --> V[Dense + lexical ranking полного union]
@@ -61,7 +63,7 @@ flowchart LR
     X -->|да| N[BGE ordering всего пула]
     X -->|нет| U
     N --> U[Deduplicate и максимум 5 context fragments]
-    U --> G{top cosine score >= threshold?}
+    U --> G{cosine >= threshold или strict lexical evidence?}
     G -->|нет| D[Честный ответ: данных нет]
     G -->|да| L[LLM по контексту]
     L --> A[Проверка и перенумерация цитат]
@@ -70,14 +72,29 @@ flowchart LR
     O --> T[Telegram editMessageText + feedback]
 ```
 
-Retrieval и генерация разделены. `RAG_TOP_K=10` задаёт базовый размер поиска, а
+Retrieval и генерация разделены. `RAG_TOP_K=10` задаёт базовый размер dense-поиска, а
 retriever запрашивает до `min(30, top_k * 3)` **raw candidates**. Самостоятельный
 вопрос выполняет один поиск. Только явно зависимый follow-up (анафорическая
 ссылка вроде «из них» либо короткое разговорное уточнение) выполняет два:
 точную формулировку пользователя для recall и объединённую с последним вопросом
 формулировку для disambiguation. После product filter результаты объединяются
 по node id через reciprocal-rank fusion (RRF, стандартная rank-константа 60).
-Lexical evidence ранжирует полный union (до 60 уникальных фрагментов), и только
+К dense-кандидатам добавляется строгий полнотекстовый recall по Qdrant payload
+index. Для самостоятельного вопроса используются до четырёх информативных слов;
+для follow-up — слова текущего ограничения и первые два слова предмета прошлого
+вопроса. Все слова должны встретиться в одном фрагменте, а русский snowball
+stemmer согласует падежи. Поэтому запрос «плоская деформация + степени свободы»
+находит нужный раздел, даже если его нет в dense top-30. Один лучший lexical
+match резервируется в пятифрагментном контексте, остальные места сохраняются
+за dense-поиском. При сортировке lexical matches приоритет имеет совпадение
+всех терминов в компактном фрагменте и текущего ограничения в начале страницы:
+позднее случайное упоминание внутри соседнего раздела не вытесняет прямое определение.
+Для зарезервированного lexical match в prompt передаётся локальное окно вокруг
+самого компактного совпадения, а не вся PDF-страница; это не даёт соседнему
+подразделу подменить запрошенное свойство.
+Payload-index создаётся online один раз, без пересчёта vectors.
+
+Lexical evidence ранжирует полный union (до 90 уникальных фрагментов), и только
 после этого пул ограничивается 30 кандидатами. Поэтому точный фрагмент из одного
 варианта не теряется за дублями, найденными обоими запросами. Dense scores разных вариантов не
 смешиваются как сопоставимые величины; лучший исходный cosine score сохраняется
@@ -115,7 +132,7 @@ retrieval-only запрос для recall; это помогает найти у
 перенумеровываются, поэтому `sources[N-1]` всегда соответствует `[N]`.
 
 Событие `rag_retrieval_completed` записывает hash вопроса (без его текста),
-режим planner, размеры raw/product/fused/ranked пулов, выбранные node id, top cosine
+режим planner, размеры raw/product/lexical/fused/ranked пулов, выбранные node id, top cosine
 score, retrieval latency, outcome и число процитированных источников. Это
 отделяет провал candidate recall от ranking, confidence и citation validation,
 не помещая пользовательский вопрос или текст документов в лог.
@@ -128,6 +145,7 @@ score, retrieval latency, outcome и число процитированных �
 | `chunk_size` | `512` токенов |
 | `chunk_overlap` | `64` токена |
 | Raw retrieval | 1 запрос; 2 только для зависимого follow-up, по 30 кандидатов |
+| Hybrid recall | strict full-text match, до 30 кандидатов; 1 reserved context slot |
 | Query fusion | deterministic RRF по node id; lexical selection полного union; лимит 30 после неё |
 | Product scope | `RAG_PRODUCT=gts_nx` |
 | Ranking | cosine similarity + deterministic lexical evidence; затем optional BGE |
@@ -253,12 +271,16 @@ Golden retrieval dataset сохраняет прежние document-level мет
 `Evidence Hit@5`, `Evidence MRR@10` и `Evidence Recall@10`; попадание в правильный
 файл с неправильным разделом или страницей не считается успехом.
 End-to-end прогон `scripts/evaluate_rag_quality.py` дополнительно проверяет уже
-сгенерированный ответ, возвращённые цитаты и обе страницы через
-`answer_evidence_rate` и `citation_provenance_rate`. Он использует тот же
+сгенерированный ответ, отсутствие размытия соседними темами, возвращённые цитаты
+и обе страницы через `answer_evidence_rate`, `answer_focus_rate` и
+`citation_provenance_rate`. Он использует тот же
 production query pipeline и требует явного `--allow-external-data-transfer`.
 
 ```powershell
 python scripts/evaluate_rag_quality.py --allow-external-data-transfer
+
+# Либо проверить уже запущенный Docker-контур без повторной инициализации RAG:
+python scripts/evaluate_rag_quality.py --api-url http://127.0.0.1:18000 --allow-external-data-transfer
 ```
 
 Compose поднимает `app`, `qdrant`, `redis`, `bot`, а также уже используемые

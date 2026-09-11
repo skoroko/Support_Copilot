@@ -187,6 +187,10 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_CONDENSE_ENABLED"),
     )
+    rag_lexical_retrieval_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
+    )
     rag_collection: str = Field(default="rag_block_03", min_length=1, validation_alias=AliasChoices("RAG_COLLECTION"))
     rag_baremetal_collection: str = Field(
         default="rag_block_03_baremetal",
