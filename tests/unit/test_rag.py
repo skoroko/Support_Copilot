@@ -203,11 +203,11 @@ def test_rag_filters_legacy_civil_payloads_and_keeps_generic_gts_manual(tmp_path
     assert "Civil bridge calculation" not in llm.prompts[0]
 
 
-def test_rag_limits_context_to_five_two_per_file_and_removes_duplicates(tmp_path: Path) -> None:
+def test_rag_limits_context_to_five_and_removes_duplicates_without_file_cap(tmp_path: Path) -> None:
     sources = [
         ("manual-a.pdf", "identical fragment", 0.99),
         ("manual-a.pdf", "second fragment", 0.98),
-        ("manual-a.pdf", "third fragment must be skipped", 0.97),
+        ("manual-a.pdf", "third valid fragment", 0.97),
         ("manual-b.pdf", "identical fragment", 0.96),
         ("manual-b.pdf", "fourth unique fragment", 0.95),
         ("manual-c.pdf", "fifth unique fragment", 0.94),
@@ -230,11 +230,11 @@ def test_rag_limits_context_to_five_two_per_file_and_removes_duplicates(tmp_path
     result = service.answer("Вопрос")
 
     assert len(result["sources"]) == 5
-    assert [source["file_name"] for source in result["sources"]].count("manual-a.pdf") == 2
+    assert [source["file_name"] for source in result["sources"]].count("manual-a.pdf") == 3
     assert [source["snippet"] for source in result["sources"]].count("identical fragment") == 1
 
 
-def test_expanded_raw_pool_recovers_five_contexts_after_product_and_file_caps(tmp_path: Path) -> None:
+def test_expanded_raw_pool_recovers_five_contexts_after_product_filter(tmp_path: Path) -> None:
     nodes = [
         *[
             NodeWithScore(
@@ -269,8 +269,60 @@ def test_expanded_raw_pool_recovers_five_contexts_after_product_and_file_caps(tm
     assert service._raw_candidate_limit() == 30
     assert len(result["sources"]) == 5
     assert all("Civil" not in source["file_name"] for source in result["sources"])
-    assert [source["file_name"] for source in result["sources"]].count("GTS_NX dominant.pdf") == 2
-    assert "GTS_NX valid-2.pdf" in [source["file_name"] for source in result["sources"]]
+    assert [source["file_name"] for source in result["sources"]].count("GTS_NX dominant.pdf") == 5
+
+
+def test_lexical_evidence_recovers_exact_dof_chunk_before_dense_distractors(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                text="Для оболочечных элементов условия освобождения степеней свободы задаются в NCS.",
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page_number": 41},
+            ),
+            score=0.96,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                text="Степени свободы узла элемента пяты сваи задаются в осевом направлении.",
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page_number": 73},
+            ),
+            score=0.93,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                text=(
+                    "Конструкционный расчет характеризуется тремя поступательными и тремя "
+                    "вращательными степенями свободы. Всего узел имеет 6 степеней свободы."
+                ),
+                metadata={
+                    "source": "02_Пособие_GTS_NX_Узел_Степень свободы.pdf",
+                    "page_number": 8,
+                },
+            ),
+            score=0.68,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                text="Конструкционный расчет Civil использует степени свободы мостовых узлов.",
+                metadata={"source": "Руководство midas Civil 2020.pdf", "page_number": 20},
+            ),
+            score=0.99,
+        ),
+    ]
+    llm = FakeLLM("Три поступательные и три вращательные, всего шесть [1].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Какие степени свободы используются в конструкционном расчёте GTS NX?")
+
+    assert result["sources"][0]["file_name"] == "02_Пособие_GTS_NX_Узел_Степень свободы.pdf"
+    assert result["sources"][0]["page"] == 8
+    assert "тремя поступательными" in result["sources"][0]["snippet"]
+    assert all("Civil" not in source["file_name"] for source in result["sources"])
+    assert "Всего узел имеет 6 степеней свободы" in llm.prompts[0]
 
 
 def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) -> None:
@@ -280,7 +332,7 @@ def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) ->
 
         def rerank(self, question: str, candidates, *, top_n: int):
             self.calls.append((question, len(candidates), top_n))
-            return [candidates[2], candidates[1]][:top_n]
+            return [candidates[2], candidates[1], candidates[0]][:top_n]
 
     llm = FakeLLM()
     reranker = FakeReranker()
@@ -293,7 +345,7 @@ def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) ->
 
     result = service.query("Каков срок возврата?")
 
-    assert reranker.calls == [("Каков срок возврата?", 3, 2)]
+    assert reranker.calls == [("Каков срок возврата?", 3, 3)]
     assert [source["file_name"] for source in result["sources"]] == ["manual-3.pdf", "manual-2.pdf"]
     assert result["top_score"] == 0.82
     assert len(llm.prompts) == 1

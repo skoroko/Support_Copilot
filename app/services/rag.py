@@ -29,11 +29,86 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 """
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 MAX_CONTEXT_SOURCES = 5
-MAX_CHUNKS_PER_FILE = 2
 MAX_RAW_CANDIDATES = 30
 RAW_CANDIDATE_MULTIPLIER = 3
 NEAR_DUPLICATE_RATIO = 0.9
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_LEXICAL_TOKEN_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
+_LEXICAL_STOP_WORDS = {
+    "а",
+    "без",
+    "бы",
+    "в",
+    "во",
+    "для",
+    "и",
+    "из",
+    "или",
+    "как",
+    "какая",
+    "какие",
+    "какой",
+    "на",
+    "не",
+    "но",
+    "о",
+    "по",
+    "при",
+    "с",
+    "со",
+    "что",
+    "это",
+    "gts",
+    "midas",
+    "nx",
+}
+_LEXICAL_IGNORED_PREFIXES = ("использ",)
+_RUSSIAN_SUFFIXES = tuple(
+    sorted(
+        {
+            "иями",
+            "ыми",
+            "ими",
+            "ами",
+            "ями",
+            "ого",
+            "его",
+            "ому",
+            "ему",
+            "иях",
+            "ах",
+            "ях",
+            "ов",
+            "ев",
+            "ей",
+            "ий",
+            "ый",
+            "ой",
+            "ая",
+            "яя",
+            "ое",
+            "ее",
+            "ие",
+            "ые",
+            "ую",
+            "юю",
+            "ам",
+            "ям",
+            "ом",
+            "ем",
+            "а",
+            "я",
+            "ы",
+            "и",
+            "е",
+            "о",
+            "у",
+            "ю",
+        },
+        key=len,
+        reverse=True,
+    )
+)
 
 HistoryItem = Mapping[str, Any] | Any
 CondenseHook = Callable[[str, Sequence[HistoryItem]], str | None]
@@ -224,9 +299,13 @@ class RAGService:
         retrieval_question = self._standalone_question(question, history, standalone_question)
         retrieved = list(self._retriever.retrieve(retrieval_question))[: self._raw_candidate_limit()]
         product_candidates = [item for item in retrieved if self._matches_target_product(item)]
-        diverse_candidates = self._diversify(product_candidates, limit=self._raw_candidate_limit())
-        ranked = self._rerank(retrieval_question, diverse_candidates)
-        ranked = self._diversify(ranked, limit=MAX_CONTEXT_SOURCES)
+        # Rank the complete product-scoped pool before removing duplicates or
+        # applying the final context limit.  An earlier per-file cap discarded
+        # exact evidence whenever two weaker dense matches from the same manual
+        # happened to arrive first.
+        ranked = self._rank_by_lexical_evidence(retrieval_question, product_candidates)
+        ranked = self._rerank(retrieval_question, ranked)
+        ranked = self._deduplicate(ranked, limit=self._context_limit())
         sources = [self._source_from_node(item) for item in ranked]
         # Cosine similarity remains the confidence signal even when a
         # cross-encoder changes presentation order.  Cross-encoder scores are
@@ -349,7 +428,10 @@ class RAGService:
         reranked = self._reranker.rerank(
             question,
             candidates,
-            top_n=min(self.config.rerank_top_n, len(candidates)),
+            # Ask the cross-encoder for a complete ordering.  Its configured
+            # context limit is applied only after duplicate removal, otherwise
+            # duplicate top results could leave too little usable context.
+            top_n=len(candidates),
         )
         return [source_nodes[int(candidate.doc_id)] for candidate in reranked]
 
@@ -375,29 +457,83 @@ class RAGService:
     def _raw_candidate_limit(self) -> int:
         return min(MAX_RAW_CANDIDATES, max(MAX_CONTEXT_SOURCES, self.config.top_k * RAW_CANDIDATE_MULTIPLIER))
 
-    def _diversify(self, source_nodes: Sequence[Any], *, limit: int) -> list[Any]:
-        """Remove duplicate chunks and cap document dominance before the LLM."""
+    def _context_limit(self) -> int:
+        if self.config.rerank_enabled:
+            return min(MAX_CONTEXT_SOURCES, self.config.rerank_top_n)
+        return MAX_CONTEXT_SOURCES
+
+    def _rank_by_lexical_evidence(self, question: str, source_nodes: Sequence[Any]) -> list[Any]:
+        """Boost literal query evidence while retaining dense similarity.
+
+        Only informative query terms contribute.  Matching both the terms and
+        their adjacent pairs rewards passages that contain the user's actual
+        concept (for example ``конструкционный расчёт``), rather than generic
+        manual boilerplate that happens to repeat one common word.
+        """
+
+        query_terms = self._lexical_terms(question)
+        if not query_terms:
+            return list(source_nodes)
+        query_unique = set(query_terms)
+        query_pairs = set(zip(query_terms, query_terms[1:]))
+
+        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, int]:
+            index, source_node = indexed_node
+            text_terms = self._lexical_terms(self._node_text(source_node))
+            text_unique = set(text_terms)
+            term_coverage = len(query_unique & text_unique) / len(query_unique)
+            pair_coverage = 0.0
+            if query_pairs:
+                text_pairs = set(zip(text_terms, text_terms[1:]))
+                pair_coverage = len(query_pairs & text_pairs) / len(query_pairs)
+            lexical_relevance = 0.7 * term_coverage + 0.3 * pair_coverage
+            dense_score = float(source_node.score or 0.0)
+            # Dense and lexical evidence have equal bounded influence.  The
+            # original cosine score remains untouched for confidence checks.
+            return dense_score + lexical_relevance, dense_score, -index
+
+        return [
+            source_node
+            for _, source_node in sorted(
+                enumerate(source_nodes),
+                key=rank_key,
+                reverse=True,
+            )
+        ]
+
+    @classmethod
+    def _lexical_terms(cls, text: str) -> list[str]:
+        terms: list[str] = []
+        for raw_token in _LEXICAL_TOKEN_RE.findall(text.casefold().replace("ё", "е")):
+            if raw_token in _LEXICAL_STOP_WORDS or any(
+                raw_token.startswith(prefix) for prefix in _LEXICAL_IGNORED_PREFIXES
+            ):
+                continue
+            token = cls._light_stem(raw_token)
+            if len(token) >= 3:
+                terms.append(token)
+        return terms
+
+    @staticmethod
+    def _light_stem(token: str) -> str:
+        if not re.search(r"[а-я]", token) or len(token) < 5:
+            return token
+        for suffix in _RUSSIAN_SUFFIXES:
+            if token.endswith(suffix) and len(token) - len(suffix) >= 4:
+                return token[: -len(suffix)]
+        return token
+
+    def _deduplicate(self, source_nodes: Sequence[Any], *, limit: int) -> list[Any]:
+        """Remove duplicate chunks after ranking and cap the LLM context."""
 
         selected: list[Any] = []
         selected_texts: list[str] = []
-        file_counts: dict[str, int] = {}
         for source_node in source_nodes:
-            metadata = source_node.node.metadata or {}
-            source = str(
-                metadata.get("file_name")
-                or metadata.get("source")
-                or metadata.get("file_path")
-                or source_node.node.node_id
-            )
-            file_key = Path(source.partition("#page=")[0]).name.casefold()
-            if file_counts.get(file_key, 0) >= MAX_CHUNKS_PER_FILE:
-                continue
             normalized_text = self._normalized_chunk_text(self._node_text(source_node))
             if any(self._near_duplicate(normalized_text, previous) for previous in selected_texts):
                 continue
             selected.append(source_node)
             selected_texts.append(normalized_text)
-            file_counts[file_key] = file_counts.get(file_key, 0) + 1
             if len(selected) >= limit:
                 break
         return selected
