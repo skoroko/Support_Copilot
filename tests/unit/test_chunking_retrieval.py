@@ -13,6 +13,7 @@ from app.services.retrieval_eval import (
     EvidencePredicate,
     RetrievalCase,
     answer_evidence_metrics,
+    answer_focus_metrics,
     citation_provenance_metrics,
     evidence_metrics,
     load_retrieval_dataset,
@@ -92,6 +93,22 @@ def test_retrieval_metrics_use_document_level_golden_labels() -> None:
     metrics = retrieval_metrics(cases, rankings)
 
     assert metrics == {"hit_rate@5": 1.0, "mrr@10": 0.75, "recall@10": 1.0}
+
+
+def test_answer_focus_metrics_reject_adjacent_topic_leakage() -> None:
+    case = RetrievalCase(
+        "Какие степени свободы используются для плоской деформации?",
+        ("manual.pdf",),
+        expected_answer_excludes_all=("угол поворота", "ориентация материала"),
+    )
+
+    assert answer_focus_metrics([case], ["Используются перемещения по осям x и y."]) == {
+        "answer_focus_rate": 1.0
+    }
+    assert answer_focus_metrics(
+        [case],
+        ["Используются x и y; ориентация материала задаётся через угол поворота."],
+    ) == {"answer_focus_rate": 0.0}
 
 
 def test_evidence_metrics_reject_wrong_chunk_from_the_right_document_and_page() -> None:

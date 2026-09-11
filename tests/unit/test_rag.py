@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from types import SimpleNamespace
 from typing import Any
 
@@ -105,6 +106,12 @@ def test_rag_config_reads_ingest_on_start_setting() -> None:
     config = RAGConfig.from_settings(SimpleNamespace(rag_ingest_on_start=False))
 
     assert config.ingest_on_start is False
+
+
+def test_rag_config_reads_lexical_retrieval_setting() -> None:
+    config = RAGConfig.from_settings(SimpleNamespace(rag_lexical_retrieval_enabled=False))
+
+    assert config.lexical_retrieval_enabled is False
 
 
 class FakeRetriever:
@@ -570,6 +577,165 @@ def test_history_follow_up_merges_raw_recall_with_standalone_topic(tmp_path: Pat
     ]
     assert llm.prompts and "по направлениям осей x и y элементной системы координат" in llm.prompts[0]
     assert result["answer"] == "Используются степени свободы по осям x и y ECS [1]."
+
+
+def test_follow_up_builds_strict_lexical_query_from_current_constraint_and_prior_subject(
+    tmp_path: Path,
+) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "А какие из них используются для плоской деформации?"
+    history = [
+        {
+            "role": "user",
+            "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?",
+        }
+    ]
+    plan = service._retrieval_plan(question, history, None)
+
+    assert service._lexical_query(question, history, plan) == (
+        "плоской деформации степени свободы"
+    )
+
+
+def test_lexical_context_focus_excludes_distant_neighbouring_section(tmp_path: Path) -> None:
+    node = NodeWithScore(
+        node=TextNode(
+            text=(
+                ("Ориентация материала задаётся проекцией и углом. " * 30)
+                + "Степени свободы (DOF). Элемент плоской деформации характеризуется "
+                "степенями свободы по направлениям осей x и y элементной системы координат."
+            ),
+            metadata={
+                "source": "03_Пособие_GTS_NX_Элементы.pdf",
+                "_lexical_focus_query": "плоской деформации степени свободы",
+            },
+        ),
+        score=0.0,
+    )
+
+    focused = RAGService(rag_config(tmp_path))._context_text(node)
+
+    assert "осей x и y элементной системы координат" in focused
+    assert focused.count("Ориентация материала") < 10
+
+
+def test_hybrid_recall_reserves_exact_fulltext_evidence_missing_from_dense_results(
+    tmp_path: Path,
+) -> None:
+    dense = [
+        NodeWithScore(
+            node=TextNode(
+                id_=f"dense-{index}",
+                text=f"Геометрическая жесткость и ориентация элемента {index}.",
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf"},
+            ),
+            score=0.90 - index / 1000,
+        )
+        for index in range(30)
+    ]
+    lexical = [
+        NodeWithScore(
+            node=TextNode(
+                id_="civil-fulltext-neighbour",
+                text="Civil: плоская деформация и степени свободы элементов.",
+                metadata={"source": "Руководство по расчетам midas Civil 2020.pdf", "page": 9},
+            ),
+            score=0.0,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                id_="gts-chm-non-direct",
+                text=(
+                    "Для двумерной модели задана ширина плоской деформации. "
+                    + ("Описание параметров демпфирования. " * 12)
+                    + "Отдельно пользователь выбирает степени свободы демпфирования."
+                ),
+                metadata={"source": "GTS_NX 2021.chm"},
+            ),
+            score=0.0,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                id_="axisymmetric-neighbour",
+                text=(
+                    "Осесимметричный элемент и ориентация материала. "
+                    + ("Соседнее описание. " * 30)
+                    + "Для плоской деформации и степеней свободы приведена ссылка."
+                ),
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page": 37},
+            ),
+            score=0.0,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                id_="orientation-neighbour",
+                text=(
+                    "Плоское напряжённое состояние и ориентация материала. "
+                    + ("Соседнее описание. " * 30)
+                    + "Упомянут элемент плоской деформации и его степени свободы."
+                ),
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page": 56},
+            ),
+            score=0.0,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                id_="plane-strain-exact",
+                text=(
+                    "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX\n45\n"
+                    "Элемент плоской деформации характеризуется степенями свободы "
+                    "по направлениям осей x и y элементной системы координат."
+                ),
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page": 32},
+            ),
+            score=0.0,
+        ),
+    ]
+
+    class CitationByEvidenceLLM(FakeLLM):
+        def complete(self, prompt: str):
+            self.prompts.append(prompt)
+            labels = re.findall(r"\[(\d+)\] Файл: ([^\n]+)", prompt)
+            exact_position = next(
+                (
+                    number
+                    for number, block in re.findall(
+                        r"\[(\d+)\] Файл:.*?\n(.*?)(?=\n\n\[\d+\] Файл:|\n\nВопрос пользователя:)",
+                        prompt,
+                        flags=re.DOTALL,
+                    )
+                    if "по направлениям осей x и y элементной системы координат" in block
+                ),
+                None,
+            )
+            assert exact_position is not None, labels
+            return SimpleNamespace(
+                text=f"Используются степени свободы по осям x и y [{exact_position}]."
+            )
+
+    service = RAGService(
+        rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
+        llm=CitationByEvidenceLLM(),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _query: dense)
+    service._lexical_available = True
+    service._retrieve_lexical_candidates = lambda _query: lexical  # type: ignore[method-assign]
+
+    result = service.answer(
+        "А какие из них используются для плоской деформации?",
+        history=[
+            {
+                "role": "user",
+                "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?",
+            }
+        ],
+    )
+
+    assert result["sources"][0]["id"] == "plane-strain-exact"
+    assert result["sources"][0]["page"] == 32
+    assert result["sources"][0]["printed_page"] == 45
+    assert result["sources"][0]["confident"] is True
+    assert all("Civil" not in source["file_name"] for source in result["sources"])
 
 
 def test_history_follow_up_deduplicates_candidates_from_both_queries(tmp_path: Path) -> None:

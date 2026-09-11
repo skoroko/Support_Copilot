@@ -104,3 +104,4 @@ def test_rag_quality_eval_checks_answers_and_citation_pages() -> None:
     assert payload["metrics"]["hit_rate@5"] == 1.0
     assert payload["metrics"]["citation_provenance_rate"] == 1.0
     assert payload["metrics"]["answer_evidence_rate"] == 1.0
+    assert payload["metrics"]["answer_focus_rate"] == 1.0

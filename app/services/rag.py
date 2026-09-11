@@ -10,12 +10,24 @@ import time
 from typing import Any, Callable, Mapping, Sequence
 
 from llama_index.core import VectorStoreIndex
-from llama_index.core.schema import MetadataMode
+from llama_index.core.schema import MetadataMode, NodeWithScore
+from llama_index.core.vector_stores.utils import metadata_dict_to_node
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.llms.openai import OpenAI as LlamaOpenAI
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchText,
+    Snowball,
+    SnowballLanguage,
+    SnowballParams,
+    TextIndexParams,
+    TextIndexType,
+    TokenizerType,
+)
 
 from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
 from app.observability.logging import get_logger
@@ -28,6 +40,8 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 Документы могут быть на русском или английском: переводи найденный ответ на русский.
 Если контекст не содержит надёжного ответа, честно сообщи, что сведений в базе нет.
 Не используй нерелевантные документы и не придумывай цены, SLA, функции или регламенты.
+Отвечай только на запрошенное свойство или действие; не подменяй его сведениями о соседних темах из контекста.
+Если найден прямой ответ, не добавляй альтернативные трактовки, условные ответы «если вопрос о...» или предложение продолжить.
 После каждого утверждения указывай ссылки на использованные фрагменты в формате [1], [2].
 """
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
@@ -35,6 +49,8 @@ MAX_CONTEXT_SOURCES = 5
 MAX_RAW_CANDIDATES = 30
 RAW_CANDIDATE_MULTIPLIER = 3
 RRF_RANK_CONSTANT = 60
+LEXICAL_CONTEXT_RESERVE = 1
+LEXICAL_PAYLOAD_FIELD = "_node_content"
 NEAR_DUPLICATE_RATIO = 0.9
 # ``snippet`` is sent through the public API, persisted with the chat message
 # and used as a compact UI preview.  It must never be reused as the generation
@@ -178,6 +194,7 @@ class RAGConfig:
     reranker_device: str | None = None
     reranker_batch_size: int = 4
     condense_enabled: bool = True
+    lexical_retrieval_enabled: bool = True
     allow_external_data_transfer: bool = False
     ingest_on_start: bool = True
     docstore_path: Path | None = None
@@ -244,6 +261,9 @@ class RAGConfig:
             reranker_device=getattr(settings, "rag_reranker_device", None) or None,
             reranker_batch_size=int(getattr(settings, "rag_reranker_batch_size", 4)),
             condense_enabled=bool(getattr(settings, "rag_condense_enabled", True)),
+            lexical_retrieval_enabled=bool(
+                getattr(settings, "rag_lexical_retrieval_enabled", True)
+            ),
             allow_external_data_transfer=bool(getattr(settings, "rag_allow_external_data_transfer", False)),
             ingest_on_start=bool(getattr(settings, "rag_ingest_on_start", True)),
             docstore_path=docstore_path,
@@ -277,6 +297,7 @@ class RAGService:
         self._ingestion_service = ingestion_service
         self._index: Any | None = None
         self._retriever: Any | None = None
+        self._lexical_available = False
 
     @property
     def ingestion_service(self) -> Any | None:
@@ -311,6 +332,7 @@ class RAGService:
             self._ensure_ingestion_service()
         vector_store = QdrantVectorStore(client=self.client, collection_name=self.config.collection_name)
         self._validate_collection(self.config.collection_name)
+        self._lexical_available = self._ensure_lexical_index()
         self._index = VectorStoreIndex.from_vector_store(
             vector_store=vector_store,
             embed_model=self._embedding_model(),
@@ -349,7 +371,28 @@ class RAGService:
             [item for item in ranking if self._matches_target_product(item)]
             for ranking in retrieved_by_query
         ]
+        lexical_query = self._lexical_query(question, history, plan)
+        lexical_candidates = (
+            self._retrieve_lexical_candidates(lexical_query)
+            if lexical_query and self._lexical_available
+            else []
+        )
+        lexical_candidates = [
+            item for item in lexical_candidates if self._matches_target_product(item)
+        ]
+        if lexical_candidates:
+            product_rankings.append(lexical_candidates)
         product_candidates = self._fuse_retrieval_candidates(product_rankings)
+        lexical_order = list(
+            dict.fromkeys(self._node_identity(item) for item in lexical_candidates)
+        )
+        lexical_ids = set(lexical_order)
+        canonical_candidates = {
+            self._node_identity(item): item for item in product_candidates
+        }
+        for node_id in lexical_ids:
+            if candidate := canonical_candidates.get(node_id):
+                candidate.node.metadata["_lexical_match"] = True
         # Rank the complete product-scoped pool before removing duplicates or
         # applying the final context limit.  An earlier per-file cap discarded
         # exact evidence whenever two weaker dense matches from the same manual
@@ -362,6 +405,14 @@ class RAGService:
         ranked = ranked[: self._raw_candidate_limit()]
         ranked = self._rerank(plan.ranking_question, ranked)
         ranked_candidate_count = len(ranked)
+        reserved = self._rank_fulltext_evidence(
+            question,
+            [canonical_candidates[node_id] for node_id in lexical_order if node_id in canonical_candidates],
+            retrieval_query=lexical_query,
+        )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())]
+        for candidate in reserved:
+            candidate.node.metadata["_lexical_focus_query"] = lexical_query
+        ranked = self._prepend_reserved(reserved, ranked)
         ranked = self._deduplicate(ranked, limit=self._context_limit())
         sources = [self._source_from_node(item) for item in ranked]
         # Cosine similarity remains the confidence signal even when a
@@ -375,13 +426,18 @@ class RAGService:
             "raw_candidate_counts": [len(items) for items in retrieved_by_query],
             "product_candidate_counts": [len(items) for items in product_rankings],
             "fused_candidate_count": len(product_candidates),
+            "lexical_candidate_count": len(lexical_candidates),
+            "lexical_selected_count": sum(
+                self._node_identity(item) in lexical_ids for item in ranked
+            ),
             "ranked_candidate_count": ranked_candidate_count,
             "selected_candidate_ids": [source["id"] for source in sources],
             "selected_candidate_count": len(sources),
             "top_score": round(top_score, 6),
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
-        if top_score < self.config.min_score:
+        has_lexical_evidence = any(self._node_identity(item) in lexical_ids for item in ranked)
+        if top_score < self.config.min_score and not has_lexical_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
             return {"answer": NO_ANSWER, "top_score": top_score, "sources": []}
         answer, cited_sources = self._generate_answer(question.strip(), sources, ranked)
@@ -425,6 +481,39 @@ class RAGService:
             raise ValueError(
                 f"RAG collection {name!r} must use Cosine/{self.config.embedding_dimensions} dimensions"
             )
+
+    def _ensure_lexical_index(self) -> bool:
+        """Create one online full-text payload index without rebuilding vectors."""
+
+        if not self.config.lexical_retrieval_enabled or self.client is None:
+            return False
+        try:
+            info = self.client.get_collection(self.config.collection_name)
+            schema = getattr(info, "payload_schema", {}) or {}
+            if LEXICAL_PAYLOAD_FIELD not in schema:
+                self.client.create_payload_index(
+                    collection_name=self.config.collection_name,
+                    field_name=LEXICAL_PAYLOAD_FIELD,
+                    field_schema=TextIndexParams(
+                        type=TextIndexType.TEXT,
+                        tokenizer=TokenizerType.MULTILINGUAL,
+                        lowercase=True,
+                        phrase_matching=True,
+                        stemmer=SnowballParams(
+                            type=Snowball.SNOWBALL,
+                            language=SnowballLanguage.RUSSIAN,
+                        ),
+                    ),
+                    wait=True,
+                )
+            return True
+        except Exception as exc:
+            logger.warning(
+                "rag_lexical_index_unavailable",
+                error_type=type(exc).__name__,
+                collection=self.config.collection_name,
+            )
+            return False
 
     def _ingest_incrementally(self) -> None:
         self._ensure_ingestion_service().ingest(
@@ -610,6 +699,159 @@ class RAGService:
             ),
         )
         return [entry["node"] for _, entry in ordered]
+
+    def _retrieve_lexical_candidates(self, query: str) -> list[Any]:
+        """Return strict all-token matches as a complementary recall path."""
+
+        if self.client is None:
+            return []
+        try:
+            records, _ = self.client.scroll(
+                collection_name=self.config.collection_name,
+                scroll_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key=LEXICAL_PAYLOAD_FIELD,
+                            match=MatchText(text=query),
+                        )
+                    ]
+                ),
+                limit=self._raw_candidate_limit(),
+                with_payload=True,
+                with_vectors=False,
+            )
+        except Exception as exc:
+            logger.warning("rag_lexical_retrieval_failed", error_type=type(exc).__name__)
+            return []
+
+        candidates: list[Any] = []
+        for record in records:
+            try:
+                node = metadata_dict_to_node(record.payload or {})
+            except Exception:
+                logger.warning("rag_lexical_point_invalid", point_id=str(record.id))
+                continue
+            candidates.append(NodeWithScore(node=node, score=0.0))
+        return candidates
+
+    @classmethod
+    def _lexical_query(
+        cls,
+        question: str,
+        history: Sequence[HistoryItem] | None,
+        plan: RetrievalPlan,
+    ) -> str | None:
+        """Build an all-token query, carrying only the prior turn's subject."""
+
+        terms = cls._fulltext_terms(question)[:4]
+        if plan.mode == "follow_up" and history:
+            previous_user_question = next(
+                (
+                    content
+                    for item in reversed(history)
+                    if cls._history_value(item, "role") == "user"
+                    and (content := str(cls._history_value(item, "content", "")).strip())
+                    and content != question.strip()
+                ),
+                "",
+            )
+            terms.extend(cls._fulltext_terms(previous_user_question)[:2])
+        unique = list(dict.fromkeys(terms))
+        return " ".join(unique) if len(unique) >= 3 else None
+
+    @staticmethod
+    def _fulltext_terms(text: str) -> list[str]:
+        return [
+            token
+            for token in _LEXICAL_TOKEN_RE.findall(text.casefold().replace("ё", "е"))
+            if len(token) >= 3
+            and token not in _LEXICAL_STOP_WORDS
+            and token not in _FOLLOWUP_REFERENCE_TERMS
+            and not any(token.startswith(prefix) for prefix in _LEXICAL_IGNORED_PREFIXES)
+        ]
+
+    @classmethod
+    def _rank_fulltext_evidence(
+        cls,
+        question: str,
+        source_nodes: Sequence[Any],
+        *,
+        retrieval_query: str | None = None,
+    ) -> list[Any]:
+        """Prefer compact direct evidence over incidental all-token matches."""
+
+        query_terms = cls._lexical_terms(retrieval_query or question)
+        if not query_terms:
+            return list(source_nodes)
+        query_unique = set(query_terms)
+        query_pairs = set(zip(query_terms, query_terms[1:]))
+        current_terms = set(cls._lexical_terms(" ".join(cls._fulltext_terms(question))))
+
+        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, float, float, int]:
+            index, source_node = indexed_node
+            full_terms = cls._lexical_terms(cls._node_text(source_node))
+            lead_terms = cls._lexical_terms(cls._node_text(source_node)[:400])
+            full_coverage = len(query_unique.intersection(full_terms)) / len(query_unique)
+            current_lead_coverage = (
+                len(current_terms.intersection(lead_terms)) / len(current_terms)
+                if current_terms
+                else 0.0
+            )
+            pair_coverage = 0.0
+            if query_pairs:
+                full_pairs = set(zip(full_terms, full_terms[1:]))
+                pair_coverage = len(query_pairs.intersection(full_pairs)) / len(query_pairs)
+            span = cls._minimum_cover_span(full_terms, query_unique)
+            proximity = 1.0 / span if span is not None else 0.0
+            return full_coverage, current_lead_coverage, proximity, pair_coverage, -index
+
+        return [
+            source_node
+            for _, source_node in sorted(
+                enumerate(source_nodes),
+                key=rank_key,
+                reverse=True,
+            )
+        ]
+
+    @staticmethod
+    def _minimum_cover_span(terms: Sequence[str], required: set[str]) -> int | None:
+        """Return the shortest token window containing every required term."""
+
+        if not required:
+            return None
+        counts: dict[str, int] = {}
+        missing = len(required)
+        left = 0
+        best: int | None = None
+        for right, term in enumerate(terms):
+            if term not in required:
+                continue
+            counts[term] = counts.get(term, 0) + 1
+            if counts[term] == 1:
+                missing -= 1
+            while missing == 0:
+                best = min(best or len(terms), right - left + 1)
+                left_term = terms[left]
+                left += 1
+                if left_term not in required:
+                    continue
+                counts[left_term] -= 1
+                if counts[left_term] == 0:
+                    missing += 1
+        return best
+
+    @classmethod
+    def _prepend_reserved(cls, reserved: Sequence[Any], ranked: Sequence[Any]) -> list[Any]:
+        result: list[Any] = []
+        seen: set[str] = set()
+        for item in (*reserved, *ranked):
+            node_id = cls._node_identity(item)
+            if node_id in seen:
+                continue
+            seen.add(node_id)
+            result.append(item)
+        return result
 
     def _rank_by_lexical_evidence(self, question: str, source_nodes: Sequence[Any]) -> list[Any]:
         """Boost literal query evidence while retaining dense similarity.
@@ -891,9 +1133,53 @@ class RAGService:
 
     @classmethod
     def _context_text(cls, source_node: Any) -> str:
-        """Normalize a complete retrieved node for the LLM prompt."""
+        """Normalize a node, focusing strict lexical evidence on its tightest passage."""
 
-        return " ".join(cls._node_text(source_node).split())
+        text = cls._node_text(source_node)
+        metadata = source_node.node.metadata or {}
+        focus_query = str(metadata.get("_lexical_focus_query") or "").strip()
+        if focus_query:
+            required = set(cls._lexical_terms(focus_query))
+            if span := cls._minimum_cover_char_span(text, required):
+                start, end = span
+                window_start = max(0, start - 160)
+                window_end = min(len(text), end + 480)
+                while window_start and not text[window_start - 1].isspace():
+                    window_start -= 1
+                while window_end < len(text) and not text[window_end].isspace():
+                    window_end += 1
+                text = text[window_start:window_end]
+        return " ".join(text.split())
+
+    @classmethod
+    def _minimum_cover_char_span(cls, text: str, required: set[str]) -> tuple[int, int] | None:
+        """Locate the shortest character passage containing all required stems."""
+
+        if not required:
+            return None
+        occurrences = [
+            (stem, match.start(), match.end())
+            for match in _LEXICAL_TOKEN_RE.finditer(text.casefold().replace("ё", "е"))
+            if (stem := cls._light_stem(match.group())) in required
+        ]
+        counts: dict[str, int] = {}
+        missing = len(required)
+        left = 0
+        best: tuple[int, int] | None = None
+        for right, (term, _start, end) in enumerate(occurrences):
+            counts[term] = counts.get(term, 0) + 1
+            if counts[term] == 1:
+                missing -= 1
+            while missing == 0:
+                start = occurrences[left][1]
+                if best is None or end - start < best[1] - best[0]:
+                    best = (start, end)
+                left_term = occurrences[left][0]
+                left += 1
+                counts[left_term] -= 1
+                if counts[left_term] == 0:
+                    missing += 1
+        return best
 
     def _source_from_node(self, source_node: Any) -> dict[str, Any]:
         node = source_node.node
@@ -934,7 +1220,7 @@ class RAGService:
             "printed_page": printed_page,
             "score": score,
             "snippet": snippet,
-            "confident": score >= self.config.min_score,
+            "confident": score >= self.config.min_score or bool(metadata.get("_lexical_match")),
         }
 
     @staticmethod
