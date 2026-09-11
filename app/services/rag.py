@@ -32,6 +32,11 @@ MAX_CONTEXT_SOURCES = 5
 MAX_RAW_CANDIDATES = 30
 RAW_CANDIDATE_MULTIPLIER = 3
 NEAR_DUPLICATE_RATIO = 0.9
+# ``snippet`` is sent through the public API, persisted with the chat message
+# and used as a compact UI preview.  It must never be reused as the generation
+# context: a selected node can legitimately contain an answer after its first
+# 700 characters (for example, after a page header and introduction).
+MAX_SOURCE_SNIPPET_CHARS = 700
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 _LEXICAL_TOKEN_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
 _LEXICAL_STOP_WORDS = {
@@ -313,7 +318,7 @@ class RAGService:
         top_score = max((source["score"] for source in sources), default=0.0)
         if top_score < self.config.min_score:
             return {"answer": NO_ANSWER, "top_score": top_score, "sources": sources}
-        answer = self._generate_answer(question.strip(), sources)
+        answer = self._generate_answer(question.strip(), sources, ranked)
         return {"answer": answer, "top_score": top_score, "sources": sources}
 
     def query(
@@ -582,11 +587,26 @@ class RAGService:
             return question.strip()
         return f"Контекст предыдущего вопроса: {previous_user_question}\nУточняющий вопрос: {question.strip()}"
 
-    def _generate_answer(self, question: str, sources: list[dict[str, Any]]) -> str:
+    def _generate_answer(
+        self,
+        question: str,
+        sources: list[dict[str, Any]],
+        source_nodes: Sequence[Any],
+    ) -> str:
+        """Generate from complete selected chunks, not their API previews.
+
+        ``sources`` and ``source_nodes`` are built from the same ranked list;
+        their positions deliberately stay aligned with citation numbers.  A
+        compact ``snippet`` remains sufficient for source APIs and Telegram,
+        while the LLM receives the complete chunk selected by retrieval.
+        """
+
+        if len(sources) != len(source_nodes):
+            raise ValueError("sources and source_nodes must have the same length")
         context = "\n\n".join(
             f"[{index}] Файл: {source['file_name']}; страница: {source['page'] or 'не указана'}\n"
-            f"{source['snippet']}"
-            for index, source in enumerate(sources, start=1)
+            f"{self._context_text(source_node)}"
+            for index, (source, source_node) in enumerate(zip(sources, source_nodes, strict=True), start=1)
         )
         prompt = (
             f"{RAG_SYSTEM_PROMPT}\n\nКонтекст:\n{context}\n\n"
@@ -629,6 +649,12 @@ class RAGService:
     def _node_text(source_node: Any) -> str:
         return source_node.node.get_content(metadata_mode=MetadataMode.NONE)
 
+    @classmethod
+    def _context_text(cls, source_node: Any) -> str:
+        """Normalize a complete retrieved node for the LLM prompt."""
+
+        return " ".join(cls._node_text(source_node).split())
+
     def _source_from_node(self, source_node: Any) -> dict[str, Any]:
         node = source_node.node
         metadata = node.metadata or {}
@@ -647,7 +673,7 @@ class RAGService:
             except (TypeError, ValueError):
                 page = None
         score = float(source_node.score or 0.0)
-        snippet = " ".join(self._node_text(source_node).split())[:700]
+        snippet = self._context_text(source_node)[:MAX_SOURCE_SNIPPET_CHARS]
         return {
             "id": str(metadata.get("doc_id") or node.node_id),
             "file_name": Path(source).name,
