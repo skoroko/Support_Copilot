@@ -49,6 +49,8 @@ NO_ANSWER = "В предоставленной базе знаний нет до
 MAX_CONTEXT_SOURCES = 5
 MAX_OVERVIEW_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
+MAX_LEXICAL_QUERY_VARIANTS = 8
+MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
 RRF_RANK_CONSTANT = 60
 LEXICAL_CONTEXT_RESERVE = 1
@@ -421,15 +423,46 @@ class RAGService:
             [item for item in ranking if self._matches_target_product(item)]
             for ranking in retrieved_by_query
         ]
-        lexical_query = self._lexical_query(question, history, plan)
-        lexical_candidates = (
-            self._retrieve_lexical_candidates(lexical_query)
-            if lexical_query and self._lexical_available
-            else []
+        lexical_queries = self._lexical_queries(question, history, plan)
+        lexical_query: str | None = None
+        lexical_candidates: list[Any] = []
+        if self._lexical_available:
+            for candidate_query in lexical_queries:
+                candidates = [
+                    item
+                    for item in self._retrieve_lexical_candidates(candidate_query)
+                    if self._matches_target_product(item)
+                ]
+                if candidates:
+                    lexical_query = candidate_query
+                    lexical_candidates = candidates
+                    break
+        dense_fallback_queries: list[str] = []
+        initial_dense_score = max(
+            (float(item.score or 0.0) for ranking in product_rankings for item in ranking),
+            default=0.0,
         )
-        lexical_candidates = [
-            item for item in lexical_candidates if self._matches_target_product(item)
-        ]
+        if not lexical_candidates and initial_dense_score < self.config.min_score:
+            for fallback_query in lexical_queries[1:]:
+                if fallback_query in plan.queries:
+                    continue
+                fallback_ranking = list(self._retriever.retrieve(fallback_query))[
+                    : self._raw_candidate_limit()
+                ]
+                fallback_product_ranking = [
+                    item for item in fallback_ranking if self._matches_target_product(item)
+                ]
+                retrieved_by_query.append(fallback_ranking)
+                product_rankings.append(fallback_product_ranking)
+                dense_fallback_queries.append(fallback_query)
+                fallback_score = max(
+                    (float(item.score or 0.0) for item in fallback_product_ranking),
+                    default=0.0,
+                )
+                if fallback_score >= self.config.min_score:
+                    break
+                if len(dense_fallback_queries) >= MAX_DENSE_FALLBACK_QUERIES:
+                    break
         if lexical_candidates:
             product_rankings.append(lexical_candidates)
         product_candidates = self._fuse_retrieval_candidates(product_rankings)
@@ -490,6 +523,8 @@ class RAGService:
             "product_candidate_counts": [len(items) for items in product_rankings],
             "fused_candidate_count": len(product_candidates),
             "lexical_candidate_count": len(lexical_candidates),
+            "lexical_query_variant_count": len(lexical_queries),
+            "dense_fallback_query_count": len(dense_fallback_queries),
             "lexical_selected_count": sum(
                 self._node_identity(item) in lexical_ids for item in ranked
             ),
@@ -828,6 +863,48 @@ class RAGService:
         unique = list(dict.fromkeys(terms))
         is_specific_pair = len(unique) == 2 and sum(map(len, unique)) >= 9
         return " ".join(unique) if len(unique) >= 3 or is_specific_pair else None
+
+    @classmethod
+    def _lexical_queries(
+        cls,
+        question: str,
+        history: Sequence[HistoryItem] | None,
+        plan: RetrievalPlan,
+    ) -> tuple[str, ...]:
+        """Build a strict query plus bounded entity-window fallbacks.
+
+        Conversational lead-ins are open-ended (for example "меня интересует"
+        or "подскажи насчёт"), so a finite stop-word list cannot cover them.
+        Short windows are tried from both ends towards the middle only when
+        the stricter primary query has no product-scoped matches. This covers
+        both a conversational prefix and a trailing phrase after the subject.
+        """
+
+        queries: list[str] = []
+        if primary := cls._lexical_query(question, history, plan):
+            queries.append(primary)
+        current_terms = cls._fulltext_terms(question)
+        for width in (3, 2):
+            if len(current_terms) <= width:
+                continue
+            left = 0
+            right = len(current_terms) - width
+            starts: list[int] = []
+            while left <= right:
+                starts.append(left)
+                if right != left:
+                    starts.append(right)
+                left += 1
+                right -= 1
+            for start in starts:
+                window = list(dict.fromkeys(current_terms[start : start + width]))
+                is_specific_pair = len(window) == 2 and sum(map(len, window)) >= 9
+                if len(window) >= 3 or is_specific_pair:
+                    queries.append(" ".join(window))
+                unique_queries = tuple(dict.fromkeys(queries))
+                if len(unique_queries) >= MAX_LEXICAL_QUERY_VARIANTS:
+                    return unique_queries
+        return tuple(dict.fromkeys(queries))
 
     @staticmethod
     def _fulltext_terms(text: str) -> list[str]:

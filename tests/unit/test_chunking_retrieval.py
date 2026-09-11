@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_golden_retrieval_dataset_has_required_coverage() -> None:
     cases = load_retrieval_dataset(ROOT / "tests" / "eval" / "retrieval_dataset.json")
 
-    assert len(cases) == 32
+    assert len(cases) == 34
     assert all(
         1 <= len(case.relevant_doc_ids) <= 3 or case.expected_no_answer
         for case in cases

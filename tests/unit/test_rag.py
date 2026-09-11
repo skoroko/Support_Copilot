@@ -691,6 +691,29 @@ def test_independent_lexical_query_removes_conversational_lead_ins(
     assert service._lexical_query(question, None, plan) == expected
 
 
+def test_lexical_queries_add_entity_tail_fallbacks_for_unknown_lead_in(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "Меня интересует модель Мора-Кулона"
+    plan = service._retrieval_plan(question, None, None)
+
+    queries = service._lexical_queries(question, None, plan)
+
+    assert queries[0] == "меня интересует модель мора"
+    assert "модель мора кулона" in queries
+    assert len(queries) <= 8
+
+
+def test_lexical_queries_find_entity_before_trailing_conversation(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "Модель Мора-Кулона, хочу узнать про неё"
+    plan = service._retrieval_plan(question, None, None)
+
+    queries = service._lexical_queries(question, None, plan)
+
+    assert queries[0] == "модель мора кулона хочу"
+    assert queries[1] == "модель мора кулона"
+
+
 def test_fulltext_ranking_uses_dense_score_to_break_exact_entity_ties(tmp_path: Path) -> None:
     modified = NodeWithScore(
         node=TextNode(
@@ -752,6 +775,96 @@ def test_conversational_entity_query_accepts_strict_lexical_evidence_below_dense
     assert result["answer"] != NO_ANSWER
     assert result["sources"][0]["id"] == "mohr-coulomb-classic"
     assert result["sources"][0]["confident"] is True
+
+
+def test_entity_tail_fallback_recovers_named_concept_after_unknown_lead_in(
+    tmp_path: Path,
+) -> None:
+    dense = NodeWithScore(
+        node=TextNode(
+            text="Общие сведения о материалах.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.38,
+    )
+    classic = NodeWithScore(
+        node=TextNode(
+            id_="mohr-coulomb-classic",
+            text="Модель Мора-Кулона описывает поведение грунтовых оснований.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf", "page": 39},
+        ),
+        score=0.0,
+    )
+    calls: list[str] = []
+
+    def lexical_candidates(query: str) -> list[NodeWithScore]:
+        calls.append(query)
+        return [classic] if query == "модель мора кулона" else []
+
+    service = RAGService(
+        rag_config(tmp_path, min_score=0.45, allow_external_data_transfer=True),
+        llm=FakeLLM("Модель описывает поведение грунта [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _query: [dense])
+    service._lexical_available = True
+    service._retrieve_lexical_candidates = lexical_candidates  # type: ignore[method-assign]
+
+    result = service.answer("Меня интересует модель Мора-Кулона")
+
+    assert calls == [
+        "меня интересует модель мора",
+        "меня интересует модель",
+        "модель мора кулона",
+    ]
+    assert result["answer"] != NO_ANSWER
+    assert result["sources"][0]["id"] == "mohr-coulomb-classic"
+
+
+def test_dense_entity_window_recovers_misspelled_subject_before_trailing_phrase(
+    tmp_path: Path,
+) -> None:
+    question = "Модель Мора-Кулана, хочу узнать про неё"
+    low_dense = NodeWithScore(
+        node=TextNode(
+            id_="generic",
+            text="Общие сведения о материалах.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.2,
+    )
+    classic = NodeWithScore(
+        node=TextNode(
+            id_="mohr-coulomb-classic",
+            text="Модель Мора-Кулона описывает поведение грунтовых оснований.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf", "page": 39},
+        ),
+        score=0.78,
+    )
+
+    class WindowRetriever:
+        def __init__(self) -> None:
+            self.questions: list[str] = []
+
+        def retrieve(self, query: str) -> list[NodeWithScore]:
+            self.questions.append(query)
+            if query == "модель мора кулана":
+                return [classic]
+            return [low_dense] if query == question else []
+
+    retriever = WindowRetriever()
+    service = RAGService(
+        rag_config(tmp_path, min_score=0.45, allow_external_data_transfer=True),
+        llm=FakeLLM("Модель описывает поведение грунта [1]."),
+    )
+    service._retriever = retriever
+    service._lexical_available = True
+    service._retrieve_lexical_candidates = lambda _query: []  # type: ignore[method-assign]
+
+    result = service.answer(question)
+
+    assert retriever.questions == [question, "модель мора кулана"]
+    assert result["answer"] != NO_ANSWER
+    assert result["sources"][0]["id"] == "mohr-coulomb-classic"
 
 
 def test_lexical_context_focus_excludes_distant_neighbouring_section(tmp_path: Path) -> None:
