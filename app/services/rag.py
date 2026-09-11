@@ -42,11 +42,15 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 Не используй нерелевантные документы и не придумывай цены, SLA, функции или регламенты.
 Отвечай только на запрошенное свойство или действие; не подменяй его сведениями о соседних темах из контекста.
 Если найден прямой ответ, не добавляй альтернативные трактовки, условные ответы «если вопрос о...» или предложение продолжить.
+Если сведений для ответа нет, верни дословно: «В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос.» Не добавляй к этой фразе ссылки.
 После каждого утверждения указывай ссылки на использованные фрагменты в формате [1], [2].
 """
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 MAX_CONTEXT_SOURCES = 5
+MAX_OVERVIEW_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
+MAX_LEXICAL_QUERY_VARIANTS = 8
+MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
 RRF_RANK_CONSTANT = 60
 LEXICAL_CONTEXT_RESERVE = 1
@@ -75,21 +79,69 @@ _LEXICAL_STOP_WORDS = {
     "какая",
     "какие",
     "какой",
+    "кратко",
     "на",
     "не",
+    "мне",
+    "можешь",
     "но",
     "о",
     "по",
+    "пожалуйста",
+    "подробнее",
+    "подробно",
+    "про",
     "при",
     "с",
     "со",
     "что",
+    "ты",
+    "знаешь",
+    "такое",
+    "такую",
+    "таком",
     "это",
+    "about",
+    "are",
+    "describe",
+    "explain",
+    "is",
+    "me",
+    "please",
+    "tell",
+    "what",
     "gts",
     "midas",
     "nx",
 }
-_LEXICAL_IGNORED_PREFIXES = ("использ",)
+_LEXICAL_IGNORED_PREFIXES = (
+    "использ",
+    "объясн",
+    "опиш",
+    "поясн",
+    "расскаж",
+)
+_OVERVIEW_PREFIXES = (
+    "дай обзор ",
+    "дай краткий обзор ",
+    "кратко расскажи ",
+    "можешь рассказать ",
+    "обзор ",
+    "объясни ",
+    "опиши ",
+    "подробно расскажи ",
+    "расскажи ",
+    "расскажи подробнее ",
+    "что известно о ",
+    "что такое ",
+    "что ты знаешь о ",
+    "describe ",
+    "explain ",
+    "overview ",
+    "tell me about ",
+    "what are ",
+    "what is ",
+)
 _RUSSIAN_SUFFIXES = tuple(
     sorted(
         {
@@ -371,15 +423,46 @@ class RAGService:
             [item for item in ranking if self._matches_target_product(item)]
             for ranking in retrieved_by_query
         ]
-        lexical_query = self._lexical_query(question, history, plan)
-        lexical_candidates = (
-            self._retrieve_lexical_candidates(lexical_query)
-            if lexical_query and self._lexical_available
-            else []
+        lexical_queries = self._lexical_queries(question, history, plan)
+        lexical_query: str | None = None
+        lexical_candidates: list[Any] = []
+        if self._lexical_available:
+            for candidate_query in lexical_queries:
+                candidates = [
+                    item
+                    for item in self._retrieve_lexical_candidates(candidate_query)
+                    if self._matches_target_product(item)
+                ]
+                if candidates:
+                    lexical_query = candidate_query
+                    lexical_candidates = candidates
+                    break
+        dense_fallback_queries: list[str] = []
+        initial_dense_score = max(
+            (float(item.score or 0.0) for ranking in product_rankings for item in ranking),
+            default=0.0,
         )
-        lexical_candidates = [
-            item for item in lexical_candidates if self._matches_target_product(item)
-        ]
+        if not lexical_candidates and initial_dense_score < self.config.min_score:
+            for fallback_query in lexical_queries[1:]:
+                if fallback_query in plan.queries:
+                    continue
+                fallback_ranking = list(self._retriever.retrieve(fallback_query))[
+                    : self._raw_candidate_limit()
+                ]
+                fallback_product_ranking = [
+                    item for item in fallback_ranking if self._matches_target_product(item)
+                ]
+                retrieved_by_query.append(fallback_ranking)
+                product_rankings.append(fallback_product_ranking)
+                dense_fallback_queries.append(fallback_query)
+                fallback_score = max(
+                    (float(item.score or 0.0) for item in fallback_product_ranking),
+                    default=0.0,
+                )
+                if fallback_score >= self.config.min_score:
+                    break
+                if len(dense_fallback_queries) >= MAX_DENSE_FALLBACK_QUERIES:
+                    break
         if lexical_candidates:
             product_rankings.append(lexical_candidates)
         product_candidates = self._fuse_retrieval_candidates(product_rankings)
@@ -405,15 +488,28 @@ class RAGService:
         ranked = ranked[: self._raw_candidate_limit()]
         ranked = self._rerank(plan.ranking_question, ranked)
         ranked_candidate_count = len(ranked)
+        overview_question = self._is_overview_question(question)
+        best_dense_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
+        reserve_lexical = not overview_question or best_dense_score < self.config.min_score
         reserved = self._rank_fulltext_evidence(
             question,
             [canonical_candidates[node_id] for node_id in lexical_order if node_id in canonical_candidates],
             retrieval_query=lexical_query,
-        )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())]
+        )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())] if reserve_lexical else []
         for candidate in reserved:
             candidate.node.metadata["_lexical_focus_query"] = lexical_query
         ranked = self._prepend_reserved(reserved, ranked)
-        ranked = self._deduplicate(ranked, limit=self._context_limit())
+        if plan.mode == "follow_up" and reserved:
+            context_limit = 1
+        elif overview_question:
+            context_limit = min(self._context_limit(), MAX_OVERVIEW_CONTEXT_SOURCES)
+        else:
+            context_limit = self._context_limit()
+        ranked = self._deduplicate(
+            ranked,
+            limit=context_limit,
+            max_per_file=1 if overview_question else None,
+        )
         sources = [self._source_from_node(item) for item in ranked]
         # Cosine similarity remains the confidence signal even when a
         # cross-encoder changes presentation order.  Cross-encoder scores are
@@ -427,12 +523,15 @@ class RAGService:
             "product_candidate_counts": [len(items) for items in product_rankings],
             "fused_candidate_count": len(product_candidates),
             "lexical_candidate_count": len(lexical_candidates),
+            "lexical_query_variant_count": len(lexical_queries),
+            "dense_fallback_query_count": len(dense_fallback_queries),
             "lexical_selected_count": sum(
                 self._node_identity(item) in lexical_ids for item in ranked
             ),
             "ranked_candidate_count": ranked_candidate_count,
             "selected_candidate_ids": [source["id"] for source in sources],
             "selected_candidate_count": len(sources),
+            "answer_mode": "overview" if overview_question else "focused",
             "top_score": round(top_score, 6),
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
@@ -440,7 +539,12 @@ class RAGService:
         if top_score < self.config.min_score and not has_lexical_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
             return {"answer": NO_ANSWER, "top_score": top_score, "sources": []}
-        answer, cited_sources = self._generate_answer(question.strip(), sources, ranked)
+        answer, cited_sources = self._generate_answer(
+            question.strip(),
+            sources,
+            ranked,
+            overview_question=overview_question,
+        )
         outcome = "grounded" if cited_sources else "missing_valid_citation"
         logger.info(
             "rag_retrieval_completed",
@@ -757,7 +861,50 @@ class RAGService:
             )
             terms.extend(cls._fulltext_terms(previous_user_question)[:2])
         unique = list(dict.fromkeys(terms))
-        return " ".join(unique) if len(unique) >= 3 else None
+        is_specific_pair = len(unique) == 2 and sum(map(len, unique)) >= 9
+        return " ".join(unique) if len(unique) >= 3 or is_specific_pair else None
+
+    @classmethod
+    def _lexical_queries(
+        cls,
+        question: str,
+        history: Sequence[HistoryItem] | None,
+        plan: RetrievalPlan,
+    ) -> tuple[str, ...]:
+        """Build a strict query plus bounded entity-window fallbacks.
+
+        Conversational lead-ins are open-ended (for example "меня интересует"
+        or "подскажи насчёт"), so a finite stop-word list cannot cover them.
+        Short windows are tried from both ends towards the middle only when
+        the stricter primary query has no product-scoped matches. This covers
+        both a conversational prefix and a trailing phrase after the subject.
+        """
+
+        queries: list[str] = []
+        if primary := cls._lexical_query(question, history, plan):
+            queries.append(primary)
+        current_terms = cls._fulltext_terms(question)
+        for width in (3, 2):
+            if len(current_terms) <= width:
+                continue
+            left = 0
+            right = len(current_terms) - width
+            starts: list[int] = []
+            while left <= right:
+                starts.append(left)
+                if right != left:
+                    starts.append(right)
+                left += 1
+                right -= 1
+            for start in starts:
+                window = list(dict.fromkeys(current_terms[start : start + width]))
+                is_specific_pair = len(window) == 2 and sum(map(len, window)) >= 9
+                if len(window) >= 3 or is_specific_pair:
+                    queries.append(" ".join(window))
+                unique_queries = tuple(dict.fromkeys(queries))
+                if len(unique_queries) >= MAX_LEXICAL_QUERY_VARIANTS:
+                    return unique_queries
+        return tuple(dict.fromkeys(queries))
 
     @staticmethod
     def _fulltext_terms(text: str) -> list[str]:
@@ -787,7 +934,7 @@ class RAGService:
         query_pairs = set(zip(query_terms, query_terms[1:]))
         current_terms = set(cls._lexical_terms(" ".join(cls._fulltext_terms(question))))
 
-        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, float, float, int]:
+        def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, float, float, float, int]:
             index, source_node = indexed_node
             full_terms = cls._lexical_terms(cls._node_text(source_node))
             lead_terms = cls._lexical_terms(cls._node_text(source_node)[:400])
@@ -803,7 +950,15 @@ class RAGService:
                 pair_coverage = len(query_pairs.intersection(full_pairs)) / len(query_pairs)
             span = cls._minimum_cover_span(full_terms, query_unique)
             proximity = 1.0 / span if span is not None else 0.0
-            return full_coverage, current_lead_coverage, proximity, pair_coverage, -index
+            dense_score = float(source_node.score or 0.0)
+            return (
+                full_coverage,
+                current_lead_coverage,
+                proximity,
+                pair_coverage,
+                dense_score,
+                -index,
+            )
 
         return [
             source_node
@@ -914,17 +1069,28 @@ class RAGService:
                 return token[: -len(suffix)]
         return token
 
-    def _deduplicate(self, source_nodes: Sequence[Any], *, limit: int) -> list[Any]:
+    def _deduplicate(
+        self,
+        source_nodes: Sequence[Any],
+        *,
+        limit: int,
+        max_per_file: int | None = None,
+    ) -> list[Any]:
         """Remove duplicate chunks after ranking and cap the LLM context."""
 
         selected: list[Any] = []
         selected_texts: list[str] = []
+        file_counts: dict[str, int] = {}
         for source_node in source_nodes:
             normalized_text = self._normalized_chunk_text(self._node_text(source_node))
             if any(self._near_duplicate(normalized_text, previous) for previous in selected_texts):
                 continue
+            file_name = str(self._source_from_node(source_node)["file_name"])
+            if max_per_file is not None and file_counts.get(file_name, 0) >= max_per_file:
+                continue
             selected.append(source_node)
             selected_texts.append(normalized_text)
+            file_counts[file_name] = file_counts.get(file_name, 0) + 1
             if len(selected) >= limit:
                 break
         return selected
@@ -1013,6 +1179,8 @@ class RAGService:
         question: str,
         sources: list[dict[str, Any]],
         source_nodes: Sequence[Any],
+        *,
+        overview_question: bool = False,
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate from complete selected chunks, not their API previews.
 
@@ -1029,9 +1197,20 @@ class RAGService:
             f"{self._context_text(source_node)}"
             for index, (source, source_node) in enumerate(zip(sources, source_nodes, strict=True), start=1)
         )
+        overview_instruction = (
+            "\nЭто широкий обзорный вопрос. Сначала дай определение в одном предложении, "
+            "затем выбери не более трёх главных аспектов и свяжи их общей логикой. "
+            "Не пересказывай каждый фрагмент контекста и не включай узкие настройки, "
+            "численные детали или частные алгоритмы, если о них не спрашивали. "
+            "Если контекст относится к разным типам расчёта и единого ответа нет, "
+            "кратко назови эти типы и задай один уточняющий вопрос о сценарии пользователя.\n"
+            if overview_question
+            else ""
+        )
         prompt = (
             f"{RAG_SYSTEM_PROMPT}\n\nКонтекст:\n{context}\n\n"
             f"Вопрос пользователя: {question}\n\n"
+            f"{overview_instruction}"
             f"Дай краткий проверяемый ответ. Используй только контекст и ссылайся только на "
             f"существующие номера от [1] до [{len(sources)}]."
         )
@@ -1058,8 +1237,8 @@ class RAGService:
     ) -> tuple[str, list[dict[str, Any]]]:
         """Validate citations, return only cited sources and keep numbering aligned."""
 
-        if answer == NO_ANSWER:
-            return answer, []
+        if cls._is_abstention_answer(answer):
+            return NO_ANSWER, []
         source_count = len(sources)
         cited_numbers = sorted(
             {
@@ -1085,6 +1264,48 @@ class RAGService:
         grounded_answer = _CITATION_RE.sub(remap, answer)
         cited_sources = [sources[number - 1] for number in cited_numbers]
         return grounded_answer, cited_sources
+
+    @classmethod
+    def _is_abstention_answer(cls, answer: str) -> bool:
+        """Recognize grounded-generation abstentions and remove false citations.
+
+        The exact canonical sentence is preferred, but providers sometimes
+        paraphrase it as "the context does not contain pricing information"
+        and append citations.  A scope marker is required so factual negative
+        statements such as "the model does not include rotations" remain valid.
+        """
+
+        without_citations = _CITATION_RE.sub("", answer).strip()
+        if without_citations == NO_ANSWER:
+            return True
+        normalized = " ".join(without_citations.casefold().replace("ё", "е").split())
+        if len(normalized) > 500:
+            return False
+        has_scope = any(
+            marker in normalized
+            for marker in (
+                "базе знаний",
+                "в базе",
+                "в контексте",
+                "предоставленном контексте",
+                "в документе",
+                "в документах",
+                "в материалах",
+            )
+        )
+        if not has_scope:
+            return False
+        subject = r"(?:сведен\w*|информац\w*|данн\w*|цен\w*|стоимост\w*)"
+        absence = r"(?:нет|не\s+(?:найден\w*|содерж\w*|указан\w*)|отсутств\w*)"
+        return bool(
+            re.search(rf"{subject}[^.!?]{{0,120}}{absence}", normalized)
+            or re.search(rf"{absence}[^.!?]{{0,120}}{subject}", normalized)
+        )
+
+    @staticmethod
+    def _is_overview_question(question: str) -> bool:
+        normalized = " ".join(question.casefold().replace("ё", "е").split())
+        return normalized.startswith(_OVERVIEW_PREFIXES)
 
     @staticmethod
     def _ensure_citations(answer: str, sources: list[dict[str, Any]]) -> str:

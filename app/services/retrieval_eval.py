@@ -31,6 +31,8 @@ class RetrievalCase:
     relevant_evidence: tuple[EvidencePredicate, ...] = ()
     expected_answer_contains_all: tuple[str, ...] = ()
     expected_answer_excludes_all: tuple[str, ...] = ()
+    expected_no_answer: bool = False
+    max_cited_sources: int | None = None
 
 
 def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[RetrievalCase]:
@@ -46,8 +48,14 @@ def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[Retri
         doc_ids = item.get("relevant_doc_ids")
         if not isinstance(question, str) or not question.strip():
             raise ValueError(f"dataset item {index} has an invalid question")
-        if not isinstance(doc_ids, list) or not 1 <= len(doc_ids) <= 3:
-            raise ValueError(f"dataset item {index} must contain 1-3 relevant_doc_ids")
+        expected_no_answer = item.get("expected_no_answer", False)
+        if not isinstance(expected_no_answer, bool):
+            raise ValueError(f"dataset item {index} has an invalid expected_no_answer")
+        if not isinstance(doc_ids, list) or len(doc_ids) > 3 or (not doc_ids and not expected_no_answer):
+            raise ValueError(
+                f"dataset item {index} must contain 1-3 relevant_doc_ids, "
+                "or none for an expected_no_answer case"
+            )
         normalized = tuple(str(doc_id).strip() for doc_id in doc_ids)
         if any(not doc_id for doc_id in normalized) or len(set(normalized)) != len(normalized):
             raise ValueError(f"dataset item {index} contains invalid relevant_doc_ids")
@@ -63,6 +71,15 @@ def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[Retri
             field="expected_answer_excludes_all",
             index=index,
         )
+        max_cited_sources = item.get("max_cited_sources")
+        if max_cited_sources is not None and (
+            not isinstance(max_cited_sources, int) or isinstance(max_cited_sources, bool) or max_cited_sources < 0
+        ):
+            raise ValueError(f"dataset item {index} has an invalid max_cited_sources")
+        if expected_no_answer and (evidence or answer_terms or excluded_answer_terms):
+            raise ValueError(
+                f"dataset item {index} cannot combine expected_no_answer with answer evidence"
+            )
         cases.append(
             RetrievalCase(
                 question=question.strip(),
@@ -71,6 +88,8 @@ def load_retrieval_dataset(path: Path, *, minimum_cases: int = 20) -> list[Retri
                 relevant_evidence=evidence,
                 expected_answer_contains_all=answer_terms,
                 expected_answer_excludes_all=excluded_answer_terms,
+                expected_no_answer=expected_no_answer,
+                max_cited_sources=max_cited_sources,
             )
         )
     return cases
@@ -145,7 +164,14 @@ def retrieval_metrics(
     hit_rate = 0.0
     reciprocal_rank = 0.0
     recall = 0.0
-    for case, ranking in zip(cases, rankings, strict=True):
+    evaluated = [
+        (case, ranking)
+        for case, ranking in zip(cases, rankings, strict=True)
+        if not case.expected_no_answer
+    ]
+    if not evaluated:
+        return {"hit_rate@5": 0.0, "mrr@10": 0.0, "recall@10": 0.0}
+    for case, ranking in evaluated:
         relevant = set(case.relevant_doc_ids)
         hit_rate += float(any(doc_id in relevant for doc_id in ranking[:5]))
         reciprocal_rank += next(
@@ -154,7 +180,7 @@ def retrieval_metrics(
         )
         recall += len(relevant.intersection(ranking[:10])) / len(relevant)
 
-    count = len(cases)
+    count = len(evaluated)
     return {
         "hit_rate@5": hit_rate / count,
         "mrr@10": reciprocal_rank / count,
@@ -254,6 +280,53 @@ def answer_focus_metrics(
         for case, answer in evaluated
     )
     return {"answer_focus_rate": passed / len(evaluated)}
+
+
+def abstention_metrics(
+    cases: Sequence[RetrievalCase],
+    answers: Sequence[str],
+    source_rankings: Sequence[Sequence[Mapping[str, Any] | Any]],
+    *,
+    no_answer_text: str,
+) -> dict[str, float]:
+    """Measure whether missing-knowledge cases abstain without fake citations."""
+
+    if not cases or len(cases) != len(answers) or len(cases) != len(source_rankings):
+        raise ValueError("cases, answers and source_rankings must be non-empty and have equal length")
+    evaluated = [
+        (answer, sources)
+        for case, answer, sources in zip(cases, answers, source_rankings, strict=True)
+        if case.expected_no_answer
+    ]
+    if not evaluated:
+        return {"answer_abstention_rate": 0.0}
+    passed = sum(
+        answer.strip() == no_answer_text and not sources
+        for answer, sources in evaluated
+    )
+    return {"answer_abstention_rate": passed / len(evaluated)}
+
+
+def citation_focus_metrics(
+    cases: Sequence[RetrievalCase],
+    source_rankings: Sequence[Sequence[Mapping[str, Any] | Any]],
+) -> dict[str, float]:
+    """Measure explicit limits on citations for overview and abstention cases."""
+
+    if not cases or len(cases) != len(source_rankings):
+        raise ValueError("cases and source_rankings must be non-empty and have equal length")
+    evaluated = [
+        (case, sources)
+        for case, sources in zip(cases, source_rankings, strict=True)
+        if case.max_cited_sources is not None
+    ]
+    if not evaluated:
+        return {"citation_focus_rate": 0.0}
+    passed = sum(
+        len(sources) <= int(case.max_cited_sources)
+        for case, sources in evaluated
+    )
+    return {"citation_focus_rate": passed / len(evaluated)}
 
 
 def citation_provenance_metrics(

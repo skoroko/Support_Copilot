@@ -6,6 +6,7 @@ from pathlib import Path
 from eval.check_thresholds import check_thresholds
 from eval.run_evaluation import build_judge_messages, calculate_aggregates, load_golden, normalize_judge_result
 from app.services.retrieval_eval import load_retrieval_dataset
+from app.services.rag import NO_ANSWER
 from scripts.evaluate_rag_quality import evaluate as evaluate_rag_quality
 
 
@@ -87,12 +88,15 @@ def test_rag_quality_eval_checks_answers_and_citation_pages() -> None:
     class FakeRAGService:
         def answer(self, question: str, *, history):
             case = by_question[question]
+            if case.expected_no_answer:
+                return {"answer": NO_ANSWER, "top_score": 0.1, "sources": []}
             source = {"file_name": case.relevant_doc_ids[0], "page": None, "printed_page": None}
             answer = "Проверяемый ответ [1]."
+            if case.expected_answer_contains_all:
+                answer = " ".join(case.expected_answer_contains_all) + " [1]."
             if case.relevant_evidence:
                 predicate = case.relevant_evidence[0]
                 source.update(page=predicate.page, printed_page=predicate.printed_page)
-                answer = " ".join(case.expected_answer_contains_all) + " [1]."
             return {"answer": answer, "top_score": 0.9, "sources": [source]}
 
     payload = evaluate_rag_quality(
@@ -105,3 +109,5 @@ def test_rag_quality_eval_checks_answers_and_citation_pages() -> None:
     assert payload["metrics"]["citation_provenance_rate"] == 1.0
     assert payload["metrics"]["answer_evidence_rate"] == 1.0
     assert payload["metrics"]["answer_focus_rate"] == 1.0
+    assert payload["metrics"]["answer_abstention_rate"] == 1.0
+    assert payload["metrics"]["citation_focus_rate"] == 1.0
