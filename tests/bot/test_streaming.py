@@ -57,7 +57,7 @@ async def test_stream_to_chat_appends_sources_shown_to_user() -> None:
 
     assert result == "Привет [1]"
     assert editable.edit_text.await_args_list[-1].args[0].endswith(
-        "Источники:\n[1] manual.pdf, стр. 7"
+        "Источники:\n[1] manual.pdf, PDF стр. 7"
     )
     assert editable.edit_text.await_args_list[-1].kwargs["parse_mode"] == ParseMode.HTML
 
@@ -75,7 +75,7 @@ async def test_stream_to_chat_shows_only_sources_cited_with_original_numbers() -
     await stream_to_chat(message, cited_stream(), sources_factory=lambda: sources)
 
     final_text = editable.edit_text.await_args_list[-1].args[0]
-    assert "Источники:\n[2] manual-2.pdf, стр. 2\n[7] manual-7.pdf, стр. 7" in final_text
+    assert "Источники:\n[2] manual-2.pdf, PDF стр. 2\n[7] manual-7.pdf, PDF стр. 7" in final_text
     assert "[1] manual-1.pdf" not in final_text
     assert "[10] manual-10.pdf" not in final_text
 
@@ -84,7 +84,8 @@ def test_format_all_sources_keeps_full_original_numbering() -> None:
     sources = [{"file_name": f"manual-{index}.pdf", "page": index} for index in range(1, 4)]
 
     assert format_all_sources(sources) == (
-        "Документы:\n[1] manual-1.pdf, стр. 1\n[2] manual-2.pdf, стр. 2\n[3] manual-3.pdf, стр. 3"
+        "Документы:\n[1] manual-1.pdf, PDF стр. 1\n[2] manual-2.pdf, PDF стр. 2\n"
+        "[3] manual-3.pdf, PDF стр. 3"
     )
 
 
@@ -96,9 +97,35 @@ def test_format_all_sources_groups_same_document_and_keeps_citation_numbers() ->
     ]
 
     assert format_all_sources(sources) == (
-        "Документы:\n[1, 3] GTS NX manual.pdf, стр. 3, 7\n[2] other.pdf, стр. 9"
+        "Документы:\n[1, 3] GTS NX manual.pdf, PDF стр. 3; PDF стр. 7\n[2] other.pdf, PDF стр. 9"
     )
     assert source_document_count(sources) == 2
+
+
+def test_format_all_sources_distinguishes_pdf_and_printed_pages() -> None:
+    sources = [
+        {
+            "file_name": "GTS NX manual.pdf",
+            "page": 32,
+            "printed_page": 45,
+        }
+    ]
+
+    assert format_all_sources(sources) == (
+        "Документы:\n[1] GTS NX manual.pdf, PDF стр. 32 (в документе 45)"
+    )
+
+
+def test_format_all_sources_keeps_physical_and_printed_page_pairs() -> None:
+    sources = [
+        {"file_name": "GTS NX manual.pdf", "page": 32, "printed_page": 45},
+        {"file_name": "GTS NX manual.pdf", "page": 60, "printed_page": 79},
+    ]
+
+    assert format_all_sources(sources) == (
+        "Документы:\n[1, 2] GTS NX manual.pdf, PDF стр. 32 (в документе 45); "
+        "PDF стр. 60 (в документе 79)"
+    )
 
 
 @pytest.mark.asyncio

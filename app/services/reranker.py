@@ -14,6 +14,8 @@ class RerankCandidate:
     source: str
     score: float
     rerank_score: float | None = None
+    page: int | None = None
+    printed_page: int | None = None
 
 
 class BGEReranker:

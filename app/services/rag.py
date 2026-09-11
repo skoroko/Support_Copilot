@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 import re
+import time
 from typing import Any, Callable, Mapping, Sequence
 
 from llama_index.core import VectorStoreIndex
@@ -17,6 +18,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance
 
 from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
+from app.observability.logging import get_logger
+from app.observability.pii import prompt_hash
 from app.services.reranker import BGEReranker, RerankCandidate
 
 
@@ -31,6 +34,7 @@ NO_ANSWER = "В предоставленной базе знаний нет до
 MAX_CONTEXT_SOURCES = 5
 MAX_RAW_CANDIDATES = 30
 RAW_CANDIDATE_MULTIPLIER = 3
+RRF_RANK_CONSTANT = 60
 NEAR_DUPLICATE_RATIO = 0.9
 # ``snippet`` is sent through the public API, persisted with the chat message
 # and used as a compact UI preview.  It must never be reused as the generation
@@ -38,6 +42,8 @@ NEAR_DUPLICATE_RATIO = 0.9
 # 700 characters (for example, after a page header and introduction).
 MAX_SOURCE_SNIPPET_CHARS = 700
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_LEGACY_PAGE_REF_RE = re.compile(r"_part_(\d+)$")
+_PRINTED_PAGE_RE = re.compile(r"(?m)^[ \t]*(\d{1,4})[ \t]*$")
 _LEXICAL_TOKEN_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
 _LEXICAL_STOP_WORDS = {
     "а",
@@ -114,9 +120,41 @@ _RUSSIAN_SUFFIXES = tuple(
         reverse=True,
     )
 )
+_FOLLOWUP_REFERENCE_TERMS = {
+    "его",
+    "ее",
+    "её",
+    "их",
+    "них",
+    "он",
+    "она",
+    "они",
+    "там",
+    "так",
+    "такие",
+    "такой",
+    "этого",
+    "этой",
+    "этом",
+    "эта",
+    "эти",
+    "этих",
+    "это",
+    "этот",
+}
+_ELLIPTICAL_FOLLOWUP_PREFIXES = ("а ", "и ", "тогда ", "что насчет ", "что насчёт ")
+
+logger = get_logger("rag-service")
 
 HistoryItem = Mapping[str, Any] | Any
 CondenseHook = Callable[[str, Sequence[HistoryItem]], str | None]
+
+
+@dataclass(frozen=True)
+class RetrievalPlan:
+    ranking_question: str
+    queries: tuple[str, ...]
+    mode: str
 
 
 @dataclass(frozen=True)
@@ -301,25 +339,60 @@ class RAGService:
             raise RuntimeError("RAG index is not built")
 
         self._require_external_transfer_allowed("embed a retrieval question")
-        retrieval_question = self._standalone_question(question, history, standalone_question)
-        retrieved = list(self._retriever.retrieve(retrieval_question))[: self._raw_candidate_limit()]
-        product_candidates = [item for item in retrieved if self._matches_target_product(item)]
+        started_at = time.perf_counter()
+        plan = self._retrieval_plan(question, history, standalone_question)
+        retrieved_by_query = [
+            list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            for query in plan.queries
+        ]
+        product_rankings = [
+            [item for item in ranking if self._matches_target_product(item)]
+            for ranking in retrieved_by_query
+        ]
+        product_candidates = self._fuse_retrieval_candidates(product_rankings)
         # Rank the complete product-scoped pool before removing duplicates or
         # applying the final context limit.  An earlier per-file cap discarded
         # exact evidence whenever two weaker dense matches from the same manual
         # happened to arrive first.
-        ranked = self._rank_by_lexical_evidence(retrieval_question, product_candidates)
-        ranked = self._rerank(retrieval_question, ranked)
+        ranked = self._rank_by_lexical_evidence(plan.ranking_question, product_candidates)
+        # Keep the complete union until lexical evidence has had a chance to
+        # rescue a candidate returned by only one query variant.  Capping the
+        # RRF union first can discard that exact passage behind candidates
+        # duplicated across both dense rankings.
+        ranked = ranked[: self._raw_candidate_limit()]
+        ranked = self._rerank(plan.ranking_question, ranked)
+        ranked_candidate_count = len(ranked)
         ranked = self._deduplicate(ranked, limit=self._context_limit())
         sources = [self._source_from_node(item) for item in ranked]
         # Cosine similarity remains the confidence signal even when a
         # cross-encoder changes presentation order.  Cross-encoder scores are
         # not calibrated to the embedding threshold.
         top_score = max((source["score"] for source in sources), default=0.0)
+        telemetry = {
+            "question_hash": prompt_hash(question.strip()),
+            "plan_mode": plan.mode,
+            "query_variant_count": len(plan.queries),
+            "raw_candidate_counts": [len(items) for items in retrieved_by_query],
+            "product_candidate_counts": [len(items) for items in product_rankings],
+            "fused_candidate_count": len(product_candidates),
+            "ranked_candidate_count": ranked_candidate_count,
+            "selected_candidate_ids": [source["id"] for source in sources],
+            "selected_candidate_count": len(sources),
+            "top_score": round(top_score, 6),
+            "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
+        }
         if top_score < self.config.min_score:
-            return {"answer": NO_ANSWER, "top_score": top_score, "sources": sources}
-        answer = self._generate_answer(question.strip(), sources, ranked)
-        return {"answer": answer, "top_score": top_score, "sources": sources}
+            logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
+            return {"answer": NO_ANSWER, "top_score": top_score, "sources": []}
+        answer, cited_sources = self._generate_answer(question.strip(), sources, ranked)
+        outcome = "grounded" if cited_sources else "missing_valid_citation"
+        logger.info(
+            "rag_retrieval_completed",
+            **telemetry,
+            outcome=outcome,
+            cited_source_count=len(cited_sources),
+        )
+        return {"answer": answer, "top_score": top_score, "sources": cited_sources}
 
     def query(
         self,
@@ -467,6 +540,77 @@ class RAGService:
             return min(MAX_CONTEXT_SOURCES, self.config.rerank_top_n)
         return MAX_CONTEXT_SOURCES
 
+    def _retrieval_plan(
+        self,
+        question: str,
+        history: Sequence[HistoryItem] | None,
+        standalone_question: str | None,
+    ) -> RetrievalPlan:
+        """Plan one normal query or two complementary follow-up queries.
+
+        A context-dependent turn uses the user's exact wording for narrow
+        recall plus a history-expanded wording for disambiguation.  Explicit
+        caller rewrites and custom hooks remain authoritative single queries.
+        Independent questions do not pay for, or get polluted by, a second
+        retrieval request.
+        """
+
+        focused = self._standalone_question(question, history, standalone_question)
+        current = question.strip()
+        if standalone_question and standalone_question.strip():
+            return RetrievalPlan(focused, (focused,), "caller_standalone")
+        if self._condense_hook is not None and focused != current:
+            return RetrievalPlan(focused, (focused,), "condense_hook")
+        if focused == current:
+            return RetrievalPlan(current, (current,), "independent")
+        return RetrievalPlan(focused, (current, focused), "follow_up")
+
+    def _fuse_retrieval_candidates(self, rankings: Sequence[Sequence[Any]]) -> list[Any]:
+        """Merge variant rankings with deterministic reciprocal-rank fusion.
+
+        Dense scores from two different query embeddings are not directly
+        comparable.  RRF uses only rank positions, rewards nodes found by both
+        variants and avoids introducing an unevaluated score weight.  The
+        original best dense score is retained on the returned node for the
+        existing confidence threshold.
+        """
+
+        fused: dict[str, dict[str, Any]] = {}
+        first_seen = 0
+        for ranking in rankings:
+            seen_in_ranking: set[str] = set()
+            for rank, source_node in enumerate(ranking, start=1):
+                node_id = self._node_identity(source_node)
+                if node_id in seen_in_ranking:
+                    continue
+                seen_in_ranking.add(node_id)
+                entry = fused.get(node_id)
+                if entry is None:
+                    entry = {
+                        "node": source_node,
+                        "rrf": 0.0,
+                        "best_score": float(source_node.score or 0.0),
+                        "first_seen": first_seen,
+                    }
+                    fused[node_id] = entry
+                    first_seen += 1
+                score = float(source_node.score or 0.0)
+                if score > entry["best_score"]:
+                    entry["node"] = source_node
+                    entry["best_score"] = score
+                entry["rrf"] += 1.0 / (RRF_RANK_CONSTANT + rank)
+
+        ordered = sorted(
+            fused.items(),
+            key=lambda item: (
+                -float(item[1]["rrf"]),
+                -float(item[1]["best_score"]),
+                int(item[1]["first_seen"]),
+                item[0],
+            ),
+        )
+        return [entry["node"] for _, entry in ordered]
+
     def _rank_by_lexical_evidence(self, question: str, source_nodes: Sequence[Any]) -> list[Any]:
         """Boost literal query evidence while retaining dense similarity.
 
@@ -573,6 +717,8 @@ class RAGService:
             condensed = self._condense_hook(question, history)
             if condensed and condensed.strip():
                 return condensed.strip()
+        if not self._is_context_dependent_followup(question):
+            return question.strip()
         previous_user_question = next(
             (
                 content
@@ -585,14 +731,47 @@ class RAGService:
         )
         if not previous_user_question:
             return question.strip()
-        return f"Контекст предыдущего вопроса: {previous_user_question}\nУточняющий вопрос: {question.strip()}"
+        # Keep the user's wording, but omit synthetic labels such as
+        # "контекст предыдущего вопроса": those labels dilute the embedding
+        # and do not add support-domain meaning.
+        previous = " ".join(previous_user_question.split()).strip()
+        return f"{previous} {question.strip()}"
+
+    @staticmethod
+    def _is_context_dependent_followup(question: str) -> bool:
+        """Recognize only clear references or short conversational ellipses.
+
+        This intentionally stays conservative.  A false negative still runs
+        the exact current question; a false positive adds one bounded query.
+        It avoids a large language-specific rewrite grammar and does not alter
+        explicit, self-contained technical questions.
+        """
+
+        normalized = " ".join(question.casefold().replace("ё", "е").split())
+        tokens = _LEXICAL_TOKEN_RE.findall(normalized)
+        starts_conversationally = normalized.startswith(_ELLIPTICAL_FOLLOWUP_PREFIXES)
+        if starts_conversationally:
+            return True
+        reference_positions = [
+            index for index, token in enumerate(tokens) if token in _FOLLOWUP_REFERENCE_TERMS
+        ]
+        if not reference_positions:
+            return False
+        # Short pronominal questions ("Какие из них?", "Для них?") are
+        # dependent.  A pronoun buried in a complete technical question is
+        # not enough on its own: adding unrelated history would pollute recall.
+        return len(tokens) <= 4 or (
+            tokens[0] in {"где", "какая", "какие", "какой", "когда", "кто", "сколько", "что"}
+            and reference_positions[0] <= 3
+            and len(tokens) <= 12
+        )
 
     def _generate_answer(
         self,
         question: str,
         sources: list[dict[str, Any]],
         source_nodes: Sequence[Any],
-    ) -> str:
+    ) -> tuple[str, list[dict[str, Any]]]:
         """Generate from complete selected chunks, not their API previews.
 
         ``sources`` and ``source_nodes`` are built from the same ranked list;
@@ -604,7 +783,7 @@ class RAGService:
         if len(sources) != len(source_nodes):
             raise ValueError("sources and source_nodes must have the same length")
         context = "\n\n".join(
-            f"[{index}] Файл: {source['file_name']}; страница: {source['page'] or 'не указана'}\n"
+            f"[{index}] {self._context_source_label(source)}\n"
             f"{self._context_text(source_node)}"
             for index, (source, source_node) in enumerate(zip(sources, source_nodes, strict=True), start=1)
         )
@@ -616,7 +795,54 @@ class RAGService:
         )
         response = self._language_model().complete(prompt)
         answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
-        return self._ensure_citations(answer, sources)
+        return self._ground_answer(answer, sources)
+
+    @staticmethod
+    def _context_source_label(source: Mapping[str, Any]) -> str:
+        parts = [f"Файл: {source['file_name']}"]
+        if source.get("page") is not None:
+            parts.append(f"PDF-страница: {source['page']}")
+        if source.get("printed_page") is not None:
+            parts.append(f"страница документа: {source['printed_page']}")
+        if len(parts) == 1:
+            parts.append("страница: не указана")
+        return "; ".join(parts)
+
+    @classmethod
+    def _ground_answer(
+        cls,
+        answer: str,
+        sources: list[dict[str, Any]],
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Validate citations, return only cited sources and keep numbering aligned."""
+
+        if answer == NO_ANSWER:
+            return answer, []
+        source_count = len(sources)
+        cited_numbers = sorted(
+            {
+                number
+                for match in _CITATION_RE.finditer(answer)
+                for raw_number in match.group(1).split(",")
+                if 1 <= (number := int(raw_number.strip())) <= source_count
+            }
+        )
+        if not cited_numbers:
+            return NO_ANSWER, []
+
+        number_map = {old: new for new, old in enumerate(cited_numbers, start=1)}
+
+        def remap(match: re.Match[str]) -> str:
+            mapped: list[int] = []
+            for raw_number in match.group(1).split(","):
+                new_number = number_map.get(int(raw_number.strip()))
+                if new_number is not None and new_number not in mapped:
+                    mapped.append(new_number)
+            return f"[{', '.join(str(number) for number in mapped)}]" if mapped else ""
+
+        grounded_answer = _CITATION_RE.sub(remap, answer)
+        cited_sources = [sources[number - 1] for number in cited_numbers]
+        return grounded_answer, cited_sources
 
     @staticmethod
     def _ensure_citations(answer: str, sources: list[dict[str, Any]]) -> str:
@@ -650,6 +876,20 @@ class RAGService:
         return source_node.node.get_content(metadata_mode=MetadataMode.NONE)
 
     @classmethod
+    def _node_identity(cls, source_node: Any) -> str:
+        node = source_node.node
+        node_id = str(getattr(node, "node_id", "") or "")
+        if node_id:
+            return node_id
+        metadata = node.metadata or {}
+        return "\x00".join(
+            (
+                str(metadata.get("doc_id") or metadata.get("source") or ""),
+                cls._normalized_chunk_text(cls._node_text(source_node)),
+            )
+        )
+
+    @classmethod
     def _context_text(cls, source_node: Any) -> str:
         """Normalize a complete retrieved node for the LLM prompt."""
 
@@ -667,21 +907,53 @@ class RAGService:
                 page = int(page_text)
             except ValueError:
                 page = None
+        if page is None and source.casefold().endswith(".pdf"):
+            ref_doc_id = str(
+                getattr(node, "ref_doc_id", "")
+                or metadata.get("ref_doc_id")
+                or metadata.get("document_id")
+                or ""
+            )
+            legacy_match = _LEGACY_PAGE_REF_RE.search(ref_doc_id)
+            if legacy_match:
+                # Legacy ingestion created one parent document per physical PDF
+                # page and suffixed its zero-based position as ``_part_N``.
+                page = int(legacy_match.group(1)) + 1
         if page is not None:
             try:
                 page = int(page)
             except (TypeError, ValueError):
                 page = None
+        printed_page = self._printed_page(metadata, self._node_text(source_node))
         score = float(source_node.score or 0.0)
         snippet = self._context_text(source_node)[:MAX_SOURCE_SNIPPET_CHARS]
         return {
             "id": str(metadata.get("doc_id") or node.node_id),
             "file_name": Path(source).name,
             "page": page,
+            "printed_page": printed_page,
             "score": score,
             "snippet": snippet,
             "confident": score >= self.config.min_score,
         }
+
+    @staticmethod
+    def _printed_page(metadata: Mapping[str, Any], text: str) -> int | None:
+        explicit = metadata.get("printed_page") or metadata.get("document_page")
+        if explicit is not None:
+            try:
+                return int(explicit)
+            except (TypeError, ValueError):
+                return None
+        # Printed page numbers are recovered only from a unique, isolated line.
+        # This avoids treating equation/table numbers embedded in prose as pages.
+        # PDF extractors place the running page number in the header.  Limit
+        # the scan to that region so an isolated value in a later table is not
+        # misreported as the printed page.
+        matches = {int(value) for value in _PRINTED_PAGE_RE.findall(text[:400])}
+        if len(matches) == 1:
+            return matches.pop()
+        return None
 
 
 def _parse_cli_args() -> argparse.Namespace:
