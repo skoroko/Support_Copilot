@@ -401,6 +401,44 @@ class RAGService:
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
     ) -> dict[str, Any]:
+        """Return the stable production response contract."""
+
+        return self._answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+            include_retrieved_contexts=False,
+        )
+
+    def evaluate_inputs(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+    ) -> dict[str, Any]:
+        """Return one production answer plus the complete contexts used for it.
+
+        Evaluation must not issue a second retrieval request or score the short
+        public ``snippet`` previews.  This method therefore executes the same
+        guarded production path once and adds only ``retrieved_contexts``.
+        """
+
+        return self._answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+            include_retrieved_contexts=True,
+        )
+
+    def _answer(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+        include_retrieved_contexts: bool,
+    ) -> dict[str, Any]:
         """Answer a question after guarded retrieval.
 
         ``history`` is supplied by the caller; the RAG service intentionally
@@ -536,9 +574,17 @@ class RAGService:
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
         has_lexical_evidence = any(self._node_identity(item) in lexical_ids for item in ranked)
+        retrieved_contexts = [self._context_text(item) for item in ranked]
         if top_score < self.config.min_score and not has_lexical_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
-            return {"answer": NO_ANSWER, "top_score": top_score, "sources": []}
+            result: dict[str, Any] = {
+                "answer": NO_ANSWER,
+                "top_score": top_score,
+                "sources": [],
+            }
+            if include_retrieved_contexts:
+                result["retrieved_contexts"] = retrieved_contexts
+            return result
         answer, cited_sources = self._generate_answer(
             question.strip(),
             sources,
@@ -552,7 +598,10 @@ class RAGService:
             outcome=outcome,
             cited_source_count=len(cited_sources),
         )
-        return {"answer": answer, "top_score": top_score, "sources": cited_sources}
+        result = {"answer": answer, "top_score": top_score, "sources": cited_sources}
+        if include_retrieved_contexts:
+            result["retrieved_contexts"] = retrieved_contexts
+        return result
 
     def query(
         self,

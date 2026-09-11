@@ -1,0 +1,6 @@
+# Homework 5.6: optional Phoenix/OpenInference runtime instrumentation.
+arize-phoenix-otel>=0.16.0
+openinference-instrumentation-openai>=0.1.0
+openinference-instrumentation-llama-index>=3,<4
+opentelemetry-sdk>=1.28
+opentelemetry-exporter-otlp>=1.28

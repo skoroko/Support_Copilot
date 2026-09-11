@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}
+        INSTALL_TRACING: ${TRACING_ENABLED:-true}
     command:
       - sh
       - -c
@@ -22,6 +23,8 @@ services:
       BOT_URL: http://bot:9000
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
+      PHOENIX_PROJECT_NAME: ${PHOENIX_PROJECT_NAME:-support-copilot-rag}
+      TRACING_ENABLED: ${TRACING_ENABLED:-true}
       QDRANT_URL: http://qdrant:6333
       QDRANT_API_KEY: ${QDRANT_API_KEY}
       QDRANT_COLLECTION: ${QDRANT_COLLECTION:-documents}
@@ -88,6 +91,10 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}
+        # app and bot intentionally use the same image tag, so their build args
+        # must remain identical; otherwise the last build can replace the app
+        # image with a variant that lacks tracing dependencies.
+        INSTALL_TRACING: ${TRACING_ENABLED:-true}
     command: ["python", "-m", "bot"]
     ports:
       - "${BOT_HOST_PORT:-19000}:9000"
