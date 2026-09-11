@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-09T15:03:34.388847+00:00",
+  "generated_at": "2026-09-11T08:53:00.406606+00:00",
   "offline_smoke": true,
-  "dataset_cases": 28,
+  "dataset_cases": 29,
   "corpus_files": 10,
   "embedding_model": "offline-lexical-hash-v2",
   "embedding_dimensions": 1024,
@@ -17,15 +17,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 3664,
-        "average_chunks_per_document": 366.4,
-        "average_chunk_tokens": 323.0
+        "total_chunks": 3689,
+        "average_chunks_per_document": 368.9,
+        "average_chunk_tokens": 321.21
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7470238095238094,
-        "recall@10": 0.761904761904762,
-        "average_retrieval_ms": 30.77
+        "hit_rate@5": 0.896551724137931,
+        "mrr@10": 0.7270114942528735,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.5,
+        "evidence_mrr@10": 0.16666666666666666,
+        "evidence_recall@10": 0.5,
+        "average_retrieval_ms": 38.03
       }
     },
     {
@@ -39,15 +42,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 3680,
-        "average_chunks_per_document": 368.0,
-        "average_chunk_tokens": 304.72
+        "total_chunks": 3698,
+        "average_chunks_per_document": 369.8,
+        "average_chunk_tokens": 303.46
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7708333333333333,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 25.53
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7557471264367815,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 37.54
       }
     },
     {
@@ -66,10 +72,13 @@
         "average_chunk_tokens": 273.54
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7172619047619048,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 28.12
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7270114942528735,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 35.48
       }
     }
   ],
@@ -86,27 +95,13 @@
         "retrieval_top_k": 20
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7708333333333333,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 29.27
-      }
-    },
-    {
-      "label": "with-BAAI/bge-reranker-v2-m3",
-      "config": {
-        "label": "recursive-without-reranker-k20",
-        "strategy": "recursive",
-        "collection": "docs_recursive",
-        "chunk_size": 512,
-        "chunk_overlap": 64,
-        "retrieval_top_k": 20
-      },
-      "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.8392857142857143,
-        "recall@10": 0.7202380952380951,
-        "average_retrieval_ms": 18014.63
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7557471264367815,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 24.32
       }
     }
   ],
@@ -122,15 +117,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 8188,
-        "average_chunks_per_document": 818.8,
-        "average_chunk_tokens": 135.79
+        "total_chunks": 8360,
+        "average_chunks_per_document": 836.0,
+        "average_chunk_tokens": 133.15
       },
       "metrics": {
-        "hit_rate@5": 0.8571428571428571,
-        "mrr@10": 0.7247023809523808,
-        "recall@10": 0.7440476190476192,
-        "average_retrieval_ms": 54.38
+        "hit_rate@5": 0.8275862068965517,
+        "mrr@10": 0.7118226600985221,
+        "recall@10": 0.7528735632183909,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 55.3
       }
     },
     {
@@ -144,15 +142,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 3680,
-        "average_chunks_per_document": 368.0,
-        "average_chunk_tokens": 304.72
+        "total_chunks": 3698,
+        "average_chunks_per_document": 369.8,
+        "average_chunk_tokens": 303.46
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7708333333333333,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 24.14
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7557471264367815,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 23.33
       }
     },
     {
@@ -166,15 +167,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 3680,
-        "average_chunks_per_document": 368.0,
-        "average_chunk_tokens": 304.72
+        "total_chunks": 3698,
+        "average_chunks_per_document": 369.8,
+        "average_chunk_tokens": 303.46
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7708333333333333,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 29.67
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7557471264367815,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.0,
+        "evidence_mrr@10": 0.0,
+        "evidence_recall@10": 0.0,
+        "average_retrieval_ms": 24.32
       }
     },
     {
@@ -188,15 +192,18 @@
       },
       "chunks": {
         "source_documents": 10,
-        "total_chunks": 2730,
-        "average_chunks_per_document": 273.0,
-        "average_chunk_tokens": 409.74
+        "total_chunks": 2742,
+        "average_chunks_per_document": 274.2,
+        "average_chunk_tokens": 408.03
       },
       "metrics": {
-        "hit_rate@5": 0.9285714285714286,
-        "mrr@10": 0.7660714285714284,
-        "recall@10": 0.75,
-        "average_retrieval_ms": 22.03
+        "hit_rate@5": 0.9310344827586207,
+        "mrr@10": 0.7442528735632183,
+        "recall@10": 0.7586206896551724,
+        "evidence_hit_rate@5": 0.5,
+        "evidence_mrr@10": 0.25,
+        "evidence_recall@10": 0.5,
+        "average_retrieval_ms": 23.97
       }
     }
   ],

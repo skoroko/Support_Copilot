@@ -201,24 +201,34 @@ def _format_source_items(source_items: list[tuple[int, dict]], *, heading: str) 
         file_name = str(source.get("file_name") or "источник")
         page = source.get("page")
         key = file_name.casefold()
-        group = grouped.setdefault(key, {"file_name": file_name, "numbers": [], "pages": []})
+        group = grouped.setdefault(
+            key,
+            {"file_name": file_name, "numbers": [], "page_pairs": []},
+        )
         numbers = group["numbers"]
-        pages = group["pages"]
+        page_pairs = group["page_pairs"]
         if isinstance(numbers, list):
             numbers.append(index)
-        if page is not None and isinstance(pages, list) and page not in pages:
-            pages.append(page)
+        printed_page = source.get("printed_page")
+        pair = (page, printed_page)
+        if isinstance(page_pairs, list) and pair != (None, None) and pair not in page_pairs:
+            page_pairs.append(pair)
 
     lines = []
     for group in grouped.values():
         numbers = group["numbers"]
-        pages = group["pages"]
+        page_pairs = group["page_pairs"]
         citation = ", ".join(str(number) for number in numbers) if isinstance(numbers, list) else ""
-        page_text = (
-            f", стр. {', '.join(str(page) for page in pages)}"
-            if isinstance(pages, list) and pages
-            else ""
-        )
+        labels: list[str] = []
+        if isinstance(page_pairs, list):
+            for physical, printed in page_pairs:
+                if physical is not None and printed is not None:
+                    labels.append(f"PDF стр. {physical} (в документе {printed})")
+                elif physical is not None:
+                    labels.append(f"PDF стр. {physical}")
+                elif printed is not None:
+                    labels.append(f"стр. документа {printed}")
+        page_text = f", {'; '.join(labels)}" if labels else ""
         lines.append(f"[{citation}] {group['file_name']}{page_text}")
     return f"\n\n{heading}:\n" + "\n".join(lines)
 

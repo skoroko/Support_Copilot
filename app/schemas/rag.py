@@ -28,7 +28,11 @@ class RAGQuery(BaseModel):
 class RAGSource(BaseModel):
     id: str
     file_name: str
+    # ``page`` is the 1-based physical page in the PDF.  ``printed_page`` is
+    # the optional page number printed inside the manual and can differ because
+    # of covers/front matter.
     page: int | None = None
+    printed_page: int | None = None
     score: float
     snippet: str
     confident: bool

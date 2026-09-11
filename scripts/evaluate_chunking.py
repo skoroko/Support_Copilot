@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import statistics
 import sys
 import time
@@ -29,6 +30,7 @@ from app.services.embeddings import EmbeddingConfig, EmbeddingService  # noqa: E
 from app.services.reranker import BGEReranker, RerankCandidate  # noqa: E402
 from app.services.retrieval_eval import (  # noqa: E402
     RetrievalCase,
+    evidence_metrics,
     load_retrieval_dataset,
     retrieval_metrics,
 )
@@ -39,6 +41,7 @@ DATASET_PATH = ROOT / "tests" / "eval" / "retrieval_dataset.json"
 RESULT_PATH = ROOT / "homework_5_4" / "results" / "chunking_experiment.json"
 REPORT_PATH = ROOT / "docs" / "chunking_experiment.md"
 POINT_NAMESPACE = uuid.UUID("7c0dbd69-e4d7-48e3-a05d-aac195b185cf")
+PRINTED_PAGE_RE = re.compile(r"(?m)^[ \t]*(\d{1,4})[ \t]*$")
 
 
 @dataclass(frozen=True)
@@ -60,13 +63,37 @@ class ChunkStats:
 
 
 def load_documents(data_dir: Path) -> list[Document]:
-    return SimpleDirectoryReader(
+    documents = SimpleDirectoryReader(
         input_dir=str(data_dir),
         recursive=True,
         required_exts=[".pdf", ".docx", ".md", ".txt", ".chm"],
         file_extractor={".chm": CHMReader()},
         raise_on_error=True,
     ).load_data()
+    for document in documents:
+        metadata = dict(document.metadata or {})
+        if str(metadata.get("file_name") or "").casefold().endswith(".pdf"):
+            page = _positive_int(metadata.get("page") or metadata.get("page_label"))
+            if page is not None:
+                metadata["page"] = page
+            printed_page = _printed_page(document.get_content(metadata_mode=MetadataMode.NONE))
+            if printed_page is not None:
+                metadata["printed_page"] = printed_page
+            document.metadata = metadata
+    return documents
+
+
+def _positive_int(value: Any) -> int | None:
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        return None
+    return result if result >= 1 else None
+
+
+def _printed_page(text: str) -> int | None:
+    matches = {int(value) for value in PRINTED_PAGE_RE.findall(text[:400])}
+    return matches.pop() if len(matches) == 1 else None
 
 
 def source_doc_id(node: BaseNode) -> str:
@@ -126,6 +153,8 @@ def recreate_collection(
                 "source": source_label(node),
                 "chunk_index": index,
                 "strategy": config.strategy,
+                "page": _positive_int((node.metadata or {}).get("page")),
+                "printed_page": _positive_int((node.metadata or {}).get("printed_page")),
             },
         )
         for index, (node, text, vector) in enumerate(zip(nodes, texts, vectors, strict=True))
@@ -160,6 +189,8 @@ def retrieve_candidates(
                 doc_id=str(payload.get("source_doc_id") or "unknown"),
                 source=str(payload.get("source") or "unknown"),
                 score=float(point.score),
+                page=_positive_int(payload.get("page")),
+                printed_page=_positive_int(payload.get("printed_page")),
             )
         )
     return candidates
@@ -175,6 +206,7 @@ def evaluate_collection(
     rerank_top_n: int = 10,
 ) -> dict[str, Any]:
     rankings: list[list[str]] = []
+    evidence_rankings: list[list[RerankCandidate]] = []
     latencies_ms: list[float] = []
     for case, vector in zip(cases, query_vectors, strict=True):
         started = time.perf_counter()
@@ -188,9 +220,11 @@ def evaluate_collection(
             candidates = reranker.rerank(case.question, candidates, top_n=rerank_top_n)
         latencies_ms.append((time.perf_counter() - started) * 1000)
         rankings.append([candidate.doc_id for candidate in candidates])
+        evidence_rankings.append(candidates)
 
     return {
         **retrieval_metrics(cases, rankings),
+        **evidence_metrics(cases, evidence_rankings),
         "average_retrieval_ms": round(statistics.fmean(latencies_ms), 2),
     }
 
@@ -226,8 +260,8 @@ def _metric(value: Any) -> str:
 
 def _strategy_table(rows: list[dict[str, Any]]) -> list[str]:
     lines = [
-        "| Стратегия | Коллекция | Chunks | Chunks/док. | Средняя длина, токены | Hit Rate@5 | MRR@10 | Recall@10 | Retrieval, мс |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Стратегия | Коллекция | Chunks | Chunks/док. | Средняя длина, токены | Hit Rate@5 | Evidence Hit@5 | Evidence MRR@10 | Recall@10 | Retrieval, мс |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         config = row["config"]
@@ -236,7 +270,8 @@ def _strategy_table(rows: list[dict[str, Any]]) -> list[str]:
         lines.append(
             f"| `{config['label']}` | `{config['collection']}` | {chunks['total_chunks']} | "
             f"{chunks['average_chunks_per_document']} | {chunks['average_chunk_tokens']} | "
-            f"{_metric(metrics['hit_rate@5'])} | {_metric(metrics['mrr@10'])} | "
+            f"{_metric(metrics['hit_rate@5'])} | {_metric(metrics['evidence_hit_rate@5'])} | "
+            f"{_metric(metrics['evidence_mrr@10'])} | "
             f"{_metric(metrics['recall@10'])} | {metrics['average_retrieval_ms']} |"
         )
     return lines
@@ -262,8 +297,8 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
         "",
         f"Golden dataset содержит **{payload['dataset_cases']}** вопросов и покрывает "
         f"**{payload['corpus_files']}** документов. Для каждого вопроса вручную указаны "
-        "1–3 релевантных документа. Метрики считаются на уровне исходного документа, "
-        "а не отдельного chunk.",
+        "1–3 релевантных документа. Для критических кейсов дополнительно заданы точный "
+        "текст доказательства, физическая PDF-страница и номер страницы внутри руководства.",
         "",
         f"Embedding: `{payload['embedding_model']}`, размерность "
         f"`{payload['embedding_dimensions']}`. "
@@ -278,19 +313,22 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
         "",
         *_strategy_table(payload["base_strategies"]),
         "",
-        f"По приоритету Hit Rate@5 → MRR@10 → Recall@10 → latency лучшей базовой "
+        f"По прежнему приоритету Hit Rate@5 → MRR@10 → Recall@10 → latency лучшей базовой "
         f"стратегией стала **`{payload['best_base_strategy']}`**.",
+        "Evidence-метрики показаны как отдельный строгий сигнал и не переключают production "
+        "chunking по офлайн hash-embedding без сопоставимого прогона основной модели.",
         "",
         "## Re-ranker",
         "",
-        "| Вариант | Hit Rate@5 | MRR@10 | Recall@10 | Retrieval, мс |",
-        "|---|---:|---:|---:|---:|",
+        "| Вариант | Hit Rate@5 | Evidence Hit@5 | Evidence MRR@10 | Recall@10 | Retrieval, мс |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for row in reranker_rows:
         metrics = row["metrics"]
         lines.append(
             f"| `{row['label']}` | {_metric(metrics['hit_rate@5'])} | "
-            f"{_metric(metrics['mrr@10'])} | {_metric(metrics['recall@10'])} | "
+            f"{_metric(metrics['evidence_hit_rate@5'])} | {_metric(metrics['evidence_mrr@10'])} | "
+            f"{_metric(metrics['recall@10'])} | "
             f"{metrics['average_retrieval_ms']} |"
         )
     if len(reranker_rows) == 1:
@@ -330,6 +368,8 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
             f"Выбираю **`{best_config['strategy']}`** с `chunk_size={best_config['chunk_size']}`, "
             f"`overlap={best_config['chunk_overlap']}`, `top-K={best_config['retrieval_top_k']}`. "
             f"Эта конфигурация дала Hit Rate@5={_metric(best_metrics['hit_rate@5'])}, "
+            f"Evidence Hit@5={_metric(best_metrics['evidence_hit_rate@5'])}, "
+            f"Evidence MRR@10={_metric(best_metrics['evidence_mrr@10'])}, "
             f"MRR@10={_metric(best_metrics['mrr@10'])}, Recall@10={_metric(best_metrics['recall@10'])} "
             f"и среднюю retrieval latency {best_metrics['average_retrieval_ms']} мс.",
             "",

@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from llama_index.core.embeddings import MockEmbedding
 from llama_index.core.llms import MockLLM
-from llama_index.core.schema import NodeWithScore, TextNode
+from llama_index.core.schema import NodeRelationship, NodeWithScore, RelatedNodeInfo, TextNode
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance
 
@@ -145,8 +145,16 @@ def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
 
     assert result["answer"].startswith("Ответ по базе")
     assert result["top_score"] == 0.91
-    assert len(result["sources"]) == 3
-    assert set(result["sources"][0]) == {"id", "file_name", "page", "score", "snippet", "confident"}
+    assert len(result["sources"]) == 2
+    assert set(result["sources"][0]) == {
+        "id",
+        "file_name",
+        "page",
+        "printed_page",
+        "score",
+        "snippet",
+        "confident",
+    }
     assert result["sources"][0]["file_name"] == "manual-1.pdf"
     assert result["sources"][0]["page"] == 1
     assert result["sources"][0]["confident"] is True
@@ -169,6 +177,22 @@ def test_rag_removes_citations_outside_final_source_list() -> None:
     assert RAGService._ensure_citations(answer, [{"id": "one"}, {"id": "two"}]) == (
         "Подтверждено [1], дополнение  и [2]."
     )
+
+
+def test_rag_returns_only_cited_sources_and_renumbers_them() -> None:
+    sources = [{"id": str(index)} for index in range(1, 5)]
+
+    answer, cited_sources = RAGService._ground_answer("Сначала [2], затем [4, 2], ошибка [9].", sources)
+
+    assert answer == "Сначала [1], затем [2, 1], ошибка ."
+    assert cited_sources == [{"id": "2"}, {"id": "4"}]
+
+
+def test_rag_rejects_uncited_generated_answer() -> None:
+    answer, cited_sources = RAGService._ground_answer("Неподтверждённый ответ.", [{"id": "1"}])
+
+    assert answer == NO_ANSWER
+    assert cited_sources == []
 
 
 def test_rag_filters_legacy_civil_payloads_and_keeps_generic_gts_manual(tmp_path: Path) -> None:
@@ -223,7 +247,7 @@ def test_rag_limits_context_to_five_and_removes_duplicates_without_file_cap(tmp_
     ]
     service = RAGService(
         rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
-        llm=FakeLLM("Ответ [1]."),
+        llm=FakeLLM("Ответ [1], [2], [3], [4], [5]."),
     )
     service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
 
@@ -260,7 +284,7 @@ def test_expanded_raw_pool_recovers_five_contexts_after_product_filter(tmp_path:
     ]
     service = RAGService(
         rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
-        llm=FakeLLM("Ответ [1]."),
+        llm=FakeLLM("Ответ [1], [2], [3], [4], [5]."),
     )
     service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
 
@@ -385,7 +409,7 @@ def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) ->
             self.calls.append((question, len(candidates), top_n))
             return [candidates[2], candidates[1], candidates[0]][:top_n]
 
-    llm = FakeLLM()
+    llm = FakeLLM("Ответ [1] и [2].")
     reranker = FakeReranker()
     service = RAGService(
         rag_config(tmp_path, rerank_enabled=True, rerank_top_n=2, allow_external_data_transfer=True),
@@ -416,8 +440,257 @@ def test_follow_up_question_uses_history_for_deterministic_condense(tmp_path: Pa
     )
 
     assert retriever.questions == [
-        "Контекст предыдущего вопроса: Каков срок возврата?\nУточняющий вопрос: А для электроники?"
+        "А для электроники?",
+        "Каков срок возврата? А для электроники?",
     ]
+
+
+def test_independent_question_does_not_use_unrelated_history_variant(tmp_path: Path) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "Какие модели материала доступны?",
+        history=[{"role": "user", "content": "Как настроить сетку?"}],
+    )
+
+    assert retriever.questions == ["Какие модели материала доступны?"]
+
+
+def test_self_contained_question_with_pronoun_does_not_use_unrelated_history(tmp_path: Path) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    question = "Какие модели материала доступны и как их параметры влияют на расчёт?"
+    service.answer(question, history=[{"role": "user", "content": "Как настроить сетку?"}])
+
+    assert retriever.questions == [question]
+
+
+def test_explicit_noun_follow_up_is_already_standalone(tmp_path: Path) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    question = "Какие степени свободы имеет элемент плоской деформации?"
+    service.answer(question, history=[{"role": "user", "content": "Расскажи о типах элементов."}])
+
+    assert retriever.questions == [question]
+
+
+def test_history_follow_up_merges_raw_recall_with_standalone_topic(tmp_path: Path) -> None:
+    """A pronoun follow-up must recover the plane-strain DOF subsection.
+
+    The first node has a higher dense score and mentions both concepts, but in
+    separate sentences about a different element.  The selected node contains
+    the topic and new constraint in one answer sentence.
+    """
+
+    orientation_distractor = NodeWithScore(
+        node=TextNode(
+            text=(
+                "Ориентация материала для элемента плоского напряженного состояния задается углом. "
+                "Степени свободы элемента плоского напряженного состояния определяются по осям ECS."
+            ),
+            metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page_number": 79},
+        ),
+        score=0.98,
+    )
+    plane_strain_dof = NodeWithScore(
+        node=TextNode(
+            text=(
+                "Элемент плоской деформации характеризуется степенями свободы "
+                "по направлениям осей x и y элементной системы координат."
+            ),
+            metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page_number": 45},
+        ),
+        score=0.9,
+    )
+    unrelated = NodeWithScore(
+        node=TextNode(
+            text="Плоская деформация применяется при расчете толщины основания.",
+            metadata={"source": "GTS_NX_guide.pdf", "page_number": 12},
+        ),
+        score=0.91,
+    )
+
+    class GroundedFakeLLM(FakeLLM):
+        def complete(self, prompt: str):
+            self.prompts.append(prompt)
+            if "по направлениям осей x и y элементной системы координат" not in prompt:
+                return SimpleNamespace(text="Надежного ответа нет.")
+            return SimpleNamespace(text="Используются степени свободы по осям x и y ECS [1].")
+
+    class FollowUpRetriever:
+        def __init__(self) -> None:
+            self.questions: list[str] = []
+
+        def retrieve(self, query: str):
+            self.questions.append(query)
+            # The short wording can recall the exact subsection by its heading,
+            # while the focused topic query recalls a dense but wrong neighbour.
+            if query == "А какие из них используются для плоской деформации?":
+                return [plane_strain_dof]
+            return [orientation_distractor, unrelated]
+
+    llm = GroundedFakeLLM()
+    retriever = FollowUpRetriever()
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = retriever
+
+    result = service.answer(
+        "А какие из них используются для плоской деформации?",
+        history=[
+            {
+                "role": "user",
+                "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?",
+            }
+        ],
+    )
+
+    assert result["sources"][0]["page"] == 45
+    assert "по направлениям осей x и y" in result["sources"][0]["snippet"]
+    assert retriever.questions == [
+        "А какие из них используются для плоской деформации?",
+        (
+            "Какие степени свободы используются в конструкционном расчёте GTS NX? "
+            "А какие из них используются для плоской деформации?"
+        ),
+    ]
+    assert llm.prompts and "по направлениям осей x и y элементной системы координат" in llm.prompts[0]
+    assert result["answer"] == "Используются степени свободы по осям x и y ECS [1]."
+
+
+def test_history_follow_up_deduplicates_candidates_from_both_queries(tmp_path: Path) -> None:
+    shared = NodeWithScore(
+        node=TextNode(text="Общий фрагмент с темой возврата.", metadata={"source": "faq.pdf"}),
+        score=0.6,
+    )
+    focused_only = NodeWithScore(
+        node=TextNode(text="Срок возврата электроники составляет 14 дней.", metadata={"source": "faq.pdf"}),
+        score=0.8,
+    )
+
+    class VariantRetriever:
+        def retrieve(self, query: str):
+            if query == "А для электроники?":
+                return [shared]
+            return [NodeWithScore(node=shared.node, score=0.9), focused_only]
+
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1] и [2]."),
+    )
+    service._retriever = VariantRetriever()
+
+    result = service.answer(
+        "А для электроники?",
+        history=[{"role": "user", "content": "Каков срок возврата?"}],
+    )
+
+    assert len(result["sources"]) == 2
+    assert sorted(source["score"] for source in result["sources"]) == [0.8, 0.9]
+    assert len({source["id"] for source in result["sources"]}) == 2
+
+
+def test_follow_up_keeps_single_variant_exact_evidence_until_lexical_ranking(tmp_path: Path) -> None:
+    shared = [
+        NodeWithScore(
+            node=TextNode(
+                id_=f"shared-{index}",
+                text=f"Общий раздел о степенях свободы, материал и ориентация {index}.",
+                metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf"},
+            ),
+            # The thirtieth shared result is dense-strong enough to beat the
+            # exact single-variant node at the old pre-lexical fusion cutoff.
+            score=0.90 if index == 29 else 0.80 - index / 1000,
+        )
+        for index in range(30)
+    ]
+    exact = NodeWithScore(
+        node=TextNode(
+            id_="plane-strain-exact",
+            text=(
+                "Элемент плоской деформации характеризуется степенями свободы "
+                "по направлениям осей x и y элементной системы координат."
+            ),
+            metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page": 32},
+        ),
+        score=0.70,
+    )
+
+    class VariantRetriever:
+        def retrieve(self, query: str):
+            if query.startswith("А какие"):
+                return [*shared[:29], exact]
+            return shared
+
+    service = RAGService(
+        rag_config(tmp_path, top_k=10, allow_external_data_transfer=True),
+        llm=FakeLLM("Используются оси x и y [1]."),
+    )
+    service._retriever = VariantRetriever()
+
+    result = service.answer(
+        "А какие из них используются для плоской деформации?",
+        history=[
+            {
+                "role": "user",
+                "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?",
+            }
+        ],
+    )
+
+    assert result["sources"][0]["id"] == "plane-strain-exact"
+    assert result["sources"][0]["page"] == 32
+
+
+def test_legacy_pdf_page_and_printed_page_are_recovered_without_reindex(tmp_path: Path) -> None:
+    node = TextNode(
+        text=(
+            "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX\n"
+            "Элемент плоской деформации характеризуется степенями свободы по направлениям "
+            "осей x и y элементной системы координат.\n\n45\n"
+        ),
+        metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf"},
+        relationships={
+            NodeRelationship.SOURCE: RelatedNodeInfo(node_id="legacy-document_part_31")
+        },
+    )
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True))
+
+    source = service._source_from_node(NodeWithScore(node=node, score=0.91))
+
+    assert source["page"] == 32
+    assert source["printed_page"] == 45
+    assert "PDF-страница: 32" in service._context_source_label(source)
+    assert "страница документа: 45" in service._context_source_label(source)
+
+
+def test_printed_page_does_not_use_isolated_table_value_late_in_chunk(tmp_path: Path) -> None:
+    text = "Заголовок без номера страницы. " + ("Описание раздела. " * 30) + "\n45\n"
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True))
+
+    source = service._source_from_node(
+        NodeWithScore(
+            node=TextNode(text=text, metadata={"source": "GTS_NX_manual.pdf", "page": 12}),
+            score=0.91,
+        )
+    )
+
+    assert source["page"] == 12
+    assert source["printed_page"] is None
 
 
 def test_standalone_question_and_condense_hook_override_default_rewrite(tmp_path: Path) -> None:
@@ -469,7 +742,7 @@ def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> Non
         config,
         client=QdrantClient(":memory:"),
         embed_model=MockEmbedding(embed_dim=8),
-        llm=MockLLM(max_tokens=32),
+        llm=FakeLLM("Ответ [1], [2], [3], [4], [5]."),
     ).build()
 
     result = service.answer("mesh")
@@ -522,7 +795,7 @@ def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(t
         ),
         client=client,
         embed_model=MockEmbedding(embed_dim=8),
-        llm=MockLLM(max_tokens=32),
+        llm=FakeLLM("Ответ [1], [2], [3], [4], [5]."),
         ingestion_service=existing_ingestion,
     ).build()
 
@@ -693,5 +966,13 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
     assert response.status_code == 200
     assert response.json()["answer"] == "Ответ: Проверочный вопрос"
     assert len(response.json()["sources"]) == 3
-    assert set(response.json()["sources"][0]) == {"id", "file_name", "page", "score", "snippet", "confident"}
+    assert set(response.json()["sources"][0]) == {
+        "id",
+        "file_name",
+        "page",
+        "printed_page",
+        "score",
+        "snippet",
+        "confident",
+    }
     assert not any(route.path == "/chat" for route in api.routes)
