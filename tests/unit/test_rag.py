@@ -325,6 +325,57 @@ def test_lexical_evidence_recovers_exact_dof_chunk_before_dense_distractors(tmp_
     assert "Всего узел имеет 6 степеней свободы" in llm.prompts[0]
 
 
+def test_generation_uses_full_selected_chunk_not_truncated_source_preview(tmp_path: Path) -> None:
+    """An answer after a long PDF page header must remain available to the LLM.
+
+    This reflects the GTS NX page where the phrase "тремя поступательными"
+    occurs before the phrase "тремя вращательными".  The public source preview
+    is intentionally short, but it must not become the generation context.
+    """
+
+    header = "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX. " * 24
+    selected_text = (
+        f"{header}Задача конструкционного расчета характеризуется тремя поступательными "
+        "и тремя вращательными степенями свободы. Всего используется 6 степеней свободы."
+    )
+    assert len(" ".join(selected_text.split())) > 700
+    class GroundedFakeLLM(FakeLLM):
+        def complete(self, prompt: str):
+            self.prompts.append(prompt)
+            if "тремя вращательными степенями свободы" not in prompt:
+                return SimpleNamespace(text="В контексте перечисление обрывается [1].")
+            return SimpleNamespace(text="Три поступательные и три вращательные, всего шесть [1].")
+
+    llm = GroundedFakeLLM()
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(
+        retrieve=lambda _question: [
+            NodeWithScore(
+                node=TextNode(
+                    text=selected_text,
+                    metadata={
+                        "source": "02_Пособие_GTS_NX_Узел_Степень свободы.pdf",
+                        "page_number": 8,
+                    },
+                ),
+                score=0.91,
+            )
+        ]
+    )
+
+    result = service.answer("Какие степени свободы используются в конструкционном расчёте GTS NX?")
+
+    assert len(result["sources"]) == 1
+    assert len(result["sources"][0]["snippet"]) == 700
+    assert "тремя вращательными" not in result["sources"][0]["snippet"]
+    assert "тремя вращательными степенями свободы" in llm.prompts[0]
+    assert "Всего используется 6 степеней свободы" in llm.prompts[0]
+    assert result["answer"] == "Три поступательные и три вращательные, всего шесть [1]."
+
+
 def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) -> None:
     class FakeReranker:
         def __init__(self) -> None:
