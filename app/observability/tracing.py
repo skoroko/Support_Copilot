@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import os
-from typing import Any
+from typing import Any, Iterator
 from urllib.parse import urlparse
 
 from app.observability.logging import get_logger
@@ -58,9 +59,32 @@ def setup_tracing(project_name: str | None = None) -> bool:
             "tracing_setup_failed",
             endpoint=endpoint,
             error_type=type(exc).__name__,
+            error_message=str(exc),
         )
         return False
 
     _tracing_configured = True
     logger.info("tracing_setup_completed", endpoint=endpoint, project_name=project_name)
     return True
+
+
+@contextmanager
+def trace_rag_query(question: str) -> Iterator[None]:
+    """Create one parent span so retrieval and LLM calls form a single trace."""
+
+    if not _tracing_configured:
+        yield
+        return
+
+    try:
+        from opentelemetry import trace
+    except ImportError:  # pragma: no cover - optional tracing dependency
+        yield
+        return
+
+    tracer = trace.get_tracer("support-copilot.rag")
+    with tracer.start_as_current_span("RAGService.answer") as span:
+        span.set_attribute("openinference.span.kind", "CHAIN")
+        span.set_attribute("input.mime_type", "text/plain")
+        span.set_attribute("input.value", question)
+        yield

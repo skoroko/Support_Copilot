@@ -103,7 +103,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--size", type=int, default=34)
     parser.add_argument("--pages-per-file", type=int, default=3)
     parser.add_argument("--max-tokens-per-page", type=int, default=450)
-    parser.add_argument("--model", default=os.getenv("RAG_EVAL_JUDGE_MODEL", "gpt-5.4-mini"))
+    parser.add_argument("--model", default=os.getenv("RAG_EVAL_JUDGE_MODEL", "gpt-4o-mini"))
     parser.add_argument(
         "--embedding-model",
         default=os.getenv("RAG_EVAL_EMBEDDING_MODEL", "text-embedding-3-small"),

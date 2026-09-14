@@ -121,7 +121,7 @@ class IngestionConfig:
     embedding_dimensions: int = 1024
     openai_api_key: str | None = None
     openai_base_url: str | None = None
-    chunk_size: int = 512
+    chunk_size: int = 1024
     chunk_overlap: int = 64
     default_product: str = "gts_nx"
     docstore_path: Path = PROJECT_ROOT / "var" / "ingestion_docstore.json"
@@ -152,7 +152,11 @@ class IngestionConfig:
         if not data_dir.is_absolute():
             data_dir = PROJECT_ROOT / data_dir
         docstore_path = Path(
-            getattr(settings, "rag_docstore_path", PROJECT_ROOT / "var" / "ingestion_docstore.json")
+            getattr(
+                settings,
+                "rag_docstore_path",
+                PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json",
+            )
         )
         if not docstore_path.is_absolute():
             docstore_path = PROJECT_ROOT / docstore_path
@@ -164,12 +168,12 @@ class IngestionConfig:
             data_dir=data_dir,
             qdrant_url=getattr(settings, "qdrant_url", None) or "http://localhost:6333",
             qdrant_api_key=qdrant_api_key,
-            collection_name=getattr(settings, "rag_collection", "support_copilot"),
+            collection_name=getattr(settings, "rag_collection", "rag_eval_chunk_1024"),
             embedding_model=getattr(settings, "rag_embedding_model", "text-embedding-3-large"),
             embedding_dimensions=getattr(settings, "rag_embedding_dimensions", 1024),
             openai_api_key=openai_api_key,
             openai_base_url=getattr(settings, "openai_base_url", None),
-            chunk_size=getattr(settings, "rag_chunk_size", 512),
+            chunk_size=getattr(settings, "rag_chunk_size", 1024),
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             default_product=getattr(settings, "rag_product", "gts_nx"),
             docstore_path=docstore_path,

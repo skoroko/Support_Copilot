@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-09-12T18:21:46.151082+00:00",
+  "label": "baseline_citation",
+  "case_count": 34,
+  "configuration": {
+    "judge_model": "gpt-4o-mini",
+    "judge_embedding_model": "text-embedding-3-small",
+    "rag_llm_model": "gpt-5.4-mini",
+    "rag_embedding_model": "text-embedding-3-large",
+    "rag_embedding_dimensions": 1024,
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "top_k": 10,
+    "reranker_enabled": false,
+    "reranker_model": null,
+    "collection": "rag_block_03"
+  },
+  "metrics": {
+    "faithfulness": 0.8640756302521009,
+    "answer_relevancy": 0.6910354768848835,
+    "context_precision": 0.8274509803712868,
+    "context_recall": 0.9558823529411765,
+    "has_citation": 0.9705882352941176,
+    "latency_ms": 16893.92918823903
+  },
+  "csv": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\tests\\eval\\results\\2026-09-12_182145_baseline_citation.csv",
+  "source_csv": "tests\\eval\\results\\2026-09-11_195030_baseline_final.csv",
+  "completed_metric_cells": 34,
+  "missing_metric_cells": 0
+}

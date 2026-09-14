@@ -135,7 +135,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("RAG_DATA_DIR"),
     )
     rag_docstore_path: Path = Field(
-        default=PROJECT_ROOT / "var" / "rag_ingestion_docstore.json",
+        default=PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json",
         validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
@@ -153,7 +153,7 @@ class _SettingsFields(BaseModel):
         default="recursive",
         validation_alias=AliasChoices("RAG_CHUNK_STRATEGY"),
     )
-    rag_chunk_size: int = Field(default=512, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
+    rag_chunk_size: int = Field(default=1024, gt=0, validation_alias=AliasChoices("RAG_CHUNK_SIZE"))
     rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
     rag_top_k: int = Field(default=10, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
     rag_product: str = Field(default="gts_nx", min_length=1, validation_alias=AliasChoices("RAG_PRODUCT"))
@@ -191,7 +191,11 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
     )
-    rag_collection: str = Field(default="rag_block_03", min_length=1, validation_alias=AliasChoices("RAG_COLLECTION"))
+    rag_collection: str = Field(
+        default="rag_eval_chunk_1024",
+        min_length=1,
+        validation_alias=AliasChoices("RAG_COLLECTION"),
+    )
     rag_baremetal_collection: str = Field(
         default="rag_block_03_baremetal",
         min_length=1,
@@ -358,13 +362,13 @@ def get_settings() -> Settings:
         ),
         rag_data_dir=Path(os.getenv("RAG_DATA_DIR") or PROJECT_ROOT / "data"),
         rag_docstore_path=Path(
-            os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_ingestion_docstore.json"
+            os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json"
         ),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
         rag_chunk_strategy=os.getenv("RAG_CHUNK_STRATEGY") or "recursive",
-        rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 512),
+        rag_chunk_size=int(os.getenv("RAG_CHUNK_SIZE") or 1024),
         rag_chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP") or 64),
         rag_top_k=int(os.getenv("RAG_TOP_K") or 10),
         rag_product=os.getenv("RAG_PRODUCT") or "gts_nx",
@@ -379,7 +383,7 @@ def get_settings() -> Settings:
         rag_condense_enabled=(
             os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
-        rag_collection=os.getenv("RAG_COLLECTION") or "rag_block_03",
+        rag_collection=os.getenv("RAG_COLLECTION") or "rag_eval_chunk_1024",
         rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",
         rag_rebuild_on_start=(
             os.getenv("RAG_REBUILD_ON_START", "false").strip().lower() in {"1", "true", "yes", "on"}

@@ -32,6 +32,7 @@ from qdrant_client.models import (
 from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash
+from app.observability.tracing import trace_rag_query
 from app.services.reranker import BGEReranker, RerankCandidate
 
 
@@ -235,7 +236,7 @@ class RAGConfig:
     llm_model: str
     embedding_model: str
     embedding_dimensions: int
-    chunk_size: int = 512
+    chunk_size: int = 1024
     chunk_overlap: int = 64
     top_k: int = 10
     target_product: str = "gts_nx"
@@ -284,7 +285,7 @@ class RAGConfig:
             getattr(
                 settings,
                 "rag_docstore_path",
-                Path(__file__).resolve().parents[2] / "var" / "ingestion_docstore.json",
+                Path(__file__).resolve().parents[2] / "var" / "rag_eval_chunk_1024_docstore.json",
             )
         )
         if not docstore_path.is_absolute():
@@ -293,12 +294,12 @@ class RAGConfig:
             data_dir=data_dir,
             qdrant_url=getattr(settings, "qdrant_url", None) or "http://localhost:6333",
             qdrant_api_key=api_key,
-            collection_name=getattr(settings, "rag_collection", "rag_block_03"),
+            collection_name=getattr(settings, "rag_collection", "rag_eval_chunk_1024"),
             baremetal_collection_name=getattr(settings, "rag_baremetal_collection", "rag_block_03_baremetal"),
             llm_model=getattr(settings, "rag_llm_model", "gpt-5.4-mini"),
             embedding_model=getattr(settings, "rag_embedding_model", "text-embedding-3-small"),
             embedding_dimensions=getattr(settings, "rag_embedding_dimensions", 1536),
-            chunk_size=getattr(settings, "rag_chunk_size", 512),
+            chunk_size=getattr(settings, "rag_chunk_size", 1024),
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             top_k=getattr(settings, "rag_top_k", 10),
             target_product=getattr(settings, "rag_product", "gts_nx"),
@@ -403,12 +404,13 @@ class RAGService:
     ) -> dict[str, Any]:
         """Return the stable production response contract."""
 
-        return self._answer(
-            question,
-            history=history,
-            standalone_question=standalone_question,
-            include_retrieved_contexts=False,
-        )
+        with trace_rag_query(question):
+            return self._answer(
+                question,
+                history=history,
+                standalone_question=standalone_question,
+                include_retrieved_contexts=False,
+            )
 
     def evaluate_inputs(
         self,

@@ -7,7 +7,12 @@ from types import SimpleNamespace
 import pytest
 
 from app.eval.dataset import load_golden_dataset
-from app.eval.metrics import aggregate_metrics, eval_row
+from app.eval.metrics import (
+    aggregate_metrics,
+    eval_row,
+    make_has_citation,
+    score_context_precision_batch,
+)
 
 
 class FakeMetric:
@@ -23,6 +28,15 @@ class FakeMetric:
 class FailingMetric:
     async def ascore(self, **kwargs):
         raise RuntimeError("judge unavailable")
+
+
+class BatchJudge:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, type]] = []
+
+    async def agenerate(self, prompt: str, response_model: type):
+        self.calls.append((prompt, response_model))
+        return response_model(verdict_1=1, verdict_2=0, verdict_3=1)
 
 
 def test_golden_dataset_requires_thirty_complete_unique_cases(tmp_path: Path) -> None:
@@ -103,6 +117,72 @@ async def test_eval_row_uses_metric_specific_named_arguments() -> None:
         "reference",
         "retrieved_contexts",
     }
+
+
+@pytest.mark.asyncio
+async def test_eval_row_reuses_only_explicit_cached_metric_values() -> None:
+    metrics = {
+        "faithfulness": FakeMetric(0.8),
+        "answer_relevancy": FakeMetric(0.9),
+        "context_precision": FakeMetric(0.7),
+        "context_recall": FakeMetric(0.6),
+        "has_citation": FakeMetric("yes"),
+    }
+
+    row = await eval_row(
+        metrics,
+        user_input="Вопрос",
+        response="Ответ [1]",
+        retrieved_contexts=["Полный контекст"],
+        reference="Эталон",
+        cached_values={"answer_relevancy": 0.42},
+    )
+
+    assert row["answer_relevancy"] == 0.42
+    assert row["answer_relevancy_cached"] is True
+    assert metrics["answer_relevancy"].calls == []
+    assert metrics["faithfulness"].calls
+
+
+@pytest.mark.asyncio
+async def test_context_precision_batches_contexts_and_keeps_ragas_formula() -> None:
+    judge = BatchJudge()
+    result = await score_context_precision_batch(
+        judge,
+        user_input="Вопрос",
+        reference="Эталон",
+        retrieved_contexts=["Полезный 1", "Шум", "Полезный 2"],
+        calculate=lambda verdicts: (
+            sum(
+                (sum(verdicts[: index + 1]) / (index + 1)) * verdicts[index]
+                for index in range(len(verdicts))
+            )
+            / sum(verdicts)
+        ),
+    )
+
+    assert result == pytest.approx(5 / 6)
+    assert len(judge.calls) == 1
+    prompt, _ = judge.calls[0]
+    assert all(text in prompt for text in ("Полезный 1", "Шум", "Полезный 2"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("response", "expected"),
+    [
+        ("Ответ подтверждён источником [1].", "yes"),
+        ("См. manual.pdf, стр. 8.", "yes"),
+        ("Согласно руководству это допустимо.", "yes"),
+        ("Ответ без указания источника.", "no"),
+    ],
+)
+async def test_has_citation_is_deterministic(response: str, expected: str) -> None:
+    metric = make_has_citation(llm=None)
+
+    result = await metric.ascore(response=response)
+
+    assert result.value == expected
 
 
 def test_aggregate_metrics_ignores_missing_cells() -> None:

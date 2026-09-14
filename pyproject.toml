@@ -17,7 +17,7 @@ eval = [
 tracing = [
   "arize-phoenix-otel>=0.16.0",
   "openinference-instrumentation-openai>=0.1.0",
-  "openinference-instrumentation-llama-index>=3,<4",
+  "openinference-instrumentation-llama-index>=4.4,<5",
   "opentelemetry-sdk>=1.28",
   "opentelemetry-exporter-otlp>=1.28",
 ]

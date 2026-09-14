@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-09-12T17:35:35.009157+00:00",
+  "label": "top_k_5_inputs",
+  "case_count": 34,
+  "configuration": {
+    "judge_model": "gpt-4o-mini",
+    "judge_embedding_model": "text-embedding-3-small",
+    "collect_only": true,
+    "judge_concurrency": 5,
+    "judge_metric_timeout_seconds": 180.0,
+    "answer_relevancy_strictness": 1,
+    "rag_llm_model": "gpt-5.4-mini",
+    "rag_embedding_model": "text-embedding-3-large",
+    "rag_embedding_dimensions": 1024,
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "top_k": 5,
+    "reranker_enabled": false,
+    "reranker_model": null,
+    "collection": "rag_block_03",
+    "reused_result_files": []
+  },
+  "metrics": {
+    "faithfulness": 0.0,
+    "answer_relevancy": 0.0,
+    "context_precision": 0.0,
+    "context_recall": 0.0,
+    "has_citation": 0.0,
+    "latency_ms": 2161.823429411764
+  },
+  "metric_cells_reused": 0,
+  "csv": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\tests\\eval\\results\\2026-09-12_173534_top_k_5_inputs.csv"
+}

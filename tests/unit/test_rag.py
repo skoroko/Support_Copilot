@@ -1448,4 +1448,4 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
         "snippet",
         "confident",
     }
-    assert not any(route.path == "/chat" for route in api.routes)
+    assert not any(getattr(route, "path", None) == "/chat" for route in api.routes)

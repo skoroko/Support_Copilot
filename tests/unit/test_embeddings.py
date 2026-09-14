@@ -16,7 +16,13 @@ from homework_5_1.cost_estimate import estimate_indexing_cost
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TEST_TOKEN_COUNTER = lambda text: len(text.split())
+
+
+def count_test_tokens(text: str) -> int:
+    return len(text.split())
+
+
+TEST_TOKEN_COUNTER = count_test_tokens
 
 
 class FakeEmbeddings:

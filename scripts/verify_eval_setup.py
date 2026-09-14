@@ -26,7 +26,7 @@ def main() -> None:
     for package in packages:
         print(f"{package}=={version(package)}")
     models = build_judge(
-        os.getenv("RAG_EVAL_JUDGE_MODEL", "gpt-5.4-mini"),
+        os.getenv("RAG_EVAL_JUDGE_MODEL", "gpt-4o-mini"),
         os.getenv("RAG_EVAL_EMBEDDING_MODEL", "text-embedding-3-small"),
         api_key="sk-import-check-only",
     )

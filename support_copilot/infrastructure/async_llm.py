@@ -12,7 +12,6 @@ from support_copilot.infrastructure.cache import LLMCache
 from support_copilot.infrastructure.llm import (
     CircuitBreaker,
     ConfigError,
-    LLMResult,
     ProviderConfig,
     UsageStats,
     calculate_cost,
