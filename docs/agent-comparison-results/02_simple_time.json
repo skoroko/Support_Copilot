@@ -1,0 +1,117 @@
+{
+  "case": {
+    "id": "02_simple_time",
+    "kind": "simple",
+    "task": "Сколько сейчас времени в Москве?"
+  },
+  "run_at": "2026-09-14T11:00:00.193910+00:00",
+  "naive": {
+    "answer": "Сейчас в Москве: **13:59:53**.",
+    "steps": 2,
+    "trace": [
+      {
+        "step": 1,
+        "tool_name": "get_current_time",
+        "tool_args": "{\"timezone\":\"Europe/Moscow\"}",
+        "tool_result": "2026-09-14T13:59:53.465090+03:00",
+        "llm_input_tokens": 393,
+        "llm_output_tokens": 20,
+        "duration_ms": 1756.27
+      },
+      {
+        "step": 2,
+        "tool_name": null,
+        "tool_args": null,
+        "tool_result": "Сейчас в Москве: **13:59:53**.",
+        "llm_input_tokens": 444,
+        "llm_output_tokens": 16,
+        "duration_ms": 830.97
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 837,
+      "completion_tokens": 36,
+      "total_tokens": 873
+    }
+  },
+  "react": {
+    "answer": "Сейчас в Москве: 2026-09-14 13:59:58 (UTC+3).",
+    "iterations": 2,
+    "steps": 2,
+    "trace": [
+      {
+        "iteration": 1,
+        "model": "gpt-5.4-mini",
+        "tool": "get_current_time",
+        "tool_name": "get_current_time",
+        "args": "{\"timezone\":\"Europe/Moscow\"}",
+        "tool_args": "{\"timezone\":\"Europe/Moscow\"}",
+        "observation": "2026-09-14T13:59:58.189436+03:00",
+        "critic": "OK",
+        "revision_applied": false,
+        "latency_ms": 5063.0,
+        "tokens": {
+          "main": {
+            "prompt_tokens": 561,
+            "completion_tokens": 43,
+            "total_tokens": 604
+          },
+          "critic": {
+            "prompt_tokens": 152,
+            "completion_tokens": 4,
+            "total_tokens": 156
+          }
+        }
+      },
+      {
+        "iteration": 2,
+        "model": "gpt-5.4-mini",
+        "tool": null,
+        "tool_name": null,
+        "args": null,
+        "tool_args": null,
+        "observation": "Сейчас в Москве: 2026-09-14 13:59:58 (UTC+3).",
+        "critic": null,
+        "revision_applied": false,
+        "latency_ms": 812.0,
+        "tokens": {
+          "main": {
+            "prompt_tokens": 635,
+            "completion_tokens": 26,
+            "total_tokens": 661
+          },
+          "critic": null
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1348,
+      "completion_tokens": 73,
+      "total_tokens": 1421,
+      "calls": [
+        {
+          "kind": "main",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 561,
+          "completion_tokens": 43,
+          "total_tokens": 604
+        },
+        {
+          "kind": "critic",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 152,
+          "completion_tokens": 4,
+          "total_tokens": 156
+        },
+        {
+          "kind": "main",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 635,
+          "completion_tokens": 26,
+          "total_tokens": 661
+        }
+      ]
+    },
+    "revisions": 0
+  }
+}

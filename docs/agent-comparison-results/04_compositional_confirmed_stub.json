@@ -1,0 +1,164 @@
+{
+  "case": {
+    "id": "04_compositional_confirmed_stub",
+    "kind": "compositional",
+    "task": "Найди в базе знаний действия при ошибке активации, затем подготовь и имитируй отправку в chat_id 12345 сообщения «Пожалуйста, пришлите код ошибки и версию MIDAS». Я явно подтверждаю этот chat_id и точный текст."
+  },
+  "run_at": "2026-09-14T11:03:21.600745+00:00",
+  "naive": {
+    "answer": "По базе знаний: надежного совпадения по действиям при ошибке активации не найдено, нужна проверка инженером поддержки.\n\nСообщение в Telegram для chat_id 12345 имитировано и отправлено:\n«Пожалуйста, пришлите код ошибки и версию MIDAS»",
+    "steps": 3,
+    "trace": [
+      {
+        "step": 1,
+        "tool_name": "search_knowledge_base",
+        "tool_args": "{\"query\":\"действия при ошибке активации MIDAS\"}",
+        "tool_result": "В базе знаний нет надежного совпадения; нужна проверка инженером поддержки.",
+        "llm_input_tokens": 446,
+        "llm_output_tokens": 29,
+        "duration_ms": 3591.33
+      },
+      {
+        "step": 2,
+        "tool_name": "send_telegram_message",
+        "tool_args": "{\"chat_id\":\"12345\",\"text\":\"Пожалуйста, пришлите код ошибки и версию MIDAS\"}",
+        "tool_result": "Сообщение отправлено в 12345",
+        "llm_input_tokens": 505,
+        "llm_output_tokens": 38,
+        "duration_ms": 1738.29
+      },
+      {
+        "step": 3,
+        "tool_name": null,
+        "tool_args": null,
+        "tool_result": "По базе знаний: надежного совпадения по действиям при ошибке активации не найдено, нужна проверка инженером поддержки.\n\nСообщение в Telegram для chat_id 12345 имитировано и отправлено:\n«Пожалуйста, пр",
+        "llm_input_tokens": 565,
+        "llm_output_tokens": 66,
+        "duration_ms": 8651.89
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1516,
+      "completion_tokens": 133,
+      "total_tokens": 1649
+    }
+  },
+  "react": {
+    "answer": "В базе знаний нет надёжного совпадения по действиям при ошибке активации; нужна проверка инженером поддержки.\n\nИмитация отправки выполнена для chat_id 12345 с текстом:\n«Пожалуйста, пришлите код ошибки и версию MIDAS»",
+    "iterations": 3,
+    "steps": 3,
+    "trace": [
+      {
+        "iteration": 1,
+        "model": "gpt-5.4-mini",
+        "tool": "search_knowledge_base",
+        "tool_name": "search_knowledge_base",
+        "args": "{\"query\":\"действия при ошибке активации\"}",
+        "tool_args": "{\"query\":\"действия при ошибке активации\"}",
+        "observation": "В базе знаний нет надежного совпадения; нужна проверка инженером поддержки.",
+        "critic": "OK",
+        "revision_applied": false,
+        "latency_ms": 5687.0,
+        "tokens": {
+          "main": {
+            "prompt_tokens": 614,
+            "completion_tokens": 63,
+            "total_tokens": 677
+          },
+          "critic": {
+            "prompt_tokens": 223,
+            "completion_tokens": 4,
+            "total_tokens": 227
+          }
+        }
+      },
+      {
+        "iteration": 2,
+        "model": "gpt-5.4-mini",
+        "tool": "send_telegram_message",
+        "tool_name": "send_telegram_message",
+        "args": "{\"chat_id\":\"12345\",\"text\":\"Пожалуйста, пришлите код ошибки и версию MIDAS\"}",
+        "tool_args": "{\"chat_id\":\"12345\",\"text\":\"Пожалуйста, пришлите код ошибки и версию MIDAS\"}",
+        "observation": "Сообщение отправлено в 12345",
+        "critic": "OK",
+        "revision_applied": false,
+        "latency_ms": 8047.0,
+        "tokens": {
+          "main": {
+            "prompt_tokens": 707,
+            "completion_tokens": 71,
+            "total_tokens": 778
+          },
+          "critic": {
+            "prompt_tokens": 225,
+            "completion_tokens": 4,
+            "total_tokens": 229
+          }
+        }
+      },
+      {
+        "iteration": 3,
+        "model": "gpt-5.4-mini",
+        "tool": null,
+        "tool_name": null,
+        "args": null,
+        "tool_args": null,
+        "observation": "В базе знаний нет надёжного совпадения по действиям при ошибке активации; нужна проверка инженером поддержки.\n\nИмитация отправки выполнена для chat_id 12345 с текстом:\n«Пожалуйста, пришлите код ошибки и версию MIDAS»",
+        "critic": null,
+        "revision_applied": false,
+        "latency_ms": 1110.0,
+        "tokens": {
+          "main": {
+            "prompt_tokens": 800,
+            "completion_tokens": 63,
+            "total_tokens": 863
+          },
+          "critic": null
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 2569,
+      "completion_tokens": 205,
+      "total_tokens": 2774,
+      "calls": [
+        {
+          "kind": "main",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 614,
+          "completion_tokens": 63,
+          "total_tokens": 677
+        },
+        {
+          "kind": "critic",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 223,
+          "completion_tokens": 4,
+          "total_tokens": 227
+        },
+        {
+          "kind": "main",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 707,
+          "completion_tokens": 71,
+          "total_tokens": 778
+        },
+        {
+          "kind": "critic",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 225,
+          "completion_tokens": 4,
+          "total_tokens": 229
+        },
+        {
+          "kind": "main",
+          "model": "gpt-5.4-mini",
+          "prompt_tokens": 800,
+          "completion_tokens": 63,
+          "total_tokens": 863
+        }
+      ]
+    },
+    "revisions": 0
+  }
+}
