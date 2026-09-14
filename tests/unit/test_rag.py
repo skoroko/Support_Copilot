@@ -172,6 +172,42 @@ def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
     assert len(llm.prompts) == 1
 
 
+def test_evaluate_inputs_returns_complete_contexts_without_second_retrieval(
+    tmp_path: Path,
+) -> None:
+    full_text = "Полный проверяемый контекст. " * 80
+    source = NodeWithScore(
+        node=TextNode(
+            id_="full-context",
+            text=full_text,
+            metadata={"source": "manual.pdf", "page_number": 7},
+        ),
+        score=0.91,
+    )
+
+    class SingleCallRetriever:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def retrieve(self, _question: str) -> list[NodeWithScore]:
+            self.calls += 1
+            return [source]
+
+    retriever = SingleCallRetriever()
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    result = service.evaluate_inputs("Что сказано в руководстве?")
+
+    assert retriever.calls == 1
+    assert result["retrieved_contexts"] == [" ".join(full_text.split())]
+    assert len(result["retrieved_contexts"][0]) > len(result["sources"][0]["snippet"])
+    assert "retrieved_contexts" not in service.answer("Что сказано в руководстве?")
+
+
 def test_rag_does_not_append_all_retrieval_candidates_as_citations() -> None:
     answer = "Ответ подтверждён источником [7]."
 
@@ -1412,4 +1448,4 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
         "snippet",
         "confident",
     }
-    assert not any(route.path == "/chat" for route in api.routes)
+    assert not any(getattr(route, "path", None) == "/chat" for route in api.routes)

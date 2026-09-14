@@ -204,7 +204,11 @@ class EmbeddingService:
         self._cache = cache or SQLiteEmbeddingCache(self.config.cache_path)
         if token_counter is None:
             encoding = self._load_encoding(self.config.model)
-            token_counter = lambda text: len(encoding.encode(text))
+
+            def count_tokens(text: str) -> int:
+                return len(encoding.encode(text))
+
+            token_counter = count_tokens
         self._token_counter = token_counter
         self.last_stats = EmbeddingRunStats()
 

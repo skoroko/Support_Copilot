@@ -20,7 +20,9 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("UV_PYTHON_DOWNLOADS=0", dockerfile)
         self.assertIn("COPY requirements.txt README.md .env.example ./", dockerfile)
         self.assertIn("COPY requirements-reranker.txt ./", dockerfile)
+        self.assertIn("COPY requirements-tracing.txt ./", dockerfile)
         self.assertIn("ARG INSTALL_RERANKER=false", dockerfile)
+        self.assertIn("ARG INSTALL_TRACING=true", dockerfile)
         self.assertIn("COPY app ./app", dockerfile)
         self.assertIn("useradd --create-home --uid 1000 appuser", dockerfile)
         self.assertIn("COPY --from=builder --chown=appuser:appuser /app /app", dockerfile)
@@ -38,6 +40,8 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn('ports:\n      - "${APP_HOST_PORT:-18000}:8000"', compose)
         self.assertIn("APP_REDIS_URL: redis://redis:6379/0", compose)
         self.assertIn("PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006", compose)
+        self.assertIn("PHOENIX_PROJECT_NAME: ${PHOENIX_PROJECT_NAME:-support-copilot-rag}", compose)
+        self.assertIn("TRACING_ENABLED: ${TRACING_ENABLED:-true}", compose)
         self.assertIn("condition: service_healthy", compose)
         self.assertIn("condition: service_started", compose)
         self.assertIn("http://localhost:8000/ready", compose)
@@ -64,12 +68,22 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("qdrant_storage:/qdrant/storage", compose)
         self.assertIn("qdrant_storage: {}", compose)
         self.assertIn("INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}", compose)
+        self.assertIn("INSTALL_TRACING: ${TRACING_ENABLED:-true}", compose)
         self.assertIn("bash -c 'echo > /dev/tcp/127.0.0.1/6333'", compose)
 
     def test_dockerignore_excludes_secrets_tests_and_python_artifacts(self) -> None:
         dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
 
-        for pattern in [".git", ".env", ".env.*", "!.env.example", "tests/", "__pycache__/", "*.pyc"]:
+        for pattern in [
+            ".git",
+            ".env",
+            ".env.*",
+            "!.env.example",
+            ".venv-*/",
+            "tests/",
+            "__pycache__/",
+            "*.pyc",
+        ]:
             self.assertIn(pattern, dockerignore)
 
 

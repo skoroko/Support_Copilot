@@ -1,0 +1,8 @@
+# Homework 5.6: optional Phoenix/OpenInference runtime instrumentation.
+arize-phoenix-otel>=0.16.0
+openinference-instrumentation-openai>=0.1.0
+# LlamaIndex 0.14 removed llama_index.core.base.agent; OpenInference 3.x still
+# imports that path. The 4.4+ line supports the current LlamaIndex runtime.
+openinference-instrumentation-llama-index>=4.4,<5
+opentelemetry-sdk>=1.28
+opentelemetry-exporter-otlp>=1.28

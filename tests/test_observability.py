@@ -7,7 +7,7 @@ from pydantic import SecretStr
 
 from app.core.config import Settings
 from app.observability.pii import prompt_hash, redact_pii
-from app.observability.tracing import _normalize_phoenix_endpoint
+from app.observability.tracing import _normalize_phoenix_endpoint, _tracing_enabled
 from app.schemas.chat import ChatRequest, ChatResponse, Usage
 from app.services.llm import LLMService
 
@@ -74,6 +74,10 @@ class ObservabilityTests(unittest.TestCase):
             _normalize_phoenix_endpoint("http://phoenix:6006"),
             "http://phoenix:6006/v1/traces",
         )
+
+    def test_tracing_can_be_disabled_explicitly(self) -> None:
+        with patch.dict("os.environ", {"TRACING_ENABLED": "false"}):
+            self.assertFalse(_tracing_enabled())
         self.assertEqual(
             _normalize_phoenix_endpoint("http://phoenix:6006/v1/traces"),
             "http://phoenix:6006/v1/traces",

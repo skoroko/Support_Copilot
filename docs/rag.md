@@ -7,7 +7,7 @@ flowchart LR
     A[Файлы в data/category] --> B[PDF / DOCX / HTML / MD readers]
     U[POST /documents/upload] --> A
     B --> C[Metadata enrichment]
-    C --> D[SentenceSplitter 512 / 64]
+    C --> D[SentenceSplitter 1024 / 64]
     D --> E[OpenAI embeddings]
     S[SimpleDocumentStore] --> F[IngestionPipeline UPSERTS]
     E --> F
@@ -157,7 +157,7 @@ score, retrieval latency, outcome и число процитированных �
 | Параметр | Значение |
 |---|---|
 | Chunking | `recursive` / `SentenceSplitter` |
-| `chunk_size` | `512` токенов |
+| `chunk_size` | `1024` токена |
 | `chunk_overlap` | `64` токена |
 | Raw retrieval | 1 запрос; 2 только для зависимого follow-up, по 30 кандидатов |
 | Hybrid recall | strict full-text match, до 30 кандидатов; 1 reserved context slot |

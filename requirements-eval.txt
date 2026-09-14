@@ -1,0 +1,11 @@
+# Homework 5.6: install only for synthetic dataset generation and RAG evaluation.
+ragas>=0.4,<0.5
+langchain-community<0.4
+anthropic>=0.40
+pandas>=2
+rapidfuzz>=3
+# Phoenix 20 pulls a much larger agent/MCP dependency tree that conflicts with
+# the course's LangChain <0.4 constraint. 11.38 provides the required local
+# tracing UI and evaluator API without that resolver conflict.
+arize-phoenix==11.38.0
+arize-phoenix-evals>=2,<3

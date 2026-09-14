@@ -1,0 +1,26 @@
+[project]
+name = "support-copilot"
+version = "0.5.6"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+eval = [
+  "ragas>=0.4,<0.5",
+  "langchain-community<0.4",
+  "anthropic>=0.40",
+  "pandas>=2",
+  "rapidfuzz>=3",
+  "arize-phoenix==11.38.0",
+  "arize-phoenix-evals>=2,<3",
+]
+tracing = [
+  "arize-phoenix-otel>=0.16.0",
+  "openinference-instrumentation-openai>=0.1.0",
+  "openinference-instrumentation-llama-index>=4.4,<5",
+  "opentelemetry-sdk>=1.28",
+  "opentelemetry-exporter-otlp>=1.28",
+]
+
+[tool.uv]
+package = false

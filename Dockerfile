@@ -15,11 +15,16 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY requirements.txt README.md .env.example ./
 COPY requirements-reranker.txt ./
+COPY requirements-tracing.txt ./
 ARG INSTALL_RERANKER=false
+ARG INSTALL_TRACING=true
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --python /app/.venv/bin/python -r requirements.txt && \
     if [ "$INSTALL_RERANKER" = "true" ]; then \
         uv pip install --python /app/.venv/bin/python -r requirements-reranker.txt; \
+    fi && \
+    if [ "$INSTALL_TRACING" = "true" ]; then \
+        uv pip install --python /app/.venv/bin/python -r requirements-tracing.txt; \
     fi
 
 COPY app ./app

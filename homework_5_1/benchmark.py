@@ -196,7 +196,11 @@ def main() -> int:
     if args.offline_smoke:
         candidates = [("local-hash-smoke", 256)]
         client_factory: Callable[[], Any] | None = LocalHashClient
-        token_counter: Callable[[str], int] | None = lambda text: len(text.split())
+
+        def count_tokens(text: str) -> int:
+            return len(text.split())
+
+        token_counter: Callable[[str], int] | None = count_tokens
     else:
         candidates = args.candidate or [
             ("text-embedding-3-small", 1536),

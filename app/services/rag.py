@@ -32,6 +32,7 @@ from qdrant_client.models import (
 from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash
+from app.observability.tracing import trace_rag_query
 from app.services.reranker import BGEReranker, RerankCandidate
 
 
@@ -235,7 +236,7 @@ class RAGConfig:
     llm_model: str
     embedding_model: str
     embedding_dimensions: int
-    chunk_size: int = 512
+    chunk_size: int = 1024
     chunk_overlap: int = 64
     top_k: int = 10
     target_product: str = "gts_nx"
@@ -284,7 +285,7 @@ class RAGConfig:
             getattr(
                 settings,
                 "rag_docstore_path",
-                Path(__file__).resolve().parents[2] / "var" / "ingestion_docstore.json",
+                Path(__file__).resolve().parents[2] / "var" / "rag_eval_chunk_1024_docstore.json",
             )
         )
         if not docstore_path.is_absolute():
@@ -293,12 +294,12 @@ class RAGConfig:
             data_dir=data_dir,
             qdrant_url=getattr(settings, "qdrant_url", None) or "http://localhost:6333",
             qdrant_api_key=api_key,
-            collection_name=getattr(settings, "rag_collection", "rag_block_03"),
+            collection_name=getattr(settings, "rag_collection", "rag_eval_chunk_1024"),
             baremetal_collection_name=getattr(settings, "rag_baremetal_collection", "rag_block_03_baremetal"),
             llm_model=getattr(settings, "rag_llm_model", "gpt-5.4-mini"),
             embedding_model=getattr(settings, "rag_embedding_model", "text-embedding-3-small"),
             embedding_dimensions=getattr(settings, "rag_embedding_dimensions", 1536),
-            chunk_size=getattr(settings, "rag_chunk_size", 512),
+            chunk_size=getattr(settings, "rag_chunk_size", 1024),
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             top_k=getattr(settings, "rag_top_k", 10),
             target_product=getattr(settings, "rag_product", "gts_nx"),
@@ -400,6 +401,45 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the stable production response contract."""
+
+        with trace_rag_query(question):
+            return self._answer(
+                question,
+                history=history,
+                standalone_question=standalone_question,
+                include_retrieved_contexts=False,
+            )
+
+    def evaluate_inputs(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+    ) -> dict[str, Any]:
+        """Return one production answer plus the complete contexts used for it.
+
+        Evaluation must not issue a second retrieval request or score the short
+        public ``snippet`` previews.  This method therefore executes the same
+        guarded production path once and adds only ``retrieved_contexts``.
+        """
+
+        return self._answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+            include_retrieved_contexts=True,
+        )
+
+    def _answer(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+        include_retrieved_contexts: bool,
     ) -> dict[str, Any]:
         """Answer a question after guarded retrieval.
 
@@ -536,9 +576,17 @@ class RAGService:
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
         has_lexical_evidence = any(self._node_identity(item) in lexical_ids for item in ranked)
+        retrieved_contexts = [self._context_text(item) for item in ranked]
         if top_score < self.config.min_score and not has_lexical_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
-            return {"answer": NO_ANSWER, "top_score": top_score, "sources": []}
+            result: dict[str, Any] = {
+                "answer": NO_ANSWER,
+                "top_score": top_score,
+                "sources": [],
+            }
+            if include_retrieved_contexts:
+                result["retrieved_contexts"] = retrieved_contexts
+            return result
         answer, cited_sources = self._generate_answer(
             question.strip(),
             sources,
@@ -552,7 +600,10 @@ class RAGService:
             outcome=outcome,
             cited_source_count=len(cited_sources),
         )
-        return {"answer": answer, "top_score": top_score, "sources": cited_sources}
+        result = {"answer": answer, "top_score": top_score, "sources": cited_sources}
+        if include_retrieved_contexts:
+            result["retrieved_contexts"] = retrieved_contexts
+        return result
 
     def query(
         self,

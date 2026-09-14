@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-09-12T19:03:28.838518+00:00",
+  "label": "baseline_batched",
+  "case_count": 34,
+  "configuration": {
+    "judge_model": "gpt-4o-mini",
+    "judge_embedding_model": "text-embedding-3-small",
+    "rag_llm_model": "gpt-5.4-mini",
+    "rag_embedding_model": "text-embedding-3-large",
+    "rag_embedding_dimensions": 1024,
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "top_k": 10,
+    "reranker_enabled": false,
+    "reranker_model": null,
+    "collection": "rag_block_03",
+    "context_precision_transport": "one_structured_call_per_case",
+    "context_precision_formula": "ragas_average_precision",
+    "context_precision_concurrency": 2,
+    "has_citation_method": "deterministic_discrete_metric"
+  },
+  "metrics": {
+    "faithfulness": 0.8640756302521009,
+    "answer_relevancy": 0.6910354768848835,
+    "context_precision": 0.8528594770906665,
+    "context_recall": 0.9558823529411765,
+    "has_citation": 0.9705882352941176,
+    "latency_ms": 16893.92918823903
+  },
+  "csv": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\tests\\eval\\results\\2026-09-12_185629_baseline_batched.csv",
+  "source_csv": "tests\\eval\\results\\2026-09-12_182145_baseline_citation.csv",
+  "completed_metric_cells": 34,
+  "missing_metric_cells": 0,
+  "forced_metrics": [
+    "context_precision"
+  ]
+}
