@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "status": "completed_live_run",
+  "run_at": "2026-09-15T07:40:19.200423+00:00",
+  "model": "gpt-5.4-mini",
+  "comparison_contract": {
+    "same_cases": [
+      "01_license_activation",
+      "02_installation_logs",
+      "03_compatible_versions",
+      "04_update_license_multistep",
+      "05_out_of_base"
+    ],
+    "same_tool": "search_knowledge_base",
+    "multi_handoff_budget": 3
+  },
+  "judge": {
+    "status": "completed_one_batched_call",
+    "usage": {
+      "input_tokens": 1642,
+      "output_tokens": 481,
+      "total_tokens": 2123,
+      "llm_calls": 1
+    }
+  },
+  "records": [
+    {
+      "run_status": "completed",
+      "implementation": "single_agent_baseline",
+      "case_id": "01_license_activation",
+      "kind": "corpus",
+      "question": "Что запросить у пользователя при ошибке активации лицензии MIDAS?",
+      "input_tokens": 1014,
+      "output_tokens": 129,
+      "total_tokens": 1143,
+      "llm_calls": 2,
+      "latency_ms": 5534.99,
+      "handoff_count": 0,
+      "answer": "При ошибке активации лицензии MIDAS попросите у пользователя: код ошибки, версию MIDAS и последние строки журнала. Также полезно уточнить, относится ли ключ к той же редакции продукта. [1]\n\nЕсли повторная активация не помогает, передайте обращение инженеру лицензирования. [1]\n\nИсточники:\n[1] KB/MIDAS-Licensing/activation.md\n",
+      "quality_score": 5.0,
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "multi_agent_langgraph",
+      "case_id": "01_license_activation",
+      "kind": "corpus",
+      "question": "Что запросить у пользователя при ошибке активации лицензии MIDAS?",
+      "input_tokens": 1146,
+      "output_tokens": 174,
+      "total_tokens": 1320,
+      "llm_calls": 3,
+      "latency_ms": 3987.97,
+      "handoff_count": 3,
+      "answer": "В учебной базе нет подтверждённых сведений о том, что именно нужно запросить у пользователя при ошибке активации лицензии MIDAS. [1] Не стоит предполагать ответ — зафиксируйте вопрос и передайте его инженеру поддержки для проверки. [2]\n\nИсточники:\n1. KB/Support/scope.md\n2. KB/Support/escalation.md",
+      "quality_score": 1.0,
+      "handoff_log": [
+        "supervisor -> researcher",
+        "researcher -> supervisor",
+        "supervisor -> writer"
+      ],
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "single_agent_baseline",
+      "case_id": "02_installation_logs",
+      "kind": "corpus",
+      "question": "Какой журнал и какие материалы нужны для диагностики ошибки установки MIDAS?",
+      "input_tokens": 1000,
+      "output_tokens": 93,
+      "total_tokens": 1093,
+      "llm_calls": 2,
+      "latency_ms": 2248.48,
+      "handoff_count": 0,
+      "answer": "Для диагностики ошибки установки MIDAS нужен файл `install.log` и снимок экрана с точным текстом ошибки [1]. Также не прикладывайте ключи лицензии и персональные данные в открытый тикет [1].\n\nИсточники:\n[1] KB/Support/diagnostics.md",
+      "quality_score": 5.0,
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "multi_agent_langgraph",
+      "case_id": "02_installation_logs",
+      "kind": "corpus",
+      "question": "Какой журнал и какие материалы нужны для диагностики ошибки установки MIDAS?",
+      "input_tokens": 1472,
+      "output_tokens": 238,
+      "total_tokens": 1710,
+      "llm_calls": 3,
+      "latency_ms": 4183.07,
+      "handoff_count": 3,
+      "answer": "Для диагностики ошибки установки MIDAS приложите файл `install.log` и снимок экрана с точным текстом ошибки. [1]\n\nНе прикладывайте в тикет ключи лицензии или персональные данные. [1]\n\nЕсли потребуется уточнение по конкретному коду ошибки или версии MIDAS, это нужно передать на эскалацию инженеру. [2]\n\nИсточники:\n[1] KB/Support/diagnostics.md  \n[2] KB/MIDAS-Licensing/activation.md",
+      "quality_score": 4.0,
+      "handoff_log": [
+        "supervisor -> researcher",
+        "researcher -> supervisor",
+        "supervisor -> writer"
+      ],
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "single_agent_baseline",
+      "case_id": "03_compatible_versions",
+      "kind": "corpus",
+      "question": "Где проверить совместимые версии MIDAS перед обновлением?",
+      "input_tokens": 995,
+      "output_tokens": 103,
+      "total_tokens": 1098,
+      "llm_calls": 2,
+      "latency_ms": 2130.21,
+      "handoff_count": 0,
+      "answer": "Проверять совместимость нужно в release notes: там сравнивают версию MIDAS и поддерживаемую версию операционной системы перед обновлением. Если связка несовместима, обновление нужно остановить и согласовать с инженером поддержки. [1]\n\nИсточники:\n[1] KB/MIDAS-NX/compatibility.md",
+      "quality_score": 5.0,
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "multi_agent_langgraph",
+      "case_id": "03_compatible_versions",
+      "kind": "corpus",
+      "question": "Где проверить совместимые версии MIDAS перед обновлением?",
+      "input_tokens": 1439,
+      "output_tokens": 196,
+      "total_tokens": 1635,
+      "llm_calls": 3,
+      "latency_ms": 4075.17,
+      "handoff_count": 3,
+      "answer": "Проверить совместимые версии MIDAS перед обновлением можно в **release notes**: там нужно сравнить версию MIDAS и поддерживаемую версию операционной системы. Если связка несовместима, обновление следует остановить и согласовать с инженером поддержки. [1]\n\nИсточники:\n1. KB/MIDAS-NX/compatibility.md  \n2. KB/MIDAS-Licensing/activation.md",
+      "quality_score": 4.0,
+      "handoff_log": [
+        "supervisor -> researcher",
+        "researcher -> supervisor",
+        "supervisor -> writer"
+      ],
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "single_agent_baseline",
+      "case_id": "04_update_license_multistep",
+      "kind": "multi_step",
+      "question": "После обновления лицензия не активируется: какие проверки выполнить и какой файл приложить в обращение?",
+      "input_tokens": 1022,
+      "output_tokens": 178,
+      "total_tokens": 1200,
+      "llm_calls": 2,
+      "latency_ms": 2343.62,
+      "handoff_count": 0,
+      "answer": "Для проверки при ошибке активации после обновления выполните следующее: запросите код ошибки, версию MIDAS и последние строки журнала; также проверьте, что ключ лицензии относится к той же редакции продукта. Если повторная активация не помогает, обращайтесь к инженеру лицензирования. [1]\n\nВ обращение приложите файл `install.log` и снимок экрана с точным текстом ошибки. Не прикладывайте ключи лицензии или персональные данные в открытый тикет. [2]\n\nИсточники:\n1. KB/MIDAS-Licensing/activation.md\n2. KB/Support/diagnostics.md",
+      "quality_score": 5.0,
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "multi_agent_langgraph",
+      "case_id": "04_update_license_multistep",
+      "kind": "multi_step",
+      "question": "После обновления лицензия не активируется: какие проверки выполнить и какой файл приложить в обращение?",
+      "input_tokens": 1170,
+      "output_tokens": 184,
+      "total_tokens": 1354,
+      "llm_calls": 3,
+      "latency_ms": 3263.59,
+      "handoff_count": 3,
+      "answer": "В учебной базе нет подтверждённых сведений о том, какие именно проверки нужно выполнить после обновления лицензии и какой файл приложить к обращению [1]. Не буду выдумывать ответ: пожалуйста, зафиксируйте вопрос и передайте его инженеру поддержки для проверки [2].\n\nИсточники:\n1. KB/Support/scope.md  \n2. KB/Support/escalation.md",
+      "quality_score": 1.0,
+      "handoff_log": [
+        "supervisor -> researcher",
+        "researcher -> supervisor",
+        "supervisor -> writer"
+      ],
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "single_agent_baseline",
+      "case_id": "05_out_of_base",
+      "kind": "out_of_base",
+      "question": "Как настроить квантовый телепорт MIDAS-QX9?",
+      "input_tokens": 854,
+      "output_tokens": 113,
+      "total_tokens": 967,
+      "llm_calls": 2,
+      "latency_ms": 2047.96,
+      "handoff_count": 0,
+      "answer": "В учебной базе знаний нет подтверждённых сведений о настройке «квантового телепорта MIDAS-QX9» [1]. Не выдумывая инструкцию, рекомендую зафиксировать запрос и эскалировать его инженеру поддержки для проверки [2].\n\nИсточники:\n[1] KB/Support/scope.md\n[2] KB/Support/escalation.md",
+      "quality_score": 5.0,
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    },
+    {
+      "run_status": "completed",
+      "implementation": "multi_agent_langgraph",
+      "case_id": "05_out_of_base",
+      "kind": "out_of_base",
+      "question": "Как настроить квантовый телепорт MIDAS-QX9?",
+      "input_tokens": 1151,
+      "output_tokens": 181,
+      "total_tokens": 1332,
+      "llm_calls": 3,
+      "latency_ms": 3454.57,
+      "handoff_count": 3,
+      "answer": "В учебной базе нет подтверждённых сведений о настройке квантового телепорта MIDAS-QX9 [1]. Не буду выдумывать инструкцию: зафиксирую вопрос и рекомендую передать его инженеру поддержки для проверки [2].\n\n**Источники:**  \n[1] KB/Support/scope.md  \n[2] KB/Support/escalation.md",
+      "quality_score": 5.0,
+      "handoff_log": [
+        "supervisor -> researcher",
+        "researcher -> supervisor",
+        "supervisor -> writer"
+      ],
+      "error": null,
+      "quality_status": "completed_batched_judge"
+    }
+  ]
+}

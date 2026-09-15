@@ -1,0 +1,47 @@
+# HW 6.5 — сравнение single-agent и manual multi-agent
+
+Статус измерений: отдельный разрешённый live-прогон завершён. `experiments/results.json` содержит 10 записей со статусом `completed_live_run`; один batched LLM judge также завершён (`completed_one_batched_call`).
+
+## Постановка
+
+Вход: один вопрос специалиста поддержки MIDAS о фактах из базы знаний или о ситуации вне её границ.
+
+Роли: `researcher` обязан получить факты и источники через общий `search_knowledge_base`, а `writer` без tools составляет ответ с цитатами; baseline делает обе функции одним `create_agent` с тем же tool.
+
+Формат: короткий русский ответ с проверяемыми утверждениями, ссылками `[1]`, `[2]`, списком источников либо явной эскалацией при отсутствии данных.
+
+## Контракт сравнения и архитектура
+
+Набор содержит ровно пять одинаковых вопросов: три по mock-корпусу, один многошаговый (обновление плюс активация) и один вне базы. Общий deterministic mock tool возвращает два-три документа с `content`, `source` и `score`; он выбран намеренно, чтобы параметры production RAG/Qdrant не исказили учебное сравнение оркестрации.
+
+Multi-agent вариант — ручной `StateGraph`/`Command`: `supervisor -> researcher -> supervisor -> writer`; budget равен трём явным переходам. `researcher` и `writer` созданы через `langchain.agents.create_agent`, у writer `tools=[]`; `InMemorySaver` и `thread_id="exp-langgraph"` включены в коде, а progress выводится через `app.stream(..., stream_mode="updates")`. Схема, сгенерированная `draw_mermaid()`, находится в [architecture-multi-agent.md](architecture-multi-agent.md).
+
+Вместо зависимости `langgraph-supervisor` выбран manual supervisor: сам официальный README пакета рекомендует tool-based/manual pattern для большинства новых случаев, поскольку он даёт больше контроля над контекстом. Это также делает handoff budget наблюдаемым и удерживает структуру учебного графа видимой. [LangGraph Supervisor README](https://github.com/langchain-ai/langgraph-supervisor-py)
+
+## Замеры
+
+`total_tokens` — сумма `usage_metadata` каждого `AIMessage`, включая модельные turns с tool call; `llm_calls` — число таких сообщений; latency измеряется от входа до final state через `perf_counter`. У ручного supervisor нет скрытого LLM routing call: он детерминированно маршрутизирует только этот sequential workflow, поэтому число его переходов отражается в `handoff_count`, но не выдаётся за токены модели.
+
+| Метрика | Single-agent (среднее по 5) | Multi-agent (среднее по 5) | Δ |
+|---|---:|---:|---:|
+| Токены на запрос | 1100.2 | 1470.2 | +370.0 (+33.63%; 1.336×) |
+| LLM-вызовов на запрос | 2.0 | 3.0 | +1.0 (+50%) |
+| Latency p50 (мс) | 2248.48 | 3987.97 | +1739.49 (+77.36%) |
+| Передач управления на запрос | 0.0 | 3.0 | +3.0 |
+| Качество ответа (один LLM-судья, 1–5) | 5.0 | 3.0 | -2.0 (-40%) |
+
+Live-прогон выполнил ровно пять запусков каждой реализации; все 10 `run_status` равны `completed`, и каждый финальный ответ содержит `[1]`. Usage judge сохранён отдельно в `judge.usage` и никогда не прибавлялся к token/call метрикам сравниваемых агентов. У single-agent все пять quality score равны 5.0; у multi-agent по кейсам получились 1.0, 4.0, 4.0, 1.0 и 5.0. Причины оценок judge не сохранялись, поэтому они не интерпретируются как факты; при прямом просмотре ответов видно, что multi-agent ошибочно ушёл в out-of-base fallback в case 01 и case 04.
+
+## Вывод
+
+На пяти одинаковых запросах multi-agent не дал измеримого выигрыша: качество снизилось с 5.0 до 3.0 при росте tokens на 33.63% и p50 latency на 77.36%. Его дополнительный model turn и три передачи контекста объясняют +1 LLM call и +3 handoff на запрос, но не добавили независимого направления поиска. Наиболее заметный функциональный сбой — ошибочный out-of-base fallback на case 01 и case 04, хотя оба вопроса должны покрываться mock-KB. Поэтому в этом narrow, shared-context support scenario single-agent с тем же tool оказался и дешевле, и качественнее.
+
+## Сопоставление с Anthropic
+
+В ориентире Anthropic multi-agent Research превзошёл single-agent на 90,2% во внутреннем breadth-first research eval, однако их multi-agent системы обычно расходовали около 15× токенов chat. Наш фактический multiplier равен `1470.2 / 1100.2 = 1.336×`: он существенно ниже 15×, но это не сопоставимые знаменатели — у Anthropic сравнение с chat и параллельное breadth-first research, а здесь один общий KB tool и последовательный workflow. Anthropic отдельно отмечает слабое соответствие multi-agent задачам с общим контекстом и многочисленными зависимостями; именно этот риск проявился в двух fallback-ответах. [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system)
+
+Рекомендация «начинать с самого простого решения и добавлять агентную сложность лишь при измеримом выигрыше» согласуется с правилами выбора multi-agent в LangChain: дополнительные агенты имеют смысл при разделении контекста, специализации или параллелизме, но добавляют model calls и tokens. [Building Effective AI Agents](https://www.anthropic.com/engineering/building-effective-agents), [LangChain multi-agent guide](https://docs.langchain.com/oss/python/langchain/multi-agent)
+
+## Решение
+
+**Не использовать multi-agent supervisor как default agent-layer диплома; оставить single-agent с `search_knowledge_base`.** Решение окончательное для текущего agent-layer: на фактических пяти кейсах multi-agent тратит на 33.63% больше tokens, имеет p50 latency на 77.36% выше, добавляет три handoff и одновременно уступает на 2.0 quality points. Сценарий tight-coupled и использует общий короткий контекст, а зафиксированные fallback в case 01 и 04 показывают, что добавленная координация ещё и ухудшила надёжность. Поэтому `app/agents/` не создаётся и production-код не меняется; к multi-agent можно вернуться только для отдельного breadth-first workflow с независимыми источниками и новым eval-набором.
