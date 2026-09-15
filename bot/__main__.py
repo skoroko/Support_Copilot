@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 import httpx
+import redis.asyncio as redis
 import uvicorn
 from aiohttp import ThreadedResolver
 from aiogram import Bot, Dispatcher
@@ -64,7 +65,12 @@ async def main() -> None:
     dp["bot_admin_ids"] = settings.bot_admin_ids
     dp.include_router(router)
 
-    api = build_api(bot, settings.internal_token.get_secret_value())
+    idempotency_store = redis.from_url(settings.redis_url, decode_responses=True)
+    api = build_api(
+        bot,
+        settings.internal_token.get_secret_value(),
+        idempotency_store=idempotency_store,
+    )
     server = uvicorn.Server(
         uvicorn.Config(api, host="0.0.0.0", port=settings.bot_api_port, log_level="info")
     )
@@ -75,6 +81,7 @@ async def main() -> None:
             broadcast_worker(bot, backend, settings.broadcast_poll_seconds),
         )
     finally:
+        await idempotency_store.aclose()
         await http.aclose()
         await bot.session.close()
 

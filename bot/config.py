@@ -22,6 +22,7 @@ class BotSettings(BaseSettings):
 
     bot_token: SecretStr = Field(validation_alias=AliasChoices("BOT_TOKEN", "TELEGRAM_BOT_TOKEN"))
     backend_url: str = Field(default="http://127.0.0.1:8000", validation_alias=AliasChoices("BACKEND_URL"))
+    redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias=AliasChoices("REDIS_URL"))
     bot_admin_ids: list[int] = Field(default_factory=list, validation_alias=AliasChoices("BOT_ADMIN_IDS"))
     internal_token: SecretStr = Field(validation_alias=AliasChoices("INTERNAL_TOKEN"))
     admin_token: SecretStr = Field(

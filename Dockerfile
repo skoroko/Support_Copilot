@@ -29,6 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY app ./app
 COPY bot ./bot
+COPY support_copilot ./support_copilot
 COPY data ./data
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic

@@ -27,7 +27,18 @@ TEMP/
 homework_*/
 docs/
 scripts/
-support_copilot/
+# The FastAPI image imports the shared homework agent tool handlers.  Keep only
+# their package/data boundary in the build context; local logs and CLI artifacts
+# remain excluded.
+support_copilot/*
+!support_copilot/__init__.py
+!support_copilot/config.py
+!support_copilot/tools/
+!support_copilot/tools/**
+!support_copilot/prompts/
+!support_copilot/prompts/**
+!support_copilot/data/
+!support_copilot/data/**
 
 *.md
 !README.md

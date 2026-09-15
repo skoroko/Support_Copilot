@@ -20,7 +20,8 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
-from app.routers import chat, documents, health, models, rag
+from app.routers import agent, chat, documents, health, models, rag
+from app.services.agent_persistent import agent_lifespan
 from app.services.rag import RAGConfig, RAGService
 from app.services.security.output_filter import build_security_system_prompt
 from app.services.vector_store import VectorStore
@@ -99,27 +100,28 @@ async def lifespan(app: FastAPI):
     app.state.ingestion_service = None
     app.state.rag_startup_error = None
     try:
-        if settings.qdrant_url:
-            qdrant_api_key = (
-                settings.qdrant_api_key.get_secret_value()
-                if settings.qdrant_api_key
-                else None
-            )
-            app.state.vector_store = VectorStore(
-                url=settings.qdrant_url,
-                api_key=qdrant_api_key,
-                collection_name=settings.qdrant_collection,
-                embedding_dim=settings.embedding_dim,
-            )
-            await app.state.vector_store.ensure_collection()
-        if settings.rag_enabled:
-            app.state.rag_service, app.state.rag_startup_error = await run_in_threadpool(
-                _initialize_rag,
-                settings,
-            )
-            if app.state.rag_service is not None:
-                app.state.ingestion_service = app.state.rag_service.ingestion_service
-        yield
+        async with agent_lifespan(app):
+            if settings.qdrant_url:
+                qdrant_api_key = (
+                    settings.qdrant_api_key.get_secret_value()
+                    if settings.qdrant_api_key
+                    else None
+                )
+                app.state.vector_store = VectorStore(
+                    url=settings.qdrant_url,
+                    api_key=qdrant_api_key,
+                    collection_name=settings.qdrant_collection,
+                    embedding_dim=settings.embedding_dim,
+                )
+                await app.state.vector_store.ensure_collection()
+            if settings.rag_enabled:
+                app.state.rag_service, app.state.rag_startup_error = await run_in_threadpool(
+                    _initialize_rag,
+                    settings,
+                )
+                if app.state.rag_service is not None:
+                    app.state.ingestion_service = app.state.rag_service.ingestion_service
+            yield
     finally:
         await _maybe_close(app.state.openai)
         await _maybe_close(app.state.cache)
@@ -224,6 +226,7 @@ async def validation_error_handler(_request: Request, exc: RequestValidationErro
 
 app.include_router(health.router)
 app.include_router(models.router)
+app.include_router(agent.router)
 app.include_router(chat.router)
 app.include_router(rag.router)
 app.include_router(documents.router)
