@@ -18,6 +18,19 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+# LangGraph owns these tables through ``Async*Saver.setup()``.  They are not
+# SQLAlchemy domain models, so Alembic autogenerate must neither propose nor
+# apply their removal.
+LANGGRAPH_CHECKPOINT_TABLES = frozenset(
+    {"checkpoints", "checkpoint_writes", "checkpoint_blobs", "checkpoint_migrations"}
+)
+
+
+def include_name(name: str | None, type_: str, parent_names: dict[str, str | None]) -> bool:
+    """Exclude exactly the LangGraph-managed checkpoint tables from Alembic."""
+
+    return not (type_ == "table" and name in LANGGRAPH_CHECKPOINT_TABLES)
+
 
 def _database_url() -> str:
     return (
@@ -33,6 +46,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_name=include_name,
     )
 
     with context.begin_transaction():
@@ -40,7 +54,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata, include_name=include_name)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -69,4 +83,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

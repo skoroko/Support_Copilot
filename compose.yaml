@@ -18,8 +18,12 @@ services:
     environment:
       APP_REDIS_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
-      CHAT_DATABASE_URL: postgresql+asyncpg://support:support@postgres:5432/support_copilot
+      CHAT_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-support}:${POSTGRES_PASSWORD:-support}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-support_copilot}"
       CHAT_REPOSITORY: postgres
+      # LangGraph uses the same Postgres service/database as the chat module.
+      AGENT_CHECKPOINTER: postgres
+      AGENT_POSTGRES_URI: "postgresql://${POSTGRES_USER:-support}:${POSTGRES_PASSWORD:-support}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-support_copilot}"
+      LANGGRAPH_STRICT_MSGPACK: "true"
       BOT_URL: http://bot:9000
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
@@ -58,6 +62,7 @@ services:
 
   redis:
     image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always"]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -103,6 +108,7 @@ services:
     environment:
       BACKEND_URL: http://app:8000
       BOT_API_PORT: 9000
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       app:
         condition: service_healthy
@@ -111,13 +117,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: support_copilot
-      POSTGRES_USER: support
-      POSTGRES_PASSWORD: support
+      POSTGRES_DB: ${POSTGRES_DB:-support_copilot}
+      POSTGRES_USER: ${POSTGRES_USER:-support}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-support}
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U support -d support_copilot"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-support} -d ${POSTGRES_DB:-support_copilot}"]
       interval: 10s
       timeout: 5s
       retries: 5
