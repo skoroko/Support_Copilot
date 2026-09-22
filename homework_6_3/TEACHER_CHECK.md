@@ -1,7 +1,7 @@
 # Проверка домашнего задания 6.3
 
-1. Убедиться, что `requirements.txt` закрепляет диапазоны LangGraph/LangChain
-   1.x и что `.venv-eval` импортирует их без запуска модели.
+1. Убедиться, что `pyproject.toml` закрепляет диапазоны LangGraph/LangChain
+   1.x, `uv.lock` фиксирует граф, а `.venv-eval` импортирует их без запуска модели.
 2. В `app/services/agent_graph.py` проверить `AgentState`: reducer
    `add_messages`, scalar `iteration_count`, `operator.add` для JSON-подобных
    `tool_results`; клиент и ключ отсутствуют в состоянии.

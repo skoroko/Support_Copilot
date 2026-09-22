@@ -1,6 +1,6 @@
 # Проверка ДЗ 5.3
 
-1. В `requirements.txt` закреплены три пакета LlamaIndex и CHM extractor; версии продублированы в `docs/rag.md`.
+1. В `pyproject.toml` закреплены диапазоны LlamaIndex и CHM extractor; точные версии зафиксированы в `uv.lock`.
 2. В `data/rag-block-03` ровно 10 документов: RU/EN PDF, CHM и намеренно нерелевантный Civil 2020.
 3. `app/services/chm_reader.py` реально читает Windows-1251 CHM на Windows и создаёт документы по HTML-страницам.
 4. `app/services/rag.py`: `SimpleDirectoryReader`, `SentenceSplitter(512/64)`, `QdrantVectorStore`, `StorageContext`, `VectorStoreIndex`, top-3 query engine.

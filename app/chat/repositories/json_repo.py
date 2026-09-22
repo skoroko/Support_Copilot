@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import aiofiles
+from filelock import AsyncFileLock
 
 from app.admin.models import BroadcastItem, StatsOut, UserOut
 from app.chat.domain import Chat, ChatMessage
@@ -16,6 +19,7 @@ from app.moderation.models import ModerationResult
 class JsonChatRepository:
     def __init__(self, base_dir: Path | str) -> None:
         self.base_dir = Path(base_dir)
+        self._lock = AsyncFileLock(self.base_dir / ".chat-repository.lock", timeout=10)
 
     async def create_chat(
         self,
@@ -28,37 +32,52 @@ class JsonChatRepository:
             interface=interface,
             system_prompt=system_prompt,
         )
-        chat_dir = self._chat_dir(chat.id)
-        chat_dir.mkdir(parents=True, exist_ok=False)
-        async with aiofiles.open(self._chat_file(chat.id), "w", encoding="utf-8") as file:
-            await file.write(chat.model_dump_json())
+        async with self._lock:
+            chat_dir = self._chat_dir(chat.id)
+            chat_dir.mkdir(parents=True, exist_ok=False)
+            await self._atomic_write_text(self._chat_file(chat.id), chat.model_dump_json())
         return chat
 
     async def get_chat(self, chat_id: UUID) -> Chat | None:
-        path = self._chat_file(chat_id)
-        if not path.exists():
-            return None
-        async with aiofiles.open(path, encoding="utf-8") as file:
-            return Chat.model_validate_json(await file.read())
+        async with self._lock:
+            path = self._chat_file(chat_id)
+            if not path.exists():
+                return None
+            async with aiofiles.open(path, encoding="utf-8") as file:
+                return Chat.model_validate_json(await file.read())
 
     async def append_message(self, chat_id: UUID, message: ChatMessage) -> ChatMessage:
         message = message.model_copy(update={"chat_id": chat_id})
-        chat_dir = self._chat_dir(chat_id)
-        if not chat_dir.exists():
-            raise FileNotFoundError(f"Chat {chat_id} does not exist")
-        async with aiofiles.open(self._messages_file(chat_id), "a", encoding="utf-8") as file:
-            await file.write(message.model_dump_json())
-            await file.write("\n")
+        async with self._lock:
+            self._require_chat(chat_id)
+            await self._append_text(self._messages_file(chat_id), message.model_dump_json() + "\n")
         return message
+
+    async def append_turn(
+        self,
+        chat_id: UUID,
+        user_message: ChatMessage,
+        assistant_message: ChatMessage,
+    ) -> tuple[ChatMessage, ChatMessage]:
+        messages = (
+            user_message.model_copy(update={"chat_id": chat_id}),
+            assistant_message.model_copy(update={"chat_id": chat_id}),
+        )
+        payload = "".join(message.model_dump_json() + "\n" for message in messages)
+        async with self._lock:
+            self._require_chat(chat_id)
+            await self._append_text(self._messages_file(chat_id), payload)
+        return messages
 
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         if limit <= 0:
             return []
-        path = self._messages_file(chat_id)
-        if not path.exists():
-            return []
-        async with aiofiles.open(path, encoding="utf-8") as file:
-            lines = await file.readlines()
+        async with self._lock:
+            path = self._messages_file(chat_id)
+            if not path.exists():
+                return []
+            async with aiofiles.open(path, encoding="utf-8") as file:
+                lines = await file.readlines()
 
         messages: list[ChatMessage] = []
         for line in lines:
@@ -77,32 +96,31 @@ class JsonChatRepository:
         return next((message for message in messages if message.id == message_id), None)
 
     async def soft_delete_messages(self, chat_id: UUID) -> None:
-        chat_dir = self._chat_dir(chat_id)
-        if not chat_dir.exists():
-            return
         marker = {"type": "soft_delete", "at": datetime.now(timezone.utc).isoformat()}
-        async with aiofiles.open(self._messages_file(chat_id), "a", encoding="utf-8") as file:
-            await file.write(json.dumps(marker, ensure_ascii=False, separators=(",", ":")))
-            await file.write("\n")
+        async with self._lock:
+            if not self._chat_dir(chat_id).exists():
+                return
+            payload = json.dumps(marker, ensure_ascii=False, separators=(",", ":")) + "\n"
+            await self._append_text(self._messages_file(chat_id), payload)
 
     async def save_feedback(self, feedback: MessageFeedback) -> MessageFeedback:
-        rows = await self._read_jsonl(self._feedback_file())
-        stored = feedback
-        unique_rows: list[dict] = []
-        replaced = False
-        for row in rows:
-            if row.get("owner_external_id") == feedback.owner_external_id and row.get("message_id") == str(
-                feedback.message_id
-            ):
-                if not replaced:
-                    unique_rows.append(feedback.model_dump(mode="json"))
-                    replaced = True
-                continue
-            unique_rows.append(row)
-        if not replaced:
-            unique_rows.append(feedback.model_dump(mode="json"))
-        await self._write_jsonl(self._feedback_file(), unique_rows)
-        return stored
+        async with self._lock:
+            rows = await self._read_jsonl_unlocked(self._feedback_file())
+            unique_rows: list[dict] = []
+            replaced = False
+            for row in rows:
+                if row.get("owner_external_id") == feedback.owner_external_id and row.get("message_id") == str(
+                    feedback.message_id
+                ):
+                    if not replaced:
+                        unique_rows.append(feedback.model_dump(mode="json"))
+                        replaced = True
+                    continue
+                unique_rows.append(row)
+            if not replaced:
+                unique_rows.append(feedback.model_dump(mode="json"))
+            await self._write_jsonl_unlocked(self._feedback_file(), unique_rows)
+        return feedback
 
     async def record_moderation(
         self,
@@ -110,18 +128,19 @@ class JsonChatRepository:
         direction: str,
         result: ModerationResult,
     ) -> None:
-        rows = await self._read_jsonl(self._moderation_file())
-        rows.append(
-            {
-                "chat_id": str(chat_id),
-                "direction": direction,
-                "allowed": result.allowed,
-                "categories": result.categories,
-                "blocked_by": result.blocked_by,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-        await self._write_jsonl(self._moderation_file(), rows)
+        async with self._lock:
+            rows = await self._read_jsonl_unlocked(self._moderation_file())
+            rows.append(
+                {
+                    "chat_id": str(chat_id),
+                    "direction": direction,
+                    "allowed": result.allowed,
+                    "categories": result.categories,
+                    "blocked_by": result.blocked_by,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            await self._write_jsonl_unlocked(self._moderation_file(), rows)
 
     async def get_admin_stats(self) -> StatsOut:
         since = datetime.now(timezone.utc).timestamp() - 24 * 60 * 60
@@ -183,9 +202,10 @@ class JsonChatRepository:
 
     async def enqueue_broadcast(self, message: str, interface: str) -> BroadcastItem:
         item = BroadcastItem(message=message, interface=interface)
-        rows = await self._read_jsonl(self._broadcast_file())
-        rows.append(item.model_dump(mode="json"))
-        await self._write_jsonl(self._broadcast_file(), rows)
+        async with self._lock:
+            rows = await self._read_jsonl_unlocked(self._broadcast_file())
+            rows.append(item.model_dump(mode="json"))
+            await self._write_jsonl_unlocked(self._broadcast_file(), rows)
         return item
 
     async def list_pending_broadcasts(self, limit: int = 10) -> list[BroadcastItem]:
@@ -198,30 +218,32 @@ class JsonChatRepository:
         return items[: max(0, limit)]
 
     async def update_broadcast_status(self, broadcast_id: UUID, status: str) -> BroadcastItem | None:
-        rows = await self._read_jsonl(self._broadcast_file())
-        updated: BroadcastItem | None = None
-        output: list[dict] = []
-        for row in rows:
-            item = BroadcastItem.model_validate(row)
-            if item.id == broadcast_id:
-                item = item.model_copy(update={"status": status, "updated_at": datetime.now(timezone.utc)})
-                updated = item
-            output.append(item.model_dump(mode="json"))
-        if updated is not None:
-            await self._write_jsonl(self._broadcast_file(), output)
+        async with self._lock:
+            rows = await self._read_jsonl_unlocked(self._broadcast_file())
+            updated: BroadcastItem | None = None
+            output: list[dict] = []
+            for row in rows:
+                item = BroadcastItem.model_validate(row)
+                if item.id == broadcast_id:
+                    item = item.model_copy(update={"status": status, "updated_at": datetime.now(timezone.utc)})
+                    updated = item
+                output.append(item.model_dump(mode="json"))
+            if updated is not None:
+                await self._write_jsonl_unlocked(self._broadcast_file(), output)
         return updated
 
     async def _load_chats(self) -> list[Chat]:
-        chats_dir = self.base_dir / "chats"
-        if not chats_dir.exists():
-            return []
-        chats: list[Chat] = []
-        for path in chats_dir.glob("*/chat.json"):
-            try:
-                chats.append(Chat.model_validate_json(path.read_text(encoding="utf-8")))
-            except (OSError, ValueError):
-                continue
-        return chats
+        async with self._lock:
+            chats_dir = self.base_dir / "chats"
+            if not chats_dir.exists():
+                return []
+            chats: list[Chat] = []
+            for path in chats_dir.glob("*/chat.json"):
+                try:
+                    chats.append(Chat.model_validate_json(path.read_text(encoding="utf-8")))
+                except (OSError, ValueError):
+                    continue
+            return chats
 
     @staticmethod
     def _row_timestamp(row: dict) -> float:
@@ -231,17 +253,49 @@ class JsonChatRepository:
             return 0.0
 
     async def _read_jsonl(self, path: Path) -> list[dict]:
+        async with self._lock:
+            return await self._read_jsonl_unlocked(path)
+
+    async def _read_jsonl_unlocked(self, path: Path) -> list[dict]:
         if not path.exists():
             return []
         async with aiofiles.open(path, encoding="utf-8") as file:
             return [json.loads(line) for line in await file.readlines() if line.strip()]
 
     async def _write_jsonl(self, path: Path, rows: list[dict]) -> None:
+        async with self._lock:
+            await self._write_jsonl_unlocked(path, rows)
+
+    async def _write_jsonl_unlocked(self, path: Path, rows: list[dict]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(path, "w", encoding="utf-8") as file:
-            for row in rows:
-                await file.write(json.dumps(row, ensure_ascii=False, separators=(",", ":"), default=str))
-                await file.write("\n")
+        payload = "".join(
+            json.dumps(row, ensure_ascii=False, separators=(",", ":"), default=str) + "\n"
+            for row in rows
+        )
+        await self._atomic_write_text(path, payload)
+
+    async def _append_text(self, path: Path, payload: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(path, "a", encoding="utf-8") as file:
+            await file.write(payload)
+            await file.flush()
+            await asyncio.to_thread(os.fsync, file.fileno())
+
+    async def _atomic_write_text(self, path: Path, payload: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+        try:
+            async with aiofiles.open(temporary, "w", encoding="utf-8") as file:
+                await file.write(payload)
+                await file.flush()
+                await asyncio.to_thread(os.fsync, file.fileno())
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def _require_chat(self, chat_id: UUID) -> None:
+        if not self._chat_dir(chat_id).exists():
+            raise FileNotFoundError(f"Chat {chat_id} does not exist")
 
     def _chat_dir(self, chat_id: UUID) -> Path:
         return self.base_dir / "chats" / str(chat_id)

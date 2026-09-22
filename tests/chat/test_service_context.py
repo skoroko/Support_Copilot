@@ -75,6 +75,29 @@ class FakeLLM:
         self.completions = completions
 
 
+class FailingStream:
+    def __init__(self) -> None:
+        self.sent = False
+
+    def __aiter__(self) -> "FailingStream":
+        return self
+
+    async def __anext__(self) -> dict[str, Any]:
+        if not self.sent:
+            self.sent = True
+            return {"choices": [{"delta": {"content": "partial"}}]}
+        raise RuntimeError("provider disconnected")
+
+
+class FailingLLM:
+    def __init__(self) -> None:
+        async def create(**_kwargs: Any) -> FailingStream:
+            return FailingStream()
+
+        completions = type("Completions", (), {"create": staticmethod(create)})()
+        self.chat = type("Chat", (), {"completions": completions})()
+
+
 class FakeRAG:
     def __init__(self) -> None:
         self.question: str | None = None
@@ -161,6 +184,18 @@ async def test_send_message_unknown_chat_raises(tmp_path: Path) -> None:
 
     with pytest.raises(ChatNotFoundError):
         [chunk async for chunk in service.send_message(UUID("00000000-0000-0000-0000-000000000000"), "hello")]
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_emits_no_partial_text_and_persists_no_orphan_turn(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    service = ChatService(repo, FailingLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    with pytest.raises(RuntimeError, match="provider disconnected"):
+        _ = [chunk async for chunk in service.send_message(chat.id, "hello")]
+
+    assert await repo.list_messages(chat.id) == []
 
 
 @pytest.mark.asyncio

@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from pydantic import AliasChoices, Field, SecretStr, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,10 +25,7 @@ class BotSettings(BaseSettings):
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias=AliasChoices("REDIS_URL"))
     bot_admin_ids: list[int] = Field(default_factory=list, validation_alias=AliasChoices("BOT_ADMIN_IDS"))
     internal_token: SecretStr = Field(validation_alias=AliasChoices("INTERNAL_TOKEN"))
-    admin_token: SecretStr = Field(
-        default=SecretStr("replace-with-admin-token"),
-        validation_alias=AliasChoices("ADMIN_TOKEN"),
-    )
+    admin_token: SecretStr = Field(validation_alias=AliasChoices("ADMIN_TOKEN"))
     bot_api_port: int = Field(default=9000, ge=1, le=65535, validation_alias=AliasChoices("BOT_API_PORT"))
     broadcast_poll_seconds: float = Field(
         default=5.0,
@@ -55,6 +52,25 @@ class BotSettings(BaseSettings):
         if isinstance(value, str):
             return [int(item.strip()) for item in value.split(",") if item.strip()]
         raise TypeError("BOT_ADMIN_IDS must be an integer or a comma-separated list of integers")
+
+    @model_validator(mode="after")
+    def validate_privileged_tokens(self) -> "BotSettings":
+        internal = self.internal_token.get_secret_value().strip()
+        admin = self.admin_token.get_secret_value().strip()
+        forbidden = {
+            "replace-with-internal-token",
+            "replace-with-admin-token",
+            "change-me",
+            "changeme",
+            "secret",
+        }
+        if len(internal) < 32 or internal.casefold() in forbidden:
+            raise ValueError("INTERNAL_TOKEN must be a non-placeholder secret of at least 32 characters")
+        if len(admin) < 32 or admin.casefold() in forbidden:
+            raise ValueError("ADMIN_TOKEN must be a non-placeholder secret of at least 32 characters")
+        if internal == admin:
+            raise ValueError("INTERNAL_TOKEN and ADMIN_TOKEN must be different")
+        return self
 
 
 @lru_cache(maxsize=1)

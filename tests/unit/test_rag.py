@@ -1429,6 +1429,11 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
 
     response = TestClient(api).post(
         "/rag/query",
+        headers={
+            "X-Internal-Token": "test-internal-token-0000000000000001",
+            "X-User-ID": "support-engineer-1",
+            "X-User-Interface": "web",
+        },
         json={
             "question": "Проверочный вопрос",
             "chat_id": "chat-1",

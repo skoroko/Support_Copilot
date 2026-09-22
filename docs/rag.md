@@ -16,7 +16,7 @@ flowchart LR
 ```
 
 `app/services/ingestion.py` поддерживает PDF, DOCX, HTML, Markdown, TXT и CHM.
-Для PDF используется `PyMuPDFReader`, для DOCX — `DocxReader`, для HTML —
+Для PDF используется pypdf-backed `PDFReader`, для DOCX — `DocxReader`, для HTML —
 `HTMLTagReader`, для Markdown — `MarkdownReader`. Ошибка одного файла не
 останавливает пакет: файл получает суффикс `.failed`, а путь попадает в итоговую
 статистику и лог.
@@ -179,7 +179,7 @@ score, retrieval latency, outcome и число процитированных �
 `RAG_SCORE_THRESHOLD` и должен повторно калиброваться на golden-наборе после
 смены модели или корпуса.
 
-`sentence-transformers` вынесен в `requirements-reranker.txt`: при
+`sentence-transformers` вынесен в optional extra `reranker` в `pyproject.toml`: при
 `RAG_RERANKER_ENABLED=false` Docker не загружает многогигабайтный CUDA/PyTorch
 стек. Если включить переменную, тот же `docker compose up -d --build`
 автоматически добавит re-ranker в образ без ручного `pip install`.

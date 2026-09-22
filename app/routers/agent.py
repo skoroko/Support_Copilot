@@ -96,16 +96,12 @@ def _authorize(
     if settings is None:
         raise HTTPException(status_code=503, detail="Application settings are not initialized")
     expected_internal = settings.internal_token.get_secret_value()
-    if expected_internal == "replace-with-internal-token":
-        raise HTTPException(status_code=503, detail="Internal authentication is not configured")
     if not internal_token or not secrets.compare_digest(internal_token, expected_internal):
         raise HTTPException(status_code=401, detail="Valid X-Internal-Token is required")
     if not user_id or len(user_id) > 200:
         raise HTTPException(status_code=401, detail="Valid X-User-ID is required")
     if user_role == "full":
         expected_admin = settings.admin_token.get_secret_value()
-        if expected_admin == "replace-with-admin-token":
-            raise HTTPException(status_code=503, detail="Administrative authentication is not configured")
         if not admin_token or not secrets.compare_digest(admin_token, expected_admin):
             raise HTTPException(status_code=403, detail="The full role requires X-Admin-Token")
     return user_id

@@ -13,6 +13,12 @@ from app.main import app
 from app.moderation.models import ModerationResult
 
 
+AUTH_HEADERS = {
+    "X-Internal-Token": "test-internal-token-0000000000000001",
+    "X-User-ID": "42",
+    "X-User-Interface": "telegram",
+}
+
 class RouteService:
     def __init__(self) -> None:
         self.chat = Chat(owner_external_id="42", interface="telegram")
@@ -59,7 +65,7 @@ def test_moderation_route_returns_403_before_llm() -> None:
     service = RouteService()
     app.dependency_overrides[get_chat_service] = lambda: service
     try:
-        with TestClient(app) as client:
+        with TestClient(app, headers=AUTH_HEADERS) as client:
             response = client.post(f"/chats/{service.chat.id}/messages", data={"content": "blocked"})
     finally:
         app.dependency_overrides.clear()
@@ -74,7 +80,7 @@ def test_feedback_route_returns_saved_vote() -> None:
     service = RouteService()
     app.dependency_overrides[get_chat_service] = lambda: service
     try:
-        with TestClient(app) as client:
+        with TestClient(app, headers=AUTH_HEADERS) as client:
             response = client.post(
                 f"/chats/{service.chat.id}/messages/{service.message.id}/feedback",
                 json={"value": "up"},
@@ -92,7 +98,7 @@ def test_feedback_route_saves_sources_shown_to_user() -> None:
     sources = [{"id": "return-policy", "file_name": "returns.md", "score": 0.91}]
     app.dependency_overrides[get_chat_service] = lambda: service
     try:
-        with TestClient(app) as client:
+        with TestClient(app, headers=AUTH_HEADERS) as client:
             response = client.post(
                 f"/chats/{service.chat.id}/messages/{service.message.id}/feedback",
                 json={"value": "down", "shown_sources": sources},

@@ -7,7 +7,7 @@ from pydantic import SecretStr
 
 from app.core.config import Settings
 from app.observability.pii import prompt_hash, redact_pii
-from app.observability.tracing import _normalize_phoenix_endpoint, _tracing_enabled
+from app.observability.tracing import _normalize_phoenix_endpoint, _tracing_enabled, setup_tracing
 from app.schemas.chat import ChatRequest, ChatResponse, Usage
 from app.services.llm import LLMService
 
@@ -82,6 +82,22 @@ class ObservabilityTests(unittest.TestCase):
             _normalize_phoenix_endpoint("http://phoenix:6006/v1/traces"),
             "http://phoenix:6006/v1/traces",
         )
+
+    def test_tracing_permission_error_is_fail_open(self) -> None:
+        with (
+            patch("app.observability.tracing._tracing_configured", False),
+            patch("app.observability.tracing._tracing_enabled", return_value=True),
+            patch("app.observability.tracing._load_tracing_dependencies", side_effect=PermissionError),
+        ):
+            self.assertFalse(setup_tracing())
+
+    def test_tracing_os_error_is_fail_open(self) -> None:
+        with (
+            patch("app.observability.tracing._tracing_configured", False),
+            patch("app.observability.tracing._tracing_enabled", return_value=True),
+            patch("app.observability.tracing._load_tracing_dependencies", side_effect=OSError),
+        ):
+            self.assertFalse(setup_tracing())
 
     def test_llm_log_uses_hash_and_redacted_preview(self) -> None:
         logger = CaptureLogger()

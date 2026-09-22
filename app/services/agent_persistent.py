@@ -257,10 +257,10 @@ def build_agent(
         }
 
     def route_after_model(state: PersistentState) -> Literal["execute_safe_tool", "prepare_telegram_message", "finish"]:
-        if state.get("iteration_count", 0) >= MAX_ITERATIONS:
-            return "finish"
         calls = _latest_tool_calls(state)
         if not calls:
+            return "finish"
+        if state.get("iteration_count", 0) >= MAX_ITERATIONS:
             return "finish"
         if any(call.get("name") == DANGEROUS_TOOL_NAME for call in calls):
             return PREPARE_NODE
@@ -407,8 +407,8 @@ def build_agent(
         }
 
     def finish(state: PersistentState) -> dict[str, Any]:
-        if state.get("iteration_count", 0) >= MAX_ITERATIONS:
-            calls = _latest_tool_calls(state)
+        calls = _latest_tool_calls(state)
+        if state.get("iteration_count", 0) >= MAX_ITERATIONS and calls:
             content = "Tool не выполнен: достигнут лимит из 6 model turns."
             messages: list[AnyMessage] = [_tool_message(call, content) for call in calls]
             results = [_tool_result(call, status="rejected", result=content) for call in calls]

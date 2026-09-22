@@ -4,7 +4,7 @@
 
 The implementation uses `langgraph>=1.0,<2`, `langchain>=1.0,<2`,
 `langchain-openai>=1.0,<2` and `langchain-core>=1.0,<2` from
-`requirements.txt`.  The model, base URL, timeout and key remain in the
+`pyproject.toml` and the committed `uv.lock`.  The model, base URL, timeout and key remain in the
 existing environment-based configuration.  The graph module uses a clearly
 invalid non-secret placeholder only to permit offline imports when no key is
 configured; it cannot make a provider request successfully.

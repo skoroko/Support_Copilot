@@ -13,6 +13,7 @@ from app.services.ingestion import (
     ExternalDataTransferRequired,
     IngestionConfig,
     IngestionService,
+    _file_extractors,
     _load_one_file,
     category_for_path,
     infer_product,
@@ -173,6 +174,10 @@ def test_pdf_page_numbers_are_preserved_before_metadata_enrichment(
     assert [document.metadata["page"] for document in documents] == [1, 2, 3]
     assert all(document.metadata["total_pages"] == 3 for document in documents)
     assert all(document.metadata["product"] == "gts_nx" for document in documents)
+
+
+def test_pdf_ingestion_uses_pypdf_reader() -> None:
+    assert type(_file_extractors()[".pdf"]).__name__ == "PDFReader"
 
 
 def test_chm_pages_can_be_materialized_as_safe_deterministic_html(tmp_path: Path) -> None:

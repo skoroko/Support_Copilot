@@ -161,6 +161,7 @@ class ChatService:
             media,
             client=self.llm_client,
             transcription_model=self.settings.transcription_model,
+            max_bytes=self.settings.chat_media_max_bytes,
         )
 
     async def ensure_input_allowed(self, chat_id: UUID, content: str) -> ModerationResult:
@@ -187,11 +188,17 @@ class ChatService:
             moderation_content = self._moderation_content(user_content, media_refs)
             await self.ensure_input_allowed(chat_id, moderation_content)
 
+        persisted_media_refs = media_refs
+        if media_refs and isinstance(media_refs.get("part"), dict):
+            part = media_refs["part"]
+            if part.get("type") == "image_url":
+                persisted_media_refs = {key: value for key, value in media_refs.items() if key != "part"}
+
         user_message = ChatMessage(
             chat_id=chat_id,
             role="user",
             content=user_content,
-            media_refs=media_refs,
+            media_refs=persisted_media_refs,
             tokens=count_tokens(
                 [
                     {
@@ -206,11 +213,10 @@ class ChatService:
                 ]
             ),
         )
-        await self.repository.append_message(chat_id, user_message)
-
         history = await self.repository.list_messages(chat_id, self.settings.chat_context_window)
-        retrieval_history = history[:-1]
-        messages = self.context_strategy.build(chat, history)
+        retrieval_history = history
+        provider_user_message = user_message.model_copy(update={"media_refs": media_refs})
+        messages = self.context_strategy.build(chat, [*history, provider_user_message])
         budget = (
             self.settings.chat_model_context_tokens
             - self.settings.chat_response_tokens
@@ -258,17 +264,22 @@ class ChatService:
             visible_content = MODERATION_OUTPUT_REPLACEMENT
             self._last_response_sources[chat_id] = []
 
-        if visible_content:
+        assistant_message = ChatMessage(
+            chat_id=chat_id,
+            role="assistant",
+            content=visible_content,
+            rag_sources=rag_sources if output_result.allowed else [],
+            tokens=count_tokens([{"role": "assistant", "content": visible_content}]),
+            latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+        )
+        append_turn = getattr(self.repository, "append_turn", None)
+        if append_turn is not None:
+            await append_turn(chat_id, user_message, assistant_message)
+        else:  # compatibility for small injected test repositories
+            await self.repository.append_message(chat_id, user_message)
             await self.repository.append_message(
                 chat_id,
-                ChatMessage(
-                    chat_id=chat_id,
-                    role="assistant",
-                    content=visible_content,
-                    rag_sources=rag_sources if output_result.allowed else [],
-                    tokens=count_tokens([{"role": "assistant", "content": visible_content}]),
-                    latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
-                ),
+                assistant_message,
             )
         for part in visible_parts:
             yield part

@@ -71,6 +71,37 @@ class PostgresChatRepository:
         await self.session.commit()
         return message
 
+    async def append_turn(
+        self,
+        chat_id: UUID,
+        user_message: ChatMessage,
+        assistant_message: ChatMessage,
+    ) -> tuple[ChatMessage, ChatMessage]:
+        messages = (
+            user_message.model_copy(update={"chat_id": chat_id}),
+            assistant_message.model_copy(update={"chat_id": chat_id}),
+        )
+        try:
+            for message in messages:
+                self.session.add(
+                    ChatMessageRow(
+                        id=message.id,
+                        chat_id=message.chat_id,
+                        role=message.role,
+                        content=message.content,
+                        media_refs=message.media_refs,
+                        rag_sources=message.rag_sources,
+                        tokens=message.tokens,
+                        latency_ms=message.latency_ms,
+                        created_at=message.created_at,
+                    )
+                )
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return messages
+
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         if limit <= 0:
             return []

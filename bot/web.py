@@ -20,11 +20,19 @@ class NotifyRequest(BaseModel):
 
 
 def build_api(bot: Bot, internal_token: str, *, idempotency_store: Any | None = None) -> FastAPI:
+    normalized_token = internal_token.strip()
+    if len(normalized_token) < 32 or normalized_token.casefold() in {
+        "replace-with-internal-token",
+        "change-me",
+        "changeme",
+        "secret",
+    }:
+        raise ValueError("Bot internal authentication requires a strong configured token")
     api = FastAPI(title="Support Copilot Bot Internal API")
 
     @api.post("/notify")
     async def notify(req: NotifyRequest, x_internal_token: str = Header(...)) -> dict[str, bool]:
-        if not hmac.compare_digest(x_internal_token, internal_token):
+        if not hmac.compare_digest(x_internal_token, normalized_token):
             raise HTTPException(status_code=401, detail="invalid internal token")
         storage_key = None
         claimed = False

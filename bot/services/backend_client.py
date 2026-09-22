@@ -13,6 +13,12 @@ STREAM_TIMEOUT = httpx.Timeout(connect=3.0, read=120.0, write=10.0, pool=5.0)
 NETWORK_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout)
 
 
+class BackendStreamError(httpx.HTTPError):
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class BackendClient:
     def __init__(
         self,
@@ -20,6 +26,7 @@ class BackendClient:
         *,
         client: httpx.AsyncClient | None = None,
         max_connect_attempts: int = 3,
+        internal_token: str,
         admin_token: str | None = None,
     ) -> None:
         self._owns_client = client is None
@@ -28,6 +35,8 @@ class BackendClient:
         self._chat_cache: dict[tuple[str, str], UUID] = {}
         self._last_message_ids: dict[str, UUID] = {}
         self._last_sources: dict[str, list[dict]] = {}
+        self._chat_owners: dict[str, str] = {}
+        self._internal_token = internal_token
         self._admin_headers = {"X-Admin-Token": admin_token} if admin_token else {}
 
     async def get_or_create_chat(self, owner_external_id: str, interface: str) -> UUID:
@@ -35,11 +44,14 @@ class BackendClient:
         if key in self._chat_cache:
             return self._chat_cache[key]
         response = await self._request_with_connect_retry(
-            "POST", "/chats", json={"owner_external_id": owner_external_id, "interface": interface}
+            "POST",
+            "/chats",
+            headers=self._principal_headers(owner_external_id, interface=interface),
         )
         response.raise_for_status()
         chat_id = UUID(str(response.json()["chat_id"]))
         self._chat_cache[key] = chat_id
+        self._chat_owners[str(chat_id)] = owner_external_id
         return chat_id
 
     async def send_message(
@@ -63,6 +75,7 @@ class BackendClient:
                     f"/chats/{chat_id}/messages",
                     data={"content": content},
                     files=files,
+                    headers=self._principal_headers_for_chat(chat_id),
                     timeout=STREAM_TIMEOUT,
                 ) as response:
                     response.raise_for_status()
@@ -83,6 +96,11 @@ class BackendClient:
                         if event_name == "sources":
                             self._last_sources[chat_key] = self._sources_from_payload(payload)
                             continue
+                        if event_name == "error" or payload.get("type") == "error":
+                            raise BackendStreamError(
+                                str(payload.get("code") or "chat_stream_failed"),
+                                str(payload.get("message") or "Backend stream failed"),
+                            )
                         event_type = payload.get("type")
                         if event_type == "token":
                             yielded_data = True
@@ -105,7 +123,11 @@ class BackendClient:
                 await asyncio.sleep(0.2 * (2 ** (attempt - 1)))
 
     async def clear_messages(self, chat_id: UUID | str) -> None:
-        response = await self._request_with_connect_retry("DELETE", f"/chats/{chat_id}/messages")
+        response = await self._request_with_connect_retry(
+            "DELETE",
+            f"/chats/{chat_id}/messages",
+            headers=self._principal_headers_for_chat(chat_id),
+        )
         response.raise_for_status()
 
     def last_response_message_id(self, chat_id: UUID | str) -> UUID | None:
@@ -114,10 +136,17 @@ class BackendClient:
     def last_response_sources(self, chat_id: UUID | str) -> list[dict]:
         return [dict(source) for source in self._last_sources.get(str(chat_id), [])]
 
-    async def get_message_sources(self, chat_id: UUID | str, message_id: UUID | str) -> list[dict]:
+    async def get_message_sources(
+        self,
+        chat_id: UUID | str,
+        message_id: UUID | str,
+        *,
+        owner_external_id: str | None = None,
+    ) -> list[dict]:
         response = await self._request_with_connect_retry(
             "GET",
             f"/chats/{chat_id}/messages/{message_id}/sources",
+            headers=self._principal_headers_for_chat(chat_id, owner_external_id),
         )
         response.raise_for_status()
         return self._sources_from_payload(response.json())
@@ -128,14 +157,20 @@ class BackendClient:
         message_id: UUID | str,
         value: str,
         shown_sources: list[dict] | None = None,
+        owner_external_id: str | None = None,
     ) -> dict:
         sources = shown_sources
         if sources is None:
-            sources = self.last_response_sources(chat_id) or await self.get_message_sources(chat_id, message_id)
+            sources = self.last_response_sources(chat_id) or await self.get_message_sources(
+                chat_id,
+                message_id,
+                owner_external_id=owner_external_id,
+            )
         response = await self._request_with_connect_retry(
             "POST",
             f"/chats/{chat_id}/messages/{message_id}/feedback",
             json={"value": value, "shown_sources": sources},
+            headers=self._principal_headers_for_chat(chat_id, owner_external_id),
         )
         response.raise_for_status()
         return response.json()
@@ -205,6 +240,24 @@ class BackendClient:
                     raise
                 await asyncio.sleep(0.2 * (2 ** (attempt - 1)))
         raise RuntimeError("unreachable")
+
+    def _principal_headers(self, owner_external_id: str, *, interface: str = "telegram") -> dict[str, str]:
+        return {
+            "X-Internal-Token": self._internal_token,
+            "X-User-ID": owner_external_id,
+            "X-User-Interface": interface,
+        }
+
+    def _principal_headers_for_chat(
+        self,
+        chat_id: UUID | str,
+        owner_external_id: str | None = None,
+    ) -> dict[str, str]:
+        owner = owner_external_id or self._chat_owners.get(str(chat_id))
+        if not owner:
+            raise ValueError("Authenticated chat owner is required")
+        self._chat_owners[str(chat_id)] = owner
+        return self._principal_headers(owner)
 
     @staticmethod
     def _filename_for_mime(mime: str | None) -> str:

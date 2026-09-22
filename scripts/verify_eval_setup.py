@@ -18,10 +18,6 @@ def main() -> None:
     packages = (
         "ragas",
         "pandas",
-        "arize-phoenix",
-        "arize-phoenix-evals",
-        "arize-phoenix-otel",
-        "openinference-instrumentation-llama-index",
     )
     for package in packages:
         print(f"{package}=={version(package)}")

@@ -17,6 +17,7 @@ from openai import AsyncOpenAI
 from app.admin import routes as admin_routes
 from app.chat import routes as chat_routes
 from app.core.config import Settings, get_settings
+from app.core.auth import InMemoryRequestBudget
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
@@ -88,6 +89,10 @@ async def lifespan(app: FastAPI):
     setup_logging(settings.log_level)
     setup_tracing()
     app.state.settings = settings
+    app.state.request_budget = InMemoryRequestBudget(
+        requests_per_minute=settings.api_rate_limit_per_minute,
+        max_concurrency=settings.api_max_concurrency_per_principal,
+    )
     app.state.canary = f"CANARY_{secrets.token_hex(4)}"
     app.state.security_system_prompt = build_security_system_prompt(app.state.canary)
     app.state.openai = AsyncOpenAI(

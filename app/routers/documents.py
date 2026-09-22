@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -8,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import aiofiles
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
+
+from app.admin.auth import require_admin
 
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -17,6 +21,34 @@ logger = logging.getLogger(__name__)
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".html", ".htm", ".md"}
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 _CATEGORY_RE = re.compile(r"^[A-Za-z0-9А-Яа-яЁё][A-Za-z0-9А-Яа-яЁё._-]{0,63}$")
+
+
+class IngestionQueueBudget:
+    """Bound pending background ingestion work per application process."""
+
+    def __init__(self, capacity: int) -> None:
+        self.capacity = capacity
+        self._pending = 0
+        self._lock = asyncio.Lock()
+
+    async def try_acquire(self) -> bool:
+        async with self._lock:
+            if self._pending >= self.capacity:
+                return False
+            self._pending += 1
+            return True
+
+    async def release(self) -> None:
+        async with self._lock:
+            self._pending = max(0, self._pending - 1)
+
+
+def _ingestion_budget(request: Request, capacity: int) -> IngestionQueueBudget:
+    budget = getattr(request.app.state, "ingestion_queue_budget", None)
+    if budget is None:
+        budget = IngestionQueueBudget(capacity)
+        request.app.state.ingestion_queue_budget = budget
+    return budget
 
 
 def _safe_name(raw_name: str | None) -> str:
@@ -82,6 +114,18 @@ def _index_uploaded_document(service: Any, target: Path, allow_external_data_tra
         logger.exception("document_indexing_failed", extra={"file_name": target.name})
 
 
+async def _run_indexing_task(
+    budget: IngestionQueueBudget,
+    service: Any,
+    target: Path,
+    allow_external_data_transfer: bool,
+) -> None:
+    try:
+        await run_in_threadpool(_index_uploaded_document, service, target, allow_external_data_transfer)
+    finally:
+        await budget.release()
+
+
 @router.post(
     "/upload",
     status_code=status.HTTP_202_ACCEPTED,
@@ -90,6 +134,7 @@ def _index_uploaded_document(service: Any, target: Path, allow_external_data_tra
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
+    _admin: None = Depends(require_admin),
     file: UploadFile = File(...),
     category: str = Form("uploads"),
 ) -> dict[str, Any]:
@@ -113,13 +158,26 @@ async def upload_document(
 
     filename = _safe_name(file.filename)
     safe_category = _safe_category(category)
+    capacity = int(getattr(settings, "ingestion_queue_capacity", 4))
+    budget = _ingestion_budget(request, capacity)
+    if not await budget.try_acquire():
+        await file.close()
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "ingestion_queue_full", "message": "Document ingestion queue is full"},
+        )
+
     data_dir = Path(settings.rag_data_dir)
     if not data_dir.is_absolute():
         data_dir = Path(__file__).resolve().parents[2] / data_dir
     target = data_dir / safe_category / filename
-    size = await _persist_upload(file, target)
+    try:
+        size = await _persist_upload(file, target)
+    except Exception:
+        await budget.release()
+        raise
 
-    background_tasks.add_task(_index_uploaded_document, service, target, allow_external)
+    background_tasks.add_task(_run_indexing_task, budget, service, target, allow_external)
     return {
         "status": "accepted",
         "file_name": filename,

@@ -6,8 +6,10 @@ from types import SimpleNamespace
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.routers.documents import router
+from app.routers.documents import IngestionQueueBudget, router
 
+
+ADMIN_HEADERS = {"X-Admin-Token": "test-admin-token-000000000000000002"}
 
 class FakeIngestionService:
     def __init__(self) -> None:
@@ -36,6 +38,7 @@ def test_upload_persists_document_and_schedules_incremental_ingestion(tmp_path: 
 
     response = TestClient(api).post(
         "/documents/upload",
+        headers=ADMIN_HEADERS,
         data={"category": "manuals"},
         files={"file": ("returns-v2.md", b"# Return policy", "text/markdown")},
     )
@@ -52,6 +55,7 @@ def test_upload_rejects_unsupported_format(tmp_path: Path) -> None:
 
     response = TestClient(api).post(
         "/documents/upload",
+        headers=ADMIN_HEADERS,
         files={"file": ("payload.exe", b"x", "application/octet-stream")},
     )
 
@@ -64,9 +68,24 @@ def test_upload_requires_document_transfer_approval(tmp_path: Path) -> None:
 
     response = TestClient(api).post(
         "/documents/upload",
+        headers=ADMIN_HEADERS,
         files={"file": ("policy.pdf", b"%PDF", "application/pdf")},
     )
 
     assert response.status_code == 409
     assert service.calls == []
     assert not (tmp_path / "uploads" / "policy.pdf").exists()
+
+
+async def _exercise_queue_budget() -> None:
+    budget = IngestionQueueBudget(1)
+    assert await budget.try_acquire() is True
+    assert await budget.try_acquire() is False
+    await budget.release()
+    assert await budget.try_acquire() is True
+
+
+def test_ingestion_queue_budget_rejects_excess_pending_work() -> None:
+    import asyncio
+
+    asyncio.run(_exercise_queue_budget())

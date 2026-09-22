@@ -1,3 +1,0 @@
-# Optional Б5.4/Б5.5 local BGE reranker. Kept out of the default image because
-# PyTorch may otherwise pull several gigabytes of CUDA runtime packages.
-sentence-transformers>=5.0.0,<6.0.0

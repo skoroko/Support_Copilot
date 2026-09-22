@@ -24,6 +24,14 @@ class ChatRepository(Protocol):
     async def append_message(self, chat_id: UUID, message: ChatMessage) -> ChatMessage:
         ...
 
+    async def append_turn(
+        self,
+        chat_id: UUID,
+        user_message: ChatMessage,
+        assistant_message: ChatMessage,
+    ) -> tuple[ChatMessage, ChatMessage]:
+        ...
+
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         ...
 

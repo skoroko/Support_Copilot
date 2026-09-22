@@ -17,6 +17,16 @@ except ImportError:  # pragma: no cover - local environment can run tests withou
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ENV_PATH = PROJECT_ROOT / ".env"
+MIN_PRIVILEGED_TOKEN_LENGTH = 32
+FORBIDDEN_PRIVILEGED_TOKENS = frozenset(
+    {
+        "replace-with-internal-token",
+        "replace-with-admin-token",
+        "change-me",
+        "changeme",
+        "secret",
+    }
+)
 
 
 class LLMSettings(BaseModel):
@@ -54,6 +64,26 @@ class _SettingsFields(BaseModel):
     )
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL", "APP_LOG_LEVEL"))
     security_enabled: bool = Field(default=True, validation_alias=AliasChoices("APP_SECURITY_ENABLED"))
+    allowed_models: list[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("APP_ALLOWED_MODELS"),
+    )
+    api_rate_limit_per_minute: int = Field(
+        default=60,
+        ge=1,
+        validation_alias=AliasChoices("APP_RATE_LIMIT_PER_MINUTE"),
+    )
+    api_max_concurrency_per_principal: int = Field(
+        default=4,
+        ge=1,
+        validation_alias=AliasChoices("APP_MAX_CONCURRENCY_PER_PRINCIPAL"),
+    )
+    ingestion_queue_capacity: int = Field(
+        default=4,
+        ge=1,
+        le=100,
+        validation_alias=AliasChoices("INGESTION_QUEUE_CAPACITY"),
+    )
     chat_repository: Literal["json", "postgres"] = Field(default="json", validation_alias=AliasChoices("CHAT_REPOSITORY"))
     chat_storage_dir: Path = Field(default=Path("./var/chats"), validation_alias=AliasChoices("CHAT_STORAGE_DIR"))
     chat_database_url: str = Field(
@@ -78,13 +108,13 @@ class _SettingsFields(BaseModel):
     )
     transcription_model: str = Field(default="whisper-1", validation_alias=AliasChoices("TRANSCRIPTION_MODEL"))
     bot_url: str = Field(default="http://bot:9000", validation_alias=AliasChoices("BOT_URL"))
-    internal_token: SecretStr = Field(
-        default=SecretStr("replace-with-internal-token"),
-        validation_alias=AliasChoices("INTERNAL_TOKEN"),
-    )
-    admin_token: SecretStr = Field(
-        default=SecretStr("replace-with-admin-token"),
-        validation_alias=AliasChoices("ADMIN_TOKEN"),
+    internal_token: SecretStr = Field(validation_alias=AliasChoices("INTERNAL_TOKEN"))
+    admin_token: SecretStr = Field(validation_alias=AliasChoices("ADMIN_TOKEN"))
+    chat_media_max_bytes: int = Field(
+        default=10 * 1024 * 1024,
+        ge=1024,
+        le=50 * 1024 * 1024,
+        validation_alias=AliasChoices("CHAT_MEDIA_MAX_BYTES"),
     )
     moderation_enabled: bool = Field(default=True, validation_alias=AliasChoices("MODERATION_ENABLED"))
     moderation_openai_enabled: bool = Field(
@@ -211,6 +241,19 @@ class _SettingsFields(BaseModel):
             raise ValueError("RAG collections must be different")
         return self
 
+    @model_validator(mode="after")
+    def validate_privileged_tokens(self) -> "_SettingsFields":
+        values = {
+            "INTERNAL_TOKEN": self.internal_token.get_secret_value().strip(),
+            "ADMIN_TOKEN": self.admin_token.get_secret_value().strip(),
+        }
+        for name, value in values.items():
+            if len(value) < MIN_PRIVILEGED_TOKEN_LENGTH or value.casefold() in FORBIDDEN_PRIVILEGED_TOKENS:
+                raise ValueError(f"{name} must be a non-placeholder secret of at least {MIN_PRIVILEGED_TOKEN_LENGTH} characters")
+        if values["INTERNAL_TOKEN"] == values["ADMIN_TOKEN"]:
+            raise ValueError("INTERNAL_TOKEN and ADMIN_TOKEN must be different")
+        return self
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Any) -> list[str]:
@@ -225,6 +268,21 @@ class _SettingsFields(BaseModel):
                 return [str(item).strip() for item in parsed if str(item).strip()]
             return [item.strip() for item in stripped.split(",") if item.strip()]
         raise TypeError("cors_origins must be a list, JSON array, or comma-separated string")
+
+    @field_validator("allowed_models", mode="before")
+    @classmethod
+    def parse_allowed_models(cls, value: Any) -> list[str]:
+        if value is None or value == "":
+            return []
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith("["):
+                parsed = json.loads(stripped)
+                return [str(item).strip() for item in parsed if str(item).strip()]
+            return [item.strip() for item in stripped.split(",") if item.strip()]
+        raise TypeError("APP_ALLOWED_MODELS must be a list, JSON array, or comma-separated string")
 
     @field_validator("moderation_thresholds", mode="before")
     @classmethod
@@ -261,6 +319,10 @@ class _SettingsFields(BaseModel):
             default_model=self.default_model,
             request_timeout=self.request_timeout,
         )
+
+    @property
+    def effective_allowed_models(self) -> frozenset[str]:
+        return frozenset(self.allowed_models or [self.default_model])
 
     @property
     def rag_score_threshold(self) -> float:
@@ -317,6 +379,10 @@ def get_settings() -> Settings:
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
         log_level=os.getenv("LOG_LEVEL") or os.getenv("APP_LOG_LEVEL") or "INFO",
         security_enabled=(os.getenv("APP_SECURITY_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}),
+        allowed_models=os.getenv("APP_ALLOWED_MODELS") or "",
+        api_rate_limit_per_minute=int(os.getenv("APP_RATE_LIMIT_PER_MINUTE") or 60),
+        api_max_concurrency_per_principal=int(os.getenv("APP_MAX_CONCURRENCY_PER_PRINCIPAL") or 4),
+        ingestion_queue_capacity=int(os.getenv("INGESTION_QUEUE_CAPACITY") or 4),
         chat_repository=os.getenv("CHAT_REPOSITORY") or "json",
         chat_storage_dir=Path(os.getenv("CHAT_STORAGE_DIR") or "./var/chats"),
         chat_database_url=(
@@ -331,8 +397,9 @@ def get_settings() -> Settings:
         chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
         transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
         bot_url=os.getenv("BOT_URL") or "http://bot:9000",
-        internal_token=SecretStr(os.getenv("INTERNAL_TOKEN") or "replace-with-internal-token"),
-        admin_token=SecretStr(os.getenv("ADMIN_TOKEN") or "replace-with-admin-token"),
+        internal_token=SecretStr(os.getenv("INTERNAL_TOKEN") or ""),
+        admin_token=SecretStr(os.getenv("ADMIN_TOKEN") or ""),
+        chat_media_max_bytes=int(os.getenv("CHAT_MEDIA_MAX_BYTES") or 10 * 1024 * 1024),
         moderation_enabled=(os.getenv("MODERATION_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}),
         moderation_openai_enabled=(
             os.getenv("MODERATION_OPENAI_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}

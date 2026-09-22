@@ -1,29 +1,26 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.admin.auth import require_admin
 from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
-from app.chat.media import MediaExtractionError, MediaProcessingError, UnsupportedMediaTypeError
+from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
 from app.chat.service import ChatNotFoundError, ModerationBlockedError
+from app.core.auth import PrincipalDep
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
 from app.services.security.input_validator import validate_input
 
 
 router = APIRouter(tags=["chats"])
-
-
-class CreateChatIn(BaseModel):
-    owner_external_id: str = Field(min_length=1)
-    interface: str = Field(min_length=1)
-    system_prompt: str | None = None
 
 
 class CreateChatOut(BaseModel):
@@ -36,27 +33,27 @@ class SystemMessageIn(BaseModel):
 
 
 @router.post("/chats", response_model=CreateChatOut)
-async def create_chat(payload: CreateChatIn, chat_service: ChatServiceDep) -> CreateChatOut:
+async def create_chat(chat_service: ChatServiceDep, principal: PrincipalDep) -> CreateChatOut:
     chat = await chat_service.create_chat(
-        owner_external_id=payload.owner_external_id,
-        interface=payload.interface,
-        system_prompt=payload.system_prompt,
+        owner_external_id=principal.user_id,
+        interface=principal.interface,
     )
     return CreateChatOut(chat_id=chat.id)
 
 
 @router.get("/chats/{chat_id}", response_model=Chat)
-async def get_chat(chat_id: UUID, chat_service: ChatServiceDep) -> Chat:
-    chat = await chat_service.get_chat(chat_id)
-    if chat is None:
-        raise _chat_not_found(chat_id)
-    return chat
+async def get_chat(chat_id: UUID, chat_service: ChatServiceDep, principal: PrincipalDep) -> Chat:
+    return await _owned_chat(chat_id, chat_service, principal)
 
 
 @router.get("/chats/{chat_id}/messages", response_model=list[ChatMessage])
-async def list_messages(chat_id: UUID, chat_service: ChatServiceDep, limit: int = 50) -> list[ChatMessage]:
-    if await chat_service.get_chat(chat_id) is None:
-        raise _chat_not_found(chat_id)
+async def list_messages(
+    chat_id: UUID,
+    chat_service: ChatServiceDep,
+    principal: PrincipalDep,
+    limit: int = 50,
+) -> list[ChatMessage]:
+    await _owned_chat(chat_id, chat_service, principal)
     return await chat_service.list_messages(chat_id, limit)
 
 
@@ -65,12 +62,12 @@ async def send_message(
     chat_id: UUID,
     request: Request,
     chat_service: ChatServiceDep,
+    principal: PrincipalDep,
     content: str = Form(..., min_length=1),
     media: UploadFile | None = File(None),
 ) -> StreamingResponse:
     _validate_user_content(content)
-    if await chat_service.get_chat(chat_id) is None:
-        raise _chat_not_found(chat_id)
+    await _owned_chat(chat_id, chat_service, principal)
 
     media_refs = None
     if media is not None:
@@ -78,6 +75,8 @@ async def send_message(
             part = await chat_service.process_media(media)
         except UnsupportedMediaTypeError as exc:
             raise HTTPException(status_code=415, detail={"code": "unsupported_media_type", "message": str(exc)}) from exc
+        except MediaTooLargeError as exc:
+            raise HTTPException(status_code=413, detail={"code": "media_too_large", "message": str(exc)}) from exc
         except (MediaExtractionError, MediaProcessingError) as exc:
             raise HTTPException(status_code=422, detail={"code": "media_processing_failed", "message": str(exc)}) from exc
         if part.get("type") == "text":
@@ -131,8 +130,19 @@ async def send_message(
             sources = _last_response_sources(chat_service, chat_id)
             sources_payload = json.dumps({"sources": sources}, ensure_ascii=False)
             yield f"event: sources\ndata: {sources_payload}\n\n"
-        except ChatNotFoundError as exc:
-            raise _chat_not_found(chat_id) from exc
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - response headers have already been sent
+            payload = json.dumps(
+                {
+                    "type": "error",
+                    "code": "chat_stream_failed",
+                    "message": "Не удалось завершить ответ. Повторите запрос или передайте обращение специалисту.",
+                },
+                ensure_ascii=False,
+            )
+            yield f"event: error\ndata: {payload}\n\n"
+            return
 
     return StreamingResponse(events(), media_type="text/event-stream")
 
@@ -142,7 +152,9 @@ async def get_response_sources(
     chat_id: UUID,
     message_id: UUID,
     chat_service: ChatServiceDep,
+    principal: PrincipalDep,
 ) -> dict[str, list[dict]]:
+    await _owned_chat(chat_id, chat_service, principal)
     try:
         return {"sources": await chat_service.response_sources(chat_id, message_id)}
     except FeedbackTargetNotFoundError as exc:
@@ -161,7 +173,9 @@ async def save_feedback(
     message_id: UUID,
     payload: FeedbackIn,
     chat_service: ChatServiceDep,
+    principal: PrincipalDep,
 ) -> MessageFeedback:
+    await _owned_chat(chat_id, chat_service, principal)
     try:
         if payload.shown_sources:
             return await chat_service.submit_feedback(
@@ -178,12 +192,13 @@ async def save_feedback(
         ) from exc
 
 
-@router.post("/chats/{chat_id}/system-message")
+@router.post("/chats/admin/{chat_id}/notification")
 async def add_system_message(
     chat_id: UUID,
     payload: SystemMessageIn,
     chat_service: ChatServiceDep,
     settings: SettingsDep,
+    _admin: None = Depends(require_admin),
 ) -> dict[str, str]:
     try:
         chat = await chat_service.append_system_message(chat_id, payload.text)
@@ -203,9 +218,12 @@ async def add_system_message(
 
 
 @router.delete("/chats/{chat_id}/messages")
-async def clear_messages(chat_id: UUID, chat_service: ChatServiceDep) -> dict[str, str]:
-    if await chat_service.get_chat(chat_id) is None:
-        raise _chat_not_found(chat_id)
+async def clear_messages(
+    chat_id: UUID,
+    chat_service: ChatServiceDep,
+    principal: PrincipalDep,
+) -> dict[str, str]:
+    await _owned_chat(chat_id, chat_service, principal)
     await chat_service.clear_history(chat_id)
     return {"status": "ok"}
 
@@ -215,6 +233,17 @@ def _chat_not_found(chat_id: UUID) -> HTTPException:
         status_code=404,
         detail={"code": "chat_not_found", "message": f"Chat {chat_id} not found"},
     )
+
+
+async def _owned_chat(chat_id: UUID, chat_service: object, principal: object) -> Chat:
+    chat = await chat_service.get_chat(chat_id)  # type: ignore[attr-defined]
+    if (
+        chat is None
+        or chat.owner_external_id != principal.user_id  # type: ignore[attr-defined]
+        or chat.interface != principal.interface  # type: ignore[attr-defined]
+    ):
+        raise _chat_not_found(chat_id)
+    return chat
 
 
 def _validate_user_content(content: str) -> None:

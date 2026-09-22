@@ -12,16 +12,15 @@ from __future__ import annotations
 import argparse
 import json
 import multiprocessing
-import sys
 import time
-from multiprocessing.connection import Connection
 from threading import Event, Thread
 from typing import Any, Callable, TypeVar
 
 from openai import OpenAI
 
 from app.observability.logging import get_logger, setup_logging
-from app.services.agent_react_tools import DISPATCH, TOOLS
+from app.services.agent_react_worker import run_tool
+from app.services.agent_react_tools import TOOLS
 from support_copilot.config import load_settings
 
 
@@ -114,25 +113,6 @@ def _call_before_deadline(
     return box["value"]
 
 
-def _tool_process(
-    tool_name: str,
-    tool_args: dict[str, Any],
-    connection: Connection,
-) -> None:
-    """Run one known local tool in a process that the parent can terminate."""
-    try:
-        # Windows can start spawned workers with a legacy console encoding.
-        # Keep Unicode-only stub output from turning into a tool failure.
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        handler = DISPATCH[tool_name]
-        connection.send(("ok", str(handler(**tool_args))))
-    except BaseException as exc:
-        connection.send(("error", f"{type(exc).__name__}: {exc}"))
-    finally:
-        connection.close()
-
-
 def _execute_tool_before_deadline(
     tool_name: str,
     tool_args: dict[str, Any],
@@ -152,7 +132,7 @@ def _execute_tool_before_deadline(
 
     context = multiprocessing.get_context("spawn")
     receive, send = context.Pipe(duplex=False)
-    process = context.Process(target=_tool_process, args=(tool_name, tool_args, send), daemon=True)
+    process = context.Process(target=run_tool, args=(tool_name, tool_args, send), daemon=True)
     process.start()
     send.close()
     try:

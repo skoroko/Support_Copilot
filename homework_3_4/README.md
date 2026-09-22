@@ -10,7 +10,7 @@
 Установить зависимости:
 
 ```powershell
-pip install -r requirements.txt
+uv sync --locked
 ```
 
 Заполнить локальный `.env`:

@@ -12,7 +12,13 @@ class SupportCopilotAPITests(unittest.TestCase):
     def test_health_and_sse_stream_with_demo_client(self) -> None:
         app.state.async_llm_client = build_demo_async_client(concurrency=2, delay_sec=0.001)
 
-        with TestClient(app) as client:
+        with TestClient(
+            app,
+            headers={
+                "X-Internal-Token": "test-internal-token-0000000000000001",
+                "X-User-ID": "support-engineer-1",
+            },
+        ) as client:
             health = client.get("/health")
             self.assertEqual(health.status_code, 200)
             self.assertEqual(health.json(), {"status": "ok"})

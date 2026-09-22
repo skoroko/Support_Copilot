@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_RERANKER: ${RAG_RERANKER_ENABLED:-false}
-        INSTALL_TRACING: ${TRACING_ENABLED:-true}
+        INSTALL_TRACING: ${TRACING_ENABLED:-false}
     command:
       - sh
       - -c
@@ -28,7 +28,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
       PHOENIX_PROJECT_NAME: ${PHOENIX_PROJECT_NAME:-support-copilot-rag}
-      TRACING_ENABLED: ${TRACING_ENABLED:-true}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "false"
       QDRANT_URL: http://qdrant:6333
       QDRANT_API_KEY: ${QDRANT_API_KEY}
       QDRANT_COLLECTION: ${QDRANT_COLLECTION:-documents}
@@ -40,8 +41,6 @@ services:
       - ./data:/app/data
       - ./var:/app/var
     depends_on:
-      phoenix:
-        condition: service_started
       redis:
         condition: service_healthy
       postgres:
@@ -61,7 +60,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.4-alpine
+    image: redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always"]
     volumes:
       - redis_data:/data
@@ -73,7 +72,7 @@ services:
     restart: unless-stopped
 
   qdrant:
-    image: qdrant/qdrant:v1.19.0
+    image: qdrant/qdrant:v1.19.0@sha256:057ee3a8da769fe7310dd3537b4dc7583bf87a95ce8ac43c0af5a46bc580d1fc
     ports:
       - "127.0.0.1:${QDRANT_HTTP_PORT:-6333}:6333"
       - "127.0.0.1:${QDRANT_GRPC_PORT:-6334}:6334"
@@ -99,10 +98,10 @@ services:
         # app and bot intentionally use the same image tag, so their build args
         # must remain identical; otherwise the last build can replace the app
         # image with a variant that lacks tracing dependencies.
-        INSTALL_TRACING: ${TRACING_ENABLED:-true}
+        INSTALL_TRACING: ${TRACING_ENABLED:-false}
     command: ["python", "-m", "bot"]
     ports:
-      - "${BOT_HOST_PORT:-19000}:9000"
+      - "127.0.0.1:${BOT_HOST_PORT:-19000}:9000"
     env_file:
       - .env
     environment:
@@ -115,7 +114,7 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-support_copilot}
       POSTGRES_USER: ${POSTGRES_USER:-support}
@@ -130,10 +129,11 @@ services:
     restart: unless-stopped
 
   phoenix:
-    image: arizephoenix/phoenix:latest
+    image: arizephoenix/phoenix:latest@sha256:7c4c55c4b6feca40aa2aca334b1d107e1729a86bf99003f3609f0fbbe5ede225
+    profiles: ["observability"]
     ports:
-      - "6006:6006"
-      - "4317:4317"
+      - "127.0.0.1:${PHOENIX_HTTP_PORT:-6006}:6006"
+      - "127.0.0.1:${PHOENIX_GRPC_PORT:-4317}:4317"
     environment:
       PHOENIX_WORKING_DIR: /data
     volumes:
