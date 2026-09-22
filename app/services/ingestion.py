@@ -22,7 +22,7 @@ from llama_index.core.readers.base import BaseReader
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.schema import MetadataMode
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.readers.file import FlatReader, HTMLTagReader, MarkdownReader, PyMuPDFReader
+from llama_index.readers.file import FlatReader, HTMLTagReader, MarkdownReader, PDFReader
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
@@ -349,7 +349,7 @@ def _file_extractors() -> dict[str, Any]:
 
     html_reader = HTMLTagReader(tag="body", ignore_no_id=False)
     return {
-        ".pdf": PyMuPDFReader(),
+        ".pdf": PDFReader(),
         ".docx": PythonDocxReader(),
         ".html": html_reader,
         ".htm": html_reader,
@@ -360,7 +360,7 @@ def _file_extractors() -> dict[str, Any]:
 
 
 def _preserve_pdf_page_metadata(documents: Sequence[Document], path: Path) -> None:
-    """Attach 1-based pages when PyMuPDF returns one Document per PDF page."""
+    """Attach 1-based pages when the pypdf-backed reader returns one document per page."""
 
     if path.suffix.lower() != ".pdf":
         return

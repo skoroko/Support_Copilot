@@ -17,7 +17,9 @@ def _read_field(value: Any, name: str, default: Any = None) -> Any:
 
 
 class ChatMessage(BaseModel):
-    role: Literal["system", "user", "assistant", "tool"]
+    model_config = ConfigDict(extra="forbid")
+
+    role: Literal["user"] = "user"
     content: str = Field(min_length=1, max_length=MAX_CHAT_MESSAGE_LENGTH)
 
     @field_validator("content")
@@ -33,6 +35,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "examples": [
                 {
@@ -45,19 +48,15 @@ class ChatRequest(BaseModel):
                     "model": "gpt-5.4-mini",
                     "temperature": 0,
                     "max_tokens": 300,
-                    "user_id": "support-engineer-1",
-                    "session_id": "ticket-123",
                 },
             ]
         }
     )
 
-    messages: list[ChatMessage] = Field(min_length=1)
-    model: str | None = None
+    messages: list[ChatMessage] = Field(min_length=1, max_length=20)
+    model: str | None = Field(default=None, min_length=1, max_length=100)
     temperature: float = Field(default=0.2, ge=0, le=2)
-    max_tokens: int = Field(default=500, ge=1, le=16000)
-    user_id: str | None = None
-    session_id: str | None = None
+    max_tokens: int = Field(default=500, ge=1, le=4000)
     stream: bool = False
 
 

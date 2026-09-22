@@ -137,3 +137,20 @@ def test_llm_service_blocks_canary_leak_from_provider() -> None:
 
     with pytest.raises(LLMOutputBlockedError):
         asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("internal", "admin"),
+    [
+        ("secret", "test-admin-token-000000000000000002"),
+        ("test-internal-token-0000000000000001", "change-me"),
+        ("same-token-value-00000000000000000001", "same-token-value-00000000000000000001"),
+    ],
+)
+def test_settings_reject_weak_or_reused_privileged_tokens(internal: str, admin: str) -> None:
+    with pytest.raises(ValueError):
+        Settings(
+            openai_api_key=SecretStr("sk-test"),
+            internal_token=SecretStr(internal),
+            admin_token=SecretStr(admin),
+        )

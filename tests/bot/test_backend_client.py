@@ -9,6 +9,16 @@ import pytest
 from bot.services.backend_client import BackendClient
 
 
+INTERNAL_TOKEN = "test-internal-token-0000000000000001"
+
+
+def build_client(http_client: httpx.AsyncClient) -> BackendClient:
+    return BackendClient("http://backend", client=http_client, internal_token=INTERNAL_TOKEN)
+
+
+def bind_owner(client: BackendClient, chat_id: UUID, owner: str = "telegram-1") -> None:
+    client._chat_owners[str(chat_id)] = owner
+
 @pytest.mark.asyncio
 async def test_get_or_create_chat_returns_uuid_and_is_idempotent() -> None:
     chat_id = UUID("00000000-0000-0000-0000-000000000123")
@@ -22,7 +32,7 @@ async def test_get_or_create_chat_returns_uuid_and_is_idempotent() -> None:
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
-        client = BackendClient("http://backend", client=http_client)
+        client = build_client(http_client)
 
         first = await client.get_or_create_chat("telegram-1", "telegram")
         second = await client.get_or_create_chat("telegram-1", "telegram")
@@ -55,7 +65,8 @@ async def test_send_message_parses_sse_frames() -> None:
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
-        client = BackendClient("http://backend", client=http_client)
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
 
         chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
 
@@ -81,7 +92,8 @@ async def test_save_feedback_includes_sources_from_last_sse_response() -> None:
         return httpx.Response(200, json={"value": "up"})
 
     async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
-        client = BackendClient("http://backend", client=http_client)
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
         client._last_sources[str(chat_id)] = [{"id": "returns-1", "score": 0.91}]
         response = await client.save_feedback(chat_id, message_id, "up")
 
@@ -105,8 +117,13 @@ async def test_message_sources_are_loaded_from_backend_when_bot_cache_is_empty()
         return httpx.Response(200, json={"value": "down"})
 
     async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
-        client = BackendClient("http://backend", client=http_client)
-        response = await client.save_feedback(chat_id, message_id, "down")
+        client = build_client(http_client)
+        response = await client.save_feedback(
+            chat_id,
+            message_id,
+            "down",
+            owner_external_id="telegram-1",
+        )
 
     assert response == {"value": "down"}
     assert calls == [
@@ -130,7 +147,8 @@ async def test_send_message_uses_multipart_for_media() -> None:
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
-        client = BackendClient("http://backend", client=http_client)
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
         chunks = [
             chunk
             async for chunk in client.send_message(
@@ -152,7 +170,8 @@ async def test_clear_messages_sends_delete_to_chat_messages() -> None:
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
-        client = BackendClient("http://backend", client=http_client)
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
 
         await client.clear_messages(chat_id)
 

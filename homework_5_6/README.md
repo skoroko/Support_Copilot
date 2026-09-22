@@ -7,15 +7,15 @@ LlamaIndex/OpenAI в локальный Phoenix.
 ## Установка eval-окружения
 
 ```powershell
-python -m venv .venv-eval
-.venv-eval\Scripts\python.exe -m pip install -r requirements.txt -r requirements-eval.txt -r requirements-tracing.txt
+$env:UV_PROJECT_ENVIRONMENT=".venv-eval"
+uv sync --locked --extra eval --extra tracing
 $env:PHOENIX_WORKING_DIR="$PWD\var\phoenix-eval"
 .venv-eval\Scripts\python.exe scripts\verify_eval_setup.py
 ```
 
-`arize-phoenix==11.38.0` и `arize-phoenix-evals>=2,<3` закреплены
-вместе: Phoenix 20.x конфликтует с требуемой заданием веткой
-`langchain-community<0.4`, а Phoenix Evals 3.x несовместим с API Phoenix 11.x.
+Сам Phoenix запускается отдельным контейнером и не входит в Python runtime graph.
+Оценка использует RAGAS и локальные метрики; точный граф версий зафиксирован
+в `uv.lock` вместе с hash-дайджестами.
 Для `llama-index==0.14.24` используется
 `openinference-instrumentation-llama-index>=4.4,<5`: ветка 3.x обращается к
 удалённому модулю `llama_index.core.base.agent` и не может включить трейсинг.
@@ -99,7 +99,7 @@ checkpoint после каждой строки. Поэтому сетевой �
 ## Phoenix
 
 ```powershell
-docker compose up -d --build --wait app bot phoenix
+docker compose --profile observability up -d --build --wait app bot phoenix
 ```
 
 Phoenix доступен на <http://localhost:6006>. Проект трасс задаётся

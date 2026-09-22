@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import secrets
 import time
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from support_copilot.infrastructure.async_llm import AsyncLLMClient
+from app.core.auth import InMemoryRequestBudget
 
 try:
     from sse_starlette.sse import EventSourceResponse
@@ -36,13 +39,39 @@ def get_async_client() -> AsyncLLMClient:
     return client
 
 
+async def require_standalone_principal(
+    request: Request,
+    x_internal_token: Annotated[str | None, Header(alias="X-Internal-Token")] = None,
+    x_user_id: Annotated[str | None, Header(alias="X-User-ID")] = None,
+) -> AsyncIterator[str]:
+    expected = os.environ.get("INTERNAL_TOKEN", "").strip()
+    if len(expected) < 32 or not x_internal_token or not secrets.compare_digest(x_internal_token, expected):
+        raise HTTPException(status_code=401, detail="Valid service authentication is required")
+    principal = (x_user_id or "").strip()
+    if not principal or len(principal) > 200:
+        raise HTTPException(status_code=401, detail="Authenticated principal is required")
+    budget = getattr(app.state, "request_budget", None)
+    if budget is None:
+        budget = InMemoryRequestBudget(requests_per_minute=60, max_concurrency=4)
+        app.state.request_budget = budget
+    await budget.acquire(principal)
+    try:
+        yield principal
+    finally:
+        await budget.release(principal)
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @app.post("/chat/stream")
-async def chat_stream(payload: ChatStreamRequest, request: Request) -> Any:
+async def chat_stream(
+    payload: ChatStreamRequest,
+    request: Request,
+    _principal: Annotated[str, Depends(require_standalone_principal)],
+) -> Any:
     client = get_async_client()
 
     async def events() -> AsyncIterator[dict[str, str]]:
@@ -70,10 +99,17 @@ async def chat_stream(payload: ChatStreamRequest, request: Request) -> Any:
             total_ms = (time.perf_counter() - start) * 1000
             yield {"event": "done", "data": json.dumps({"total_ms": round(total_ms, 2)})}
         except Exception as exc:  # noqa: BLE001 - SSE boundary returns structured error
-            logger.exception("sse.stream_failed")
+            logger.warning("sse.stream_failed", extra={"error_type": type(exc).__name__})
             yield {
                 "event": "error",
-                "data": json.dumps({"type": type(exc).__name__, "message": str(exc)}, ensure_ascii=False),
+                "data": json.dumps(
+                    {
+                        "type": "error",
+                        "code": "chat_stream_failed",
+                        "message": "Не удалось завершить ответ. Повторите запрос позже.",
+                    },
+                    ensure_ascii=False,
+                ),
             }
 
     if EventSourceResponse is not None:

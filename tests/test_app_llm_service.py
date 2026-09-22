@@ -6,6 +6,7 @@ from typing import Any
 from pydantic import SecretStr
 
 from app.core.config import Settings
+from app.core.exceptions import LLMOutputBlockedError
 from app.schemas.chat import ChatRequest
 from app.services.llm import LLMService
 
@@ -38,16 +39,17 @@ class FakeStream:
 
 
 class FakeCompletions:
-    def __init__(self) -> None:
+    def __init__(self, stream_chunks: list[dict[str, Any]] | None = None) -> None:
         self.calls = 0
         self.last_kwargs: dict[str, Any] | None = None
+        self.stream_chunks = stream_chunks
 
     async def create(self, **kwargs: Any) -> Any:
         self.calls += 1
         self.last_kwargs = kwargs
         if kwargs.get("stream"):
             return FakeStream(
-                [
+                list(self.stream_chunks) if self.stream_chunks is not None else [
                     {"choices": [{"delta": {"content": "Первый "}}]},
                     {"choices": [{"delta": {"content": "чанк"}}]},
                     {"usage": {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10}},
@@ -62,8 +64,8 @@ class FakeCompletions:
 
 
 class FakeOpenAI:
-    def __init__(self) -> None:
-        completions = FakeCompletions()
+    def __init__(self, stream_chunks: list[dict[str, Any]] | None = None) -> None:
+        completions = FakeCompletions(stream_chunks)
         self.chat = type("Chat", (), {"completions": completions})()
         self.completions = completions
 
@@ -80,24 +82,22 @@ def build_settings() -> Settings:
 
 
 class LLMServiceTests(unittest.IsolatedAsyncioTestCase):
-    async def test_complete_caches_response_and_ignores_user_fields_in_key(self) -> None:
+    async def test_complete_cache_key_includes_trusted_system_prompt(self) -> None:
         openai = FakeOpenAI()
         cache = FakeCache()
         service = LLMService(openai=openai, cache=cache, settings=build_settings())
-        req = ChatRequest(
-            messages=[{"role": "user", "content": "Как проверить лицензию?"}],
-            user_id="engineer-1",
-            session_id="ticket-1",
-        )
+        req = ChatRequest(messages=[{"role": "user", "content": "Как проверить лицензию?"}])
 
-        first = await service.complete(req)
-        second = await service.complete(req.model_copy(update={"user_id": "engineer-2", "session_id": "ticket-2"}))
+        first = await service.complete(req, system_prompt="trusted-a")
+        second = await service.complete(req, system_prompt="trusted-a")
+        third = await service.complete(req, system_prompt="trusted-b")
 
         self.assertFalse(first.cached)
         self.assertTrue(second.cached)
         self.assertEqual(first.content, "Ответ из fake OpenAI")
         self.assertEqual(second.content, first.content)
-        self.assertEqual(openai.completions.calls, 1)
+        self.assertFalse(third.cached)
+        self.assertEqual(openai.completions.calls, 2)
         self.assertEqual(cache.last_ttl, 123)
         self.assertEqual(openai.completions.last_kwargs["max_completion_tokens"], 500)
         self.assertNotIn("max_tokens", openai.completions.last_kwargs)
@@ -109,11 +109,38 @@ class LLMServiceTests(unittest.IsolatedAsyncioTestCase):
 
         chunks = [delta async for delta in service.stream(req)]
 
-        self.assertEqual([chunk.content for chunk in chunks[:2]], ["Первый ", "чанк"])
+        self.assertEqual([chunk.content for chunk in chunks if chunk.content is not None], ["Первый чанк"])
         self.assertEqual(chunks[-1].usage.total_tokens, 10)
         self.assertTrue(openai.completions.last_kwargs["stream"])
         self.assertEqual(openai.completions.last_kwargs["stream_options"], {"include_usage": True})
         self.assertEqual(openai.completions.last_kwargs["max_completion_tokens"], 500)
+
+    async def test_stream_blocks_canary_split_across_provider_chunks_before_emitting(self) -> None:
+        openai = FakeOpenAI(
+            [
+                {"choices": [{"delta": {"content": "CANARY_"}}]},
+                {"choices": [{"delta": {"content": "deadbeef"}}]},
+            ]
+        )
+        service = LLMService(openai=openai, cache=FakeCache(), settings=build_settings())
+        req = ChatRequest(messages=[{"role": "user", "content": "Проверка"}])
+
+        with self.assertRaises(LLMOutputBlockedError):
+            _ = [delta async for delta in service.stream(req, canary="CANARY_deadbeef")]
+
+    async def test_stream_redacts_email_split_across_provider_chunks(self) -> None:
+        openai = FakeOpenAI(
+            [
+                {"choices": [{"delta": {"content": "Пишите alice@"}}]},
+                {"choices": [{"delta": {"content": "example.com"}}]},
+            ]
+        )
+        service = LLMService(openai=openai, cache=FakeCache(), settings=build_settings())
+        req = ChatRequest(messages=[{"role": "user", "content": "Проверка"}])
+
+        chunks = [delta async for delta in service.stream(req)]
+
+        self.assertEqual([chunk.content for chunk in chunks], ["Пишите [EMAIL]"])
 
 
 if __name__ == "__main__":

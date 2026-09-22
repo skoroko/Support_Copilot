@@ -41,7 +41,7 @@ class LLMService:
         canary: str = "",
         security_enabled: bool = True,
     ) -> ChatResponse:
-        cache_key = self._cache_key(req)
+        cache_key = self._cache_key(req, system_prompt=system_prompt)
         raw_prompt = self._prompt_text(req)
         cached = await self._cache_get(cache_key)
         if cached is not None:
@@ -62,7 +62,7 @@ class LLMService:
         try:
             raw_response = await self.openai.chat.completions.create(
                 model=model,
-                messages=[message.model_dump() for message in req.messages],
+                messages=self._provider_messages(req, system_prompt=system_prompt),
                 temperature=req.temperature,
                 **self._token_limit_kwargs(model, req.max_tokens),
             )
@@ -95,18 +95,20 @@ class LLMService:
         try:
             stream = await self.openai.chat.completions.create(
                 model=model,
-                messages=[message.model_dump() for message in req.messages],
+                messages=self._provider_messages(req, system_prompt=system_prompt),
                 temperature=req.temperature,
                 **self._token_limit_kwargs(model, req.max_tokens),
                 stream=True,
                 stream_options={"include_usage": True},
             )
 
+            content_parts: list[str] = []
+            final_usage: Usage | None = None
             async for chunk in stream:
                 raw_usage = chunk.get("usage") if isinstance(chunk, dict) else getattr(chunk, "usage", None)
                 usage = Usage.from_openai(raw_usage)
                 if usage.total_tokens:
-                    yield ChatDelta(usage=usage)
+                    final_usage = usage
                     continue
 
                 choices = chunk.get("choices", []) if isinstance(chunk, dict) else getattr(chunk, "choices", [])
@@ -117,10 +119,15 @@ class LLMService:
                 delta = first_choice.get("delta") if isinstance(first_choice, dict) else getattr(first_choice, "delta", None)
                 content = delta.get("content", "") if isinstance(delta, dict) else getattr(delta, "content", "")
                 if content:
-                    text = str(content)
-                    if security_enabled:
-                        text = self._filter_text(text, system_prompt="", canary=canary)
-                    yield ChatDelta(content=text)
+                    content_parts.append(str(content))
+
+            text = "".join(content_parts)
+            if security_enabled:
+                text = self._filter_text(text, system_prompt=system_prompt, canary=canary)
+            for offset in range(0, len(text), 256):
+                yield ChatDelta(content=text[offset : offset + 256])
+            if final_usage is not None:
+                yield ChatDelta(usage=final_usage)
 
         except RateLimitError as exc:
             raise LLMRateLimitError("LLM provider rate limit exceeded") from exc
@@ -131,14 +138,23 @@ class LLMService:
         except OpenAIError as exc:
             raise LLMError("LLM provider request failed") from exc
 
-    def _cache_key(self, req: ChatRequest) -> str:
+    def _cache_key(self, req: ChatRequest, *, system_prompt: str = "") -> str:
         payload = req.model_dump(
             mode="json",
-            exclude={"user_id", "session_id", "stream"},
+            exclude={"stream"},
             exclude_none=True,
         )
+        payload["trusted_system_prompt_sha256"] = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()
         raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         return "chat:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _provider_messages(req: ChatRequest, *, system_prompt: str) -> list[dict[str, str]]:
+        messages: list[dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.extend(message.model_dump() for message in req.messages)
+        return messages
 
     def _prompt_text(self, req: ChatRequest) -> str:
         return "\n".join(message.content for message in req.messages if message.role in {"system", "user"})

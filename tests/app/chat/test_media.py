@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -8,8 +7,9 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import UploadFile
 from starlette.datastructures import Headers
+from PIL import Image
 
-from app.chat.media import media_to_part
+from app.chat.media import MediaExtractionError, MediaTooLargeError, media_to_part
 
 
 def upload(filename: str, content: bytes, mime: str) -> UploadFile:
@@ -18,22 +18,32 @@ def upload(filename: str, content: bytes, mime: str) -> UploadFile:
 
 @pytest.mark.asyncio
 async def test_image_becomes_data_uri_content_part() -> None:
-    part = await media_to_part(upload("screen.png", b"png", "image/png"))
-    assert part == {"type": "image_url", "image_url": {"url": "data:image/png;base64,cG5n"}}
+    data = BytesIO()
+    Image.new("RGB", (2, 2), color="white").save(data, format="PNG")
+    part = await media_to_part(upload("screen.png", data.getvalue(), "image/png"))
+    assert part["type"] == "image_url"
+    assert part["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+@pytest.mark.asyncio
+async def test_media_rejects_body_larger_than_configured_limit() -> None:
+    with pytest.raises(MediaTooLargeError):
+        await media_to_part(upload("screen.png", b"x" * 9, "image/png"), max_bytes=8)
+
+
+@pytest.mark.asyncio
+async def test_image_rejects_spoofed_mime_type() -> None:
+    with pytest.raises(MediaExtractionError):
+        await media_to_part(upload("screen.png", b"not-a-png", "image/png"))
 
 
 @pytest.mark.asyncio
 async def test_pdf_becomes_text_content_part(monkeypatch) -> None:
-    class Page:
-        def extract_text(self) -> str:
-            return "Инструкция по установке"
+    async def extract(_kind: str, _data: bytes) -> str:
+        return "Инструкция по установке"
 
-    class Reader:
-        def __init__(self, _stream) -> None:
-            self.pages = [Page()]
-
-    monkeypatch.setitem(sys.modules, "pypdf", SimpleNamespace(PdfReader=Reader))
-    part = await media_to_part(upload("guide.pdf", b"pdf", "application/pdf"))
+    monkeypatch.setattr("app.chat.media._extract_in_process", extract)
+    part = await media_to_part(upload("guide.pdf", b"%PDF-1.7\n", "application/pdf"))
     assert part == {"type": "text", "text": "[документ PDF]:\nИнструкция по установке"}
 
 
@@ -42,7 +52,7 @@ async def test_audio_uses_configured_transcription_model() -> None:
     create = AsyncMock(return_value=SimpleNamespace(text="Не работает лицензия"))
     client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
     part = await media_to_part(
-        upload("voice.ogg", b"ogg", "audio/ogg"),
+        upload("voice.ogg", b"OggS-test", "audio/ogg"),
         client=client,
         transcription_model="whisper-1",
     )

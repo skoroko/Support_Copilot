@@ -63,5 +63,10 @@ async def test_admin_client_sends_admin_header() -> None:
         return httpx.Response(200, json={"total_messages": 0})
 
     async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http:
-        client = BackendClient("http://backend", client=http, admin_token="secret")
+        client = BackendClient(
+            "http://backend",
+            client=http,
+            internal_token="test-internal-token-0000000000000001",
+            admin_token="secret",
+        )
         assert await client.get_admin_stats() == {"total_messages": 0}

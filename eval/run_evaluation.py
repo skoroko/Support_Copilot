@@ -62,7 +62,7 @@ def load_golden(path: Path) -> dict[str, Any]:
 
 async def run_real_evaluation(args: argparse.Namespace, golden: dict[str, Any]) -> dict[str, Any]:
     if AsyncOpenAI is None:
-        raise RuntimeError("OpenAI SDK is not installed. Install requirements.txt first.")
+        raise RuntimeError("OpenAI SDK is not installed. Run `uv sync --locked --extra eval` first.")
 
     judge_client = AsyncOpenAI()
     async with httpx.AsyncClient(base_url=args.app_url, timeout=args.timeout) as app_client:

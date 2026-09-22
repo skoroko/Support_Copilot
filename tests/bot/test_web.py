@@ -8,14 +8,16 @@ from fastapi.testclient import TestClient
 from bot.web import build_api
 
 
+INTERNAL_TOKEN = "test-internal-token-0000000000000001"
+
 def test_notify_requires_internal_token_and_sends_message() -> None:
     bot = SimpleNamespace(send_message=AsyncMock())
-    client = TestClient(build_api(bot, "secret"))
+    client = TestClient(build_api(bot, INTERNAL_TOKEN))
     unauthorized = client.post(
         "/notify", headers={"X-Internal-Token": "wrong"}, json={"chat_id": 42, "text": "Готово"}
     )
     accepted = client.post(
-        "/notify", headers={"X-Internal-Token": "secret"}, json={"chat_id": 42, "text": "Готово"}
+        "/notify", headers={"X-Internal-Token": INTERNAL_TOKEN}, json={"chat_id": 42, "text": "Готово"}
     )
     assert unauthorized.status_code == 401
     assert accepted.status_code == 200
@@ -29,11 +31,11 @@ def test_notify_deduplicates_claimed_delivery_key() -> None:
         set=AsyncMock(side_effect=[True, True, False]),
         get=AsyncMock(return_value="sent"),
     )
-    client = TestClient(build_api(bot, "secret", idempotency_store=store))
+    client = TestClient(build_api(bot, INTERNAL_TOKEN, idempotency_store=store))
     payload = {"chat_id": 42, "text": "Готово", "idempotency_key": "stable-key-12345"}
 
-    first = client.post("/notify", headers={"X-Internal-Token": "secret"}, json=payload)
-    duplicate = client.post("/notify", headers={"X-Internal-Token": "secret"}, json=payload)
+    first = client.post("/notify", headers={"X-Internal-Token": INTERNAL_TOKEN}, json=payload)
+    duplicate = client.post("/notify", headers={"X-Internal-Token": INTERNAL_TOKEN}, json=payload)
 
     assert first.json() == {"ok": True, "deduplicated": False, "delivery_unknown": False}
     assert duplicate.json() == {"ok": True, "deduplicated": True, "delivery_unknown": False}
@@ -47,16 +49,16 @@ def test_notify_marks_ambiguous_failure_unknown_and_blocks_retry() -> None:
         set=AsyncMock(side_effect=[True, True, False]),
         get=AsyncMock(return_value="unknown"),
     )
-    client = TestClient(build_api(bot, "secret", idempotency_store=store), raise_server_exceptions=False)
+    client = TestClient(build_api(bot, INTERNAL_TOKEN, idempotency_store=store), raise_server_exceptions=False)
 
     first = client.post(
         "/notify",
-        headers={"X-Internal-Token": "secret"},
+        headers={"X-Internal-Token": INTERNAL_TOKEN},
         json={"chat_id": 42, "text": "Готово", "idempotency_key": "stable-key-12345"},
     )
     retry = client.post(
         "/notify",
-        headers={"X-Internal-Token": "secret"},
+        headers={"X-Internal-Token": INTERNAL_TOKEN},
         json={"chat_id": 42, "text": "Готово", "idempotency_key": "stable-key-12345"},
     )
 

@@ -234,8 +234,15 @@ def test_fastapi_chat_uses_dependency_override_without_real_llm() -> None:
     app.dependency_overrides[get_llm_service] = lambda: StubLLMService()
 
     try:
-        with TestClient(app) as client:
-            response = client.post("/chat", json={"messages": [{"role": "user", "content": "ping"}]})
+            with TestClient(
+                app,
+                headers={
+                    "X-Internal-Token": "test-internal-token-0000000000000001",
+                    "X-User-ID": "support-engineer-1",
+                    "X-User-Interface": "web",
+                },
+            ) as client:
+                response = client.post("/chat", json={"messages": [{"role": "user", "content": "ping"}]})
     finally:
         app.dependency_overrides.clear()
         get_settings.cache_clear()

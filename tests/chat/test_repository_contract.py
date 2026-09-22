@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
@@ -68,6 +69,27 @@ async def test_append_message_and_list_messages_are_chronological(repository: Ch
     messages = await repository.list_messages(chat.id)
 
     assert [message.content for message in messages] == ["first", "second"]
+
+
+@pytest.mark.asyncio
+async def test_independent_json_repositories_serialize_concurrent_appends(tmp_path) -> None:
+    first = JsonChatRepository(tmp_path)
+    second = JsonChatRepository(tmp_path)
+    chat = await first.create_chat("owner", "cli")
+
+    await asyncio.gather(
+        *(
+            (first if index % 2 == 0 else second).append_message(
+                chat.id,
+                ChatMessage(chat_id=chat.id, role="user", content=f"message-{index}"),
+            )
+            for index in range(40)
+        )
+    )
+
+    messages = await first.list_messages(chat.id, limit=100)
+    assert len(messages) == 40
+    assert {message.content for message in messages} == {f"message-{index}" for index in range(40)}
 
 
 @pytest.mark.asyncio

@@ -58,6 +58,7 @@ async def main() -> None:
     backend = BackendClient(
         settings.backend_url,
         client=http,
+        internal_token=settings.internal_token.get_secret_value(),
         admin_token=settings.admin_token.get_secret_value(),
     )
     dp = Dispatcher(storage=MemoryStorage())

@@ -1,6 +1,6 @@
 # Проверка домашнего задания 6.4
 
-1. Проверить `requirements.txt`: пакеты `langgraph-checkpoint-sqlite` и
+1. Проверить `pyproject.toml` и `uv.lock`: пакеты `langgraph-checkpoint-sqlite` и
    `langgraph-checkpoint-postgres` закреплены в диапазоне 3.x, есть
    `aiosqlite` и `psycopg[binary,pool]` v3.
 2. В `app/services/agent_persistent.py` проверить `build_agent(checkpointer)`,

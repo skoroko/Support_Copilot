@@ -6,14 +6,25 @@ from typing import Any, Iterator
 from urllib.parse import urlparse
 
 from app.observability.logging import get_logger
+from app.observability.pii import prompt_hash
 
 
 logger = get_logger("llm-service")
 _tracing_configured = False
 
 
+def _load_tracing_dependencies() -> tuple[Any, Any, Any]:
+    """Import optional tracing packages inside the fail-open boundary."""
+
+    from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+    from openinference.instrumentation.openai import OpenAIInstrumentor
+    from phoenix.otel import register
+
+    return LlamaIndexInstrumentor, OpenAIInstrumentor, register
+
+
 def _tracing_enabled() -> bool:
-    return os.environ.get("TRACING_ENABLED", "true").strip().casefold() in {
+    return os.environ.get("TRACING_ENABLED", "false").strip().casefold() in {
         "1",
         "true",
         "yes",
@@ -39,27 +50,14 @@ def setup_tracing(project_name: str | None = None) -> bool:
     endpoint = _normalize_phoenix_endpoint(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"))
     project_name = project_name or os.environ.get("PHOENIX_PROJECT_NAME", "support-copilot-rag")
     try:
-        from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-        from openinference.instrumentation.openai import OpenAIInstrumentor
-        from phoenix.otel import register
-    except ImportError as exc:  # pragma: no cover - optional local dependency
-        logger.warning(
-            "tracing_setup_skipped",
-            reason="missing_dependency",
-            dependency_error=type(exc).__name__,
-        )
-        return False
-
-    try:
+        LlamaIndexInstrumentor, OpenAIInstrumentor, register = _load_tracing_dependencies()
         tracer_provider: Any = register(project_name=project_name, endpoint=endpoint)
         OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
         LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
     except Exception as exc:  # noqa: BLE001 - tracing must not break app startup
         logger.warning(
             "tracing_setup_failed",
-            endpoint=endpoint,
             error_type=type(exc).__name__,
-            error_message=str(exc),
         )
         return False
 
@@ -85,6 +83,6 @@ def trace_rag_query(question: str) -> Iterator[None]:
     tracer = trace.get_tracer("support-copilot.rag")
     with tracer.start_as_current_span("RAGService.answer") as span:
         span.set_attribute("openinference.span.kind", "CHAIN")
-        span.set_attribute("input.mime_type", "text/plain")
-        span.set_attribute("input.value", question)
+        span.set_attribute("support.question_hash", prompt_hash(question))
+        span.set_attribute("support.question_chars", len(question))
         yield

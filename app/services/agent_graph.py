@@ -178,7 +178,8 @@ async def execute_tool(state: AgentState) -> dict[str, Any]:
 async def force_finish(state: AgentState) -> dict[str, Any]:
     """End explicitly at the iteration ceiling or preserve the final AI answer."""
 
-    if state.get("iteration_count", 0) >= MAX_ITERATIONS:
+    last_message = state["messages"][-1] if state.get("messages") else None
+    if state.get("iteration_count", 0) >= MAX_ITERATIONS and getattr(last_message, "tool_calls", None):
         return {"messages": [AIMessage(content=MAX_ITERATIONS_MESSAGE)]}
 
     # The final model message has already been appended by ``call_model``.  An
@@ -190,9 +191,11 @@ async def force_finish(state: AgentState) -> dict[str, Any]:
 def route_after_model(state: AgentState) -> Literal["execute_tool", "force_finish"]:
     """Pure, deterministic router for the custom graph's only branch."""
 
+    last_message = state["messages"][-1] if state.get("messages") else None
+    if not getattr(last_message, "tool_calls", None):
+        return "force_finish"
     if state.get("iteration_count", 0) >= MAX_ITERATIONS:
         return "force_finish"
-    last_message = state["messages"][-1] if state.get("messages") else None
     if getattr(last_message, "tool_calls", None):
         return "execute_tool"
     return "force_finish"

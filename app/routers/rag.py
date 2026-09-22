@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 
+from app.core.auth import PrincipalDep
 from app.schemas.rag import RAGQuery, RAGResponse
 from app.services.security.input_validator import validate_input
 
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 
 
 @router.post("/query", response_model=RAGResponse, summary="Answer from the GTS NX knowledge base")
-async def query_rag(payload: RAGQuery, request: Request) -> RAGResponse:
+async def query_rag(payload: RAGQuery, request: Request, _principal: PrincipalDep) -> RAGResponse:
     for text in [
         payload.question,
         payload.standalone_question,

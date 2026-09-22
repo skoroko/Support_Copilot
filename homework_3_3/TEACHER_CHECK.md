@@ -66,7 +66,7 @@ async batch_chat concurrency=10: 0.222s, speedup 9.86x
 - `scripts/benchmark_results.md` - лог последнего demo benchmark.
 - `support_copilot/config.py` - async-настройки через `.env`.
 - `.env.example` - шаблон async-переменных без секретов.
-- `requirements.txt` - зависимости для FastAPI/SSE/async stack.
+- `pyproject.toml` и `uv.lock` - декларация и воспроизводимый граф FastAPI/SSE/async stack.
 - `tests/test_async_llm.py` - тесты async-клиента.
 - `tests/test_api.py` - тест FastAPI/SSE без внешней сети.
 
