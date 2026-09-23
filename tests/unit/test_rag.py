@@ -649,7 +649,10 @@ def test_llamaindex_reranks_after_top_k_and_guards_before_llm(tmp_path: Path) ->
 
     assert reranker.calls == [("Каков срок возврата?", 3, 3)]
     assert [source["file_name"] for source in result["sources"]] == ["manual-3.pdf", "manual-2.pdf"]
-    assert result["top_score"] == 0.82
+    # Confidence is measured on the ranked pool before the context limit
+    # drops the reranked tail: the 0.91 candidate still proves retrieval
+    # found a strong match even though it did not reach the prompt.
+    assert result["top_score"] == 0.91
     assert len(llm.prompts) == 1
 
 
@@ -1477,6 +1480,49 @@ def test_history_follow_up_deduplicates_candidates_from_both_queries(tmp_path: P
     assert len(result["sources"]) == 2
     assert sorted(source["score"] for source in result["sources"]) == [0.8, 0.9]
     assert len({source["id"] for source in result["sources"]}) == 2
+
+
+def test_top_score_uses_candidate_pool_before_deduplication(tmp_path: Path) -> None:
+    """A top-scoring candidate dropped as a near-duplicate must not abstain.
+
+    The kept twin carries the same passage, so the retriever genuinely found
+    confident evidence.  Scoring only the post-dedup selection used to fall
+    below ``min_score`` and return ``NO_ANSWER`` even though the candidate
+    pool contained a strong match.
+    """
+
+    shared_passage = (
+        "Раздел пособия описывает материалы грунтов и их параметры. "
+        "Значения cohesion, friction angle и dilatancy задаются в диалоге "
+        "свойств материала и применяются в нелинейных расчётах основания."
+    )
+    low_twin = NodeWithScore(
+        node=TextNode(
+            id_="low-score-twin",
+            text=f"{shared_passage} Модель Мора-Кулона описывает поведение грунта.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf", "page": 39},
+        ),
+        score=0.34,
+    )
+    high_twin = NodeWithScore(
+        node=TextNode(
+            id_="high-score-twin",
+            text=f"{shared_passage} Модель Мор-Кулоновой описывает поведение грунта.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf", "page": 40},
+        ),
+        score=0.9,
+    )
+    service = RAGService(
+        rag_config(tmp_path, min_score=0.35, allow_external_data_transfer=True),
+        llm=FakeLLM("Модель описывает поведение грунта [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _query: [high_twin, low_twin])
+
+    result = service.answer("модель мора кулона")
+
+    assert result["answer"] != NO_ANSWER
+    assert result["top_score"] == 0.9
+    assert [source["id"] for source in result["sources"]] == ["low-score-twin"]
 
 
 def test_follow_up_keeps_single_variant_exact_evidence_until_lexical_ranking(tmp_path: Path) -> None:
