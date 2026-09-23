@@ -191,7 +191,33 @@ Telegram message
 - **Вариант исправления:** добавлять текст цитаты в content; использовать
   `html_text`/`md_text` для ссылок; обработчик edited_message; debounce-склейка
   burst-сообщений (300–800 мс); media_group handler.
-- **Статус:** [ ]
+- **Статус:** [x] — единый burst-буфер `bot/handlers/_burst.py` собирает
+  подряд идущие сообщения чата (текст и медиа) в один backend-запрос:
+  debounce 0.7 с для текста, 1.5 с если в пачке есть `media_group_id`,
+  принудительный flush через 4 с и по `/clear` (`flush_pending`), лимит
+  10 файлов. Альбомы скачиваются параллельно и уходят одним multipart
+  запросом — `POST /chats/{id}/messages` принимает `media: list[UploadFile]`,
+  `media_refs` несёт `parts` (и legacy `part` = первый), `ChatService`
+  склеивает все text-части для модерации и RAG-вопроса, все image_url части
+  доходят до multimodal-контекста, а в персисте сохраняются только
+  text-части без base64. `reply_to_message` добавляется в content блоком
+  `[сообщение, на которое отвечает пользователь]:` (≤1500 символов, для
+  медиа-цитат — placeholder-описание). `text_link`-ссылки разворачиваются
+  в `[label](url)` с UTF-16-корректными offset'ами (полный `md_text`
+  отвергнут — он экранирует всю пунктуацию и мусорил бы в истории).
+  `edited_message`: правка ещё не отправленного сообщения заменяет его в
+  буфере; правка уже ушедшего уходит отдельным запросом; собственные правки
+  бота (стриминг-редактирование ответов) отфильтрованы, правки в FSM-сценарии
+  `/ask` игнорируются. Частичные ошибки вложений собираются и показываются
+  одним сообщением. Тесты: `tests/bot/test_burst.py` (16 кейсов),
+  `test_send_message_sends_every_media_file_under_one_field`,
+  `test_chat_message_route_accepts_multiple_media_files`,
+  `test_chat_message_route_rejects_second_failing_media_file`,
+  `test_multi_part_media_all_parts_reach_provider_content`,
+  `test_multi_part_persisted_refs_keep_text_but_drop_image_payloads`,
+  `test_rag_question_merges_all_extracted_text_parts`,
+  `test_rag_album_of_images_without_caption_still_refuses`,
+  `test_moderation_content_covers_all_text_parts`.
 
 ### F7. Хрупкий контракт цитат: нет `[N]` → полный отказ
 

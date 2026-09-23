@@ -25,6 +25,7 @@ class FakeChatService:
         self.chats: dict[UUID, Chat] = {}
         self.messages: dict[UUID, list[ChatMessage]] = {}
         self.media_part: dict = {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
+        self.processed_filenames: list[str | None] = []
 
     async def create_chat(
         self,
@@ -48,6 +49,7 @@ class FakeChatService:
         return list(message.rag_sources) if message is not None else []
 
     async def process_media(self, media) -> dict:
+        self.processed_filenames.append(media.filename)
         return self.media_part
 
     async def send_message(
@@ -249,6 +251,58 @@ def test_chat_message_route_accepts_optional_media(fake_chat_service: FakeChatSe
     assert stored.media_refs is not None
     assert stored.media_refs["mime"] == "image/png"
     assert stored.media_refs["part"]["type"] == "image_url"
+
+
+def test_chat_message_route_accepts_multiple_media_files(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(app, headers=auth_headers(interface="telegram")) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "два скриншота ошибки"},
+            files=[
+                ("media", ("one.png", b"image-one", "image/png")),
+                ("media", ("two.png", b"image-two", "image/png")),
+            ],
+        )
+
+    assert response.status_code == 200
+    assert fake_chat_service.processed_filenames == ["one.png", "two.png"]
+    stored = fake_chat_service.messages[chat.id][0]
+    assert stored.media_refs["part"] == fake_chat_service.media_part
+    assert stored.media_refs["parts"] == [fake_chat_service.media_part, fake_chat_service.media_part]
+    assert [meta["filename"] for meta in stored.media_refs["files"]] == ["one.png", "two.png"]
+
+
+def test_chat_message_route_rejects_second_failing_media_file(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    async def fail_second(media):
+        if media.filename == "bad.png":
+            from app.chat.media import UnsupportedMediaTypeError
+
+            raise UnsupportedMediaTypeError("Поддерживаются только JPEG, PNG и WebP.")
+        return {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
+
+    fake_chat_service.process_media = fail_second  # type: ignore[method-assign]
+
+    with TestClient(app, headers=auth_headers(interface="telegram")) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "альбом"},
+            files=[
+                ("media", ("ok.png", b"image-one", "image/png")),
+                ("media", ("bad.png", b"image-two", "image/png")),
+            ],
+        )
+
+    assert response.status_code == 415
+    assert response.json()["error"]["code"] == "unsupported_media_type"
+    assert fake_chat_service.messages[chat.id] == []
 
 
 def test_system_message_is_saved_without_notification(fake_chat_service: FakeChatService) -> None:

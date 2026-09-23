@@ -152,7 +152,34 @@ async def test_send_message_uses_multipart_for_media() -> None:
         chunks = [
             chunk
             async for chunk in client.send_message(
-                chat_id, "question", media=b"image-bytes", mime="image/png"
+                chat_id, "question", media=[(b"image-bytes", "image/png")]
+            )
+        ]
+
+    assert chunks == []
+
+
+@pytest.mark.asyncio
+async def test_send_message_sends_every_media_file_under_one_field() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000458")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = request.read()
+        assert body.count(b'name="media"; filename="image.jpg"') == 2
+        assert b"photo-one" in body
+        assert b"photo-two" in body
+        return httpx.Response(200, content=b'data: {"type":"done"}\n\n')
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        chunks = [
+            chunk
+            async for chunk in client.send_message(
+                chat_id,
+                "два скриншота",
+                media=[(b"photo-one", "image/jpeg"), (b"photo-two", "image/jpeg")],
             )
         ]
 

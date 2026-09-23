@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from bot.handlers._burst import flush_pending
 from bot.handlers._common import BACKEND_EXCEPTIONS, backend_error_message, get_telegram_chat_id
 from bot.services.backend_client import BackendClient
 
@@ -47,6 +48,8 @@ async def help_command(message: Message) -> None:
 
 @router.message(Command("clear"))
 async def clear(message: Message, backend: BackendClient) -> None:
+    # A debounced question must reach the backend before its history is wiped.
+    await flush_pending(message.chat.id, backend)
     try:
         chat_id = await get_telegram_chat_id(message, backend)
         await backend.clear_messages(chat_id)

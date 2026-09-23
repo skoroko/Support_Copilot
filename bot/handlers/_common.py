@@ -12,6 +12,7 @@ import httpx
 from aiogram.enums import ChatAction, ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.types import InlineKeyboardMarkup, Message
+from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
 from bot.keyboards.inline import answer_kb
 from bot.services.backend_client import BackendClient
@@ -19,6 +20,7 @@ from bot.services.backend_client import BackendClient
 
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
 EDIT_DEBOUNCE_SECONDS = 0.8
+QUOTE_MAX_CHARS = 1500
 RESPONSE_PLACEHOLDER = "Готовлю ответ…"
 _INLINE_CODE_RE = re.compile(r"(`[^`\n]+`)")
 _BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
@@ -35,6 +37,96 @@ _MEDIA_ERROR_MESSAGES = {
 
 async def get_telegram_chat_id(message: Message, backend: BackendClient) -> UUID:
     return await backend.get_or_create_chat(str(message.chat.id), "telegram")
+
+
+def message_text(message: Message) -> str:
+    """Return message text/caption with hidden ``text_link`` URLs inlined.
+
+    ``message.md_text`` would also resolve links, but it escapes everyday
+    punctuation (``.``, ``!``, ``()``) which would pollute the content stored
+    in chat history.  Only ``text_link`` entities carry data that is not
+    already visible, so they are rewritten as ``[label](url)`` while the rest
+    of the text stays untouched.  Telegram entity offsets are UTF-16 code
+    units, so slicing happens on the surrogate-expanded representation.
+    """
+
+    text = getattr(message, "text", None) or getattr(message, "caption", None) or ""
+    entities = getattr(message, "entities", None) or getattr(message, "caption_entities", None) or []
+    links = sorted(
+        (entity for entity in entities if entity.type == "text_link" and entity.url),
+        key=lambda entity: entity.offset,
+    )
+    if not links:
+        return text.strip()
+    raw = add_surrogates(text)
+    pieces: list[bytes] = []
+    cursor = 0
+    for entity in links:
+        start, end = entity.offset * 2, (entity.offset + entity.length) * 2
+        if start < cursor or end > len(raw):
+            continue
+        pieces.append(raw[cursor:start])
+        label = remove_surrogates(raw[start:end])
+        pieces.append(add_surrogates(f"[{label}]({entity.url})"))
+        cursor = end
+    pieces.append(raw[cursor:])
+    return remove_surrogates(b"".join(pieces)).strip()
+
+
+def attachment_placeholder(message: Message) -> str | None:
+    """Describe a non-text attachment the way the backend expects to see it."""
+
+    if getattr(message, "photo", None):
+        return "[фото]"
+    if getattr(message, "voice", None):
+        return "[голосовое сообщение]"
+    if getattr(message, "audio", None):
+        return "[аудиофайл]"
+    if getattr(message, "video", None) or getattr(message, "video_note", None):
+        return "[видео]"
+    document = getattr(message, "document", None)
+    if document is not None:
+        return f"[документ {getattr(document, 'file_name', None) or ''}]".rstrip()
+    if getattr(message, "sticker", None):
+        return "[стикер]"
+    if getattr(message, "location", None) or getattr(message, "venue", None):
+        return "[геолокация]"
+    if getattr(message, "contact", None):
+        return "[контакт]"
+    if getattr(message, "poll", None):
+        return "[опрос]"
+    return None
+
+
+def quote_block(message: Message) -> str:
+    """Render the message the user replied to as a context block for the LLM.
+
+    Support engineers routinely answer by replying to the original client
+    message; without this block the quoted text never reaches the backend.
+    """
+
+    reply = getattr(message, "reply_to_message", None)
+    if reply is None:
+        return ""
+    quoted = message_text(reply) or attachment_placeholder(reply) or ""
+    quoted = quoted.strip()
+    if not quoted:
+        return ""
+    return f"[сообщение, на которое отвечает пользователь]:\n{quoted[:QUOTE_MAX_CHARS]}"
+
+
+def compose_message_text(message: Message, *, placeholder: str = "") -> str:
+    """Build the backend ``content`` for one incoming message."""
+
+    parts = [quote_block(message), message_text(message) or placeholder]
+    return "\n\n".join(part for part in parts if part).strip()
+
+
+def is_bot_or_channel_edit(message: Message) -> bool:
+    """Edits of our own streamed answers must not trigger a new request."""
+
+    sender = getattr(message, "from_user", None)
+    return sender is None or bool(getattr(sender, "is_bot", False))
 
 
 def backend_error_message(exc: httpx.HTTPError) -> str:

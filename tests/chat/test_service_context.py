@@ -357,3 +357,117 @@ async def test_rag_image_with_caption_searches_caption_text(tmp_path: Path) -> N
     ]
 
     assert rag.question == "Что означает эта ошибка?"
+
+
+@pytest.mark.asyncio
+async def test_multi_part_media_all_parts_reach_provider_content(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    image = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,aW1n"}}
+    image_two = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,bWlq"}}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "скриншоты ошибки",
+            media_refs={
+                "mime": "image/jpeg",
+                "size": 3,
+                "filename": "a.jpg",
+                "part": image,
+                "parts": [image, image_two],
+            },
+        )
+    ]
+
+    user_message = next(message for message in llm.completions.last_kwargs["messages"] if message["role"] == "user")
+    assert user_message["content"] == [
+        {"type": "text", "text": "скриншоты ошибки"},
+        image,
+        image_two,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_multi_part_persisted_refs_keep_text_but_drop_image_payloads(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    image = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,aW1n"}}
+    doc_text = {"type": "text", "text": "[документ PDF]:\nсодержимое"}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "материалы",
+            media_refs={"mime": "image/jpeg", "part": image, "parts": [image, doc_text]},
+        )
+    ]
+
+    stored = await repo.list_messages(chat.id)
+    user_message = next(message for message in stored if message.role == "user")
+    assert "image_url" not in str(user_message.media_refs)
+    assert user_message.media_refs["parts"] == [doc_text]
+    assert user_message.media_refs["part"] == doc_text
+
+
+@pytest.mark.asyncio
+async def test_rag_question_merges_all_extracted_text_parts(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    rag = FakeRAG()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    doc_one = {"type": "text", "text": "[документ PDF]:\nпервая часть"}
+    doc_two = {"type": "text", "text": "[документ DOCX]:\nвторая часть"}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "сравни документы",
+            media_refs={"mime": "application/pdf", "part": doc_one, "parts": [doc_one, doc_two]},
+            rag_service=rag,
+        )
+    ]
+
+    assert rag.question == "сравни документы\n[документ PDF]:\nпервая часть\n[документ DOCX]:\nвторая часть"
+
+
+@pytest.mark.asyncio
+async def test_rag_album_of_images_without_caption_still_refuses(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    rag = FakeRAG()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    image = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,aW1n"}}
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "[фото]\n[фото]",
+            media_refs={"mime": "image/jpeg", "part": image, "parts": [image, image]},
+            rag_service=rag,
+        )
+    ]
+
+    assert chunks == [MEDIA_IMAGE_NO_TEXT_REPLY]
+    assert rag.question is None
+
+
+@pytest.mark.asyncio
+async def test_moderation_content_covers_all_text_parts(tmp_path: Path) -> None:
+    doc_one = {"type": "text", "text": "текст первого документа"}
+    doc_two = {"type": "text", "text": "текст второго документа"}
+
+    merged = ChatService._moderation_content(
+        "проверь",
+        {"mime": "application/pdf", "part": doc_one, "parts": [doc_one, doc_two]},
+    )
+
+    assert merged == "проверь\nтекст первого документа\nтекст второго документа"

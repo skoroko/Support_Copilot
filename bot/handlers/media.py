@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from io import BytesIO
-
 from aiogram import F, Router
 from aiogram.types import Message
 
-from bot.handlers._common import (
-    BACKEND_EXCEPTIONS,
-    backend_error_message,
-    get_telegram_chat_id,
-    response_feedback_markup,
-    stream_to_chat,
-)
+from bot.handlers import _burst
+from bot.handlers._common import compose_message_text, is_bot_or_channel_edit
 from bot.services.backend_client import BackendClient
-
 
 router = Router()
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
@@ -21,89 +13,68 @@ MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
-async def _download(message: Message, file_id: str) -> bytes:
-    telegram_file = await message.bot.get_file(file_id)
-    if not telegram_file.file_path:
-        raise ValueError("Telegram не вернул путь к файлу.")
-    destination = BytesIO()
-    await message.bot.download_file(telegram_file.file_path, destination=destination)
-    return destination.getvalue()
+def _media_descriptor(message: Message) -> tuple[str, str, str, str | None] | None:
+    """Return (file_id, mime, placeholder, validation_error) for the attachment."""
 
-
-async def _send_media(
-    message: Message,
-    backend: BackendClient,
-    *,
-    file_id: str,
-    content: str,
-    mime: str,
-) -> None:
-    try:
-        media = await _download(message, file_id)
-        chat_id = await get_telegram_chat_id(message, backend)
-        await stream_to_chat(
-            message,
-            backend.send_message(chat_id, content, media=media, mime=mime),
-            reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
-            sources_factory=lambda: backend.last_response_sources(chat_id),
+    if message.photo:
+        candidates = [photo for photo in message.photo if (photo.file_size or 0) <= MAX_PHOTO_BYTES]
+        if not candidates:
+            return "", "", "[фото]", "фото слишком большое — максимальный размер 2 МБ"
+        photo = max(candidates, key=lambda item: item.file_size or 0)
+        return photo.file_id, "image/jpeg", "[фото]", None
+    if message.voice:
+        return message.voice.file_id, "audio/ogg", "[голосовое сообщение]", None
+    if message.audio:
+        return (
+            message.audio.file_id,
+            message.audio.mime_type or "audio/mpeg",
+            "[аудиофайл]",
+            None,
         )
-    except BACKEND_EXCEPTIONS as exc:
-        await message.answer(backend_error_message(exc))
+    if message.document:
+        document = message.document
+        filename = document.file_name or ""
+        if not filename.lower().endswith((".pdf", ".docx")):
+            return "", "", f"[документ {filename}]".rstrip(), (
+                f"документ {filename or ''} не поддерживается — только PDF и DOCX".rstrip()
+            )
+        if (document.file_size or 0) > MAX_DOCUMENT_BYTES:
+            return "", "", f"[документ {filename}]".rstrip(), (
+                f"документ {filename or ''} слишком большой — максимальный размер 10 МБ".rstrip()
+            )
+        mime = document.mime_type or ("application/pdf" if filename.lower().endswith(".pdf") else DOCX_MIME)
+        return document.file_id, mime, f"[документ {filename}]".rstrip(), None
+    return None
 
 
-@router.message(F.photo)
-async def handle_photo(message: Message, backend: BackendClient) -> None:
-    candidates = [photo for photo in message.photo if (photo.file_size or 0) <= MAX_PHOTO_BYTES]
-    if not candidates:
-        await message.answer("Фото слишком большое. Максимальный размер — 2 МБ.")
+def _build_item(message: Message) -> _burst.BurstItem | None:
+    descriptor = _media_descriptor(message)
+    if descriptor is None:
+        return None
+    file_id, mime, placeholder, error = descriptor
+    return _burst.BurstItem(
+        message=message,
+        media=(file_id, mime),
+        placeholder=placeholder,
+        error=error,
+        text=compose_message_text(message),
+    )
+
+
+@router.message(F.photo | F.voice | F.audio | F.document)
+async def handle_media(message: Message, backend: BackendClient) -> None:
+    item = _build_item(message)
+    if item is not None:
+        _burst.enqueue_item(item, backend)
+
+
+@router.edited_message(F.photo | F.voice | F.audio | F.document)
+async def handle_edited_media(message: Message, backend: BackendClient) -> None:
+    if is_bot_or_channel_edit(message):
         return
-    photo = max(candidates, key=lambda item: item.file_size or 0)
-    await _send_media(
-        message,
-        backend,
-        file_id=photo.file_id,
-        content=message.caption or "[фото]",
-        mime="image/jpeg",
-    )
-
-
-@router.message(F.voice)
-async def handle_voice(message: Message, backend: BackendClient) -> None:
-    await _send_media(
-        message,
-        backend,
-        file_id=message.voice.file_id,
-        content=message.caption or "[голосовое сообщение]",
-        mime="audio/ogg",
-    )
-
-
-@router.message(F.audio)
-async def handle_audio(message: Message, backend: BackendClient) -> None:
-    await _send_media(
-        message,
-        backend,
-        file_id=message.audio.file_id,
-        content=message.caption or "[аудиофайл]",
-        mime=message.audio.mime_type or "audio/mpeg",
-    )
-
-
-@router.message(F.document)
-async def handle_document(message: Message, backend: BackendClient) -> None:
-    document = message.document
-    filename = (document.file_name or "").lower()
-    if not filename.endswith((".pdf", ".docx")):
-        await message.answer("Поддерживаются только документы PDF и DOCX.")
+    item = _build_item(message)
+    if item is None:
         return
-    if (document.file_size or 0) > MAX_DOCUMENT_BYTES:
-        await message.answer("Документ слишком большой. Максимальный размер — 10 МБ.")
+    if _burst.absorb_edit(message, backend, item):
         return
-    mime = document.mime_type or ("application/pdf" if filename.endswith(".pdf") else DOCX_MIME)
-    await _send_media(
-        message,
-        backend,
-        file_id=document.file_id,
-        content=message.caption or f"[документ {document.file_name or ''}]",
-        mime=mime,
-    )
+    await _burst.deliver_now(item, backend)
