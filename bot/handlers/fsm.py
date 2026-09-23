@@ -58,6 +58,7 @@ async def ask_question(message: Message, state: FSMContext, backend: BackendClie
             backend.send_message(chat_id, prompt),
             reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
             sources_factory=lambda: backend.last_response_sources(chat_id),
+            notice_factory=lambda: backend.last_response_notice(chat_id),
         )
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))

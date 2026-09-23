@@ -195,6 +195,7 @@ async def stream_to_chat(
     *,
     reply_markup_factory: Callable[[], InlineKeyboardMarkup | None] | None = None,
     sources_factory: Callable[[], list[dict]] | None = None,
+    notice_factory: Callable[[], str] | None = None,
 ) -> str:
     draft_id = uuid.uuid4().int & 0xFFFFFFFF
     buffer = ""
@@ -233,6 +234,10 @@ async def stream_to_chat(
         await typing_task
 
     final_text = buffer or "Backend вернул пустой ответ."
+    if notice_factory is not None:
+        notice = (notice_factory() or "").strip()
+        if notice:
+            final_text += f"\n\n{notice}"
     if sources_factory is not None:
         final_text += _format_cited_sources(final_text, sources_factory())
     final_html = _render_telegram_html(final_text)

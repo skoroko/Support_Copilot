@@ -205,6 +205,7 @@ async def _deliver(batch: _Batch, backend: BackendClient) -> None:
             backend.send_message(chat_id, content or "[вложения]", media=files or None),
             reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
             sources_factory=lambda: backend.last_response_sources(chat_id),
+            notice_factory=lambda: backend.last_response_notice(chat_id),
         )
     except BACKEND_EXCEPTIONS as exc:
         await anchor.answer(backend_error_message(exc))

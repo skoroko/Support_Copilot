@@ -75,6 +75,40 @@ async def test_send_message_parses_sse_frames() -> None:
     assert client.last_response_sources(chat_id) == [
         {"id": "returns-1", "snippet": "14 days", "score": 0.91}
     ]
+    assert client.last_response_notice(chat_id) == ""
+
+
+@pytest.mark.asyncio
+async def test_send_message_captures_notice_and_resets_between_responses() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000460")
+    responses = [
+        (
+            'data: {"type":"notice","code":"rag_unavailable","message":"База знаний недоступна"}\n\n'
+            'data: {"type":"token","delta":"Hi"}\n\n'
+            'data: {"type":"done"}\n\n'
+        ).encode(),
+        b'data: {"type":"token","delta":"Ok"}\n\ndata: {"type":"done"}\n\n',
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=responses.pop(0),
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+
+        chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
+        assert chunks == ["Hi"]
+        assert client.last_response_notice(chat_id) == "База знаний недоступна"
+
+        chunks = [chunk async for chunk in client.send_message(chat_id, "again")]
+        assert chunks == ["Ok"]
+        assert client.last_response_notice(chat_id) == ""
 
 
 @pytest.mark.asyncio

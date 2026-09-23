@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 import unittest
 from collections.abc import AsyncIterator
+from types import SimpleNamespace
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
+from app import main
 from app.core.config import get_settings
 from app.core.exceptions import LLMAuthError, LLMOutputBlockedError
 from app.deps.providers import get_cache, get_llm_service
@@ -99,11 +102,14 @@ class FakeDownCache:
 class FastAPIAppTests(unittest.TestCase):
     def setUp(self) -> None:
         os.environ["OPENAI_API_KEY"] = "sk-test"
+        # Pin RAG off so readiness assertions stay independent of a local .env.
+        os.environ["RAG_ENABLED"] = "false"
         get_settings.cache_clear()
         self.fake_service = FakeLLMService()
         app.dependency_overrides[get_llm_service] = lambda: self.fake_service
 
     def tearDown(self) -> None:
+        os.environ.pop("RAG_ENABLED", None)
         app.dependency_overrides.clear()
         get_settings.cache_clear()
 
@@ -125,7 +131,7 @@ class FastAPIAppTests(unittest.TestCase):
             response = client.get("/ready")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok", "redis": "up"})
+        self.assertEqual(response.json(), {"status": "ok", "redis": "up", "rag": "disabled"})
 
     def test_ready_returns_503_when_redis_ping_fails_but_health_stays_200(self) -> None:
         app.dependency_overrides[get_cache] = lambda: FakeDownCache()
@@ -135,9 +141,56 @@ class FastAPIAppTests(unittest.TestCase):
             health = client.get("/health")
 
         self.assertEqual(ready.status_code, 503)
-        self.assertEqual(ready.json(), {"status": "degraded", "redis": "down"})
+        self.assertEqual(ready.json(), {"status": "degraded", "redis": "down", "rag": "disabled"})
         self.assertEqual(health.status_code, 200)
         self.assertEqual(health.json(), {"status": "ok"})
+
+    def test_ready_surfaces_rag_startup_failure_as_degraded(self) -> None:
+        app.dependency_overrides[get_cache] = lambda: FakeReadyCache()
+        os.environ["RAG_ENABLED"] = "true"
+        get_settings.cache_clear()
+
+        try:
+            with (
+                mock.patch.object(
+                    main, "_initialize_rag", return_value=(None, "QdrantConnectionError")
+                ),
+                TestClient(app, headers=AUTH_HEADERS) as client,
+            ):
+                response = client.get("/ready")
+        finally:
+            os.environ["RAG_ENABLED"] = "false"
+            get_settings.cache_clear()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "status": "degraded",
+                "redis": "up",
+                "rag": "down",
+                "rag_error": "QdrantConnectionError",
+            },
+        )
+
+    def test_ready_reports_rag_up_when_service_built(self) -> None:
+        app.dependency_overrides[get_cache] = lambda: FakeReadyCache()
+        os.environ["RAG_ENABLED"] = "true"
+        get_settings.cache_clear()
+        rag_service = SimpleNamespace(ingestion_service=None, close=lambda: None)
+
+        try:
+            with (
+                mock.patch.object(main, "_initialize_rag", return_value=(rag_service, None)),
+                TestClient(app, headers=AUTH_HEADERS) as client,
+            ):
+                response = client.get("/ready")
+        finally:
+            os.environ["RAG_ENABLED"] = "false"
+            get_settings.cache_clear()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "redis": "up", "rag": "up"})
 
     def test_chat_returns_json_response(self) -> None:
         with TestClient(app, headers=AUTH_HEADERS) as client:

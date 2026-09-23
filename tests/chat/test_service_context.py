@@ -10,6 +10,7 @@ from pydantic import SecretStr
 from app.chat.domain import Chat, ChatMessage
 from app.chat.repository import ChatRepository
 from app.chat.service import (
+    FALLBACK_SYSTEM_PROMPT,
     ChatNotFoundError,
     ChatService,
     MEDIA_IMAGE_NO_TEXT_REPLY,
@@ -183,6 +184,36 @@ async def test_send_message_builds_context_streams_and_persists_assistant(tmp_pa
     stored = await repo.list_messages(chat.id)
     assert [message.role for message in stored] == ["user", "user", "assistant"]
     assert stored[-1].content == "Аня"
+
+
+@pytest.mark.asyncio
+async def test_non_rag_fallback_injects_default_system_prompt_when_chat_has_none(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    chunks = [chunk async for chunk in service.send_message(chat.id, "Привет")]
+
+    assert chunks == ["Аня"]
+    assert llm.completions.last_kwargs["messages"][0] == {
+        "role": "system",
+        "content": FALLBACK_SYSTEM_PROMPT,
+    }
+
+
+@pytest.mark.asyncio
+async def test_non_rag_fallback_keeps_custom_system_prompt(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram", "custom support rules")
+
+    _ = [chunk async for chunk in service.send_message(chat.id, "Привет")]
+
+    messages = llm.completions.last_kwargs["messages"]
+    assert messages[0] == {"role": "system", "content": "custom support rules"}
+    assert all(message["content"] != FALLBACK_SYSTEM_PROMPT for message in messages)
 
 
 @pytest.mark.asyncio

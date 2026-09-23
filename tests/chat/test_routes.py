@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
@@ -26,6 +27,7 @@ class FakeChatService:
         self.messages: dict[UUID, list[ChatMessage]] = {}
         self.media_part: dict = {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
         self.processed_filenames: list[str | None] = []
+        self.last_rag_service: object | None = None
 
     async def create_chat(
         self,
@@ -60,6 +62,7 @@ class FakeChatService:
         media_refs: dict | None = None,
         rag_service=None,
     ) -> AsyncIterator[str]:
+        self.last_rag_service = rag_service
         self.messages[chat_id].append(
             ChatMessage(chat_id=chat_id, role="user", content=user_content, media_refs=media_refs)
         )
@@ -339,6 +342,80 @@ def test_stream_emits_json_safe_sources_as_final_event(fake_chat_service: FakeCh
     assert '"snippet": "Первая строка\\nВторая строка"' in body
     assert body.index('data: {"type":"done"}') < body.index("event: sources")
     assert body.rstrip().endswith('data: {"sources": [{"id": "doc-1", "snippet": "Первая строка\\nВторая строка", "score": 0.91}]}')
+
+
+def test_chat_message_stream_notices_when_rag_enabled_but_unavailable(
+    fake_chat_service: FakeChatService,
+) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(app, headers=auth_headers()) as client:
+        original_settings = app.state.settings
+        original_rag_service = app.state.rag_service
+        app.state.settings = SimpleNamespace(rag_enabled=True)
+        app.state.rag_service = None
+        app.state.rag_startup_error = "QdrantConnectionError"
+        try:
+            response = client.post(f"/chats/{chat.id}/messages", data={"content": "Вопрос"})
+        finally:
+            app.state.settings = original_settings
+            app.state.rag_service = original_rag_service
+            app.state.rag_startup_error = None
+
+    assert response.status_code == 200
+    body = response.text
+    assert '"type": "notice"' in body
+    assert '"code": "rag_unavailable"' in body
+    assert '"type":"done"' in body
+    assert fake_chat_service.last_rag_service is None
+
+
+def test_chat_message_stream_passes_rag_service_without_notice(
+    fake_chat_service: FakeChatService,
+) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    rag_service = SimpleNamespace()
+
+    with TestClient(app, headers=auth_headers()) as client:
+        original_settings = app.state.settings
+        original_rag_service = app.state.rag_service
+        app.state.settings = SimpleNamespace(rag_enabled=True)
+        app.state.rag_service = rag_service
+        try:
+            response = client.post(f"/chats/{chat.id}/messages", data={"content": "Вопрос"})
+        finally:
+            app.state.settings = original_settings
+            app.state.rag_service = original_rag_service
+
+    assert response.status_code == 200
+    assert '"type": "notice"' not in response.text
+    assert fake_chat_service.last_rag_service is rag_service
+
+
+def test_chat_message_stream_without_rag_has_no_notice_when_disabled(
+    fake_chat_service: FakeChatService,
+) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(app, headers=auth_headers()) as client:
+        original_settings = app.state.settings
+        original_rag_service = app.state.rag_service
+        app.state.settings = SimpleNamespace(rag_enabled=False)
+        app.state.rag_service = None
+        try:
+            response = client.post(f"/chats/{chat.id}/messages", data={"content": "Вопрос"})
+        finally:
+            app.state.settings = original_settings
+            app.state.rag_service = original_rag_service
+
+    assert response.status_code == 200
+    assert '"type": "notice"' not in response.text
 
 
 def test_response_sources_route_returns_persisted_assistant_sources(fake_chat_service: FakeChatService) -> None:

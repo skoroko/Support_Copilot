@@ -35,6 +35,7 @@ class BackendClient:
         self._chat_cache: dict[tuple[str, str], UUID] = {}
         self._last_message_ids: dict[str, UUID] = {}
         self._last_sources: dict[str, list[dict]] = {}
+        self._last_notices: dict[str, str] = {}
         self._chat_owners: dict[str, str] = {}
         self._internal_token = internal_token
         self._admin_headers = {"X-Admin-Token": admin_token} if admin_token else {}
@@ -70,6 +71,7 @@ class BackendClient:
         yielded_data = False
         chat_key = str(chat_id)
         self._last_sources[chat_key] = []
+        self._last_notices[chat_key] = ""
         for attempt in range(1, self._max_connect_attempts + 1):
             try:
                 async with self._client.stream(
@@ -111,6 +113,10 @@ class BackendClient:
                             message_id = payload.get("message_id")
                             if message_id:
                                 self._last_message_ids[str(chat_id)] = UUID(str(message_id))
+                        elif event_type == "notice":
+                            notice = str(payload.get("message") or "").strip()
+                            if notice:
+                                self._last_notices[chat_key] = notice
                         elif event_type == "done":
                             message_id = payload.get("message_id")
                             if message_id:
@@ -137,6 +143,9 @@ class BackendClient:
 
     def last_response_sources(self, chat_id: UUID | str) -> list[dict]:
         return [dict(source) for source in self._last_sources.get(str(chat_id), [])]
+
+    def last_response_notice(self, chat_id: UUID | str) -> str:
+        return self._last_notices.get(str(chat_id), "")
 
     async def get_message_sources(
         self,
