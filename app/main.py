@@ -63,7 +63,14 @@ def _build_cache(settings: Settings) -> Any:
 def _initialize_rag(settings: Settings) -> tuple[RAGService | None, str | None]:
     """Build RAG without making an optional provider outage fatal to the API."""
 
-    service = RAGService(RAGConfig.from_settings(settings))
+    config = RAGConfig.from_settings(settings)
+    if not getattr(config, "allow_external_data_transfer", True):
+        # Without the opt-in the built-in embedding adapter raises RuntimeError
+        # on every question; surface the misconfiguration once here instead.
+        error_type = "ExternalDataTransferNotAllowed"
+        logger.warning("rag_startup_failed", error_type=error_type)
+        return None, error_type
+    service = RAGService(config)
     try:
         service.build()
     except Exception as exc:

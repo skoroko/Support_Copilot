@@ -30,6 +30,15 @@ MEDIA_IMAGE_NO_TEXT_REPLY = (
     "Я пока не умею искать по базе знаний по изображению без описания. "
     "Добавьте подпись к фото или опишите проблему текстом."
 )
+# Used only when the chat has no custom system prompt and RAG cannot ground
+# the answer; without it the fallback path streamed a bare LLM with no role.
+FALLBACK_SYSTEM_PROMPT = (
+    "Ты — Support Copilot, ассистент инженера технической поддержки MIDAS. "
+    "Отвечай на русском языке. База знаний сейчас не подключена к ответу: "
+    "полагайся только на проверенные общеизвестные сведения, прямо говори о "
+    "нехватке данных и не выдумывай функции, цены, SLA, ссылки и регламенты "
+    "MIDAS. Если уверенности нет, предложи передать обращение инженеру поддержки."
+)
 
 logger = get_logger("chat-service")
 
@@ -243,6 +252,8 @@ class ChatService:
         retrieval_history = history
         provider_user_message = user_message.model_copy(update={"media_refs": media_refs})
         messages = self.context_strategy.build(chat, [*history, provider_user_message])
+        if rag_service is None and not chat.system_prompt:
+            messages.insert(0, {"role": "system", "content": FALLBACK_SYSTEM_PROMPT})
         budget = (
             self.settings.chat_model_context_tokens
             - self.settings.chat_response_tokens

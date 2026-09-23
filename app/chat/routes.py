@@ -22,6 +22,11 @@ from app.services.security.input_validator import MAX_MESSAGE_CHARS, validate_in
 
 router = APIRouter(tags=["chats"])
 
+RAG_UNAVAILABLE_NOTICE = (
+    "База знаний временно недоступна — ответ дан без опоры на документацию. "
+    "Проверьте критичные детали или передайте обращение специалисту."
+)
+
 
 class CreateChatOut(BaseModel):
     chat_id: UUID
@@ -126,6 +131,16 @@ async def send_message(
             rag_service = getattr(request.app.state, "rag_service", None)
             if rag_service is not None:
                 message_kwargs["rag_service"] = rag_service
+            elif _rag_enabled(request):
+                notice = json.dumps(
+                    {
+                        "type": "notice",
+                        "code": "rag_unavailable",
+                        "message": RAG_UNAVAILABLE_NOTICE,
+                    },
+                    ensure_ascii=False,
+                )
+                yield f"data: {notice}\n\n"
             stream = chat_service.send_message(chat_id, content, **message_kwargs)
             async for chunk in stream:
                 payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
@@ -235,6 +250,17 @@ async def clear_messages(
     await _owned_chat(chat_id, chat_service, principal)
     await chat_service.clear_history(chat_id)
     return {"status": "ok"}
+
+
+def _rag_enabled(request: Request) -> bool:
+    """Whether the deployment expects a working RAG service.
+
+    ``rag_enabled=False`` is a deliberate deployment choice, not an outage, so
+    only the enabled-but-missing state earns the user-facing notice.
+    """
+
+    settings = getattr(request.app.state, "settings", None)
+    return bool(getattr(settings, "rag_enabled", False))
 
 
 def _chat_not_found(chat_id: UUID) -> HTTPException:

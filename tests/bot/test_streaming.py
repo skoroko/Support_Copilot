@@ -148,6 +148,42 @@ async def test_stream_to_chat_edits_one_response_message_when_available() -> Non
     bot.send_message.assert_not_awaited()
 
 
+@pytest.mark.asyncio
+async def test_stream_to_chat_appends_notice_to_final_message() -> None:
+    editable = SimpleNamespace(edit_text=AsyncMock())
+    bot = SimpleNamespace(send_chat_action=AsyncMock(), send_message_draft=AsyncMock())
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=bot,
+        answer=AsyncMock(return_value=editable),
+    )
+
+    result = await stream_to_chat(
+        message,
+        token_stream(),
+        notice_factory=lambda: "База знаний временно недоступна",
+    )
+
+    assert result == "Привет"
+    final_text = editable.edit_text.await_args_list[-1].args[0]
+    assert final_text.endswith("\n\nБаза знаний временно недоступна")
+
+
+@pytest.mark.asyncio
+async def test_stream_to_chat_skips_empty_notice() -> None:
+    editable = SimpleNamespace(edit_text=AsyncMock())
+    bot = SimpleNamespace(send_chat_action=AsyncMock(), send_message_draft=AsyncMock())
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=bot,
+        answer=AsyncMock(return_value=editable),
+    )
+
+    await stream_to_chat(message, token_stream(), notice_factory=lambda: "")
+
+    assert editable.edit_text.await_args_list[-1].args[0] == "Привет"
+
+
 def test_render_telegram_html_supports_bold_inline_code_and_escapes_content() -> None:
     assert _render_telegram_html("**GTS & NX**: `x < 1` <script>") == (
         "<b>GTS &amp; NX</b>: <code>x &lt; 1</code> &lt;script&gt;"

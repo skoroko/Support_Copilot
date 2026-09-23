@@ -241,16 +241,23 @@ python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline
 
 Для OpenAI ingestion нужно осознанно установить
 `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=true`; без этого документы не отправляются
-внешнему провайдеру. Если embedding-провайдер недоступен, API продолжает
-работать, а `/rag/query` отвечает `503 rag_unavailable`: внешний сбой не
-запускает бесконечный restart loop всего приложения.
+внешнему провайдеру. Если embedding-провайдер недоступен или transfer opt-in
+не выдан, API продолжает работать, а `/rag/query` отвечает
+`503 rag_unavailable`: внешний сбой не запускает бесконечный restart loop
+всего приложения. Такой запуск фиксируется как `rag_startup_failed` и виден в
+`/ready` как `"status": "degraded", "rag": "down", "rag_error": "<type>"`
+(endpoint остаётся 200, пока жив Redis: деградация RAG не должна перезапускать
+контейнер). В чате при включённом, но неподнявшемся RAG ответ идёт через
+fallback-LLM с дефолтным system prompt, а SSE-поток открывает событие
+`{"type": "notice", "code": "rag_unavailable"}` — бот показывает его как
+предупреждение под ответом.
 
 ## HTTP и Telegram
 
 | Endpoint | Назначение |
 |---|---|
 | `POST /rag/query` | Синхронный вопрос; optional history; ответ и sources |
-| `POST /chats/{id}/messages` | Диалоговый SSE: token, message, `event: sources`, done |
+| `POST /chats/{id}/messages` | Диалоговый SSE: token, notice, message, `event: sources`, done |
 | `POST /documents/upload` | PDF/DOCX/HTML/MD, сохранение в `data/`, ответ 202 и background UPSERT |
 | `POST /chats/{id}/messages/{mid}/feedback` | Оценка `up/down` вместе с показанными sources |
 
@@ -260,7 +267,9 @@ python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline
 использует нумерованные ссылки `[1]`, `[2]`. SSE-токены
 сериализуются JSON, поэтому переносы строк не разрывают событие; массив
 контекстных фрагментов отправляется отдельным финальным `event: sources` после legacy-маркера
-`done`.
+`done`. При деградированном RAG поток дополнительно несёт
+`{"type": "notice", "code": "rag_unavailable", "message": ...}` до первого
+token — клиент показывает предупреждение и не сохраняет его в историю.
 
 Telegram-бот читает этот же endpoint, создаёт одно сообщение и обновляет его
 через `editMessageText` с debounce 0.8 секунды, а после ответа показывает footer

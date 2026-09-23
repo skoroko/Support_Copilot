@@ -47,3 +47,38 @@ def test_initialize_rag_degrades_and_closes_partial_service(monkeypatch) -> None
     assert service is None
     assert error == "PermissionError"
     assert FakeRAGService.instances[0].closed is True
+
+
+def test_initialize_rag_refuses_external_transfer_without_optin(monkeypatch) -> None:
+    # Without the opt-in the built-in embedding adapter would raise RuntimeError
+    # on every chat question; startup degrades once instead of per request.
+    FakeRAGService.instances.clear()
+    FakeRAGService.build_error = None
+    monkeypatch.setattr(
+        main.RAGConfig,
+        "from_settings",
+        lambda _settings: SimpleNamespace(allow_external_data_transfer=False),
+    )
+    monkeypatch.setattr(main, "RAGService", FakeRAGService)
+
+    service, error = main._initialize_rag(SimpleNamespace())
+
+    assert service is None
+    assert error == "ExternalDataTransferNotAllowed"
+    assert FakeRAGService.instances == []
+
+
+def test_initialize_rag_builds_when_external_transfer_allowed(monkeypatch) -> None:
+    FakeRAGService.instances.clear()
+    FakeRAGService.build_error = None
+    monkeypatch.setattr(
+        main.RAGConfig,
+        "from_settings",
+        lambda _settings: SimpleNamespace(allow_external_data_transfer=True),
+    )
+    monkeypatch.setattr(main, "RAGService", FakeRAGService)
+
+    service, error = main._initialize_rag(SimpleNamespace())
+
+    assert service is FakeRAGService.instances[0]
+    assert error is None

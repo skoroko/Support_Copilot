@@ -269,7 +269,27 @@ Telegram message
   отличить снаружи.
 - **Вариант исправления:** surface `rag_startup_error` в `/ready` и в ответах
   бота («база знаний недоступна»); дефолтный system prompt для non-RAG пути.
-- **Статус:** [ ]
+- **Статус:** [x] — `/ready` теперь возвращает `rag: up|down|disabled` и
+  `rag_error` (`200` + `status: degraded` при падении RAG, чтобы compose
+  healthcheck не рестартовал контейнер). При `rag_enabled` без живого сервиса
+  SSE-поток открывает `{"type": "notice", "code": "rag_unavailable"}`; бот
+  сохраняет notice в `last_response_notice` и дописывает его в финальное
+  сообщение, не засоряя историю. Non-RAG fallback получает
+  `FALLBACK_SYSTEM_PROMPT`, когда у чата нет своего system prompt.
+  `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=false` при включённом RAG переводится в
+  startup-деградацию `ExternalDataTransferNotAllowed` вместо RuntimeError на
+  каждый вопрос. Тесты: `test_initialize_rag_refuses_external_transfer_without_optin`,
+  `test_initialize_rag_builds_when_external_transfer_allowed`,
+  `test_ready_surfaces_rag_startup_failure_as_degraded`,
+  `test_ready_reports_rag_up_when_service_built`,
+  `test_chat_message_stream_notices_when_rag_enabled_but_unavailable`,
+  `test_chat_message_stream_passes_rag_service_without_notice`,
+  `test_chat_message_stream_without_rag_has_no_notice_when_disabled`,
+  `test_non_rag_fallback_injects_default_system_prompt_when_chat_has_none`,
+  `test_non_rag_fallback_keeps_custom_system_prompt`,
+  `test_send_message_captures_notice_and_resets_between_responses`,
+  `test_stream_to_chat_appends_notice_to_final_message`,
+  `test_stream_to_chat_skips_empty_notice`.
 
 ### F9. `top_score` считается после дедупликации
 
@@ -483,3 +503,4 @@ Telegram message
 | 2026-09-23 | F3, F21 | `validate_input` больше не применяется к extracted-тексту медиа; лимит пользовательского сообщения поднят до `MAX_MESSAGE_CHARS=16_000`; транскрипт whisper ограничен `MAX_DOCUMENT_CHARS`; бот разводит 400/403/413/415/422/429/5xx по понятным сообщениям | 4 новых route-теста + тесты валидатора, медиа-лимита и маппинга ошибок; полный прогон `tests` — 334 passed, 9 skipped |
 | 2026-09-23 | F5 | `context_limit=1` для follow_up+reserved заменён лимитом `FOLLOWUP_LEXICAL_CONTEXT_SOURCES=3`: резерв идёт первым, до двух dense-альтернатив сохраняются в prompt | новый тест + полный прогон `tests` в `.venv` (`uv sync --extra eval`, CPython 3.13.15) — 350 passed, 9 skipped |
 | 2026-09-23 | F7 | `_ground_answer`: нормализация `【N】`/`[^N]`/«источник N»/mid-line `(N)` к `[N]`; ответ без валидных ссылок доставляется без списка источников вместо `NO_ANSWER`; warning `rag_answer_missing_citations` | 12 новых тестов grounding + обновлённый uncited-кейс; полный прогон `tests` — 386 passed, 9 skipped |
+| 2026-09-23 | F8 | `/ready` возвращает `rag` + `rag_error` (200 + degraded, без restart loop); SSE `notice`/`rag_unavailable` при включённом, но неподнявшемся RAG; `FALLBACK_SYSTEM_PROMPT` для non-RAG пути; `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=false` → startup-деградация `ExternalDataTransferNotAllowed`; бот показывает notice под ответом | 12 новых тестов (startup, ready, route notice, fallback prompt, bot notice) + обновлённые ready-assertions |
