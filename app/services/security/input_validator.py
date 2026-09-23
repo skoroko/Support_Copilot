@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import codecs
 import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Final
 
-
 MAX_INPUT_CHARS: Final[int] = 4000
 MAX_MESSAGE_CHARS: Final[int] = 16_000
 NON_PRINTABLE_RATIO_LIMIT: Final[float] = 0.10
 ATYPICAL_UNICODE_RATIO_LIMIT: Final[float] = 0.35
+DECODED_PRINTABLE_RATIO_LIMIT: Final[float] = 0.9
 
 
 INJECTION_PATTERNS: Final[list[re.Pattern[str]]] = [
@@ -24,11 +27,12 @@ INJECTION_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\bno\s+takesies\s+backsies\b", re.IGNORECASE),
 ]
 
-ENCODING_PATTERNS: Final[list[re.Pattern[str]]] = [
-    re.compile(r"\b(base64|rot13|morse|decode this|atob\(|btoa\()", re.IGNORECASE),
-    re.compile(r"(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{6,}={1,2}(?![A-Za-z0-9+/_=-])"),
-    re.compile(r"\b[A-Za-z0-9+/]{48,}={0,2}\b"),
-]
+# Opaque alphabet runs long enough to hide an instruction phrase. They are
+# decoded and inspected instead of blocked on sight, so license keys, hashes
+# and error signatures pasted into tickets stay allowed.
+_ENCODED_TOKEN_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z0-9+/_-]{20,}={0,2}")
+_BASE64_TOKEN_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z0-9+/]+={0,2}")
+_BASE64URL_TOKEN_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z0-9_-]+={0,2}")
 
 
 @dataclass(frozen=True)
@@ -51,15 +55,72 @@ def validate_input(text: str, *, max_chars: int = MAX_INPUT_CHARS) -> Validation
     if _atypical_unicode_ratio(normalized) > ATYPICAL_UNICODE_RATIO_LIMIT:
         return ValidationResult(False, "atypical unicode ratio", rule="encoding")
 
-    for pattern in ENCODING_PATTERNS:
-        if pattern.search(normalized):
-            return ValidationResult(False, "encoded prompt injection marker", rule="encoding")
-
     for pattern in INJECTION_PATTERNS:
         if pattern.search(normalized):
             return ValidationResult(False, "prompt injection marker", rule="injection")
 
+    if _encoded_injection(normalized):
+        return ValidationResult(False, "encoded prompt injection marker", rule="encoded_injection")
+
     return ValidationResult(True)
+
+
+def decoded_fragments(text: str) -> list[str]:
+    """Readable text recovered from opaque base64/base64url tokens.
+
+    Callers feed the fragments to moderation so an encoded harmful request is
+    judged by its decoded content rather than slipping through as opaque.
+    """
+
+    normalized = unicodedata.normalize("NFKC", text)
+    fragments: list[str] = []
+    for match in _ENCODED_TOKEN_RE.finditer(normalized):
+        decoded = _decode_token(match.group(0))
+        if decoded is not None:
+            fragments.append(decoded)
+    return fragments
+
+
+def _encoded_injection(text: str) -> bool:
+    if any(pattern.search(codecs.decode(text, "rot13")) for pattern in INJECTION_PATTERNS):
+        return True
+    return any(
+        pattern.search(fragment)
+        for fragment in decoded_fragments(text)
+        for pattern in INJECTION_PATTERNS
+    )
+
+
+def _decode_token(token: str) -> str | None:
+    padded = token + "=" * (-len(token) % 4)
+    raw = _b64decode(padded) or _b64urldecode(padded)
+    if not raw:
+        return None
+    decoded = raw.decode("utf-8", errors="ignore")
+    if not decoded:
+        return None
+    printable = sum(1 for char in decoded if char.isprintable() or char in "\t\n")
+    if printable / len(decoded) < DECODED_PRINTABLE_RATIO_LIMIT:
+        return None
+    return decoded
+
+
+def _b64decode(padded: str) -> bytes | None:
+    if not _BASE64_TOKEN_RE.fullmatch(padded):
+        return None
+    try:
+        return base64.b64decode(padded, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+
+
+def _b64urldecode(padded: str) -> bytes | None:
+    if not _BASE64URL_TOKEN_RE.fullmatch(padded):
+        return None
+    try:
+        return base64.urlsafe_b64decode(padded)
+    except (binascii.Error, ValueError):
+        return None
 
 
 def _atypical_unicode_ratio(text: str) -> float:

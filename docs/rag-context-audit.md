@@ -507,7 +507,35 @@ Telegram message
 - **Суть:** `[A-Za-z0-9+/]{48,}` и base64-паттерны могут заблокировать
   вставленные license-ключи, хэши, подписи ошибок. Причина блокировки
   пользователю не раскрывается.
-- **Статус:** [ ]
+- **Статус:** [x] — блокировка по виду токена заменена проверкой содержимого:
+  `ENCODING_PATTERNS` и эвристики «base64/decode/atob» убраны; длинные
+  непрозрачные токены (`≥20` символов алфавита base64/base64url) декодируются,
+  и блок срабатывает только если декодированный текст совпадает с
+  `INJECTION_PATTERNS` (новое правило `encoded_injection`) либо rot13 всего
+  сообщения раскрывает injection-маркер. License-ключи, sha256-хэши, JWT и
+  base64-подписи ошибок (декодируются в бинарные данные или безобидный текст)
+  теперь проходят; упоминания слов «base64», «atob()» не блокируются.
+  Чтобы закодированный вредоносный запрос не обходил модерацию как
+  непрозрачный текст, `decoded_fragments()` возвращает читаемые декодированные
+  фрагменты, и `/chats/{id}/messages` добавляет их в `moderation_content`
+  перед `ensure_input_allowed`. Ошибки стали понятнее: API-маршруты
+  (`app/routers/chat.py`, `app/routers/rag.py`) проксируют `result.reason`,
+  а бот маппит правила на разные подсказки — `injection` («похоже на попытку
+  изменить инструкции ассистента»), `encoded_injection` («закодированный
+  фрагмент со служебными инструкциями — уберите или перешлите открытым
+  текстом»), `encoding` («слишком много нечитаемых символов»), `length`
+  (лимит символов). Тесты:
+  `test_validate_input_blocks_base64_marker`,
+  `test_validate_input_blocks_base64_encoded_injection`,
+  `test_validate_input_blocks_rot13_encoded_injection`,
+  `test_validate_input_allows_license_keys_hashes_and_tokens`,
+  `test_validate_input_allows_encoding_keyword_mentions`,
+  `test_decoded_fragments_return_readable_payloads`,
+  `test_decoded_fragments_skip_binary_tokens`,
+  `test_chat_message_route_moderates_decoded_fragments`,
+  `test_injection_400_maps_to_instruction_hint`,
+  `test_encoded_injection_400_maps_to_decoded_hint`,
+  `test_encoding_400_maps_to_charset_hint`.
 
 ### F17. Lexical recall только русский; токены <3 символов отбрасываются
 
