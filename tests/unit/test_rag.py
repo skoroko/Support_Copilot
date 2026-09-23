@@ -1445,6 +1445,132 @@ def test_independent_lexical_query_removes_conversational_lead_ins(
     assert service._lexical_query(question, None, plan) == expected
 
 
+def test_fulltext_terms_keep_digit_identifiers_and_accented_latin(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+
+    terms = service._fulltext_terms("3D модель для метода Müller-Breslau и 2D расчёта")
+
+    assert "3d" in terms
+    assert "2d" in terms
+    assert "модель" in terms
+    assert "müller" in terms
+    assert "breslau" in terms
+
+
+def test_fulltext_terms_still_drop_short_noise(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+
+    terms = service._fulltext_terms("model of dam to be built")
+
+    assert terms == ["model", "dam", "built"]
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [
+        ("boundaries", "boundary"),
+        ("properties", "property"),
+        ("elements", "element"),
+        ("stresses", "stress"),
+        ("meshes", "mesh"),
+        ("settings", "setting"),
+        ("nodes", "node"),
+        ("loads", "load"),
+        ("loading", "load"),
+        ("meshing", "mesh"),
+    ],
+)
+def test_light_stem_converges_english_word_forms(
+    tmp_path: Path, plural: str, singular: str
+) -> None:
+    service = RAGService(rag_config(tmp_path))
+
+    assert service._light_stem(plural) == service._light_stem(singular)
+
+
+@pytest.mark.parametrize("token", ["stress", "analysis", "status", "mesh", "axis", "spring"])
+def test_light_stem_leaves_stable_english_terms(tmp_path: Path, token: str) -> None:
+    service = RAGService(rag_config(tmp_path))
+
+    assert service._light_stem(token) == token
+
+
+def test_light_stem_keeps_russian_stemming(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+
+    assert service._light_stem("сетки") == service._light_stem("сетка") == "сетк"
+
+
+def test_lexical_query_accepts_digit_identifier_pair(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "Какая 3D модель?"
+    plan = service._retrieval_plan(question, None, None)
+
+    assert service._lexical_query(question, None, plan) == "3d модель"
+
+
+def test_lexical_query_accepts_single_digit_identifier(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "Расскажи про 4021"
+    plan = service._retrieval_plan(question, None, None)
+
+    assert service._lexical_query(question, None, plan) == "4021"
+
+
+def test_lexical_query_still_rejects_lone_short_term(tmp_path: Path) -> None:
+    service = RAGService(rag_config(tmp_path))
+    question = "Расскажи про ось"
+    plan = service._retrieval_plan(question, None, None)
+
+    assert service._lexical_query(question, None, plan) is None
+
+
+def test_lexical_ranking_prefers_digit_identifier_match(tmp_path: Path) -> None:
+    generic = NodeWithScore(
+        node=TextNode(
+            text="Модель формируется из конечных элементов.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.50,
+    )
+    specific = NodeWithScore(
+        node=TextNode(
+            text="3D модель включает тела и сетку.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.40,
+    )
+
+    ranked = RAGService(rag_config(tmp_path))._rank_by_lexical_evidence(
+        "3d модель", [generic, specific]
+    )
+
+    assert ranked[0] is specific
+
+
+def test_lexical_ranking_matches_english_plural_to_singular(tmp_path: Path) -> None:
+    distractor = NodeWithScore(
+        node=TextNode(
+            text="Общие сведения о моделировании конструкций.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.50,
+    )
+    match = NodeWithScore(
+        node=TextNode(
+            text="Boundary conditions задаются через меню Model.",
+            metadata={"source": "04_Пособие_GTS_NX_Материалы.pdf"},
+        ),
+        score=0.40,
+    )
+
+    ranked = RAGService(rag_config(tmp_path))._rank_by_lexical_evidence(
+        "граничные conditions", [distractor, match]
+    )
+
+    assert ranked[0] is match
+
+
 def test_lexical_queries_add_entity_tail_fallbacks_for_unknown_lead_in(tmp_path: Path) -> None:
     service = RAGService(rag_config(tmp_path))
     question = "Меня интересует модель Мора-Кулона"
