@@ -11,7 +11,13 @@ from aiogram.types import Message as TgMessage
 from aiogram.types import MessageEntity
 
 from bot.handlers import _burst
-from bot.handlers._common import compose_message_text, message_text, quote_block
+from bot.handlers._common import (
+    callback_owner_external_id,
+    compose_message_text,
+    message_owner_external_id,
+    message_text,
+    quote_block,
+)
 from bot.handlers.media import handle_edited_media, handle_media
 from bot.handlers.text import handle_edited_text, handle_text
 
@@ -22,12 +28,15 @@ BACKEND_CHAT_ID = UUID("00000000-0000-0000-0000-000000000777")
 class FakeBackend:
     def __init__(self) -> None:
         self.sent: list[dict] = []
+        self.chats: dict[str, UUID] = {}
 
     async def get_or_create_chat(self, owner_external_id: str, interface: str) -> UUID:
-        return BACKEND_CHAT_ID
+        if owner_external_id not in self.chats:
+            self.chats[owner_external_id] = UUID(int=len(self.chats) + 1)
+        return self.chats[owner_external_id]
 
     def send_message(self, chat_id, content, media=None):
-        self.sent.append({"content": content, "media": media})
+        self.sent.append({"chat_id": chat_id, "content": content, "media": media})
 
         async def gen():
             yield "Ответ"
@@ -67,9 +76,17 @@ def make_message(
     audio=None,
     is_bot: bool = False,
     bot=None,
+    chat_id: int = CHAT_ID,
+    chat_type: str | None = None,
+    user_id: int | None = None,
+    sender_chat=None,
 ) -> SimpleNamespace:
+    chat = SimpleNamespace(id=chat_id)
+    if chat_type is not None:
+        chat.type = chat_type
+    from_user = None if sender_chat is not None else SimpleNamespace(is_bot=is_bot, id=user_id)
     return SimpleNamespace(
-        chat=SimpleNamespace(id=CHAT_ID),
+        chat=chat,
         message_id=message_id,
         text=text,
         caption=caption,
@@ -77,7 +94,8 @@ def make_message(
         caption_entities=None,
         reply_to_message=reply_to,
         media_group_id=media_group_id,
-        from_user=SimpleNamespace(is_bot=is_bot),
+        from_user=from_user,
+        sender_chat=sender_chat,
         photo=photo,
         voice=voice,
         audio=audio,
@@ -91,6 +109,7 @@ def make_message(
         poll=None,
         bot=bot or make_bot(),
         answer=AsyncMock(return_value=SimpleNamespace(edit_text=AsyncMock())),
+        reply=AsyncMock(return_value=SimpleNamespace(edit_text=AsyncMock())),
     )
 
 
@@ -316,4 +335,119 @@ async def test_flush_pending_delivers_immediately() -> None:
 
     assert len(backend.sent) == 1
     assert backend.sent[0]["content"] == "срочный вопрос"
-    assert CHAT_ID not in _burst._pending
+    assert _burst._pending == {}
+
+
+def test_private_message_owner_key_stays_chat_id() -> None:
+    message = make_message(text="привет")
+
+    assert message_owner_external_id(message) == str(CHAT_ID)
+
+
+def test_group_message_owner_key_scopes_sender() -> None:
+    message = make_message(text="привет", chat_id=-100, chat_type="supergroup", user_id=7)
+
+    assert message_owner_external_id(message) == "-100:7"
+
+
+def test_group_message_owner_key_falls_back_to_sender_chat() -> None:
+    message = make_message(
+        text="привет",
+        chat_id=-100,
+        chat_type="supergroup",
+        sender_chat=SimpleNamespace(id=-100),
+    )
+
+    assert message_owner_external_id(message) == "-100:-100"
+
+
+def test_group_message_owner_key_falls_back_to_chat_without_sender() -> None:
+    message = make_message(text="привет", chat_id=-100, chat_type="supergroup")
+    message.from_user = None
+
+    assert message_owner_external_id(message) == "-100:-100"
+
+
+def test_callback_owner_key_uses_clicker_in_groups() -> None:
+    callback = SimpleNamespace(
+        message=SimpleNamespace(chat=SimpleNamespace(id=-100, type="supergroup")),
+        from_user=SimpleNamespace(id=7),
+    )
+
+    assert callback_owner_external_id(callback) == "-100:7"
+
+
+def test_callback_owner_key_private_chat() -> None:
+    callback = SimpleNamespace(
+        message=SimpleNamespace(chat=SimpleNamespace(id=42)),
+        from_user=SimpleNamespace(id=42),
+    )
+
+    assert callback_owner_external_id(callback) == "42"
+
+
+@pytest.mark.asyncio
+async def test_group_members_get_separate_histories() -> None:
+    backend = FakeBackend()
+    await handle_text(
+        make_message(message_id=1, text="вопрос А", chat_id=-100, chat_type="supergroup", user_id=7),
+        backend,
+    )
+    await handle_text(
+        make_message(message_id=2, text="вопрос Б", chat_id=-100, chat_type="supergroup", user_id=8),
+        backend,
+    )
+    await handle_text(
+        make_message(message_id=3, text="уточнение А", chat_id=-100, chat_type="supergroup", user_id=7),
+        backend,
+    )
+    await wait_flush()
+
+    assert set(backend.chats) == {"-100:7", "-100:8"}
+    assert len(backend.sent) == 2
+    by_chat = {sent["chat_id"]: sent["content"] for sent in backend.sent}
+    assert by_chat[backend.chats["-100:7"]] == "вопрос А\nуточнение А"
+    assert by_chat[backend.chats["-100:8"]] == "вопрос Б"
+
+
+@pytest.mark.asyncio
+async def test_group_edit_lands_in_owning_member_batch() -> None:
+    backend = FakeBackend()
+    state = make_state()
+    await handle_text(
+        make_message(message_id=5, text="вопрос А", chat_id=-100, chat_type="supergroup", user_id=7),
+        backend,
+    )
+    await handle_text(
+        make_message(message_id=6, text="вопрос Б", chat_id=-100, chat_type="supergroup", user_id=8),
+        backend,
+    )
+    await handle_edited_text(
+        make_message(message_id=5, text="вопрос А2", chat_id=-100, chat_type="supergroup", user_id=7),
+        backend,
+        state,
+    )
+    await wait_flush()
+
+    assert len(backend.sent) == 2
+    by_chat = {sent["chat_id"]: sent["content"] for sent in backend.sent}
+    assert by_chat[backend.chats["-100:7"]] == "вопрос А2"
+    assert by_chat[backend.chats["-100:8"]] == "вопрос Б"
+
+
+@pytest.mark.asyncio
+async def test_group_flush_pending_delivers_every_member_batch() -> None:
+    backend = FakeBackend()
+    await handle_text(
+        make_message(message_id=1, text="вопрос А", chat_id=-100, chat_type="supergroup", user_id=7),
+        backend,
+    )
+    await handle_text(
+        make_message(message_id=2, text="вопрос Б", chat_id=-100, chat_type="supergroup", user_id=8),
+        backend,
+    )
+
+    await _burst.flush_pending(-100, backend)
+
+    assert len(backend.sent) == 2
+    assert _burst._pending == {}

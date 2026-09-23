@@ -267,7 +267,8 @@ class BackendClient:
         owner = owner_external_id or self._chat_owners.get(str(chat_id))
         if not owner:
             raise ValueError("Authenticated chat owner is required")
-        self._chat_owners[str(chat_id)] = owner
+        # Only get_or_create_chat may bind a chat to an owner: a caller-supplied
+        # principal (e.g. a feedback click in a group) must not remap it.
         return self._principal_headers(owner)
 
     @staticmethod

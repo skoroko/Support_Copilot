@@ -12,8 +12,9 @@ from bot.handlers._common import (
     BACKEND_EXCEPTIONS,
     backend_error_message,
     compose_message_text,
-    get_telegram_chat_id,
+    message_owner_external_id,
     response_feedback_markup,
+    send_answer,
     stream_to_chat,
 )
 from bot.services.backend_client import BackendClient
@@ -39,7 +40,8 @@ class BurstItem:
 
 @dataclass
 class _Batch:
-    chat_id: int
+    chat_id: int                       # Telegram chat for delivery/logging
+    owner_key: str                     # backend owner key = _pending dict key
     items: list[BurstItem] = field(default_factory=list)
     by_message_id: dict[int, BurstItem] = field(default_factory=dict)
     anchor: Message | None = None
@@ -47,11 +49,11 @@ class _Batch:
     task: asyncio.Task | None = None
 
 
-_pending: dict[int, _Batch] = {}
+_pending: dict[str, _Batch] = {}
 
 
 def enqueue_item(item: BurstItem, backend: BackendClient) -> None:
-    _enqueue(item.message.chat.id, backend, item)
+    _enqueue(message_owner_external_id(item.message), item.message.chat.id, backend, item)
 
 
 def enqueue_text(message: Message, backend: BackendClient) -> None:
@@ -68,7 +70,7 @@ def absorb_edit(message: Message, backend: BackendClient, item: BurstItem) -> bo
     so a stale correction does not merge into a fresh question.
     """
 
-    batch = _pending.get(message.chat.id)
+    batch = _pending.get(message_owner_external_id(message))
     if batch is None:
         enqueue_item(item, backend)
         return True
@@ -88,29 +90,36 @@ def absorb_edit(message: Message, backend: BackendClient, item: BurstItem) -> bo
 async def deliver_now(item: BurstItem, backend: BackendClient) -> None:
     """Send a single item outside the batch (edit of an already-flushed message)."""
 
-    batch = _Batch(chat_id=item.message.chat.id, items=[item], anchor=item.message)
+    batch = _Batch(
+        chat_id=item.message.chat.id,
+        owner_key=message_owner_external_id(item.message),
+        items=[item],
+        anchor=item.message,
+    )
     await _deliver(batch, backend)
 
 
 async def flush_pending(chat_id: int, backend: BackendClient) -> None:
-    """Deliver a queued batch immediately (used by /clear to keep update order)."""
+    """Deliver queued batches immediately (used by /clear to keep update order)."""
 
-    batch = _pending.pop(chat_id, None)
+    keys = [key for key, batch in _pending.items() if batch.chat_id == chat_id]
+    for key in keys:
+        batch = _pending.pop(key, None)
+        if batch is None:
+            continue
+        if batch.task is not None:
+            batch.task.cancel()
+        try:
+            await _deliver(batch, backend)
+        except Exception:
+            logger.exception("burst_flush_failed", chat_id=chat_id)
+
+
+def _enqueue(owner_key: str, chat_id: int, backend: BackendClient, item: BurstItem) -> None:
+    batch = _pending.get(owner_key)
     if batch is None:
-        return
-    if batch.task is not None:
-        batch.task.cancel()
-    try:
-        await _deliver(batch, backend)
-    except Exception:
-        logger.exception("burst_flush_failed", chat_id=chat_id)
-
-
-def _enqueue(chat_id: int, backend: BackendClient, item: BurstItem) -> None:
-    batch = _pending.get(chat_id)
-    if batch is None:
-        batch = _Batch(chat_id=chat_id, first_seen=time.monotonic())
-        _pending[chat_id] = batch
+        batch = _Batch(chat_id=chat_id, owner_key=owner_key, first_seen=time.monotonic())
+        _pending[owner_key] = batch
     batch.items.append(item)
     batch.by_message_id[item.message.message_id] = item
     batch.anchor = item.message
@@ -132,9 +141,9 @@ async def _flush_after(batch: _Batch, delay: float, backend: BackendClient) -> N
         await asyncio.sleep(delay)
     except asyncio.CancelledError:
         return
-    if _pending.get(batch.chat_id) is not batch:
+    if _pending.get(batch.owner_key) is not batch:
         return
-    del _pending[batch.chat_id]
+    del _pending[batch.owner_key]
     try:
         await _deliver(batch, backend)
     except Exception:
@@ -194,12 +203,12 @@ async def _deliver(batch: _Batch, backend: BackendClient) -> None:
     content = "\n".join(slot for slot in slots if slot and slot.strip()).strip()
     if not files and not content:
         if failures:
-            await anchor.answer("\n".join(dict.fromkeys(failures)))
+            await send_answer(anchor, "\n".join(dict.fromkeys(failures)))
         return
     if failures:
-        await anchor.answer("Часть вложений пропущена:\n" + "\n".join(dict.fromkeys(failures)))
+        await send_answer(anchor, "Часть вложений пропущена:\n" + "\n".join(dict.fromkeys(failures)))
     try:
-        chat_id = await get_telegram_chat_id(anchor, backend)
+        chat_id = await backend.get_or_create_chat(batch.owner_key, "telegram")
         await stream_to_chat(
             anchor,
             backend.send_message(chat_id, content or "[вложения]", media=files or None),
@@ -208,4 +217,4 @@ async def _deliver(batch: _Batch, backend: BackendClient) -> None:
             notice_factory=lambda: backend.last_response_notice(chat_id),
         )
     except BACKEND_EXCEPTIONS as exc:
-        await anchor.answer(backend_error_message(exc))
+        await send_answer(anchor, backend_error_message(exc))

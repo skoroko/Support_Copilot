@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from app.admin.auth import require_admin
 from app.chat.deps import ChatServiceDep
-from app.chat.domain import Chat, ChatMessage
+from app.chat.domain import Chat, ChatMessage, telegram_chat_id_from_owner
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
 from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
 from app.chat.service import ChatNotFoundError, ModerationBlockedError, media_parts
@@ -231,7 +231,7 @@ async def add_system_message(
 
     if payload.notify:
         try:
-            telegram_chat_id = int(chat.owner_external_id)
+            telegram_chat_id = telegram_chat_id_from_owner(chat.owner_external_id)
         except ValueError as exc:
             raise HTTPException(
                 status_code=422,

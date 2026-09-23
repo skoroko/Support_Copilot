@@ -326,6 +326,53 @@ def test_system_message_is_saved_without_notification(fake_chat_service: FakeCha
     assert fake_chat_service.messages[chat.id][0].content == "Заявка обработана"
 
 
+def test_system_message_notification_resolves_group_owner_chat_id(
+    fake_chat_service: FakeChatService,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat = Chat(owner_external_id="-100:7", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    deliveries: list[tuple[int, str]] = []
+
+    async def fake_notify(chat_id: int, text: str, **kwargs) -> None:
+        deliveries.append((chat_id, text))
+
+    monkeypatch.setattr("app.chat.routes.notify_user", fake_notify)
+
+    with TestClient(
+        app,
+        headers={"X-Admin-Token": "test-admin-token-000000000000000002"},
+    ) as client:
+        response = client.post(
+            f"/chats/admin/{chat.id}/notification",
+            json={"text": "Заявка обработана", "notify": True},
+        )
+
+    assert response.status_code == 200
+    assert deliveries == [(-100, "Заявка обработана")]
+
+
+def test_system_message_notification_rejects_non_telegram_owner(
+    fake_chat_service: FakeChatService,
+) -> None:
+    chat = Chat(owner_external_id="cli-user-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(
+        app,
+        headers={"X-Admin-Token": "test-admin-token-000000000000000002"},
+    ) as client:
+        response = client.post(
+            f"/chats/admin/{chat.id}/notification",
+            json={"text": "Заявка обработана", "notify": True},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_external_id"
+
+
 def test_stream_emits_json_safe_sources_as_final_event(fake_chat_service: FakeChatService) -> None:
     chat = Chat(owner_external_id="test-1", interface="cli")
     fake_chat_service.chats[chat.id] = chat

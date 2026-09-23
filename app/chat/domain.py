@@ -29,3 +29,14 @@ class Chat(BaseModel):
     interface: str
     system_prompt: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+def telegram_chat_id_from_owner(owner_external_id: str) -> int:
+    """Telegram delivery chat encoded in a bot ``owner_external_id`` key.
+
+    Bot owner keys are ``"<chat_id>"`` for private dialogs and
+    ``"<chat_id>:<sender_id>"`` for group members, so the leading segment is
+    always the Telegram chat id the answer should be delivered to.
+    """
+
+    return int(owner_external_id.split(":", 1)[0])
