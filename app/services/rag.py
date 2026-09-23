@@ -120,7 +120,9 @@ _CONDENSED_PREFIX_RE = re.compile(
     r"(?:поисковый\s+)?(?:вопрос|запрос)\s*[:—–-]\s*",
     re.IGNORECASE,
 )
-_LEXICAL_TOKEN_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
+# Unicode letters and digits (no underscore): accented Latin, Greek symbols
+# and other scripts stay whole instead of splitting into noise fragments.
+_LEXICAL_TOKEN_RE = re.compile(r"[^\W_]+")
 _LEXICAL_STOP_WORDS = {
     "а",
     "без",
@@ -1429,8 +1431,7 @@ class RAGService:
             )
             terms.extend(cls._fulltext_terms(previous_user_question)[:2])
         unique = list(dict.fromkeys(terms))
-        is_specific_pair = len(unique) == 2 and sum(map(len, unique)) >= 9
-        return " ".join(unique) if len(unique) >= 3 or is_specific_pair else None
+        return " ".join(unique) if cls._sufficient_lexical_terms(unique) else None
 
     @classmethod
     def _lexical_queries(
@@ -1466,9 +1467,7 @@ class RAGService:
                     + current_terms[:2]
                 )
             )
-            if len(anchor_terms) >= 3 or (
-                len(anchor_terms) == 2 and sum(map(len, anchor_terms)) >= 9
-            ):
+            if cls._sufficient_lexical_terms(anchor_terms):
                 queries.append(" ".join(anchor_terms))
         for width in (3, 2):
             if len(current_terms) <= width:
@@ -1484,8 +1483,7 @@ class RAGService:
                 right -= 1
             for start in starts:
                 window = list(dict.fromkeys(current_terms[start : start + width]))
-                is_specific_pair = len(window) == 2 and sum(map(len, window)) >= 9
-                if len(window) >= 3 or is_specific_pair:
+                if cls._sufficient_lexical_terms(window):
                     queries.append(" ".join(window))
                 unique_queries = tuple(dict.fromkeys(queries))
                 if len(unique_queries) >= MAX_LEXICAL_QUERY_VARIANTS:
@@ -1493,11 +1491,43 @@ class RAGService:
         return tuple(dict.fromkeys(queries))
 
     @staticmethod
-    def _fulltext_terms(text: str) -> list[str]:
+    def _is_lexical_term(token: str) -> bool:
+        """Accept normal terms and short digit-bearing identifiers.
+
+        Two-character codes (``3D``, ``2D``, ``R2``, ``E5``) carry product
+        meaning and must not be dropped with one-letter noise; bare letters
+        below three characters stay out.
+        """
+
+        return len(token) >= 3 or (
+            len(token) == 2 and any(char.isdigit() for char in token)
+        )
+
+    @staticmethod
+    def _sufficient_lexical_terms(terms: Sequence[str]) -> bool:
+        """Strict all-token recall needs enough specificity to avoid noise.
+
+        Three terms always qualify; a pair qualifies when it is long enough
+        or carries a digit-bearing identifier («3d модель»); a lone
+        identifier («4021») is already a precise match on its own.
+        """
+
+        if len(terms) >= 3:
+            return True
+        has_identifier = any(
+            len(term) >= 2 and any(char.isdigit() for char in term)
+            for term in terms
+        )
+        if len(terms) == 2:
+            return has_identifier or sum(map(len, terms)) >= 9
+        return len(terms) == 1 and has_identifier
+
+    @classmethod
+    def _fulltext_terms(cls, text: str) -> list[str]:
         return [
             token
             for token in _LEXICAL_TOKEN_RE.findall(text.casefold().replace("ё", "е"))
-            if len(token) >= 3
+            if cls._is_lexical_term(token)
             and token not in _LEXICAL_STOP_WORDS
             and token not in _FOLLOWUP_REFERENCE_TERMS
             and not any(token.startswith(prefix) for prefix in _LEXICAL_IGNORED_PREFIXES)
@@ -1648,17 +1678,35 @@ class RAGService:
             ):
                 continue
             token = cls._light_stem(raw_token)
-            if len(token) >= 3:
+            if cls._is_lexical_term(token):
                 terms.append(token)
         return terms
 
     @staticmethod
     def _light_stem(token: str) -> str:
-        if not re.search(r"[а-я]", token) or len(token) < 5:
+        if re.search(r"[а-я]", token):
+            if len(token) < 5:
+                return token
+            for suffix in _RUSSIAN_SUFFIXES:
+                if token.endswith(suffix) and len(token) - len(suffix) >= 4:
+                    return token[: -len(suffix)]
             return token
-        for suffix in _RUSSIAN_SUFFIXES:
-            if token.endswith(suffix) and len(token) - len(suffix) >= 4:
-                return token[: -len(suffix)]
+        if not token.isascii() or not token.isalpha():
+            return token
+        # English terms get conservative plural/gerund reductions so
+        # «boundaries» meets «boundary».  The stems are approximate, but the
+        # same rules run on query and document tokens, so an imperfect stem
+        # still matches itself.
+        if len(token) >= 6 and token.endswith("sses"):
+            token = token[:-2]
+        elif len(token) >= 5 and token.endswith("ies") and token[-4] not in "aeiou":
+            token = token[:-3] + "y"
+        elif len(token) >= 5 and token.endswith(("ches", "shes", "xes", "zes")):
+            token = token[:-2]
+        elif len(token) >= 4 and token.endswith("s") and token[-2] not in "siu":
+            token = token[:-1]
+        if len(token) >= 7 and token.endswith("ing"):
+            token = token[:-3]
         return token
 
     def _deduplicate(

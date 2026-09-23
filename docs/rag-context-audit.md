@@ -543,7 +543,34 @@ Telegram message
 - **Суть:** snowball-стеммер русский — англоязычные запросы по английским
   мануалам почти без lexical-помощи. Токены <3 символов («3D», «2D»)
   отбрасываются из lexical-терминов.
-- **Статус:** [ ]
+- **Статус:** [x] — `_LEXICAL_TOKEN_RE` расширен до Unicode-букв и цифр
+  (`[^\W_]+`): акцентированная латиница и другие письменности больше не
+  дробятся на шумовые куски. Короткие токены с цифрой («3D», «2D», «R2»,
+  «E5») принимаются общей проверкой `_is_lexical_term` в `_fulltext_terms`
+  и `_lexical_terms` — тот же критерий, что уже действовал в
+  `_detail_carry_tokens`; короткие токены без цифры по-прежнему
+  отбрасываются. `_light_stem` получил консервативную английскую ветку
+  (plural `-s`/`-es`/`-ies`, gerund `-ing` для токенов ≥7): стеммер
+  симметричен для запроса и документа, поэтому «boundaries» совпадает с
+  «boundary» в `_rank_by_lexical_evidence`, `_rank_fulltext_evidence` и
+  `_minimum_cover_char_span`, а «stress»/«analysis»/«status» не режутся.
+  Порог достаточности вынесен в `_sufficient_lexical_terms`: ≥3 термина,
+  пара с суммой ≥9 символов или с digit-идентификатором («3d модель»),
+  либо одиночный идентификатор («4021») — без него короткие термины не
+  доходили бы до строгого запроса. Qdrant-индекс не менялся: на поле
+  возможен только один stemmer, корпус русский — RUSSIAN snowball
+  сохранён, а латинские термины в `MatchText` идут exact-match, как и
+  прежде. Тесты:
+  `test_fulltext_terms_keep_digit_identifiers_and_accented_latin`,
+  `test_fulltext_terms_still_drop_short_noise`,
+  `test_light_stem_converges_english_word_forms` (10 кейсов),
+  `test_light_stem_leaves_stable_english_terms` (6 кейсов),
+  `test_light_stem_keeps_russian_stemming`,
+  `test_lexical_query_accepts_digit_identifier_pair`,
+  `test_lexical_query_accepts_single_digit_identifier`,
+  `test_lexical_query_still_rejects_lone_short_term`,
+  `test_lexical_ranking_prefers_digit_identifier_match`,
+  `test_lexical_ranking_matches_english_plural_to_singular`.
 
 ### F18. RAG-ответ не стримится; общий request_timeout=30с
 
@@ -676,5 +703,6 @@ Telegram message
 | 2026-09-23 | F10 | `_is_overview_question`: токен-нормализация (пунктуация не влияет) + veto по wh-словам и основам действий — «расскажи, как настроить …» больше не попадает под обзор; лимит `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран, `max_per_file` стал мягким с backfill — контекст не режется ниже общего лимита ни на одном типе вопроса | 3 новых теста + переписанный overview-кейс + расширенный параметризованный детектор; полный прогон `tests` — 412 passed, 9 skipped |
 | 2026-09-23 | F11 | `build_llm_condense_hook` инжектится в `_initialize_rag` (флаг `RAG_CONDENSE_LLM_ENABLED`): LLM-rewrite хода по ограниченному диалогу → одиночный dense-запрос `condense_hook`, эхо → `independent`; отказ/таймаут/невалидный вывод → `None` → deterministic `follow_up` merge (dual query) — `_standalone_question` теперь возвращает источник rewrite, чтобы падение hook не ломало эвристики; lexical-запросы берут термины из `plan.ranking_question` для переписанных режимов | 11 новых тестов (hook, план, fallback, lexical, config, startup-инжекция); полный прогон `tests` — 426 passed, 9 skipped |
 | 2026-09-23 | F12 | Реранкер остаётся opt-in выключенным; веса `0.7·term_cov + 0.3·pair_cov` выведены из констант в `RAG_LEXICAL_TERM_WEIGHT` / `RAG_LEXICAL_PAIR_WEIGHT` (Settings → RAGConfig → `_rank_by_lexical_evidence`), валидация [0,1], `0`/`0` отключает lexical-буст | 7 новых тестов (from_settings, дефолты, диапазон, отключение буста); полный прогон `tests` — 434 passed, 9 skipped |
+| 2026-09-23 | F17 | `_LEXICAL_TOKEN_RE` → `[^\W_]+` (Unicode-буквы/цифры не дробятся); короткие токены с цифрой («3D», «4021») принимаются через `_is_lexical_term`; `_light_stem` +консервативные английские plural/gerund редукции (симметрично для запроса и документа); достаточность терминов в `_sufficient_lexical_terms` — пара с идентификатором или одиночный идентификатор; Qdrant-индекс без изменений (один stemmer на поле — RUSSIAN сохранён, латиница в `MatchText` идёт exact-match) | 10 новых тестов (25 кейсов) в `test_rag.py`; полный прогон `tests` — 501 passed, 9 skipped |
 | 2026-09-23 | F13 | `RAG_PRODUCT_SCOPE` (`strict\|fallback\|all`, default `fallback`): GTS NX остаётся первичным пулом, при провале evidence-gate отбор повторяется по полному корпусу без доп. retrieval-запросов — уже лежащий Civil-мануал становится достижимым; отбор вынесен в `_select_context`; телеметрия `product_scope` + `cross_product_selected_count`; scope-токены `all`/`any`/`none` отклонены как `RAG_PRODUCT`/`default_product`; `infer_product` +`soilworks`; промпты обобщены до продуктов MIDAS; пробелы корпуса описаны в `data_inventory.md` | 8 новых тестов в `test_rag.py` (scope-режимы, fallback, reserved-токены) + параметризованный guard в `test_ingestion.py`; полный прогон `tests` — 447 passed, 9 skipped |
 | 2026-09-23 | F14 | condense-hook рендерит всё окно истории (`_dialog_context_section(max_messages=10)`; генерация по-прежнему 6 сообщений); heuristic-мердж дополнен keyword-tail `_detail_carry_tokens` — идентификаторы из user-ходов старше последнего (числа/dotted-версии ≥2, latin ≥3), до 8 токенов, без кириллических топик-слов и дублей; для `follow_up` добавлен incident-anchored вариант строгого lexical-запроса (details + current terms), попадающий и в dense-fallback | 6 новых тестов в `test_rag.py`; полный прогон `tests` — 453 passed, 9 skipped |
