@@ -187,6 +187,10 @@ class _SettingsFields(BaseModel):
     rag_chunk_overlap: int = Field(default=64, ge=0, validation_alias=AliasChoices("RAG_CHUNK_OVERLAP"))
     rag_top_k: int = Field(default=10, ge=3, validation_alias=AliasChoices("RAG_TOP_K"))
     rag_product: str = Field(default="gts_nx", min_length=1, validation_alias=AliasChoices("RAG_PRODUCT"))
+    rag_product_scope: Literal["strict", "fallback", "all"] = Field(
+        default="fallback",
+        validation_alias=AliasChoices("RAG_PRODUCT_SCOPE"),
+    )
     rag_reranker_enabled: bool = Field(
         default=False,
         validation_alias=AliasChoices("RAG_RERANKER_ENABLED"),

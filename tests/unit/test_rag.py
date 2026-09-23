@@ -632,6 +632,132 @@ def test_expanded_raw_pool_recovers_five_contexts_after_product_filter(tmp_path:
     assert [source["file_name"] for source in result["sources"]].count("GTS_NX dominant.pdf") == 5
 
 
+def _civil_nodes() -> list[NodeWithScore]:
+    return [
+        NodeWithScore(
+            node=TextNode(
+                text="Пружинные опоры задаются в свойствах граничных условий.",
+                metadata={"source": "midas Civil 2020.pdf"},
+            ),
+            score=0.9,
+        ),
+        NodeWithScore(
+            node=TextNode(
+                text="Граничные условия Civil назначаются по узлам.",
+                metadata={"source": "midas Civil guide.pdf"},
+            ),
+            score=0.85,
+        ),
+    ]
+
+
+def test_rag_product_scope_fallback_reaches_other_product_when_primary_empty(tmp_path: Path) -> None:
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="fallback"),
+        llm=FakeLLM("Пружинные опоры задаются так [1] и [2]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: _civil_nodes())
+
+    result = service.answer("Как задать пружинные опоры?")
+
+    assert result["answer"] != NO_ANSWER
+    assert [source["file_name"] for source in result["sources"]] == [
+        "midas Civil 2020.pdf",
+        "midas Civil guide.pdf",
+    ]
+
+
+def test_rag_product_scope_strict_keeps_other_product_unreachable(tmp_path: Path) -> None:
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="strict"),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: _civil_nodes())
+
+    result = service.answer("Как задать пружинные опоры?")
+
+    assert result["answer"] == NO_ANSWER
+    assert result["sources"] == []
+
+
+def test_rag_product_scope_fallback_prefers_primary_evidence(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                text="Пружинные опоры GTS NX задаются в граничных условиях.",
+                metadata={"source": "GTS_NX boundary.pdf"},
+            ),
+            score=0.9,
+        ),
+        *_civil_nodes(),
+    ]
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="fallback"),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Как задать пружинные опоры?")
+
+    assert [source["file_name"] for source in result["sources"]] == ["GTS_NX boundary.pdf"]
+
+
+def test_rag_product_scope_fallback_engages_when_primary_below_threshold(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                text="Слабый фрагмент GTS NX о границах.",
+                metadata={"source": "GTS_NX weak.pdf"},
+            ),
+            score=0.2,
+        ),
+        *_civil_nodes(),
+    ]
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="fallback"),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Как задать пружинные опоры?")
+
+    assert result["answer"] != NO_ANSWER
+    assert result["sources"][0]["file_name"] == "midas Civil 2020.pdf"
+
+
+def test_rag_product_scope_all_disables_product_filter(tmp_path: Path) -> None:
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="all"),
+        llm=FakeLLM("Ответ [1] и [2]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: _civil_nodes())
+
+    result = service.answer("Как задать пружинные опоры?")
+
+    assert result["answer"] != NO_ANSWER
+    assert {source["file_name"] for source in result["sources"]} == {
+        "midas Civil 2020.pdf",
+        "midas Civil guide.pdf",
+    }
+
+
+@pytest.mark.parametrize("scope", ["all", "any", "none"])
+def test_rag_config_rejects_scope_tokens_as_target_product(tmp_path: Path, scope: str) -> None:
+    with pytest.raises(ValueError, match="target_product"):
+        rag_config(tmp_path, target_product=scope)
+
+
+def test_rag_config_rejects_unknown_product_scope(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="product_scope"):
+        rag_config(tmp_path, product_scope="everything")
+
+
+def test_rag_config_reads_product_scope_setting() -> None:
+    assert RAGConfig.from_settings(SimpleNamespace()).product_scope == "fallback"
+    assert RAGConfig.from_settings(SimpleNamespace(rag_product_scope="strict")).product_scope == "strict"
+    assert RAGConfig.from_settings(SimpleNamespace(rag_product_scope="all")).product_scope == "all"
+
+
 def test_lexical_evidence_recovers_exact_dof_chunk_before_dense_distractors(tmp_path: Path) -> None:
     nodes = [
         NodeWithScore(

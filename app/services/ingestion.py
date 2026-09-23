@@ -60,6 +60,7 @@ _PRODUCT_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("fea_nx", re.compile(r"(?i)(?:\bfea\s+nx\b|\bfeanx\b)")),
     ("civil", re.compile(r"(?i)\b(?:midas\s+)?civil\b")),
     ("gen", re.compile(r"(?i)\b(?:midas\s+)?gen\b")),
+    ("soilworks", re.compile(r"(?i)\bsoil\s*works\b")),
 )
 _GENERIC_MIDAS_PRODUCT_RE = re.compile(r"(?i)\bmidas\s+([a-z0-9]+(?:\s+nx)?)\b")
 _PRODUCT_ALIASES = {
@@ -71,7 +72,13 @@ _PRODUCT_ALIASES = {
     "fea_nx": "fea_nx",
     "midas_civil": "civil",
     "midas_gen": "gen",
+    "midas_soilworks": "soilworks",
 }
+# These values control the retrieval product scope (``RAG_PRODUCT_SCOPE``);
+# they are not real product keys.  A document or config that resolves to one
+# of them would silently match nothing under a scoped retrieval, so it is
+# rejected instead of being stored as a product tag.
+RESERVED_PRODUCT_TOKENS = frozenset({"all", "any", "none"})
 
 
 class ExternalDataTransferRequired(PermissionError):
@@ -139,6 +146,8 @@ class IngestionConfig:
             raise ValueError("chunk_overlap must be non-negative and smaller than chunk_size")
         if not canonical_product(self.default_product):
             raise ValueError("default_product must not be blank")
+        if canonical_product(self.default_product) in RESERVED_PRODUCT_TOKENS:
+            raise ValueError("default_product must name a product key, not a scope token")
 
     @classmethod
     def from_settings(cls, settings: Any) -> "IngestionConfig":

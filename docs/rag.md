@@ -28,14 +28,17 @@ flowchart LR
 - `last_modified` и `created_at` — время из файловой системы;
 - `author` — автор из DOCX core properties, если заполнен;
 - `category` — первый каталог после `data/`;
-- `product` — канонический продукт (`gts_nx`, `civil`, `fea_nx`, `gen`);
+- `product` — канонический продукт (`gts_nx`, `civil`, `fea_nx`, `gen`,
+  `soilworks` и другие `midas <имя>` через общий маркер);
 - `page` и `total_pages` — физическая 1-based страница PDF и число страниц;
 - `version` — версия вида `v2`, `2.1` или дата из имени файла.
 
 Продукт определяется по маркерам в пути и имени, а не по списку отдельных
-файлов. Явные `midas Civil`, `FEA NX` и другие известные маркеры имеют приоритет;
-нейтральные имена вроде `User Manual_Chapter5` наследуют продукт корпуса из
-`RAG_PRODUCT` (по умолчанию `gts_nx`).
+файлов. Явные `midas Civil`, `FEA NX`, `SoilWorks` и другие известные маркеры
+имеют приоритет; нейтральные имена вроде `User Manual_Chapter5` наследуют
+продукт корпуса из `RAG_PRODUCT` (по умолчанию `gts_nx`). Значения `all`,
+`any`, `none` зарезервированы под управление областью поиска и отклоняются
+как `RAG_PRODUCT`: область настраивается отдельной `RAG_PRODUCT_SCOPE`.
 
 Технические поля пути и времени остаются доступными для фильтров и цитат, но
 исключены из embedding через `excluded_embed_metadata_keys`. Детерминированный
@@ -57,9 +60,12 @@ flowchart LR
     H --> FT[Строгий full-text recall]
     FT --> F
     F --> PF
-    R --> PF[Product filter: только GTS NX]
+    R --> PF[Product scope: сначала RAG_PRODUCT]
     PF --> V[Dense + lexical ranking полного union]
-    V --> K[Максимум 30 кандидатов]
+    V --> PS{Есть evidence в scope?}
+    PS -->|да| K[Максимум 30 кандидатов]
+    PS -->|нет, scope=fallback| FB[Тот же отбор по всему корпусу]
+    FB --> K
     K --> X{BGE reranker включён?}
     X -->|да| N[BGE ordering всего пула]
     X -->|нет| U
@@ -113,6 +119,22 @@ match резервируется в пятифрагментном контек�
 альтернатива — ошибочное all-token попадание не остаётся единственным
 источником генератора.
 Payload-index создаётся online один раз, без пересчёта vectors.
+
+Продуктовая область поиска задаётся двумя настройками. `RAG_PRODUCT` — основной
+продукт корпуса (`gts_nx`): он же используется как product-тег для файлов без
+явных маркеров. `RAG_PRODUCT_SCOPE` управляет фильтрацией при ответе:
+`strict` оставляет только фрагменты основного продукта (поведение ранних
+версий), `all` снимает фильтр полностью, а `fallback` (значение по умолчанию)
+сначала прогоняет scoped-пул и только если он не проходит gate — нет
+кандидата с `top_score >= RAG_SCORE_THRESHOLD` и нет выжившего strict-lexical
+match — повторяет тот же отбор по уже полученному полному корпусу без
+дополнительных retrieval-запросов. Поэтому явно помеченные документы других
+продуктов (например, уже лежащее в корпусе «Руководство по расчетам midas
+Civil 2020.pdf») остаются достижимыми и отвечают на вопросы вне основного
+продукта, но никогда не вытесняют evidence основного продукта, когда оно
+есть. Телеметрия `rag_retrieval_completed` фиксирует фактическую область
+(`product_scope`: `primary`, `fallback_all`, `all`) и число выбранных
+фрагментов вне основного продукта (`cross_product_selected_count`).
 
 Широкие обзорные вопросы (`расскажи про`, `что такое`, `дай обзор`) получают не
 более трёх фрагментов контекста, не более одного на исходный файл. Генератор сначала формулирует определение,
@@ -210,7 +232,7 @@ score, retrieval latency, outcome и число процитированных �
 | Raw retrieval | 1 запрос; 2 только для зависимого follow-up, по 30 кандидатов |
 | Hybrid recall | strict full-text match, до 30 кандидатов; 1 reserved context slot |
 | Query fusion | deterministic RRF по node id; lexical selection полного union; лимит 30 после неё |
-| Product scope | `RAG_PRODUCT=gts_nx` |
+| Product scope | `RAG_PRODUCT=gts_nx`; `RAG_PRODUCT_SCOPE=fallback` (strict \| fallback \| all) |
 | Ranking | cosine + `RAG_LEXICAL_TERM_WEIGHT`·term_cov + `RAG_LEXICAL_PAIR_WEIGHT`·pair_cov (0.7/0.3); затем optional BGE |
 | Context | максимум 5 уникальных фрагментов без жёсткого лимита на документ |
 | Re-ranker | optional `BAAI/bge-reranker-v2-m3`, `top_n=5` |
@@ -325,9 +347,10 @@ RAG_INGEST_ON_START=false
 
 Коллекция без новых `product`/`page` payload продолжает работать. Для legacy
 points query pipeline выводит продукт из `file_name`, `source`, `file_path` и
-`category` теми же правилами; поэтому явно маркированный Civil уже не попадёт в
-GTS NX context без немедленного reindex. Нейтральные названия наследуют
-`RAG_PRODUCT`.
+`category` теми же правилами; поэтому явно маркированный Civil не попадёт в
+GTS NX context без немедленного reindex (при `RAG_PRODUCT_SCOPE=fallback` он
+достижим только тогда, когда у основного продукта нет evidence). Нейтральные
+названия наследуют `RAG_PRODUCT`.
 
 Для legacy PDF физическая страница восстанавливается из сохранённого parent id,
 а напечатанный номер — из заголовка страницы, поэтому оба номера уже могут

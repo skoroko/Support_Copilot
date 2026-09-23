@@ -397,7 +397,35 @@ Telegram message
   типовые ошибки вне мануалов, другие продукты → структурно `NO_ANSWER`.
   Фильтр `RAG_PRODUCT=gts_nx` также отсекает явно помеченные другие
   продукты при их будущем добавлении.
-- **Статус:** [ ]
+- **Статус:** [x] — кодовая часть: новый `RAG_PRODUCT_SCOPE`
+  (`strict|fallback|all`, default `fallback`) в Settings → `RAGConfig`.
+  `fallback` сохраняет GTS NX первичным пулом и только при провале gate
+  (`top_score < min_score` и нет выжившего lexical-evidence) повторяет тот же
+  отбор по уже полученному полному корпусу — без дополнительных
+  retrieval-запросов; `all` снимает фильтр; `strict` — прежнее поведение.
+  Отбор пула вынесен в `_select_context` (fusion → lexical-rank → rerank →
+  reserve → dedup → gate), обе итерации идентичны. Телеметрия:
+  `product_scope` (`primary|fallback_all|all`) +
+  `cross_product_selected_count`. `RAG_PRODUCT` значения `all`/`any`/`none`
+  отклоняются (`RESERVED_PRODUCT_TOKENS`) в `RAGConfig` и `IngestionConfig`,
+  чтобы scope-токен не стал мёртвым product-тегом. `infer_product` дополнен
+  маркером `soilworks`; system/condense-промпты обобщены до «продуктов
+  MIDAS». Уже лежащий в корпусе «Руководство по расчетам midas Civil
+  2020.pdf» (раньше индексировался, но был недостижим) теперь отвечает на
+  Civil-вопросы. Контентная часть (установка, лицензии, типовые ошибки, FAQ,
+  другие продукты) — не код: пробелы и порядок пополнения зафиксированы в
+  `docs/data_inventory.md` → «Покрытие и пробелы корпуса» и сознательно
+  отложены пользователем до следующей версии агента — текущая версия
+  работает только с мануалами.
+  Тесты: `test_rag_product_scope_fallback_reaches_other_product_when_primary_empty`,
+  `test_rag_product_scope_strict_keeps_other_product_unreachable`,
+  `test_rag_product_scope_fallback_prefers_primary_evidence`,
+  `test_rag_product_scope_fallback_engages_when_primary_below_threshold`,
+  `test_rag_product_scope_all_disables_product_filter`,
+  `test_rag_config_rejects_scope_tokens_as_target_product`,
+  `test_rag_config_rejects_unknown_product_scope`,
+  `test_rag_config_reads_product_scope_setting`,
+  `test_ingestion_config_rejects_scope_tokens_as_default_product`.
 
 ### F14. Retrieval использует только последний user-вопрос
 
@@ -563,3 +591,4 @@ Telegram message
 | 2026-09-23 | F10 | `_is_overview_question`: токен-нормализация (пунктуация не влияет) + veto по wh-словам и основам действий — «расскажи, как настроить …» больше не попадает под обзор; лимит `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран, `max_per_file` стал мягким с backfill — контекст не режется ниже общего лимита ни на одном типе вопроса | 3 новых теста + переписанный overview-кейс + расширенный параметризованный детектор; полный прогон `tests` — 412 passed, 9 skipped |
 | 2026-09-23 | F11 | `build_llm_condense_hook` инжектится в `_initialize_rag` (флаг `RAG_CONDENSE_LLM_ENABLED`): LLM-rewrite хода по ограниченному диалогу → одиночный dense-запрос `condense_hook`, эхо → `independent`; отказ/таймаут/невалидный вывод → `None` → deterministic `follow_up` merge (dual query) — `_standalone_question` теперь возвращает источник rewrite, чтобы падение hook не ломало эвристики; lexical-запросы берут термины из `plan.ranking_question` для переписанных режимов | 11 новых тестов (hook, план, fallback, lexical, config, startup-инжекция); полный прогон `tests` — 426 passed, 9 skipped |
 | 2026-09-23 | F12 | Реранкер остаётся opt-in выключенным; веса `0.7·term_cov + 0.3·pair_cov` выведены из констант в `RAG_LEXICAL_TERM_WEIGHT` / `RAG_LEXICAL_PAIR_WEIGHT` (Settings → RAGConfig → `_rank_by_lexical_evidence`), валидация [0,1], `0`/`0` отключает lexical-буст | 7 новых тестов (from_settings, дефолты, диапазон, отключение буста); полный прогон `tests` — 434 passed, 9 skipped |
+| 2026-09-23 | F13 | `RAG_PRODUCT_SCOPE` (`strict\|fallback\|all`, default `fallback`): GTS NX остаётся первичным пулом, при провале evidence-gate отбор повторяется по полному корпусу без доп. retrieval-запросов — уже лежащий Civil-мануал становится достижимым; отбор вынесен в `_select_context`; телеметрия `product_scope` + `cross_product_selected_count`; scope-токены `all`/`any`/`none` отклонены как `RAG_PRODUCT`/`default_product`; `infer_product` +`soilworks`; промпты обобщены до продуктов MIDAS; пробелы корпуса описаны в `data_inventory.md` | 8 новых тестов в `test_rag.py` (scope-режимы, fallback, reserved-токены) + параметризованный guard в `test_ingestion.py`; полный прогон `tests` — 447 passed, 9 skipped |

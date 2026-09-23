@@ -29,16 +29,22 @@ from qdrant_client.models import (
     TokenizerType,
 )
 
-from app.services.ingestion import IngestionConfig, IngestionService, canonical_product, infer_product
+from app.services.ingestion import (
+    IngestionConfig,
+    IngestionService,
+    RESERVED_PRODUCT_TOKENS,
+    canonical_product,
+    infer_product,
+)
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash
 from app.observability.tracing import trace_rag_query
 from app.services.reranker import BGEReranker, RerankCandidate
 
 
-RAG_SYSTEM_PROMPT = """Ты — помощник технической поддержки MIDAS GTS NX.
+RAG_SYSTEM_PROMPT = """Ты — помощник технической поддержки продуктов MIDAS (основной — GTS NX).
 Отвечай только на русском языке и только по предоставленному контексту.
-Документы могут быть на русском или английском: переводи найденный ответ на русский.
+Документы могут быть на русском или английском и относиться к разным продуктам MIDAS: переводи найденный ответ на русский и опирайся на фрагменты, отвечающие на вопрос.
 Если контекст не содержит надёжного ответа, честно сообщи, что сведений в базе нет.
 Не используй нерелевантные документы и не придумывай цены, SLA, функции или регламенты.
 Отвечай только на запрошенное свойство или действие; не подменяй его сведениями о соседних темах из контекста.
@@ -46,7 +52,7 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 Если сведений для ответа нет, верни дословно: «В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос.» Не добавляй к этой фразе ссылки.
 После каждого утверждения указывай ссылки на использованные фрагменты в формате [1], [2].
 """
-LLM_CONDENSE_PROMPT = """Ты — переписыватель поисковых запросов базы знаний MIDAS GTS NX.
+LLM_CONDENSE_PROMPT = """Ты — переписыватель поисковых запросов базы знаний MIDAS.
 По диалогу и последнему сообщению пользователя сформулируй один самостоятельный
 поисковый вопрос на русском языке, понятный без контекста диалога.
 Правила:
@@ -68,6 +74,10 @@ MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
 RRF_RANK_CONSTANT = 60
 LEXICAL_CONTEXT_RESERVE = 1
+# Retrieval product scope modes: ``strict`` keeps only ``target_product``
+# chunks, ``fallback`` retries over the whole corpus when the scoped pool has
+# no usable evidence, and ``all`` disables the product filter entirely.
+PRODUCT_SCOPE_MODES = frozenset({"strict", "fallback", "all"})
 LEXICAL_PAYLOAD_FIELD = "_node_content"
 NEAR_DUPLICATE_RATIO = 0.9
 # The LLM condense call is auxiliary: it must stay cheaper than the guarded
@@ -552,6 +562,26 @@ class RetrievalPlan:
 
 
 @dataclass(frozen=True)
+class _ContextSelection:
+    """One candidate pool after fusion, ranking and the evidence gate.
+
+    The production answer uses the product-scoped selection; the optional
+    full-corpus fallback produces the same shape so the confidence gate and
+    telemetry stay identical for both pools.
+    """
+
+    ranked: list[Any]
+    sources: list[dict[str, Any]]
+    retrieved_contexts: list[str]
+    top_score: float
+    selected_top_score: float
+    fused_candidate_count: int
+    ranked_candidate_count: int
+    lexical_selected_count: int
+    has_evidence: bool
+
+
+@dataclass(frozen=True)
 class RAGConfig:
     data_dir: Path
     qdrant_url: str
@@ -565,6 +595,7 @@ class RAGConfig:
     chunk_overlap: int = 64
     top_k: int = 10
     target_product: str = "gts_nx"
+    product_scope: str = "fallback"
     min_score: float = 0.3
     rerank_enabled: bool = False
     rerank_top_n: int = 5
@@ -591,6 +622,10 @@ class RAGConfig:
             raise ValueError("top_k must be at least 3")
         if not canonical_product(self.target_product):
             raise ValueError("target_product must not be blank")
+        if canonical_product(self.target_product) in RESERVED_PRODUCT_TOKENS:
+            raise ValueError("target_product must name a product key; use product_scope for corpus-wide retrieval")
+        if self.product_scope not in PRODUCT_SCOPE_MODES:
+            raise ValueError(f"product_scope must be one of {sorted(PRODUCT_SCOPE_MODES)}")
         if self.rerank_top_n < 1:
             raise ValueError("rerank_top_n must be positive")
         if self.reranker_batch_size < 1:
@@ -635,6 +670,7 @@ class RAGConfig:
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             top_k=getattr(settings, "rag_top_k", 10),
             target_product=getattr(settings, "rag_product", "gts_nx"),
+            product_scope=str(getattr(settings, "rag_product_scope", "fallback")),
             min_score=float(score_threshold),
             rerank_enabled=bool(
                 getattr(settings, "rag_reranker_enabled", getattr(settings, "rag_rerank_enabled", False))
@@ -795,19 +831,24 @@ class RAGService:
             for query in plan.queries
         ]
         product_rankings = [
-            [item for item in ranking if self._matches_target_product(item)]
+            self._product_scoped(ranking)
             for ranking in retrieved_by_query
         ]
         lexical_queries = self._lexical_queries(question, history, plan)
         lexical_query: str | None = None
         lexical_candidates: list[Any] = []
+        # The unscoped counterpart of the strict full-text hit feeds the
+        # optional cross-product fallback below: it is the recall pool for a
+        # question the configured product cannot answer at all.
+        lexical_fallback_query: str | None = None
+        lexical_fallback_candidates: list[Any] = []
         if self._lexical_available:
             for candidate_query in lexical_queries:
-                candidates = [
-                    item
-                    for item in self._retrieve_lexical_candidates(candidate_query)
-                    if self._matches_target_product(item)
-                ]
+                unscoped_candidates = self._retrieve_lexical_candidates(candidate_query)
+                candidates = self._product_scoped(unscoped_candidates)
+                if unscoped_candidates and not lexical_fallback_candidates:
+                    lexical_fallback_query = candidate_query
+                    lexical_fallback_candidates = unscoped_candidates
                 if candidates:
                     lexical_query = candidate_query
                     lexical_candidates = candidates
@@ -824,9 +865,7 @@ class RAGService:
                 fallback_ranking = list(self._retriever.retrieve(fallback_query))[
                     : self._raw_candidate_limit()
                 ]
-                fallback_product_ranking = [
-                    item for item in fallback_ranking if self._matches_target_product(item)
-                ]
+                fallback_product_ranking = self._product_scoped(fallback_ranking)
                 retrieved_by_query.append(fallback_ranking)
                 product_rankings.append(fallback_product_ranking)
                 dense_fallback_queries.append(fallback_query)
@@ -838,104 +877,79 @@ class RAGService:
                     break
                 if len(dense_fallback_queries) >= MAX_DENSE_FALLBACK_QUERIES:
                     break
-        if lexical_candidates:
-            product_rankings.append(lexical_candidates)
-        product_candidates = self._fuse_retrieval_candidates(product_rankings)
-        lexical_order = list(
-            dict.fromkeys(self._node_identity(item) for item in lexical_candidates)
-        )
-        lexical_ids = set(lexical_order)
-        canonical_candidates = {
-            self._node_identity(item): item for item in product_candidates
-        }
-        for node_id in lexical_ids:
-            if candidate := canonical_candidates.get(node_id):
-                candidate.node.metadata["_lexical_match"] = True
-        # Rank the complete product-scoped pool before removing duplicates or
-        # applying the final context limit.  An earlier per-file cap discarded
-        # exact evidence whenever two weaker dense matches from the same manual
-        # happened to arrive first.
-        ranked = self._rank_by_lexical_evidence(plan.ranking_question, product_candidates)
-        # Keep the complete union until lexical evidence has had a chance to
-        # rescue a candidate returned by only one query variant.  Capping the
-        # RRF union first can discard that exact passage behind candidates
-        # duplicated across both dense rankings.
-        ranked = ranked[: self._raw_candidate_limit()]
-        ranked = self._rerank(plan.ranking_question, ranked)
-        ranked_candidate_count = len(ranked)
         overview_question = self._is_overview_question(question)
-        best_dense_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
-        reserve_lexical = not overview_question or best_dense_score < self.config.min_score
-        reserved = self._rank_fulltext_evidence(
-            question,
-            [canonical_candidates[node_id] for node_id in lexical_order if node_id in canonical_candidates],
-            retrieval_query=lexical_query,
-        )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())] if reserve_lexical else []
-        for candidate in reserved:
-            candidate.node.metadata["_lexical_focus_query"] = lexical_query
-        ranked = self._prepend_reserved(reserved, ranked)
-        if plan.mode == "follow_up" and reserved:
-            # The reserved lexical fragment still leads, but a single-fragment
-            # context made the answer hostage to one all-token match: a wrong
-            # hit left the generator no corrective dense evidence at all.
-            context_limit = min(self._context_limit(), FOLLOWUP_LEXICAL_CONTEXT_SOURCES)
-        else:
-            # Overview questions share the regular context limit: breadth
-            # comes from the per-file diversity preference in ``_deduplicate``
-            # and the survey instruction, never from a smaller budget.
-            context_limit = self._context_limit()
-        # Confidence is measured over the ranked candidate pool before
-        # deduplication and the context limit discard candidates: a dropped
-        # near-duplicate still means the retriever found confident evidence,
-        # which survives in the kept twin.  Cosine similarity remains the
-        # confidence signal even when a cross-encoder changes presentation
-        # order; cross-encoder scores are not calibrated to the embedding
-        # threshold.
-        top_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
-        ranked = self._deduplicate(
-            ranked,
-            limit=context_limit,
-            max_per_file=1 if overview_question else None,
+        selection = self._select_context(
+            question=question,
+            plan=plan,
+            rankings=product_rankings,
+            lexical_candidates=lexical_candidates,
+            lexical_query=lexical_query,
+            overview_question=overview_question,
         )
-        sources = [self._source_from_node(item) for item in ranked]
-        selected_top_score = max((source["score"] for source in sources), default=0.0)
+        product_scope = "all" if self._scope_all_products() else "primary"
+        if (
+            self.config.product_scope == "fallback"
+            and not selection.has_evidence
+            and self._has_out_of_scope_candidates(
+                retrieved_by_query, lexical_fallback_candidates
+            )
+        ):
+            # The configured product produced nothing usable.  Run the same
+            # ranking and evidence gates over the already retrieved
+            # full-corpus pool so explicitly labelled sibling products (for
+            # example the Civil manual ingested next to GTS NX) can answer
+            # instead of a structural NO_ANSWER.  The scoped selection always
+            # wins while it has evidence, so cross-product material never
+            # dilutes a good primary answer.
+            selection = self._select_context(
+                question=question,
+                plan=plan,
+                rankings=retrieved_by_query,
+                lexical_candidates=lexical_fallback_candidates,
+                lexical_query=lexical_fallback_query,
+                overview_question=overview_question,
+            )
+            product_scope = "fallback_all"
         telemetry = {
             "question_hash": prompt_hash(question.strip()),
             "plan_mode": plan.mode,
             "query_variant_count": len(plan.queries),
             "raw_candidate_counts": [len(items) for items in retrieved_by_query],
-            "product_candidate_counts": [len(items) for items in product_rankings],
-            "fused_candidate_count": len(product_candidates),
+            "product_candidate_counts": [
+                *(len(items) for items in product_rankings),
+                *([len(lexical_candidates)] if lexical_candidates else []),
+            ],
+            "fused_candidate_count": selection.fused_candidate_count,
             "lexical_candidate_count": len(lexical_candidates),
             "lexical_query_variant_count": len(lexical_queries),
             "dense_fallback_query_count": len(dense_fallback_queries),
-            "lexical_selected_count": sum(
-                self._node_identity(item) in lexical_ids for item in ranked
-            ),
-            "ranked_candidate_count": ranked_candidate_count,
-            "selected_candidate_ids": [source["id"] for source in sources],
-            "selected_candidate_count": len(sources),
+            "lexical_selected_count": selection.lexical_selected_count,
+            "ranked_candidate_count": selection.ranked_candidate_count,
+            "selected_candidate_ids": [source["id"] for source in selection.sources],
+            "selected_candidate_count": len(selection.sources),
             "answer_mode": "overview" if overview_question else "focused",
-            "top_score": round(top_score, 6),
-            "selected_top_score": round(selected_top_score, 6),
+            "product_scope": product_scope,
+            "cross_product_selected_count": sum(
+                not self._matches_target_product(item) for item in selection.ranked
+            ),
+            "top_score": round(selection.top_score, 6),
+            "selected_top_score": round(selection.selected_top_score, 6),
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
-        has_lexical_evidence = any(self._node_identity(item) in lexical_ids for item in ranked)
-        retrieved_contexts = [self._context_text(item) for item in ranked]
-        if top_score < self.config.min_score and not has_lexical_evidence:
+        if not selection.has_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
             result: dict[str, Any] = {
                 "answer": NO_ANSWER,
-                "top_score": top_score,
+                "top_score": selection.top_score,
                 "sources": [],
             }
             if include_retrieved_contexts:
-                result["retrieved_contexts"] = retrieved_contexts
+                result["retrieved_contexts"] = selection.retrieved_contexts
             return result
         answer, cited_sources = self._generate_answer(
             question.strip(),
-            sources,
-            ranked,
+            selection.sources,
+            selection.ranked,
             overview_question=overview_question,
             history=history,
         )
@@ -946,9 +960,9 @@ class RAGService:
             outcome=outcome,
             cited_source_count=len(cited_sources),
         )
-        result = {"answer": answer, "top_score": top_score, "sources": cited_sources}
+        result = {"answer": answer, "top_score": selection.top_score, "sources": cited_sources}
         if include_retrieved_contexts:
-            result["retrieved_contexts"] = retrieved_contexts
+            result["retrieved_contexts"] = selection.retrieved_contexts
         return result
 
     def query(
@@ -1121,6 +1135,124 @@ class RAGService:
                 default_product=self.config.target_product,
             )
         return product == canonical_product(self.config.target_product)
+
+    def _scope_all_products(self) -> bool:
+        return self.config.product_scope == "all"
+
+    def _product_scoped(self, ranking: Sequence[Any]) -> list[Any]:
+        """Apply the configured product scope to one raw candidate ranking."""
+
+        if self._scope_all_products():
+            return list(ranking)
+        return [item for item in ranking if self._matches_target_product(item)]
+
+    def _has_out_of_scope_candidates(
+        self,
+        rankings: Sequence[Sequence[Any]],
+        lexical_candidates: Sequence[Any],
+    ) -> bool:
+        """Whether any retrieved evidence sits outside the target product."""
+
+        return any(
+            not self._matches_target_product(item)
+            for ranking in rankings
+            for item in ranking
+        ) or any(
+            not self._matches_target_product(item) for item in lexical_candidates
+        )
+
+    def _select_context(
+        self,
+        *,
+        question: str,
+        plan: RetrievalPlan,
+        rankings: Sequence[Sequence[Any]],
+        lexical_candidates: Sequence[Any],
+        lexical_query: str | None,
+        overview_question: bool,
+    ) -> _ContextSelection:
+        """Fuse, rank and gate one candidate pool into an answer context.
+
+        The product-scoped pool and the optional full-corpus fallback share
+        this pipeline so the confidence rule — dense score above threshold or
+        strict lexical evidence surviving selection — is identical no matter
+        which pool supplied the fragments.
+        """
+
+        rankings_all = (
+            [*rankings, list(lexical_candidates)] if lexical_candidates else list(rankings)
+        )
+        candidates = self._fuse_retrieval_candidates(rankings_all)
+        lexical_order = list(
+            dict.fromkeys(self._node_identity(item) for item in lexical_candidates)
+        )
+        lexical_ids = set(lexical_order)
+        canonical_candidates = {
+            self._node_identity(item): item for item in candidates
+        }
+        for node_id in lexical_ids:
+            if candidate := canonical_candidates.get(node_id):
+                candidate.node.metadata["_lexical_match"] = True
+        # Rank the complete pool before removing duplicates or applying the
+        # final context limit.  An earlier per-file cap discarded exact
+        # evidence whenever two weaker dense matches from the same manual
+        # happened to arrive first.
+        ranked = self._rank_by_lexical_evidence(plan.ranking_question, candidates)
+        # Keep the complete union until lexical evidence has had a chance to
+        # rescue a candidate returned by only one query variant.  Capping the
+        # RRF union first can discard that exact passage behind candidates
+        # duplicated across both dense rankings.
+        ranked = ranked[: self._raw_candidate_limit()]
+        ranked = self._rerank(plan.ranking_question, ranked)
+        ranked_candidate_count = len(ranked)
+        best_dense_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
+        reserve_lexical = not overview_question or best_dense_score < self.config.min_score
+        reserved = self._rank_fulltext_evidence(
+            question,
+            [canonical_candidates[node_id] for node_id in lexical_order if node_id in canonical_candidates],
+            retrieval_query=lexical_query,
+        )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())] if reserve_lexical else []
+        for candidate in reserved:
+            candidate.node.metadata["_lexical_focus_query"] = lexical_query
+        ranked = self._prepend_reserved(reserved, ranked)
+        if plan.mode == "follow_up" and reserved:
+            # The reserved lexical fragment still leads, but a single-fragment
+            # context made the answer hostage to one all-token match: a wrong
+            # hit left the generator no corrective dense evidence at all.
+            context_limit = min(self._context_limit(), FOLLOWUP_LEXICAL_CONTEXT_SOURCES)
+        else:
+            # Overview questions share the regular context limit: breadth
+            # comes from the per-file diversity preference in ``_deduplicate``
+            # and the survey instruction, never from a smaller budget.
+            context_limit = self._context_limit()
+        # Confidence is measured over the ranked candidate pool before
+        # deduplication and the context limit discard candidates: a dropped
+        # near-duplicate still means the retriever found confident evidence,
+        # which survives in the kept twin.  Cosine similarity remains the
+        # confidence signal even when a cross-encoder changes presentation
+        # order; cross-encoder scores are not calibrated to the embedding
+        # threshold.
+        top_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
+        ranked = self._deduplicate(
+            ranked,
+            limit=context_limit,
+            max_per_file=1 if overview_question else None,
+        )
+        sources = [self._source_from_node(item) for item in ranked]
+        lexical_selected_count = sum(
+            self._node_identity(item) in lexical_ids for item in ranked
+        )
+        return _ContextSelection(
+            ranked=ranked,
+            sources=sources,
+            retrieved_contexts=[self._context_text(item) for item in ranked],
+            top_score=top_score,
+            selected_top_score=max((source["score"] for source in sources), default=0.0),
+            fused_candidate_count=len(candidates),
+            ranked_candidate_count=ranked_candidate_count,
+            lexical_selected_count=lexical_selected_count,
+            has_evidence=top_score >= self.config.min_score or lexical_selected_count > 0,
+        )
 
     def _raw_candidate_limit(self) -> int:
         return min(MAX_RAW_CANDIDATES, max(MAX_CONTEXT_SOURCES, self.config.top_k * RAW_CANDIDATE_MULTIPLIER))
