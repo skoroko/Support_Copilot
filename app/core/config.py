@@ -225,6 +225,18 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
     )
+    rag_lexical_term_weight: float = Field(
+        default=0.7,
+        ge=0,
+        le=1,
+        validation_alias=AliasChoices("RAG_LEXICAL_TERM_WEIGHT"),
+    )
+    rag_lexical_pair_weight: float = Field(
+        default=0.3,
+        ge=0,
+        le=1,
+        validation_alias=AliasChoices("RAG_LEXICAL_PAIR_WEIGHT"),
+    )
     rag_collection: str = Field(
         default="rag_eval_chunk_1024",
         min_length=1,
@@ -457,6 +469,8 @@ def get_settings() -> Settings:
         rag_condense_llm_enabled=(
             os.getenv("RAG_CONDENSE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
+        rag_lexical_term_weight=float(os.getenv("RAG_LEXICAL_TERM_WEIGHT") or 0.7),
+        rag_lexical_pair_weight=float(os.getenv("RAG_LEXICAL_PAIR_WEIGHT") or 0.3),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_eval_chunk_1024",
         rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",
         rag_rebuild_on_start=(

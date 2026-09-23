@@ -377,7 +377,18 @@ Telegram message
 - **Файлы:** `app/core/config.py:190-193`, `app/services/rag.py:1062-1099`
 - **Суть:** `RAG_RERANKER_ENABLED=false` по умолчанию; ранжирование =
   `cosine + 0.7·term_cov + 0.3·pair_cov`, подобранное под eval-кейсы.
-- **Статус:** [ ]
+- **Статус:** [x] — решение зафиксировано: BGE-реранкер остаётся opt-in
+  (`RAG_RERANKER_ENABLED=false` по умолчанию), а ручные веса выведены из
+  магических констант в конфигурацию: `RAG_LEXICAL_TERM_WEIGHT` (default 0.7)
+  и `RAG_LEXICAL_PAIR_WEIGHT` (default 0.3) в `Settings`, `RAGConfig` и
+  `_rank_by_lexical_evidence` с валидацией диапазона [0,1]. `0`/`0` отключает
+  lexical-буст и возвращает чистый dense-порядок — это даёт управляемый
+  способ сравнивать веса на eval-прогонах без правки кода. Формула
+  задокументирована в `.env.example` и `docs/rag.md`. Тесты:
+  `test_rag_config_reads_lexical_rank_weights`,
+  `test_rag_config_defaults_keep_eval_tuned_lexical_weights`,
+  `test_rag_config_rejects_out_of_range_lexical_weights` (4 кейса),
+  `test_lexical_rank_weights_zero_disables_lexical_boost`.
 
 ### F13. Корпус узкий: только документация GTS NX
 
@@ -551,3 +562,4 @@ Telegram message
 | 2026-09-23 | F9 | `top_score` считается по пулу `ranked` до `_deduplicate`/context-limit вместо максимума по отобранным источникам — выпадение топ-кандидата на дедупе/лимите больше не даёт ложный `NO_ANSWER`; в телеметрию добавлен `selected_top_score` | новый тест near-duplicate + обновлённый reranker-кейс; прогон `tests` |
 | 2026-09-23 | F10 | `_is_overview_question`: токен-нормализация (пунктуация не влияет) + veto по wh-словам и основам действий — «расскажи, как настроить …» больше не попадает под обзор; лимит `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран, `max_per_file` стал мягким с backfill — контекст не режется ниже общего лимита ни на одном типе вопроса | 3 новых теста + переписанный overview-кейс + расширенный параметризованный детектор; полный прогон `tests` — 412 passed, 9 skipped |
 | 2026-09-23 | F11 | `build_llm_condense_hook` инжектится в `_initialize_rag` (флаг `RAG_CONDENSE_LLM_ENABLED`): LLM-rewrite хода по ограниченному диалогу → одиночный dense-запрос `condense_hook`, эхо → `independent`; отказ/таймаут/невалидный вывод → `None` → deterministic `follow_up` merge (dual query) — `_standalone_question` теперь возвращает источник rewrite, чтобы падение hook не ломало эвристики; lexical-запросы берут термины из `plan.ranking_question` для переписанных режимов | 11 новых тестов (hook, план, fallback, lexical, config, startup-инжекция); полный прогон `tests` — 426 passed, 9 skipped |
+| 2026-09-23 | F12 | Реранкер остаётся opt-in выключенным; веса `0.7·term_cov + 0.3·pair_cov` выведены из констант в `RAG_LEXICAL_TERM_WEIGHT` / `RAG_LEXICAL_PAIR_WEIGHT` (Settings → RAGConfig → `_rank_by_lexical_evidence`), валидация [0,1], `0`/`0` отключает lexical-буст | 7 новых тестов (from_settings, дефолты, диапазон, отключение буста); полный прогон `tests` — 434 passed, 9 skipped |
