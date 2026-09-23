@@ -17,7 +17,7 @@ from qdrant_client.models import Distance
 from app.routers.rag import router as rag_router
 from app.schemas.rag import RAGHistoryMessage
 from app.services.chm_reader import CHMReader
-from app.services.rag import NO_ANSWER, RAGConfig, RAGService
+from app.services.rag import NO_ANSWER, RAGConfig, RAGService, RetrievalPlan, build_llm_condense_hook
 from app.services.rag_baremetal import BareMetalRAGService, TextRecord, naive_chunks
 
 
@@ -1740,6 +1740,186 @@ def test_standalone_question_and_condense_hook_override_default_rewrite(tmp_path
     )
 
     assert retriever.questions == ["rewritten: А для электроники?", "срок возврата электроники"]
+
+
+def test_llm_condense_hook_rewrites_follow_up_into_single_standalone_query(tmp_path: Path) -> None:
+    """The injected LLM hook replaces the regex merge with one resolved query."""
+
+    condense_llm = FakeLLM("Какие степени свободы у элемента плоской деформации?")
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А какие из них для плоской деформации?",
+        history=[{"role": "user", "content": "Какие типы элементов есть в GTS NX?"}],
+    )
+
+    assert retriever.questions == ["Какие степени свободы у элемента плоской деформации?"]
+    assert len(condense_llm.prompts) == 1
+    assert "Последнее сообщение пользователя: А какие из них для плоской деформации?" in (
+        condense_llm.prompts[0]
+    )
+    assert "Пользователь: Какие типы элементов есть в GTS NX?" in condense_llm.prompts[0]
+
+
+def test_llm_condense_hook_echo_marks_question_independent(tmp_path: Path) -> None:
+    """An unchanged rewrite is the model's verdict that the turn is standalone."""
+
+    condense_llm = FakeLLM("Какие модели материала доступны?")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm),
+    )
+
+    plan = service._retrieval_plan(
+        "Какие модели материала доступны?",
+        [{"role": "user", "content": "Как настроить сетку?"}],
+        None,
+    )
+
+    assert plan.mode == "independent"
+    assert plan.queries == ("Какие модели материала доступны?",)
+
+
+def test_llm_condense_hook_failure_falls_back_to_deterministic_merge(tmp_path: Path) -> None:
+    """A condense outage must not disable the proven heuristic follow-up path."""
+
+    class FailingLLM:
+        def complete(self, _prompt: str):
+            raise TimeoutError("provider timeout")
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=FailingLLM()),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для электроники?",
+        history=[{"role": "user", "content": "Каков срок возврата?"}],
+    )
+
+    assert retriever.questions == [
+        "А для электроники?",
+        "Каков срок возврата? А для электроники?",
+    ]
+
+
+def test_raising_condense_hook_falls_back_to_deterministic_merge(tmp_path: Path) -> None:
+    """Even a non-cooperative hook must not crash the answer path."""
+
+    def broken_hook(_question: str, _history: object) -> str:
+        raise RuntimeError("custom hook exploded")
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        condense_hook=broken_hook,
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для электроники?",
+        history=[{"role": "user", "content": "Каков срок возврата?"}],
+    )
+
+    assert retriever.questions == [
+        "А для электроники?",
+        "Каков срок возврата? А для электроники?",
+    ]
+
+
+@pytest.mark.parametrize("bad_output", ["", "   \n  ", "x" * 600])
+def test_llm_condense_hook_rejects_contract_violating_output(
+    tmp_path: Path, bad_output: str
+) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=FakeLLM(bad_output)),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для электроники?",
+        history=[{"role": "user", "content": "Каков срок возврата?"}],
+    )
+
+    assert retriever.questions == [
+        "А для электроники?",
+        "Каков срок возврата? А для электроники?",
+    ]
+
+
+def test_llm_condense_hook_prompt_renders_bounded_dialog_without_stale_citations(
+    tmp_path: Path,
+) -> None:
+    condense_llm = FakeLLM("Каков срок возврата электроники?")
+    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
+
+    result = hook(
+        "А для электроники?",
+        [
+            {"role": "user", "content": "Каков срок возврата товара?"},
+            {"role": "assistant", "content": "Для большинства товаров 30 дней [1]."},
+        ],
+    )
+
+    assert result == "Каков срок возврата электроники?"
+    prompt = condense_llm.prompts[0]
+    assert "Пользователь: Каков срок возврата товара?" in prompt
+    assert "Ассистент: Для большинства товаров 30 дней" in prompt
+    assert "[1]" not in prompt
+    assert "Последнее сообщение пользователя: А для электроники?" in prompt
+
+
+def test_llm_condense_hook_skips_llm_without_usable_history(tmp_path: Path) -> None:
+    condense_llm = FakeLLM("не должен вызываться")
+    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
+
+    assert hook("Вопрос", []) is None
+    assert hook("Вопрос", [{"role": "system", "content": "правила"}]) is None
+    assert condense_llm.prompts == []
+
+
+def test_llm_condense_hook_strips_output_label_and_quotes(tmp_path: Path) -> None:
+    condense_llm = FakeLLM("Самостоятельный вопрос: «Какие типы элементов есть?»")
+    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
+
+    result = hook("А какие?", [{"role": "user", "content": "Расскажи про элементы."}])
+
+    assert result == "Какие типы элементов есть?"
+
+
+def test_lexical_query_uses_condensed_question_terms(tmp_path: Path) -> None:
+    """A hook-rewritten plan feeds lexical recall from the resolved subject."""
+
+    service = RAGService(rag_config(tmp_path))
+    plan = RetrievalPlan(
+        "Какие степени свободы у элемента плоской деформации?",
+        ("Какие степени свободы у элемента плоской деформации?",),
+        "condense_hook",
+    )
+
+    assert service._lexical_query(
+        "А для них?", [{"role": "user", "content": "Расскажи про элементы."}], plan
+    ) == "степени свободы элемента плоской"
+
+
+def test_rag_config_reads_condense_llm_setting() -> None:
+    config = RAGConfig.from_settings(SimpleNamespace(rag_condense_llm_enabled=False))
+
+    assert config.condense_llm_enabled is False
 
 
 def test_rag_requires_explicit_permission_before_embedding_question(tmp_path: Path) -> None:

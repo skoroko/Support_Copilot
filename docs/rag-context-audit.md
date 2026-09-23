@@ -14,7 +14,7 @@ Telegram message
   -> app/chat/routes.py              (validate_input, moderation)
   -> ChatService.send_message        (history = последние 10 сообщений)
   -> RAGService.answer(question, history)
-       _retrieval_plan               (follow-up эвристика)
+       _retrieval_plan               (LLM condense -> follow-up эвристика)
        dense retrieve x N запросов   (до 30 raw кандидатов)
        product filter (gts_nx)
        lexical full-text recall      (Qdrant text index, snowball RU)
@@ -352,7 +352,25 @@ Telegram message
 - **Суть:** `condense_hook` объявлен, но нигде не инжектится — сервис
   создаётся без него. Весь disambiguation на regex-эвристиках; нет
   multi-query decomposition, HyDE, уточняющих вопросов пользователю.
-- **Статус:** [ ]
+- **Статус:** [x] — `_initialize_rag` инжектит `build_llm_condense_hook(config)`
+  при `RAG_CONDENSE_ENABLED` + `RAG_CONDENSE_LLM_ENABLED` (оба default true).
+  Хук отдаёт модели ограниченный блок `Диалог:` (тот же рендер, что в
+  генерации) + последнее сообщение и просит один самостоятельный вопрос
+  одной строкой; успешный rewrite идёт единственным dense-запросом
+  (`plan_mode="condense_hook"`), эхо вопроса помечается `independent`.
+  Ошибка провайдера, таймаут (отдельный лимит 15 с) или нарушение контракта
+  вывода (пусто / >500 символов) → `None` → прежний детерминированный
+  `follow_up`-merge с двумя запросами: падение LLM не отключает
+  эвристики. Prompt помечает диалог и вопрос как данные, не инструкции.
+  Lexical-запросы и окна строятся по терминам `plan.ranking_question` для
+  переписанных режимов (`condense_hook`, `caller_standalone`), поэтому
+  strict full-text recall ищет по разрешённому предмету, а не по
+  эллиптической формулировке. Осознанно вне scope: multi-query
+  decomposition, HyDE и уточняющие вопросы пользователю — отдельные
+  инкременты. Тесты: `test_llm_condense_hook_*` (7 кейсов),
+  `test_lexical_query_uses_condensed_question_terms`,
+  `test_rag_config_reads_condense_llm_setting`,
+  `test_initialize_rag_*condense*` (3 кейса).
 
 ### F12. Reranker выключен по умолчанию; ручные веса ранжирования
 
@@ -532,3 +550,4 @@ Telegram message
 | 2026-09-23 | F8 | `/ready` возвращает `rag` + `rag_error` (200 + degraded, без restart loop); SSE `notice`/`rag_unavailable` при включённом, но неподнявшемся RAG; `FALLBACK_SYSTEM_PROMPT` для non-RAG пути; `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=false` → startup-деградация `ExternalDataTransferNotAllowed`; бот показывает notice под ответом | 12 новых тестов (startup, ready, route notice, fallback prompt, bot notice) + обновлённые ready-assertions |
 | 2026-09-23 | F9 | `top_score` считается по пулу `ranked` до `_deduplicate`/context-limit вместо максимума по отобранным источникам — выпадение топ-кандидата на дедупе/лимите больше не даёт ложный `NO_ANSWER`; в телеметрию добавлен `selected_top_score` | новый тест near-duplicate + обновлённый reranker-кейс; прогон `tests` |
 | 2026-09-23 | F10 | `_is_overview_question`: токен-нормализация (пунктуация не влияет) + veto по wh-словам и основам действий — «расскажи, как настроить …» больше не попадает под обзор; лимит `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран, `max_per_file` стал мягким с backfill — контекст не режется ниже общего лимита ни на одном типе вопроса | 3 новых теста + переписанный overview-кейс + расширенный параметризованный детектор; полный прогон `tests` — 412 passed, 9 skipped |
+| 2026-09-23 | F11 | `build_llm_condense_hook` инжектится в `_initialize_rag` (флаг `RAG_CONDENSE_LLM_ENABLED`): LLM-rewrite хода по ограниченному диалогу → одиночный dense-запрос `condense_hook`, эхо → `independent`; отказ/таймаут/невалидный вывод → `None` → deterministic `follow_up` merge (dual query) — `_standalone_question` теперь возвращает источник rewrite, чтобы падение hook не ломало эвристики; lexical-запросы берут термины из `plan.ranking_question` для переписанных режимов | 11 новых тестов (hook, план, fallback, lexical, config, startup-инжекция); полный прогон `tests` — 426 passed, 9 skipped |
