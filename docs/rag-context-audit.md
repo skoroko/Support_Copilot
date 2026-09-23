@@ -22,7 +22,7 @@ Telegram message
        dedup -> top-5 фрагментов
        min_score gate (0.45)
        _generate_answer              (контекст + сырой вопрос; истории НЕТ)
-       citation grounding            (нет [N] -> NO_ANSWER)
+       citation grounding            (нет [N] -> ответ без списка источников)
   -> SSE -> bot stream_to_chat -> editMessageText
 ```
 
@@ -231,7 +231,28 @@ Telegram message
 - **Вариант исправления:** fallback — вернуть ответ без источников или с
   мягкой пометкой, расширить распознавание форматов ссылок, логировать
   исходный ответ при отказе.
-- **Статус:** [ ]
+- **Статус:** [x] — `_ground_answer` нормализует альтернативные формы цитат
+  к каноническому `[N]` до проверки: `【1】`/`【1†…】`, `[^1]`, словесные
+  «источник 1»/«источники 1 и 2»/«source: 2»; mid-line `(1)` — только при
+  полном отсутствии канонических маркеров (строчные `(1)`-перечисления
+  остаются прозой). Ответ без валидных ссылок доставляется без списка
+  источников: висячие `[N]` вне диапазона вырезаются, пишется warning
+  `rag_answer_missing_citations` (длина и число источников, без текста),
+  outcome `missing_valid_citation` сохранён. Полный отказ остаётся только
+  для явной абстенции и ответа, сводящегося к висячим ссылкам.
+  Тесты: `test_rag_delivers_uncited_answer_without_sources`,
+  `test_rag_normalizes_cjk_citation_brackets`,
+  `test_rag_normalizes_annotated_cjk_citation`,
+  `test_rag_normalizes_footnote_citation`,
+  `test_rag_normalizes_source_word_citations`,
+  `test_rag_normalizes_multi_number_source_word_citations`,
+  `test_rag_merges_mixed_citation_formats_into_one_numbering`,
+  `test_rag_converts_midline_paren_citation_without_canonical_markers`,
+  `test_rag_keeps_paren_numbers_when_canonical_citations_exist`,
+  `test_rag_keeps_line_start_paren_enumeration_as_prose`,
+  `test_rag_strips_dangling_citations_but_delivers_answer`,
+  `test_rag_refuses_answer_that_is_only_dangling_citations`,
+  `test_rag_uncited_llm_answer_is_delivered_without_sources`.
 
 ### F8. Тихая деградация при недоступном/несобранном RAG
 
@@ -461,3 +482,4 @@ Telegram message
 | 2026-09-23 | F2 | `send_message` строит вопрос для RAG через `_rag_question`: `part.type=="text"` склеивается в вопрос с bound'ом `RAG_MEDIA_TEXT_MAX_CHARS`; фото без подписи — явный отказ без retrieval, с подписью — поиск по подписи | 4 новых теста в `tests/chat/test_service_context.py`; полный прогон `tests` — 322 passed |
 | 2026-09-23 | F3, F21 | `validate_input` больше не применяется к extracted-тексту медиа; лимит пользовательского сообщения поднят до `MAX_MESSAGE_CHARS=16_000`; транскрипт whisper ограничен `MAX_DOCUMENT_CHARS`; бот разводит 400/403/413/415/422/429/5xx по понятным сообщениям | 4 новых route-теста + тесты валидатора, медиа-лимита и маппинга ошибок; полный прогон `tests` — 334 passed, 9 skipped |
 | 2026-09-23 | F5 | `context_limit=1` для follow_up+reserved заменён лимитом `FOLLOWUP_LEXICAL_CONTEXT_SOURCES=3`: резерв идёт первым, до двух dense-альтернатив сохраняются в prompt | новый тест + полный прогон `tests` в `.venv` (`uv sync --extra eval`, CPython 3.13.15) — 350 passed, 9 skipped |
+| 2026-09-23 | F7 | `_ground_answer`: нормализация `【N】`/`[^N]`/«источник N»/mid-line `(N)` к `[N]`; ответ без валидных ссылок доставляется без списка источников вместо `NO_ANSWER`; warning `rag_answer_missing_citations` | 12 новых тестов grounding + обновлённый uncited-кейс; полный прогон `tests` — 386 passed, 9 skipped |
