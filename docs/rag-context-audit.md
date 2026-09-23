@@ -463,7 +463,43 @@ Telegram message
 - **Суть:** `owner_external_id = message.chat.id` — у группы одна общая
   история и контекст; follow-up одного человека склеивается с вопросом
   другого.
-- **Статус:** [ ]
+- **Статус:** [x] — owner-ключ теперь зависит от отправителя:
+  `chat_owner_external_id`/`message_owner_external_id` в `_common.py` дают
+  приватным чатам прежний `chat.id`, а участникам групп —
+  `"<chat_id>:<sender_id>"` (sender = `from_user`, для анонимных админов и
+  постов канала — `sender_chat`, без отправителя — fallback `chat_id:chat_id`).
+  Каждый участник группы получает отдельный backend-чат и свою историю.
+  Burst-батчи `_pending` ключированы owner-ключом — быстрые сообщения разных
+  участников не склеиваются в один запрос; `flush_pending` по-прежнему
+  принимает Telegram `chat_id` и сбрасывает все батчи этого чата. Ответы в
+  группах уходят через `message.reply` (`send_answer`), поэтому видно, к чьему
+  вопросу относится ответ; доставка остаётся в тот же Telegram-чат.
+  Feedback-колбэки вычисляют owner по нажавшему пользователю
+  (`callback_owner_external_id`) — чужой клик получает 404 от backend и тост
+  об ошибке; `_principal_headers_for_chat` больше не перезаписывает
+  `_chat_owners` caller-supplied owner, иначе чужой клик отравлял бы привязку
+  чата до рестарта. Ведущий сегмент ключа парсится обратно в Telegram chat id
+  через `telegram_chat_id_from_owner` (`app/chat/domain.py`) для
+  admin-уведомлений (`/chats/admin/{id}/notification`) и рассылки; рассылка
+  дедуплицирует участников одной группы — одно сообщение на Telegram-чат.
+  Побочный эффект: `/clear` участника теперь очищает только его историю, а
+  admin-статистика считает «пользователь в чате». Тесты:
+  `test_private_message_owner_key_stays_chat_id`,
+  `test_group_message_owner_key_scopes_sender`,
+  `test_group_message_owner_key_falls_back_to_sender_chat`,
+  `test_group_message_owner_key_falls_back_to_chat_without_sender`,
+  `test_callback_owner_key_uses_clicker_in_groups`,
+  `test_callback_owner_key_private_chat`,
+  `test_group_members_get_separate_histories`,
+  `test_group_edit_lands_in_owning_member_batch`,
+  `test_group_flush_pending_delivers_every_member_batch`,
+  `test_group_feedback_uses_clicker_scoped_owner`,
+  `test_private_feedback_uses_chat_id_owner`,
+  `test_explicit_owner_does_not_rebind_chat_owner`,
+  `test_broadcast_chat_ids_dedupes_group_members`,
+  `test_broadcast_chat_ids_skips_unparseable_owners`,
+  `test_system_message_notification_resolves_group_owner_chat_id`,
+  `test_system_message_notification_rejects_non_telegram_owner`.
 
 ### F16. Ложные срабатывания ENCODING_PATTERNS; непонятные ошибки
 

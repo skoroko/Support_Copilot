@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import httpx
@@ -8,7 +9,13 @@ import pytest
 
 from bot.handlers._common import backend_error_message
 from bot.handlers.admin import IsAdmin
-from bot.keyboards.inline import answer_kb, decode_message_context, feedback_kb
+from bot.handlers.feedback import save_feedback
+from bot.keyboards.inline import (
+    answer_kb,
+    decode_message_context,
+    encode_message_context,
+    feedback_kb,
+)
 from bot.services.backend_client import BackendClient
 
 
@@ -98,6 +105,53 @@ def test_media_processing_422_surfaces_server_reason() -> None:
 def test_media_processing_422_without_reason_uses_fallback() -> None:
     exc = _status_error(422, {"error": {"code": "media_processing_failed"}})
     assert "прочитать" in backend_error_message(exc)
+
+
+class _FeedbackBackend:
+    def __init__(self) -> None:
+        self.calls: dict[str, str | None] = {}
+
+    async def get_message_sources(self, chat_id, message_id, *, owner_external_id=None):
+        self.calls["sources_owner"] = owner_external_id
+        return [{"file_name": "manual.pdf"}]
+
+    async def save_feedback(self, chat_id, message_id, value, shown_sources=None, owner_external_id=None):
+        self.calls["feedback_owner"] = owner_external_id
+        return {}
+
+
+def _feedback_callback(*, chat_id: int, chat_type: str | None, user_id: int) -> SimpleNamespace:
+    chat = SimpleNamespace(id=chat_id)
+    if chat_type is not None:
+        chat.type = chat_type
+    return SimpleNamespace(
+        data=f"fb:u:{encode_message_context(UUID(int=1), UUID(int=2))}",
+        message=SimpleNamespace(chat=chat, edit_reply_markup=AsyncMock()),
+        from_user=SimpleNamespace(id=user_id),
+        answer=AsyncMock(),
+    )
+
+
+@pytest.mark.asyncio
+async def test_group_feedback_uses_clicker_scoped_owner() -> None:
+    backend = _FeedbackBackend()
+    callback = _feedback_callback(chat_id=-100, chat_type="supergroup", user_id=7)
+
+    await save_feedback(callback, backend)  # type: ignore[arg-type]
+
+    assert backend.calls["sources_owner"] == "-100:7"
+    assert backend.calls["feedback_owner"] == "-100:7"
+
+
+@pytest.mark.asyncio
+async def test_private_feedback_uses_chat_id_owner() -> None:
+    backend = _FeedbackBackend()
+    callback = _feedback_callback(chat_id=42, chat_type="private", user_id=42)
+
+    await save_feedback(callback, backend)  # type: ignore[arg-type]
+
+    assert backend.calls["sources_owner"] == "42"
+    assert backend.calls["feedback_owner"] == "42"
 
 
 @pytest.mark.asyncio

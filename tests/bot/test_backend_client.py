@@ -167,6 +167,32 @@ async def test_message_sources_are_loaded_from_backend_when_bot_cache_is_empty()
 
 
 @pytest.mark.asyncio
+async def test_explicit_owner_does_not_rebind_chat_owner() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000457")
+    message_id = UUID("00000000-0000-0000-0000-000000000999")
+    seen_principals: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_principals.append(request.headers["X-User-ID"])
+        return httpx.Response(200, json={"value": "up"})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id, "-100:7")
+        await client.save_feedback(
+            chat_id,
+            message_id,
+            "up",
+            shown_sources=[],
+            owner_external_id="-100:8",
+        )
+        await client.clear_messages(chat_id)
+
+    assert seen_principals == ["-100:8", "-100:7"]
+    assert client._chat_owners[str(chat_id)] == "-100:7"
+
+
+@pytest.mark.asyncio
 async def test_send_message_uses_multipart_for_media() -> None:
     chat_id = UUID("00000000-0000-0000-0000-000000000457")
 

@@ -8,8 +8,8 @@ from aiogram.types import CallbackQuery
 from bot.handlers._common import (
     BACKEND_EXCEPTIONS,
     _render_telegram_html,
+    callback_owner_external_id,
     format_all_sources,
-    get_telegram_chat_id,
     source_document_count,
 )
 from bot.keyboards.inline import decode_message_context, sources_kb
@@ -29,14 +29,14 @@ async def save_feedback(callback: CallbackQuery, backend: BackendClient) -> None
         vote = {"u": "up", "d": "down"}.get(raw_vote, raw_vote)
         if vote not in {"up", "down"}:
             raise ValueError("invalid vote")
+        owner_external_id = callback_owner_external_id(callback)
         try:
             chat_id, message_id = decode_message_context(raw_context)
         except ValueError:
             # Keep feedback available for reply keyboards sent before this
             # compact callback format was introduced.
             message_id = UUID(raw_context)
-            chat_id = await get_telegram_chat_id(callback.message, backend)
-        owner_external_id = str(callback.message.chat.id)
+            chat_id = await backend.get_or_create_chat(owner_external_id, "telegram")
         sources = await backend.get_message_sources(chat_id, message_id, owner_external_id=owner_external_id)
         await backend.save_feedback(
             chat_id,
@@ -66,7 +66,7 @@ async def show_all_sources(callback: CallbackQuery, backend: BackendClient) -> N
         sources = await backend.get_message_sources(
             chat_id,
             message_id,
-            owner_external_id=str(callback.message.chat.id),
+            owner_external_id=callback_owner_external_id(callback),
         )
     except (ValueError, *BACKEND_EXCEPTIONS):
         await callback.answer("Не удалось загрузить источники. Попробуйте позже.", show_alert=True)

@@ -6,12 +6,13 @@ import uuid
 from collections.abc import AsyncIterator, Callable
 from html import escape
 import re
+from typing import Any
 from uuid import UUID
 
 import httpx
-from aiogram.enums import ChatAction, ParseMode
+from aiogram.enums import ChatAction, ChatType, ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
-from aiogram.types import InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
 from bot.keyboards.inline import answer_kb
@@ -35,8 +36,48 @@ _MEDIA_ERROR_MESSAGES = {
 }
 
 
+def _is_private_chat_type(chat_type: object) -> bool:
+    return chat_type is None or chat_type == ChatType.PRIVATE
+
+
+def is_group_chat(message: Message) -> bool:
+    """Non-private chats get per-sender history and reply attribution."""
+
+    return not _is_private_chat_type(getattr(getattr(message, "chat", None), "type", None))
+
+
+def chat_owner_external_id(chat: Any, sender_id: int | None) -> str:
+    """Backend ``owner_external_id`` for one Telegram chat participant.
+
+    Private dialogs keep the legacy ``chat.id`` key.  In group chats each
+    sender gets ``"<chat_id>:<sender_id>"`` so members do not share one
+    history; the leading segment still parses as the Telegram delivery chat.
+    """
+
+    chat_id = int(chat.id)
+    if _is_private_chat_type(getattr(chat, "type", None)):
+        return str(chat_id)
+    return f"{chat_id}:{sender_id if sender_id is not None else chat_id}"
+
+
+def message_owner_external_id(message: Message) -> str:
+    sender = getattr(message, "from_user", None) or getattr(message, "sender_chat", None)
+    return chat_owner_external_id(message.chat, getattr(sender, "id", None))
+
+
+def callback_owner_external_id(callback: CallbackQuery) -> str:
+    """Owner key for callbacks: the chat plus the user who pressed the button."""
+
+    message = getattr(callback, "message", None)
+    chat = getattr(message, "chat", None)
+    sender_id = getattr(getattr(callback, "from_user", None), "id", None)
+    if chat is None:
+        return str(sender_id if sender_id is not None else "")
+    return chat_owner_external_id(chat, sender_id)
+
+
 async def get_telegram_chat_id(message: Message, backend: BackendClient) -> UUID:
-    return await backend.get_or_create_chat(str(message.chat.id), "telegram")
+    return await backend.get_or_create_chat(message_owner_external_id(message), "telegram")
 
 
 def message_text(message: Message) -> str:
@@ -256,15 +297,11 @@ async def stream_to_chat(
         except TelegramAPIError:
             pass
     if reply_markup is None:
-        await message.bot.send_message(
-            chat_id=message.chat.id,
-            text=final_html,
-            parse_mode=ParseMode.HTML,
-        )
+        await send_answer(message, final_html, parse_mode=ParseMode.HTML)
     else:
-        await message.bot.send_message(
-            chat_id=message.chat.id,
-            text=final_html,
+        await send_answer(
+            message,
+            final_html,
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup,
         )
@@ -274,6 +311,21 @@ async def stream_to_chat(
 render_stream = stream_to_chat
 
 
+async def send_answer(message: Message, text: str, **kwargs):
+    """Send an answer message; replies to the question in group chats.
+
+    Group answers go through ``message.reply`` so members can attribute the
+    bot's answer to the right question.  Private chats use ``message.answer``
+    when present and fall back to ``bot.send_message`` for test transports.
+    """
+
+    method = "reply" if is_group_chat(message) else "answer"
+    send = getattr(message, method, None)
+    if callable(send):
+        return await send(text, **kwargs)
+    return await message.bot.send_message(chat_id=message.chat.id, text=text, **kwargs)
+
+
 async def _start_editable_response(message: Message) -> Message | None:
     """Create one bot response to update in-place while SSE tokens arrive.
 
@@ -281,11 +333,11 @@ async def _start_editable_response(message: Message) -> Message | None:
     and for transports that cannot return an editable Telegram message.
     """
 
-    answer = getattr(message, "answer", None)
-    if not callable(answer):
+    send = getattr(message, "reply" if is_group_chat(message) else "answer", None)
+    if not callable(send):
         return None
     try:
-        return await answer(RESPONSE_PLACEHOLDER)
+        return await send(RESPONSE_PLACEHOLDER)
     except TelegramAPIError:
         return None
 
