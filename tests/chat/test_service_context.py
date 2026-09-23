@@ -9,7 +9,14 @@ from pydantic import SecretStr
 
 from app.chat.domain import Chat, ChatMessage
 from app.chat.repository import ChatRepository
-from app.chat.service import ChatNotFoundError, ChatService, count_tokens, fit_to_budget
+from app.chat.service import (
+    ChatNotFoundError,
+    ChatService,
+    MEDIA_IMAGE_NO_TEXT_REPLY,
+    RAG_MEDIA_TEXT_MAX_CHARS,
+    count_tokens,
+    fit_to_budget,
+)
 from app.core.config import Settings
 
 
@@ -257,3 +264,96 @@ async def test_rag_uses_prior_history_and_exposes_shown_sources(tmp_path: Path) 
     stored = await repo.list_messages(chat.id)
     assert stored[-1].rag_sources == service.last_response_sources(chat.id)
     assert await service.response_sources(chat.id, stored[-1].id) == service.last_response_sources(chat.id)
+
+
+@pytest.mark.asyncio
+async def test_rag_question_merges_extracted_media_text(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    rag = FakeRAG()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    part = {"type": "text", "text": "[пользователь сказал голосом]:\nпочему модель не сходится"}
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "[голосовое сообщение]",
+            media_refs={"mime": "audio/ogg", "size": 10, "filename": "v.ogg", "part": part},
+            rag_service=rag,
+        )
+    ]
+
+    assert chunks == ["Для электроники действует отдельный срок возврата [1]."]
+    assert rag.question == (
+        "[голосовое сообщение]\n[пользователь сказал голосом]:\nпочему модель не сходится"
+    )
+
+
+@pytest.mark.asyncio
+async def test_rag_question_bounds_extracted_document_text(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    rag = FakeRAG()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    part = {"type": "text", "text": "[документ PDF]:\n" + "очень длинный текст " * 2000}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "проверь документ",
+            media_refs={"mime": "application/pdf", "size": 10, "filename": "d.pdf", "part": part},
+            rag_service=rag,
+        )
+    ]
+
+    assert rag.question is not None
+    assert len(rag.question) == RAG_MEDIA_TEXT_MAX_CHARS
+    assert rag.question.startswith("проверь документ\n[документ PDF]:")
+
+
+@pytest.mark.asyncio
+async def test_rag_image_without_caption_refuses_without_retrieval(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    llm = FakeLLM()
+    rag = FakeRAG()
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    part = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,aW1n"}}
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "[фото]",
+            media_refs={"mime": "image/jpeg", "size": 3, "filename": "x.jpg", "part": part},
+            rag_service=rag,
+        )
+    ]
+
+    assert chunks == [MEDIA_IMAGE_NO_TEXT_REPLY]
+    assert rag.question is None
+    assert llm.completions.last_kwargs is None
+
+
+@pytest.mark.asyncio
+async def test_rag_image_with_caption_searches_caption_text(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    rag = FakeRAG()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    part = {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,aW1n"}}
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(
+            chat.id,
+            "Что означает эта ошибка?",
+            media_refs={"mime": "image/jpeg", "size": 3, "filename": "x.jpg", "part": part},
+            rag_service=rag,
+        )
+    ]
+
+    assert rag.question == "Что означает эта ошибка?"

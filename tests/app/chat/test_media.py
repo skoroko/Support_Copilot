@@ -9,7 +9,7 @@ from fastapi import UploadFile
 from starlette.datastructures import Headers
 from PIL import Image
 
-from app.chat.media import MediaExtractionError, MediaTooLargeError, media_to_part
+from app.chat.media import MAX_DOCUMENT_CHARS, MediaExtractionError, MediaTooLargeError, media_to_part
 
 
 def upload(filename: str, content: bytes, mime: str) -> UploadFile:
@@ -59,6 +59,20 @@ async def test_audio_uses_configured_transcription_model() -> None:
     assert part == {"type": "text", "text": "[пользователь сказал голосом]:\nНе работает лицензия"}
     assert create.await_args.kwargs["model"] == "whisper-1"
     assert create.await_args.kwargs["file"].name == "voice.ogg"
+
+
+@pytest.mark.asyncio
+async def test_audio_transcript_is_bounded_to_document_limit() -> None:
+    create = AsyncMock(return_value=SimpleNamespace(text="длинный текст " * 5000))
+    client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    part = await media_to_part(
+        upload("voice.ogg", b"OggS-test", "audio/ogg"),
+        client=client,
+        transcription_model="whisper-1",
+    )
+    prefix = "[пользователь сказал голосом]:\n"
+    assert part["text"].startswith(prefix)
+    assert len(part["text"]) == len(prefix) + MAX_DOCUMENT_CHARS
 
 
 @pytest.mark.asyncio

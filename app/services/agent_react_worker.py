@@ -18,4 +18,4 @@ def run_tool(tool_name: str, tool_args: dict[str, Any], connection: Connection) 
     except BaseException as exc:
         connection.send(("error", f"{type(exc).__name__}: {exc}"))
     finally:
-    connection.close()
+        connection.close()

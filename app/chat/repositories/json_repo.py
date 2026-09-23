@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -19,7 +20,27 @@ from app.moderation.models import ModerationResult
 class JsonChatRepository:
     def __init__(self, base_dir: Path | str) -> None:
         self.base_dir = Path(base_dir)
-        self._lock = AsyncFileLock(self.base_dir / ".chat-repository.lock", timeout=10)
+        # ``AsyncFileLock`` is reentrant within one instance: a second
+        # ``async with`` on the same object sees the already-held descriptor and
+        # returns without OS-level exclusion, so concurrent coroutines on this
+        # repository overlap. ``asyncio.Lock`` provides real same-instance
+        # mutual exclusion; the file lock still arbitrates between separate
+        # repository instances or processes. ``preserve_lock_file`` keeps the
+        # lock pathname stable: on Windows the default release path unlinks it,
+        # letting a waiter on the deleted inode and a new acquirer on a fresh
+        # file hold "the lock" simultaneously.
+        self._async_lock = asyncio.Lock()
+        self._lock = AsyncFileLock(
+            self.base_dir / ".chat-repository.lock",
+            timeout=10,
+            preserve_lock_file=True,
+        )
+
+    @asynccontextmanager
+    async def _locked(self):
+        async with self._async_lock:
+            async with self._lock:
+                yield
 
     async def create_chat(
         self,
@@ -32,14 +53,14 @@ class JsonChatRepository:
             interface=interface,
             system_prompt=system_prompt,
         )
-        async with self._lock:
+        async with self._locked():
             chat_dir = self._chat_dir(chat.id)
             chat_dir.mkdir(parents=True, exist_ok=False)
             await self._atomic_write_text(self._chat_file(chat.id), chat.model_dump_json())
         return chat
 
     async def get_chat(self, chat_id: UUID) -> Chat | None:
-        async with self._lock:
+        async with self._locked():
             path = self._chat_file(chat_id)
             if not path.exists():
                 return None
@@ -48,7 +69,7 @@ class JsonChatRepository:
 
     async def append_message(self, chat_id: UUID, message: ChatMessage) -> ChatMessage:
         message = message.model_copy(update={"chat_id": chat_id})
-        async with self._lock:
+        async with self._locked():
             self._require_chat(chat_id)
             await self._append_text(self._messages_file(chat_id), message.model_dump_json() + "\n")
         return message
@@ -64,7 +85,7 @@ class JsonChatRepository:
             assistant_message.model_copy(update={"chat_id": chat_id}),
         )
         payload = "".join(message.model_dump_json() + "\n" for message in messages)
-        async with self._lock:
+        async with self._locked():
             self._require_chat(chat_id)
             await self._append_text(self._messages_file(chat_id), payload)
         return messages
@@ -72,7 +93,7 @@ class JsonChatRepository:
     async def list_messages(self, chat_id: UUID, limit: int = 50) -> list[ChatMessage]:
         if limit <= 0:
             return []
-        async with self._lock:
+        async with self._locked():
             path = self._messages_file(chat_id)
             if not path.exists():
                 return []
@@ -97,14 +118,14 @@ class JsonChatRepository:
 
     async def soft_delete_messages(self, chat_id: UUID) -> None:
         marker = {"type": "soft_delete", "at": datetime.now(timezone.utc).isoformat()}
-        async with self._lock:
+        async with self._locked():
             if not self._chat_dir(chat_id).exists():
                 return
             payload = json.dumps(marker, ensure_ascii=False, separators=(",", ":")) + "\n"
             await self._append_text(self._messages_file(chat_id), payload)
 
     async def save_feedback(self, feedback: MessageFeedback) -> MessageFeedback:
-        async with self._lock:
+        async with self._locked():
             rows = await self._read_jsonl_unlocked(self._feedback_file())
             unique_rows: list[dict] = []
             replaced = False
@@ -128,7 +149,7 @@ class JsonChatRepository:
         direction: str,
         result: ModerationResult,
     ) -> None:
-        async with self._lock:
+        async with self._locked():
             rows = await self._read_jsonl_unlocked(self._moderation_file())
             rows.append(
                 {
@@ -202,7 +223,7 @@ class JsonChatRepository:
 
     async def enqueue_broadcast(self, message: str, interface: str) -> BroadcastItem:
         item = BroadcastItem(message=message, interface=interface)
-        async with self._lock:
+        async with self._locked():
             rows = await self._read_jsonl_unlocked(self._broadcast_file())
             rows.append(item.model_dump(mode="json"))
             await self._write_jsonl_unlocked(self._broadcast_file(), rows)
@@ -218,7 +239,7 @@ class JsonChatRepository:
         return items[: max(0, limit)]
 
     async def update_broadcast_status(self, broadcast_id: UUID, status: str) -> BroadcastItem | None:
-        async with self._lock:
+        async with self._locked():
             rows = await self._read_jsonl_unlocked(self._broadcast_file())
             updated: BroadcastItem | None = None
             output: list[dict] = []
@@ -233,7 +254,7 @@ class JsonChatRepository:
         return updated
 
     async def _load_chats(self) -> list[Chat]:
-        async with self._lock:
+        async with self._locked():
             chats_dir = self.base_dir / "chats"
             if not chats_dir.exists():
                 return []
@@ -253,7 +274,7 @@ class JsonChatRepository:
             return 0.0
 
     async def _read_jsonl(self, path: Path) -> list[dict]:
-        async with self._lock:
+        async with self._locked():
             return await self._read_jsonl_unlocked(path)
 
     async def _read_jsonl_unlocked(self, path: Path) -> list[dict]:
@@ -263,7 +284,7 @@ class JsonChatRepository:
             return [json.loads(line) for line in await file.readlines() if line.strip()]
 
     async def _write_jsonl(self, path: Path, rows: list[dict]) -> None:
-        async with self._lock:
+        async with self._locked():
             await self._write_jsonl_unlocked(path, rows)
 
     async def _write_jsonl_unlocked(self, path: Path, rows: list[dict]) -> None:

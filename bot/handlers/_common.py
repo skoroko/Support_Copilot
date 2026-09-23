@@ -23,6 +23,14 @@ RESPONSE_PLACEHOLDER = "Готовлю ответ…"
 _INLINE_CODE_RE = re.compile(r"(`[^`\n]+`)")
 _BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_MEDIA_ERROR_MESSAGES = {
+    "media_too_large": "Файл слишком большой. Максимальный размер — 10 МБ.",
+    "unsupported_media_type": (
+        "Этот формат файла не поддерживается. "
+        "Отправьте фото (JPEG, PNG, WebP), документ PDF/DOCX или голосовое сообщение."
+    ),
+    "media_processing_failed": "Не удалось прочитать файл. Проверьте, что он не повреждён, и попробуйте ещё раз.",
+}
 
 
 async def get_telegram_chat_id(message: Message, backend: BackendClient) -> UUID:
@@ -35,19 +43,39 @@ def backend_error_message(exc: httpx.HTTPError) -> str:
     if isinstance(exc, httpx.ReadTimeout):
         return "Ответ занимает слишком долго. Попробуйте ещё раз позже."
     if isinstance(exc, httpx.HTTPStatusError):
-        if exc.response.status_code == 403:
-            try:
-                payload = exc.response.json()
-                error = payload.get("error", payload.get("detail", {}))
-            except ValueError:
-                error = {}
-            if error.get("code") == "moderation_blocked":
-                return "Не могу обработать этот запрос — он мог нарушить правила."
-        if exc.response.status_code == 429:
+        status_code = exc.response.status_code
+        error = _error_payload(exc.response)
+        code = error.get("code")
+        if status_code == 400 and code == "security_input_blocked":
+            if error.get("rule") == "length":
+                limit = error.get("limit")
+                if isinstance(limit, int):
+                    return f"Сообщение слишком длинное — максимум {limit} символов. Разделите его на несколько сообщений."
+                return "Сообщение слишком длинное. Разделите его на несколько сообщений."
+            return "Сообщение отклонено проверкой безопасности. Уберите из него служебные инструкции и закодированные фрагменты."
+        if status_code == 403 and code == "moderation_blocked":
+            return "Не могу обработать этот запрос — он мог нарушить правила."
+        if code in _MEDIA_ERROR_MESSAGES:
+            server_message = error.get("message")
+            if code == "media_processing_failed" and isinstance(server_message, str) and server_message.strip():
+                return server_message
+            return _MEDIA_ERROR_MESSAGES[str(code)]
+        if status_code == 429:
             return "Слишком много запросов, подождите минуту."
-        if exc.response.status_code >= 500:
+        if status_code >= 500:
             return "Внутренняя ошибка сервиса. Попробуйте позже."
     return "Не удалось обработать запрос. Проверьте данные и попробуйте ещё раз."
+
+
+def _error_payload(response: httpx.Response) -> dict:
+    try:
+        payload = response.json()
+    except ValueError:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    error = payload.get("error", payload.get("detail", {}))
+    return error if isinstance(error, dict) else {}
 
 
 async def _typing(message: Message, stop: asyncio.Event) -> None:

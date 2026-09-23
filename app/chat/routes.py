@@ -17,7 +17,7 @@ from app.chat.service import ChatNotFoundError, ModerationBlockedError
 from app.core.auth import PrincipalDep
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
-from app.services.security.input_validator import validate_input
+from app.services.security.input_validator import MAX_MESSAGE_CHARS, validate_input
 
 
 router = APIRouter(tags=["chats"])
@@ -79,8 +79,6 @@ async def send_message(
             raise HTTPException(status_code=413, detail={"code": "media_too_large", "message": str(exc)}) from exc
         except (MediaExtractionError, MediaProcessingError) as exc:
             raise HTTPException(status_code=422, detail={"code": "media_processing_failed", "message": str(exc)}) from exc
-        if part.get("type") == "text":
-            _validate_user_content(str(part.get("text", "")))
         media_refs = {
             "mime": media.content_type,
             "size": media.size,
@@ -247,17 +245,17 @@ async def _owned_chat(chat_id: UUID, chat_service: object, principal: object) ->
 
 
 def _validate_user_content(content: str) -> None:
-    result = validate_input(content)
+    result = validate_input(content, max_chars=MAX_MESSAGE_CHARS)
     if result.ok:
         return
-    raise HTTPException(
-        status_code=400,
-        detail={
-            "code": "security_input_blocked",
-            "message": result.reason or "input blocked by security policy",
-            "rule": result.rule,
-        },
-    )
+    detail: dict[str, object] = {
+        "code": "security_input_blocked",
+        "message": result.reason or "input blocked by security policy",
+        "rule": result.rule,
+    }
+    if result.rule == "length":
+        detail["limit"] = MAX_MESSAGE_CHARS
+    raise HTTPException(status_code=400, detail=detail)
 
 
 def _last_response_sources(chat_service: object, chat_id: UUID) -> list[dict]:
