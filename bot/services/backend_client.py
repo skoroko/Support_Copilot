@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from uuid import UUID
 
 import httpx
@@ -58,12 +58,14 @@ class BackendClient:
         self,
         chat_id: UUID | str,
         content: str,
-        media: bytes | None = None,
-        mime: str | None = None,
+        media: Sequence[tuple[bytes, str]] | None = None,
     ) -> AsyncIterator[str]:
         files = None
-        if media is not None:
-            files = {"media": (self._filename_for_mime(mime), media, mime or "application/octet-stream")}
+        if media:
+            files = [
+                ("media", (self._filename_for_mime(mime), data, mime or "application/octet-stream"))
+                for data, mime in media
+            ]
 
         yielded_data = False
         chat_key = str(chat_id)

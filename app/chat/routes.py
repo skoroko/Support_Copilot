@@ -13,7 +13,7 @@ from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
 from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
-from app.chat.service import ChatNotFoundError, ModerationBlockedError
+from app.chat.service import ChatNotFoundError, ModerationBlockedError, media_parts
 from app.core.auth import PrincipalDep
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
@@ -64,32 +64,43 @@ async def send_message(
     chat_service: ChatServiceDep,
     principal: PrincipalDep,
     content: str = Form(..., min_length=1),
-    media: UploadFile | None = File(None),
+    media: list[UploadFile] | None = File(None),
 ) -> StreamingResponse:
     _validate_user_content(content)
     await _owned_chat(chat_id, chat_service, principal)
 
     media_refs = None
-    if media is not None:
-        try:
-            part = await chat_service.process_media(media)
-        except UnsupportedMediaTypeError as exc:
-            raise HTTPException(status_code=415, detail={"code": "unsupported_media_type", "message": str(exc)}) from exc
-        except MediaTooLargeError as exc:
-            raise HTTPException(status_code=413, detail={"code": "media_too_large", "message": str(exc)}) from exc
-        except (MediaExtractionError, MediaProcessingError) as exc:
-            raise HTTPException(status_code=422, detail={"code": "media_processing_failed", "message": str(exc)}) from exc
+    if media:
+        parts: list[dict] = []
+        files_meta: list[dict] = []
+        for item in media:
+            try:
+                part = await chat_service.process_media(item)
+            except UnsupportedMediaTypeError as exc:
+                raise HTTPException(status_code=415, detail={"code": "unsupported_media_type", "message": str(exc)}) from exc
+            except MediaTooLargeError as exc:
+                raise HTTPException(status_code=413, detail={"code": "media_too_large", "message": str(exc)}) from exc
+            except (MediaExtractionError, MediaProcessingError) as exc:
+                raise HTTPException(status_code=422, detail={"code": "media_processing_failed", "message": str(exc)}) from exc
+            parts.append(part)
+            files_meta.append({"mime": item.content_type, "size": item.size, "filename": item.filename})
         media_refs = {
-            "mime": media.content_type,
-            "size": media.size,
-            "filename": media.filename,
-            "part": part,
+            "mime": files_meta[0]["mime"],
+            "size": files_meta[0]["size"],
+            "filename": files_meta[0]["filename"],
+            "part": parts[0],
+            "parts": parts,
+            "files": files_meta,
         }
 
     moderation_content = content
-    media_part = (media_refs or {}).get("part")
-    if isinstance(media_part, dict) and media_part.get("type") == "text":
-        moderation_content = f"{content}\n{media_part.get('text', '')}".strip()
+    media_texts = [
+        str(part.get("text", ""))
+        for part in media_parts(media_refs)
+        if part.get("type") == "text" and part.get("text")
+    ]
+    if media_texts:
+        moderation_content = "\n".join([content, *media_texts]).strip()
     ensure_input_allowed = getattr(chat_service, "ensure_input_allowed", None)
     input_moderated = ensure_input_allowed is not None
     if ensure_input_allowed is not None:

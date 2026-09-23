@@ -1,30 +1,29 @@
 from __future__ import annotations
 
 from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.handlers._common import (
-    BACKEND_EXCEPTIONS,
-    backend_error_message,
-    get_telegram_chat_id,
-    response_feedback_markup,
-    stream_to_chat,
-)
+from bot.handlers import _burst
+from bot.handlers._common import compose_message_text, is_bot_or_channel_edit
 from bot.services.backend_client import BackendClient
-
+from bot.states import AskFlow
 
 router = Router()
 
 
 @router.message(F.text & ~F.text.startswith("/"))
 async def handle_text(message: Message, backend: BackendClient) -> None:
-    try:
-        chat_id = await get_telegram_chat_id(message, backend)
-        await stream_to_chat(
-            message,
-            backend.send_message(chat_id, message.text or ""),
-            reply_markup_factory=lambda: response_feedback_markup(backend, chat_id),
-            sources_factory=lambda: backend.last_response_sources(chat_id),
-        )
-    except BACKEND_EXCEPTIONS as exc:
-        await message.answer(backend_error_message(exc))
+    _burst.enqueue_text(message, backend)
+
+
+@router.edited_message(F.text & ~F.text.startswith("/"))
+async def handle_edited_text(message: Message, backend: BackendClient, state: FSMContext) -> None:
+    if is_bot_or_channel_edit(message):
+        return
+    if await state.get_state() == AskFlow.waiting_for_question:
+        return
+    item = _burst.BurstItem(message=message, text=compose_message_text(message))
+    if _burst.absorb_edit(message, backend, item):
+        return
+    await _burst.deliver_now(item, backend)

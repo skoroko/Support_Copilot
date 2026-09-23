@@ -36,6 +36,22 @@ logger = get_logger("chat-service")
 ChatMLMessage = dict[str, Any]
 
 
+def media_parts(media_refs: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """All LLM content parts attached to a message.
+
+    Multi-file uploads (Telegram albums) arrive as ``media_refs["parts"]``;
+    single-file requests and older persisted messages carry only ``"part"``.
+    """
+
+    if not isinstance(media_refs, Mapping):
+        return []
+    parts = media_refs.get("parts")
+    if isinstance(parts, list):
+        return [part for part in parts if isinstance(part, dict)]
+    part = media_refs.get("part")
+    return [part] if isinstance(part, dict) else []
+
+
 class ChatNotFoundError(ValueError):
     pass
 
@@ -112,11 +128,11 @@ class SlidingWindowContextStrategy:
             messages.append({"role": "system", "content": chat.system_prompt})
         for message in history[-self.history_limit :]:
             content: Any = message.content
-            media_part = (message.media_refs or {}).get("part")
-            if message.role == "user" and isinstance(media_part, dict):
+            parts = media_parts(message.media_refs)
+            if message.role == "user" and parts:
                 content = [
                     {"type": "text", "text": message.content},
-                    media_part,
+                    *parts,
                 ]
             messages.append({"role": message.role, "content": content})
         return messages
@@ -193,11 +209,16 @@ class ChatService:
             moderation_content = self._moderation_content(user_content, media_refs)
             await self.ensure_input_allowed(chat_id, moderation_content)
 
+        parts = media_parts(media_refs)
         persisted_media_refs = media_refs
-        if media_refs and isinstance(media_refs.get("part"), dict):
-            part = media_refs["part"]
-            if part.get("type") == "image_url":
-                persisted_media_refs = {key: value for key, value in media_refs.items() if key != "part"}
+        if any(part.get("type") == "image_url" for part in parts):
+            kept = [part for part in parts if part.get("type") != "image_url"]
+            persisted_media_refs = {
+                key: value for key, value in media_refs.items() if key not in ("part", "parts")
+            }
+            if kept:
+                persisted_media_refs["part"] = kept[0]
+                persisted_media_refs["parts"] = kept
 
         user_message = ChatMessage(
             chat_id=chat_id,
@@ -210,9 +231,9 @@ class ChatService:
                         "role": "user",
                         "content": [
                             {"type": "text", "text": user_content},
-                            media_refs["part"],
+                            *parts,
                         ]
-                        if media_refs and isinstance(media_refs.get("part"), dict)
+                        if parts
                         else user_content,
                     }
                 ]
@@ -343,33 +364,41 @@ class ChatService:
 
     @staticmethod
     def _moderation_content(user_content: str, media_refs: dict[str, Any] | None) -> str:
-        media_part = (media_refs or {}).get("part")
-        if isinstance(media_part, dict) and media_part.get("type") == "text":
-            return f"{user_content}\n{media_part.get('text', '')}".strip()
-        return user_content
+        texts = [
+            str(part.get("text", ""))
+            for part in media_parts(media_refs)
+            if part.get("type") == "text" and part.get("text")
+        ]
+        if not texts:
+            return user_content
+        return "\n".join([user_content, *texts]).strip()
 
     @staticmethod
     def _rag_question(user_content: str, media_refs: dict[str, Any] | None) -> str | None:
         """Return the text RAG retrieval should actually search for.
 
         Voice transcripts and extracted document text arrive in
-        ``media_refs.part``; merging them keeps retrieval from running on
+        ``media_refs`` parts; merging them keeps retrieval from running on
         the ``[документ x.pdf]``-style placeholder the bot sends as
-        ``content``.  An image without a caption has no searchable text,
+        ``content``.  Images without a caption have no searchable text,
         so ``None`` asks the caller to refuse explicitly instead of
         embedding the placeholder.
         """
 
-        media_part = (media_refs or {}).get("part")
-        if not isinstance(media_part, dict):
+        parts = media_parts(media_refs)
+        if not parts:
             return user_content
-        part_type = media_part.get("type")
-        if part_type == "text":
-            merged = ChatService._moderation_content(user_content, media_refs)
+        texts = [
+            str(part.get("text", ""))
+            for part in parts
+            if part.get("type") == "text" and part.get("text")
+        ]
+        if texts:
+            merged = "\n".join([user_content, *texts]).strip()
             # Retrieval embeds the question, so document-sized payloads stay
             # below the embedding model input limit.
             return merged[:RAG_MEDIA_TEXT_MAX_CHARS]
-        if part_type == "image_url":
+        if all(part.get("type") == "image_url" for part in parts):
             stripped = user_content.strip()
             if stripped.startswith("[") and stripped.endswith("]"):
                 return None
