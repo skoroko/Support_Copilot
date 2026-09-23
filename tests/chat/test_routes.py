@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.chat.deps import get_chat_service
 from app.chat.domain import Chat, ChatMessage
 from app.main import app
+from app.services.security.input_validator import MAX_MESSAGE_CHARS
 
 
 def auth_headers(owner: str = "test-1", interface: str = "cli") -> dict[str, str]:
@@ -23,6 +24,7 @@ class FakeChatService:
     def __init__(self) -> None:
         self.chats: dict[UUID, Chat] = {}
         self.messages: dict[UUID, list[ChatMessage]] = {}
+        self.media_part: dict = {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
 
     async def create_chat(
         self,
@@ -46,7 +48,7 @@ class FakeChatService:
         return list(message.rag_sources) if message is not None else []
 
     async def process_media(self, media) -> dict:
-        return {"type": "image_url", "image_url": {"url": "data:image/png;base64,aW1n"}}
+        return self.media_part
 
     async def send_message(
         self,
@@ -155,6 +157,79 @@ def test_chat_message_route_blocks_prompt_injection(fake_chat_service: FakeChatS
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "security_input_blocked"
     assert fake_chat_service.messages[chat.id] == []
+
+
+def test_chat_message_route_accepts_long_user_message(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    content = "Письмо клиента: " + "длинный текст " * 400
+
+    with TestClient(app, headers=auth_headers()) as client:
+        response = client.post(f"/chats/{chat.id}/messages", data={"content": content})
+
+    assert response.status_code == 200
+
+
+def test_chat_message_route_rejects_overlong_user_message_with_limit(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(app, headers=auth_headers()) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "x" * (MAX_MESSAGE_CHARS + 1)},
+        )
+
+    assert response.status_code == 400
+    error = response.json()["error"]
+    assert error["code"] == "security_input_blocked"
+    assert error["rule"] == "length"
+    assert error["limit"] == MAX_MESSAGE_CHARS
+    assert fake_chat_service.messages[chat.id] == []
+
+
+def test_chat_message_route_accepts_long_extracted_document_text(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    fake_chat_service.media_part = {
+        "type": "text",
+        "text": "[документ PDF]:\n" + "строка извлечённого текста\n" * 400,
+    }
+
+    with TestClient(app, headers=auth_headers(interface="telegram")) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "Суммируй документ"},
+            files={"media": ("guide.pdf", b"%PDF-1.7", "application/pdf")},
+        )
+
+    assert response.status_code == 200
+    stored = fake_chat_service.messages[chat.id][0]
+    assert stored.media_refs["part"]["type"] == "text"
+
+
+def test_chat_message_route_does_not_apply_input_rules_to_extracted_document_text(
+    fake_chat_service: FakeChatService,
+) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    fake_chat_service.media_part = {
+        "type": "text",
+        "text": "[документ PDF]:\nРаздел про developer mode и лицензионный ключ " + "Q" * 60,
+    }
+
+    with TestClient(app, headers=auth_headers(interface="telegram")) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "Проверь документ"},
+            files={"media": ("guide.pdf", b"%PDF-1.7", "application/pdf")},
+        )
+
+    assert response.status_code == 200
 
 
 def test_chat_message_route_accepts_optional_media(fake_chat_service: FakeChatService) -> None:

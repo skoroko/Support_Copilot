@@ -50,6 +50,8 @@ NO_ANSWER = "В предоставленной базе знаний нет до
 MAX_CONTEXT_SOURCES = 5
 MAX_OVERVIEW_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
+DIALOG_HISTORY_MESSAGES = 6
+DIALOG_MESSAGE_CHARS = 600
 MAX_LEXICAL_QUERY_VARIANTS = 8
 MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
@@ -592,6 +594,7 @@ class RAGService:
             sources,
             ranked,
             overview_question=overview_question,
+            history=history,
         )
         outcome = "grounded" if cited_sources else "missing_valid_citation"
         logger.info(
@@ -1232,6 +1235,7 @@ class RAGService:
         source_nodes: Sequence[Any],
         *,
         overview_question: bool = False,
+        history: Sequence[HistoryItem] | None = None,
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate from complete selected chunks, not their API previews.
 
@@ -1259,7 +1263,9 @@ class RAGService:
             else ""
         )
         prompt = (
-            f"{RAG_SYSTEM_PROMPT}\n\nКонтекст:\n{context}\n\n"
+            f"{RAG_SYSTEM_PROMPT}\n\n"
+            f"{self._dialog_context_section(history)}"
+            f"Контекст:\n{context}\n\n"
             f"Вопрос пользователя: {question}\n\n"
             f"{overview_instruction}"
             f"Дай краткий проверяемый ответ. Используй только контекст и ссылайся только на "
@@ -1268,6 +1274,49 @@ class RAGService:
         response = self._language_model().complete(prompt)
         answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
         return self._ground_answer(answer, sources)
+
+    @classmethod
+    def _dialog_context_section(cls, history: Sequence[HistoryItem] | None) -> str:
+        """Render a bounded recent-dialog block placed before the retrieved context.
+
+        The generation prompt previously received only the raw current wording,
+        so an elliptical follow-up ("а какие из них?") was unreadable for the
+        LLM even though retrieval had already resolved its topic.  Citations
+        inside previous assistant answers refer to an older context numbering
+        and are stripped so they cannot collide with [1]..[N] fragments.
+        """
+
+        if not history:
+            return ""
+        lines: list[str] = []
+        for item in history[-DIALOG_HISTORY_MESSAGES:]:
+            label = {"user": "Пользователь", "assistant": "Ассистент"}.get(
+                str(cls._history_value(item, "role"))
+            )
+            if label is None:
+                continue
+            text = cls._history_text(cls._history_value(item, "content", ""))
+            if label == "Ассистент":
+                text = _CITATION_RE.sub("", text)
+            text = " ".join(text.split())
+            if not text:
+                continue
+            lines.append(f"{label}: {text[:DIALOG_MESSAGE_CHARS]}")
+        if not lines:
+            return ""
+        return "Диалог:\n" + "\n".join(lines) + "\n\n"
+
+    @staticmethod
+    def _history_text(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "\n".join(
+                str(part.get("text", ""))
+                for part in content
+                if isinstance(part, Mapping) and part.get("type") == "text"
+            )
+        return str(content or "")
 
     @staticmethod
     def _context_source_label(source: Mapping[str, Any]) -> str:

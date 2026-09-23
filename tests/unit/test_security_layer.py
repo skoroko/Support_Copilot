@@ -10,7 +10,7 @@ from app.core.config import Settings
 from app.core.exceptions import LLMOutputBlockedError
 from app.schemas.chat import ChatRequest
 from app.services.llm import LLMService
-from app.services.security.input_validator import MAX_INPUT_CHARS, validate_input
+from app.services.security.input_validator import MAX_INPUT_CHARS, MAX_MESSAGE_CHARS, validate_input
 from app.services.security.output_filter import OutputFilterError, build_security_system_prompt, filter_output
 
 
@@ -79,6 +79,13 @@ def test_validate_input_blocks_too_long_message() -> None:
 
     assert result.ok is False
     assert result.rule == "length"
+
+
+def test_validate_input_honours_custom_length_limit() -> None:
+    text = "длинный текст " * 400
+
+    assert validate_input(text).ok is False
+    assert validate_input(text, max_chars=MAX_MESSAGE_CHARS).ok is True
 
 
 def test_filter_output_blocks_canary_leak() -> None:

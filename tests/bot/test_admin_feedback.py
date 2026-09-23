@@ -45,15 +45,59 @@ def test_answer_keyboard_compacts_chat_and_message_ids_below_telegram_limit() ->
     assert callbacks[2].startswith("fb:d:")
 
 
-def test_moderation_403_has_user_friendly_message() -> None:
+def _status_error(status: int, payload: dict) -> httpx.HTTPStatusError:
     request = httpx.Request("POST", "http://backend/chats/x/messages")
-    response = httpx.Response(
-        403,
-        request=request,
-        json={"error": {"code": "moderation_blocked", "categories": ["violence"]}},
-    )
-    message = backend_error_message(httpx.HTTPStatusError("blocked", request=request, response=response))
+    response = httpx.Response(status, request=request, json=payload)
+    return httpx.HTTPStatusError("error", request=request, response=response)
+
+
+def test_moderation_403_has_user_friendly_message() -> None:
+    exc = _status_error(403, {"error": {"code": "moderation_blocked", "categories": ["violence"]}})
+    message = backend_error_message(exc)
     assert "правил" in message
+
+
+def test_overlong_input_400_maps_to_length_hint() -> None:
+    exc = _status_error(
+        400,
+        {"error": {"code": "security_input_blocked", "rule": "length", "limit": 16000}},
+    )
+    message = backend_error_message(exc)
+    assert "длинн" in message
+    assert "16000" in message
+
+
+def test_injection_400_maps_to_security_hint() -> None:
+    exc = _status_error(400, {"error": {"code": "security_input_blocked", "rule": "injection"}})
+    assert "безопасност" in backend_error_message(exc)
+
+
+def test_media_too_large_413_maps_to_size_hint() -> None:
+    exc = _status_error(413, {"error": {"code": "media_too_large", "message": "Файл превышает лимит 10 МиБ."}})
+    assert "10 МБ" in backend_error_message(exc)
+
+
+def test_unsupported_media_415_maps_to_format_hint() -> None:
+    exc = _status_error(
+        415,
+        {"error": {"code": "unsupported_media_type", "message": "Unsupported media type: text/plain"}},
+    )
+    message = backend_error_message(exc)
+    assert "формат" in message.lower()
+    assert "PDF/DOCX" in message
+
+
+def test_media_processing_422_surfaces_server_reason() -> None:
+    exc = _status_error(
+        422,
+        {"error": {"code": "media_processing_failed", "message": "PDF похож на скан: для него требуется OCR."}},
+    )
+    assert backend_error_message(exc) == "PDF похож на скан: для него требуется OCR."
+
+
+def test_media_processing_422_without_reason_uses_fallback() -> None:
+    exc = _status_error(422, {"error": {"code": "media_processing_failed"}})
+    assert "прочитать" in backend_error_message(exc)
 
 
 @pytest.mark.asyncio

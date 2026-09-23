@@ -688,6 +688,63 @@ def test_history_follow_up_merges_raw_recall_with_standalone_topic(tmp_path: Pat
     assert result["answer"] == "Используются степени свободы по осям x и y ECS [1]."
 
 
+def test_generation_prompt_includes_recent_dialog_without_stale_citations(tmp_path: Path) -> None:
+    """The generator must see the conversation, not only the elliptical wording.
+
+    The follow-up "А для электроники?" is unanswerable without the prior turn,
+    and citation markers inside previous assistant messages belong to a
+    different fragment numbering: they are stripped from the dialog block so
+    they cannot be mistaken for current sources.
+    """
+
+    llm = FakeLLM("Срок возврата электроники — 14 дней [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    service.answer(
+        "А для электроники?",
+        history=[
+            {"role": "user", "content": "Каков срок возврата товара?"},
+            {"role": "assistant", "content": "Для большинства товаров 30 дней [1]."},
+        ],
+    )
+
+    prompt = llm.prompts[0]
+    assert "Диалог:\n" in prompt
+    dialog = prompt.split("Диалог:", 1)[1].split("Контекст:", 1)[0]
+    assert "Пользователь: Каков срок возврата товара?" in dialog
+    assert "Ассистент: Для большинства товаров 30 дней" in dialog
+    assert "[1]" not in dialog and "[2]" not in dialog
+    assert "Вопрос пользователя: А для электроники?" in prompt
+
+
+def test_generation_prompt_omits_dialog_section_without_history(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    service.answer("Самостоятельный вопрос")
+
+    assert "Диалог:" not in llm.prompts[0]
+
+
+def test_generation_dialog_is_bounded_to_recent_turns(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    history = [
+        {"role": "user", "content": f"сообщение-{index}"}
+        for index in range(10)
+    ]
+    service.answer("Итоговый вопрос", history=history)
+
+    dialog = llm.prompts[0].split("Диалог:", 1)[1].split("Контекст:", 1)[0]
+    assert "сообщение-9" in dialog
+    assert "сообщение-4" in dialog
+    assert "сообщение-3" not in dialog
+
+
 def test_follow_up_builds_strict_lexical_query_from_current_constraint_and_prior_subject(
     tmp_path: Path,
 ) -> None:

@@ -7,6 +7,7 @@ from typing import Final
 
 
 MAX_INPUT_CHARS: Final[int] = 4000
+MAX_MESSAGE_CHARS: Final[int] = 16_000
 NON_PRINTABLE_RATIO_LIMIT: Final[float] = 0.10
 ATYPICAL_UNICODE_RATIO_LIMIT: Final[float] = 0.35
 
@@ -37,10 +38,10 @@ class ValidationResult:
     rule: str | None = None
 
 
-def validate_input(text: str) -> ValidationResult:
+def validate_input(text: str, *, max_chars: int = MAX_INPUT_CHARS) -> ValidationResult:
     normalized = unicodedata.normalize("NFKC", text)
 
-    if len(normalized) > MAX_INPUT_CHARS:
+    if len(normalized) > max_chars:
         return ValidationResult(False, "input too long", rule="length")
 
     non_printable = sum(1 for char in normalized if not char.isprintable() and char not in "\n\r\t")

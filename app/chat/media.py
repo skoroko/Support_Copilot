@@ -75,7 +75,7 @@ async def media_to_part(
         )
         return {
             "type": "text",
-            "text": f"[пользователь сказал голосом]:\n{transcript}",
+            "text": f"[пользователь сказал голосом]:\n{transcript[:MAX_DOCUMENT_CHARS]}",
         }
 
     if mime == "application/pdf":

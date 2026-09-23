@@ -25,6 +25,11 @@ DEFAULT_RESPONSE_TOKENS = 500
 DEFAULT_SAFETY_MARGIN_TOKENS = 500
 MODERATION_OUTPUT_REPLACEMENT = "Не могу показать ответ — он мог нарушить правила"
 RAG_EMPTY_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
+RAG_MEDIA_TEXT_MAX_CHARS = 16_000
+MEDIA_IMAGE_NO_TEXT_REPLY = (
+    "Я пока не умею искать по базе знаний по изображению без описания. "
+    "Добавьте подпись к фото или опишите проблему текстом."
+)
 
 logger = get_logger("chat-service")
 
@@ -228,10 +233,14 @@ class ChatService:
         rag_sources: list[dict[str, Any]] = []
         started_at = time.perf_counter()
         if rag_service is not None:
-            rag_result = await self._answer_with_rag(rag_service, user_content, retrieval_history)
-            answer = str(rag_result.get("answer") or "").strip() or RAG_EMPTY_ANSWER
+            rag_question = self._rag_question(user_content, media_refs)
+            if rag_question is None:
+                answer = MEDIA_IMAGE_NO_TEXT_REPLY
+            else:
+                rag_result = await self._answer_with_rag(rag_service, rag_question, retrieval_history)
+                answer = str(rag_result.get("answer") or "").strip() or RAG_EMPTY_ANSWER
+                rag_sources = self._citation_array(rag_result.get("sources"))
             assistant_parts = [answer]
-            rag_sources = self._citation_array(rag_result.get("sources"))
         else:
             try:
                 stream = await self.llm_client.chat.completions.create(
@@ -337,6 +346,33 @@ class ChatService:
         media_part = (media_refs or {}).get("part")
         if isinstance(media_part, dict) and media_part.get("type") == "text":
             return f"{user_content}\n{media_part.get('text', '')}".strip()
+        return user_content
+
+    @staticmethod
+    def _rag_question(user_content: str, media_refs: dict[str, Any] | None) -> str | None:
+        """Return the text RAG retrieval should actually search for.
+
+        Voice transcripts and extracted document text arrive in
+        ``media_refs.part``; merging them keeps retrieval from running on
+        the ``[документ x.pdf]``-style placeholder the bot sends as
+        ``content``.  An image without a caption has no searchable text,
+        so ``None`` asks the caller to refuse explicitly instead of
+        embedding the placeholder.
+        """
+
+        media_part = (media_refs or {}).get("part")
+        if not isinstance(media_part, dict):
+            return user_content
+        part_type = media_part.get("type")
+        if part_type == "text":
+            merged = ChatService._moderation_content(user_content, media_refs)
+            # Retrieval embeds the question, so document-sized payloads stay
+            # below the embedding model input limit.
+            return merged[:RAG_MEDIA_TEXT_MAX_CHARS]
+        if part_type == "image_url":
+            stripped = user_content.strip()
+            if stripped.startswith("[") and stripped.endswith("]"):
+                return None
         return user_content
 
     def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
