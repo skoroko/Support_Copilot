@@ -26,7 +26,7 @@ async def query_rag(payload: RAGQuery, request: Request, _principal: PrincipalDe
                 status_code=400,
                 detail={
                     "code": "security_input_blocked",
-                    "message": "Request blocked by input security policy",
+                    "message": validation.reason or "Request blocked by input security policy",
                     "rule": validation.rule,
                 },
             )

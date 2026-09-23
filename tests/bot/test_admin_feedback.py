@@ -74,9 +74,20 @@ def test_overlong_input_400_maps_to_length_hint() -> None:
     assert "16000" in message
 
 
-def test_injection_400_maps_to_security_hint() -> None:
+def test_injection_400_maps_to_instruction_hint() -> None:
     exc = _status_error(400, {"error": {"code": "security_input_blocked", "rule": "injection"}})
-    assert "безопасност" in backend_error_message(exc)
+    message = backend_error_message(exc)
+    assert "инструкц" in message
+
+def test_encoded_injection_400_maps_to_decoded_hint() -> None:
+    exc = _status_error(400, {"error": {"code": "security_input_blocked", "rule": "encoded_injection"}})
+    message = backend_error_message(exc)
+    assert "закодированн" in message
+
+def test_encoding_400_maps_to_charset_hint() -> None:
+    exc = _status_error(400, {"error": {"code": "security_input_blocked", "rule": "encoding"}})
+    message = backend_error_message(exc)
+    assert "нечитаем" in message
 
 
 def test_media_too_large_413_maps_to_size_hint() -> None:

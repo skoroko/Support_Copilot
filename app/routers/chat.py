@@ -120,7 +120,7 @@ def _validate_chat_input(req: ChatRequest) -> None:
                 status_code=400,
                 detail={
                     "code": "security_input_blocked",
-                    "message": "Request blocked by input security policy",
+                    "message": result.reason or "Request blocked by input security policy",
                     "rule": result.rule,
                 },
             )

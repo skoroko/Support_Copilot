@@ -17,7 +17,7 @@ from app.chat.service import ChatNotFoundError, ModerationBlockedError, media_pa
 from app.core.auth import PrincipalDep
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
-from app.services.security.input_validator import MAX_MESSAGE_CHARS, validate_input
+from app.services.security.input_validator import MAX_MESSAGE_CHARS, decoded_fragments, validate_input
 
 
 router = APIRouter(tags=["chats"])
@@ -71,7 +71,7 @@ async def send_message(
     content: str = Form(..., min_length=1),
     media: list[UploadFile] | None = File(None),
 ) -> StreamingResponse:
-    _validate_user_content(content)
+    decoded = _validate_user_content(content)
     await _owned_chat(chat_id, chat_service, principal)
 
     media_refs = None
@@ -98,14 +98,12 @@ async def send_message(
             "files": files_meta,
         }
 
-    moderation_content = content
     media_texts = [
         str(part.get("text", ""))
         for part in media_parts(media_refs)
         if part.get("type") == "text" and part.get("text")
     ]
-    if media_texts:
-        moderation_content = "\n".join([content, *media_texts]).strip()
+    moderation_content = "\n".join([content, *decoded, *media_texts]).strip()
     ensure_input_allowed = getattr(chat_service, "ensure_input_allowed", None)
     input_moderated = ensure_input_allowed is not None
     if ensure_input_allowed is not None:
@@ -281,10 +279,10 @@ async def _owned_chat(chat_id: UUID, chat_service: object, principal: object) ->
     return chat
 
 
-def _validate_user_content(content: str) -> None:
+def _validate_user_content(content: str) -> list[str]:
     result = validate_input(content, max_chars=MAX_MESSAGE_CHARS)
     if result.ok:
-        return
+        return decoded_fragments(content)
     detail: dict[str, object] = {
         "code": "security_input_blocked",
         "message": result.reason or "input blocked by security policy",

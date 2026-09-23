@@ -164,6 +164,27 @@ def test_chat_message_route_blocks_prompt_injection(fake_chat_service: FakeChatS
     assert fake_chat_service.messages[chat.id] == []
 
 
+def test_chat_message_route_moderates_decoded_fragments(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+    moderated: list[str] = []
+
+    async def ensure_input_allowed(chat_id: UUID, content: str) -> None:
+        moderated.append(content)
+
+    fake_chat_service.ensure_input_allowed = ensure_input_allowed  # type: ignore[attr-defined]
+
+    with TestClient(app, headers=auth_headers()) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "Подпись ошибки: ZXhlY3V0aW9uIGZhaWxlZCBmb3IgbG9jYWw="},
+        )
+
+    assert response.status_code == 200
+    assert moderated and "execution failed for local" in moderated[0]
+
+
 def test_chat_message_route_accepts_long_user_message(fake_chat_service: FakeChatService) -> None:
     chat = Chat(owner_external_id="test-1", interface="cli")
     fake_chat_service.chats[chat.id] = chat
