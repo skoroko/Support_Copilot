@@ -557,7 +557,7 @@ def test_follow_up_question_uses_history_for_deterministic_condense(tmp_path: Pa
 
     assert retriever.questions == [
         "А для электроники?",
-        "Каков срок возврата? А для электроники?",
+        "Каков срок возврата? Срок зависит от категории товара. А для электроники?",
     ]
 
 
@@ -686,6 +686,182 @@ def test_history_follow_up_merges_raw_recall_with_standalone_topic(tmp_path: Pat
     ]
     assert llm.prompts and "по направлениям осей x и y элементной системы координат" in llm.prompts[0]
     assert result["answer"] == "Используются степени свободы по осям x и y ECS [1]."
+
+
+def test_how_question_with_early_reference_is_follow_up(tmp_path: Path) -> None:
+    """«как» belongs to the wh-set: a mid-length how-question anchored by an
+    anaphora resolves its subject from the previous exchange."""
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "Как мне настроить этот параметр?",
+        history=[{"role": "user", "content": "Какие параметры сетки бывают?"}],
+    )
+
+    assert retriever.questions == [
+        "Как мне настроить этот параметр?",
+        "Какие параметры сетки бывают? Как мне настроить этот параметр?",
+    ]
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Подробнее",
+        "А подробнее?",
+        "Почему?",
+        "Например, для грунтов?",
+        "Для 2D?",
+        "Для него?",
+        "И что будет, если его не задать?",
+        "Ну а для плоской деформации?",
+        "Этот метод применяется для плоской деформации?",
+    ],
+)
+def test_widened_follow_up_markers_use_history_variant(tmp_path: Path, question: str) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        question,
+        history=[{"role": "user", "content": "Какие параметры сетки бывают?"}],
+    )
+
+    assert retriever.questions == [question, f"Какие параметры сетки бывают? {question}"]
+
+
+def test_follow_up_merges_last_assistant_answer_for_assistant_owned_referent(
+    tmp_path: Path,
+) -> None:
+    """The referent may live in the assistant's answer, not the user question.
+
+    "из них" points at the list of element types produced by the assistant, so
+    the expanded query must carry the previous exchange, not only the last
+    user wording.  Stale citation markers are stripped from the merge.
+    """
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А какие из них подходят для плоской деформации?",
+        history=[
+            {"role": "user", "content": "Какие типы элементов есть в GTS NX?"},
+            {"role": "assistant", "content": "В GTS NX есть 1D, 2D и 3D элементы [1]."},
+        ],
+    )
+
+    assert retriever.questions == [
+        "А какие из них подходят для плоской деформации?",
+        (
+            "Какие типы элементов есть в GTS NX? "
+            "В GTS NX есть 1D, 2D и 3D элементы. "
+            "А какие из них подходят для плоской деформации?"
+        ),
+    ]
+
+
+def test_chained_follow_up_uses_latest_exchange_not_first_question(tmp_path: Path) -> None:
+    """A follow-up to a follow-up must not resurrect the first user question.
+
+    The previous user turn is itself elliptical, so the assistant's answer is
+    the part that still carries the topical terms for retrieval.
+    """
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для осесимметричной задачи?",
+        history=[
+            {"role": "user", "content": "Какие типы элементов есть в GTS NX?"},
+            {"role": "assistant", "content": "Есть 1D, 2D и 3D элементы."},
+            {"role": "user", "content": "А какие из них для плоской деформации?"},
+            {
+                "role": "assistant",
+                "content": "Для плоской деформации применяются элементы с двумя степенями свободы.",
+            },
+        ],
+    )
+
+    merged = retriever.questions[1]
+    assert "А какие из них для плоской деформации?" in merged
+    assert "Для плоской деформации применяются элементы с двумя степенями свободы." in merged
+    assert "Какие типы элементов есть в GTS NX?" not in merged
+
+
+def test_follow_up_merge_skips_abstention_assistant_answer(tmp_path: Path) -> None:
+    """A stored NO_ANSWER assistant turn adds no topical terms to the merge."""
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для электроники?",
+        history=[
+            {"role": "user", "content": "Каков срок возврата?"},
+            {"role": "assistant", "content": NO_ANSWER},
+        ],
+    )
+
+    assert retriever.questions == [
+        "А для электроники?",
+        "Каков срок возврата? А для электроники?",
+    ]
+
+
+def test_self_contained_why_question_without_reference_stays_independent(
+    tmp_path: Path,
+) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    question = "Почему метод сил не используется для динамического расчёта?"
+    service.answer(question, history=[{"role": "user", "content": "Как настроить сетку?"}])
+
+    assert retriever.questions == [question]
+
+
+def test_self_contained_question_with_late_possessive_stays_independent(
+    tmp_path: Path,
+) -> None:
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    question = "Какие параметры элемента влияют на его жёсткость в расчёте?"
+    service.answer(question, history=[{"role": "user", "content": "Как настроить сетку?"}])
+
+    assert retriever.questions == [question]
 
 
 def test_generation_prompt_includes_recent_dialog_without_stale_citations(tmp_path: Path) -> None:

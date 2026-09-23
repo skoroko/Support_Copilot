@@ -52,6 +52,7 @@ MAX_OVERVIEW_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
 DIALOG_HISTORY_MESSAGES = 6
 DIALOG_MESSAGE_CHARS = 600
+FOLLOWUP_CONTEXT_CHARS = 400
 MAX_LEXICAL_QUERY_VARIANTS = 8
 MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
@@ -195,25 +196,209 @@ _FOLLOWUP_REFERENCE_TERMS = {
     "его",
     "ее",
     "её",
-    "их",
+    "ей",
+    "ему",
+    "ею",
+    "им",
+    "ими",
+    "него",
+    "нее",
+    "неё",
+    "ней",
+    "нем",
+    "нём",
     "них",
+    "ними",
+    "их",
     "он",
     "она",
+    "оно",
     "они",
-    "там",
+    "та",
     "так",
+    "такая",
     "такие",
+    "таким",
+    "такими",
+    "таких",
+    "такого",
+    "такое",
     "такой",
+    "такому",
+    "такую",
+    "там",
+    "те",
+    "тем",
+    "теми",
+    "тех",
+    "того",
+    "той",
+    "тому",
+    "тот",
+    "ту",
     "этого",
     "этой",
     "этом",
+    "этому",
     "эта",
     "эти",
+    "этим",
+    "этими",
     "этих",
     "это",
     "этот",
+    "эту",
+    "it",
+    "its",
+    "that",
+    "their",
+    "them",
+    "these",
+    "they",
+    "this",
+    "those",
 }
-_ELLIPTICAL_FOLLOWUP_PREFIXES = ("а ", "и ", "тогда ", "что насчет ", "что насчёт ")
+# Question words that open a follow-up when an anaphora sits near the head
+# ("как мне настроить этот параметр?", "почему это не работает?").
+_FOLLOWUP_QUESTION_WORDS = {
+    "где",
+    "зачем",
+    "как",
+    "какая",
+    "какие",
+    "каким",
+    "какими",
+    "каких",
+    "какого",
+    "какое",
+    "какой",
+    "каком",
+    "какому",
+    "какую",
+    "когда",
+    "кем",
+    "кого",
+    "кому",
+    "кто",
+    "куда",
+    "насколько",
+    "откуда",
+    "отчего",
+    "почему",
+    "сколько",
+    "чего",
+    "чей",
+    "чем",
+    "что",
+    "чье",
+    "чьё",
+    "чьи",
+    "чьим",
+    "чьих",
+    "чья",
+    "how",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "whom",
+    "why",
+}
+# Single-token openers that mark a conversational continuation.  They are
+# matched on the first token, so trailing punctuation cannot hide them.
+_FOLLOWUP_HEAD_MARKERS = {
+    "а",
+    "и",
+    "но",
+    "или",
+    "если",
+    "иначе",
+    "тогда",
+    "значит",
+    "подробнее",
+    "поподробнее",
+    "конкретнее",
+    "например",
+    "уточни",
+    "уточните",
+    "and",
+    "but",
+    "or",
+    "so",
+    "then",
+}
+# Multi-word openers matched on the token-joined text ("то есть это работает?").
+_ELLIPTICAL_FOLLOWUP_PHRASES = (
+    "то есть ",
+    "что насчет ",
+    "what about ",
+    "how about ",
+    "for example ",
+    "for instance ",
+    "more detail",
+)
+# Bare one-word turns that continue the prior exchange ("Подробнее", "Почему?").
+_FOLLOWUP_SINGLE_WORDS = {
+    "дальше",
+    "еще",
+    "ещё",
+    "зачем",
+    "почему",
+    "пример",
+    "примеры",
+    "уточнение",
+    "details",
+    "example",
+    "examples",
+    "more",
+    "why",
+}
+# Short fragments opening with a preposition are elliptical ("для 2D?").
+_FOLLOWUP_FRAGMENT_PREPOSITIONS = {
+    "без",
+    "в",
+    "вместо",
+    "во",
+    "для",
+    "до",
+    "за",
+    "из",
+    "к",
+    "ко",
+    "кроме",
+    "между",
+    "на",
+    "над",
+    "о",
+    "об",
+    "обо",
+    "около",
+    "от",
+    "по",
+    "под",
+    "после",
+    "при",
+    "про",
+    "против",
+    "с",
+    "со",
+    "у",
+    "через",
+    "about",
+    "for",
+    "in",
+    "of",
+    "on",
+    "to",
+    "with",
+    "without",
+}
+# Leading discourse particles are stripped before marker checks
+# ("ладно, а для них?" -> "а для них?").
+_FOLLOWUP_LEAD_PARTICLE_RE = re.compile(
+    r"^(?:(?:okay|ладно|итак|вот|ну|ок|ok)\b[\s,;:—–-]*)+"
+)
 
 logger = get_logger("rag-service")
 
@@ -1181,51 +1366,114 @@ class RAGService:
                 return condensed.strip()
         if not self._is_context_dependent_followup(question):
             return question.strip()
+        current = question.strip()
         previous_user_question = next(
             (
                 content
                 for item in reversed(history)
                 if self._history_value(item, "role") == "user"
-                and (content := str(self._history_value(item, "content", "")).strip())
-                and content != question.strip()
+                and (content := self._followup_context_text(
+                    self._history_value(item, "content", "")
+                ))
+                and content != current
             ),
             "",
         )
-        if not previous_user_question:
-            return question.strip()
-        # Keep the user's wording, but omit synthetic labels such as
-        # "контекст предыдущего вопроса": those labels dilute the embedding
-        # and do not add support-domain meaning.
-        previous = " ".join(previous_user_question.split()).strip()
-        return f"{previous} {question.strip()}"
+        previous_assistant_answer = next(
+            (
+                content
+                for item in reversed(history)
+                if self._history_value(item, "role") == "assistant"
+                and (content := self._followup_context_text(
+                    self._history_value(item, "content", ""), assistant=True
+                ))
+            ),
+            "",
+        )
+        # Merge the latest exchange, not only the last user question: the
+        # assistant's answer often introduces the referent a follow-up points
+        # to, and a chained follow-up would otherwise keep pointing at an
+        # elliptical predecessor.  Keep the user's wording, but omit synthetic
+        # labels such as "контекст предыдущего вопроса": those labels dilute
+        # the embedding and do not add support-domain meaning.
+        context_parts = [
+            part for part in (previous_user_question, previous_assistant_answer) if part
+        ]
+        if not context_parts:
+            return current
+        return " ".join((*context_parts, current))
+
+    @classmethod
+    def _followup_context_text(cls, content: Any, *, assistant: bool = False) -> str:
+        """Compact a prior turn for the merged follow-up retrieval query.
+
+        Assistant answers carry citation markers that belong to an older
+        fragment numbering and abstention sentences that add no topical
+        terms, so both are removed before the bounded merge.
+        """
+
+        text = cls._history_text(content)
+        if assistant:
+            text = _CITATION_RE.sub("", text)
+            text = re.sub(r"\s+([.,;:!?])", r"\1", text)
+        text = " ".join(text.split())
+        if assistant and (not text or cls._is_abstention_answer(text)):
+            return ""
+        if len(text) > FOLLOWUP_CONTEXT_CHARS:
+            text = text[:FOLLOWUP_CONTEXT_CHARS].rsplit(" ", 1)[0].rstrip(",;:")
+        return text
 
     @staticmethod
     def _is_context_dependent_followup(question: str) -> bool:
-        """Recognize only clear references or short conversational ellipses.
+        """Recognize conversational ellipses and questions anchored in prior context.
 
-        This intentionally stays conservative.  A false negative still runs
-        the exact current question; a false positive adds one bounded query.
-        It avoids a large language-specific rewrite grammar and does not alter
-        explicit, self-contained technical questions.
+        The detector intentionally stays conservative, but covers the common
+        support-dialog shapes: continuation openers ("а", "и", "но", "если",
+        "подробнее"), one-word continuation markers ("почему", "дальше"),
+        short prepositional fragments ("для 2D?") and anaphoric pronouns in
+        short questions or near the head of a wh-question ("как мне настроить
+        этот параметр?").  A false negative still runs the exact current
+        question; a false positive adds one bounded query variant.
         """
 
-        normalized = " ".join(question.casefold().replace("ё", "е").split())
+        normalized = _FOLLOWUP_LEAD_PARTICLE_RE.sub(
+            "", " ".join(question.casefold().replace("ё", "е").split())
+        )
         tokens = _LEXICAL_TOKEN_RE.findall(normalized)
-        starts_conversationally = normalized.startswith(_ELLIPTICAL_FOLLOWUP_PREFIXES)
-        if starts_conversationally:
+        if not tokens:
+            return False
+        if (
+            tokens[0] in _FOLLOWUP_HEAD_MARKERS
+            or " ".join(tokens).startswith(_ELLIPTICAL_FOLLOWUP_PHRASES)
+        ):
+            return True
+        if len(tokens) == 1 and tokens[0] in _FOLLOWUP_SINGLE_WORDS:
+            return True
+        if len(tokens) <= 4 and tokens[0] in _FOLLOWUP_FRAGMENT_PREPOSITIONS:
             return True
         reference_positions = [
-            index for index, token in enumerate(tokens) if token in _FOLLOWUP_REFERENCE_TERMS
+            index
+            for index, token in enumerate(tokens)
+            if token in _FOLLOWUP_REFERENCE_TERMS
+            # "что такое/такой/такие" and "кто такой" are the "what/who is"
+            # idiom, not a reference to a prior turn.
+            and not (index > 0 and tokens[index - 1] in {"что", "кто"} and token.startswith("так"))
         ]
         if not reference_positions:
             return False
         # Short pronominal questions ("Какие из них?", "Для них?") are
-        # dependent.  A pronoun buried in a complete technical question is
-        # not enough on its own: adding unrelated history would pollute recall.
-        return len(tokens) <= 4 or (
-            tokens[0] in {"где", "какая", "какие", "какой", "когда", "кто", "сколько", "что"}
-            and reference_positions[0] <= 3
-            and len(tokens) <= 12
+        # dependent, and so are medium questions that open with a wh-word or
+        # a reference to the prior turn.  A pronoun buried late in a complete
+        # technical question is not enough on its own: adding unrelated
+        # history would pollute recall.
+        return (
+            len(tokens) <= 4
+            or (
+                tokens[0] in _FOLLOWUP_QUESTION_WORDS
+                and reference_positions[0] <= 4
+                and len(tokens) <= 12
+            )
+            or (reference_positions[0] <= 2 and len(tokens) <= 8)
         )
 
     def _generate_answer(
