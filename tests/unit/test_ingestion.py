@@ -146,7 +146,14 @@ def test_product_metadata_uses_explicit_product_markers_and_corpus_default(tmp_p
     assert product_for_path(tmp_path / "03_midas GTS NX_elements.pdf") == "gts_nx"
     assert product_for_path(tmp_path / "manuals" / "midas Civil guide.pdf") == "civil"
     assert product_for_path(tmp_path / "manuals" / "midas NFX guide.pdf") == "nfx"
+    assert product_for_path(tmp_path / "manuals" / "SoilWorks manual.pdf") == "soilworks"
     assert infer_product(["generic User Manual Chapter 5.pdf"], default_product="gts_nx") == "gts_nx"
+
+
+@pytest.mark.parametrize("scope", ["all", "any", "none"])
+def test_ingestion_config_rejects_scope_tokens_as_default_product(tmp_path: Path, scope: str) -> None:
+    with pytest.raises(ValueError, match="default_product"):
+        IngestionConfig(data_dir=tmp_path, default_product=scope, docstore_path=tmp_path / "docstore.json")
 
 
 def test_pdf_page_numbers_are_preserved_before_metadata_enrichment(
