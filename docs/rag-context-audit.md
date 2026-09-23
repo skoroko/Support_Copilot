@@ -130,7 +130,29 @@ Telegram message
 - **Вариант исправления:** добавить «как» в wh-сет, расширить эллиптические
   префиксы, мерджить последний user + последний assistant, в перспективе —
   LLM-condense через `condense_hook` (см. F11).
-- **Статус:** [ ]
+- **Статус:** [x] — wh-сет вынесено в `_FOLLOWUP_QUESTION_WORDS` и расширено
+  («как», «почему», «зачем», вся парадигма «какой»/«чей», EN wh-слова), порог
+  позиции анафоры смягчён до ≤4; добавлены head-маркеры продолжения
+  `_FOLLOWUP_HEAD_MARKERS` («но», «или», «если», «значит», «подробнее»,
+  «например», «уточни» + EN), фразовые открытия `_ELLIPTICAL_FOLLOWUP_PHRASES`
+  («то есть», «what about», «for example»), однословные маркеры
+  `_FOLLOWUP_SINGLE_WORDS` («почему», «дальше», «ещё»…), короткие предложные
+  фрагменты ≤4 токенов `_FOLLOWUP_FRAGMENT_PREPOSITIONS` («для 2D?», «у
+  него?»), ранняя анафора (≤2 позиция) в вопросах ≤8 токенов; ведущие
+  дискурсивные частицы срезаются `_FOLLOWUP_LEAD_PARTICLE_RE`;
+  `_FOLLOWUP_REFERENCE_TERMS` дополнен предложными и косвенными формами
+  («него», «неё», «ему», «ими», «тому», «этим»…). В `_standalone_question`
+  расширение мерджит последний обмен — последний user-вопрос + последний
+  ответ ассистента через `_followup_context_text` (цитаты `[N]` вырезаются,
+  `NO_ANSWER` пропускается, ≤`FOLLOWUP_CONTEXT_CHARS`=400 символов на часть) —
+  referent'ы из ответа ассистента и цепочки follow-up больше не теряются.
+  Тесты: `test_how_question_with_early_reference_is_follow_up`,
+  `test_widened_follow_up_markers_use_history_variant`,
+  `test_follow_up_merges_last_assistant_answer_for_assistant_owned_referent`,
+  `test_chained_follow_up_uses_latest_exchange_not_first_question`,
+  `test_follow_up_merge_skips_abstention_assistant_answer`,
+  `test_self_contained_why_question_without_reference_stays_independent`,
+  `test_self_contained_question_with_late_possessive_stays_independent`.
 
 ### F5. Follow-up с lexical-hit получает ровно один фрагмент
 
@@ -400,6 +422,7 @@ Telegram message
 | Дата | ID | Что сделано | Проверка |
 |------|----|-------------|----------|
 | 2026-09-22 | — | Аудит проведён, список зафиксирован | read-only анализ |
+| 2026-09-23 | F4 | Расширена детекция follow-up (wh-сет +«как», новые маркеры, предложные фрагменты, ранняя анафора); расширение мерджит последний обмен user+assistant | `pytest tests/unit/test_rag.py` |
 | 2026-09-22 | F1 | `_generate_answer` принимает `history`; prompt включает ограниченный блок `Диалог:` перед `Контекст:`; `[N]`-цитаты прошлых ответов вырезаются | 3 новых теста + весь `tests/unit/test_rag.py` и `tests/chat/test_service_context.py` зелёные (71); полный прогон `tests` — 317 passed |
 | 2026-09-22 | infra | Починен предсуществующий `IndentationError` в `app/services/agent_react_worker.py` (`finally:` без отступа) — блокировал импорт `app.main` и все route-тесты | сборка тестов восстановлена |
 | 2026-09-22 | F23 | `JsonChatRepository`: добавлен `asyncio.Lock` поверх `AsyncFileLock(preserve_lock_file=True)` в `_locked()`; `filelock>=3.32.0` в pyproject | стресс-репродукция 20/20 без потерь (было до 14/40), флаки-тест 8/8, полный прогон `tests` зелёный |
