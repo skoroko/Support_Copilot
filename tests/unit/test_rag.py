@@ -1278,6 +1278,64 @@ def test_hybrid_recall_reserves_exact_fulltext_evidence_missing_from_dense_resul
     assert all("Civil" not in source["file_name"] for source in result["sources"])
 
 
+def test_follow_up_lexical_hit_keeps_dense_alternatives_in_context(tmp_path: Path) -> None:
+    """A wrong lexical hit must not starve the follow-up context.
+
+    The reserved all-token fragment still leads the prompt, but the strongest
+    dense candidates follow it: when the lexical match lands on an off-topic
+    glossary mention, the generator still sees the fragment carrying the
+    answer instead of being locked to a single wrong source.
+    """
+
+    off_topic_lexical = NodeWithScore(
+        node=TextNode(
+            id_="glossary-mention",
+            text=(
+                "В глоссарии перечислены термины: плоская деформация, "
+                "степени свободы, осесимметричная задача."
+            ),
+            metadata={"source": "GTS_NX_glossary.chm"},
+        ),
+        score=0.0,
+    )
+    dof_answer = NodeWithScore(
+        node=TextNode(
+            id_="plane-strain-dof",
+            text=(
+                "Элемент плоской деформации характеризуется степенями свободы "
+                "по направлениям осей x и y элементной системы координат."
+            ),
+            metadata={"source": "03_Пособие_GTS_NX_Элементы.pdf", "page": 45},
+        ),
+        score=0.9,
+    )
+    llm = FakeLLM("Степени свободы по осям x и y [2].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _query: [dof_answer])
+    service._lexical_available = True
+    service._retrieve_lexical_candidates = lambda _query: [off_topic_lexical]  # type: ignore[method-assign]
+
+    result = service.answer(
+        "А какие из них используются для плоской деформации?",
+        history=[
+            {
+                "role": "user",
+                "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?",
+            }
+        ],
+    )
+
+    prompt = llm.prompts[0]
+    assert "[1] Файл: GTS_NX_glossary.chm" in prompt
+    assert "[2] Файл: 03_Пособие_GTS_NX_Элементы.pdf" in prompt
+    assert "по направлениям осей x и y элементной системы координат" in prompt
+    assert result["answer"] == "Степени свободы по осям x и y [1]."
+    assert [source["id"] for source in result["sources"]] == ["plane-strain-dof"]
+
+
 def test_history_follow_up_deduplicates_candidates_from_both_queries(tmp_path: Path) -> None:
     shared = NodeWithScore(
         node=TextNode(text="Общий фрагмент с темой возврата.", metadata={"source": "faq.pdf"}),
