@@ -1157,6 +1157,119 @@ def test_chained_follow_up_uses_latest_exchange_not_first_question(tmp_path: Pat
     assert "Какие типы элементов есть в GTS NX?" not in merged
 
 
+def test_follow_up_merge_carries_incident_details_from_earlier_user_turns(
+    tmp_path: Path,
+) -> None:
+    """Incident details survive after the opening report leaves the exchange.
+
+    The merge resolves a follow-up against the latest exchange, so the error
+    code, version and host details reported in the first message would
+    otherwise decay out of the retrieval query within a few turns.
+    """
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А где эти логи лежат?",
+        history=[
+            {
+                "role": "user",
+                "content": "Ошибка 4021 при запуске анализа в GTS NX 2024.1, Windows 11",
+            },
+            {"role": "assistant", "content": "Проверьте журнал анализа [1]."},
+            {"role": "user", "content": "А как включить подробный журнал?"},
+            {"role": "assistant", "content": "Через настройки анализа."},
+        ],
+    )
+
+    merged = retriever.questions[1]
+    assert "А как включить подробный журнал?" in merged
+    assert "Через настройки анализа." in merged
+    assert "4021" in merged
+    assert "2024.1" in merged
+    assert "windows" in merged.casefold()
+    # The earlier turn contributes identifiers, not its whole wording.
+    assert "Ошибка 4021 при запуске анализа" not in merged
+
+
+def test_follow_up_detail_carry_skips_cyrillic_topic_words(tmp_path: Path) -> None:
+    """Only identifiers are carried: a dropped topic is not dragged back."""
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А для него?",
+        history=[
+            {
+                "role": "user",
+                "content": "Какие типы элементов подходят для модели Мора-Кулона, версия 5.2?",
+            },
+            {"role": "assistant", "content": "Есть несколько типов [1]."},
+            {"role": "user", "content": "А какие из них для грунта?"},
+            {"role": "assistant", "content": "2D-элементы."},
+        ],
+    )
+
+    merged = retriever.questions[1]
+    assert "5.2" in merged
+    assert "мора" not in merged
+    assert "кулона" not in merged
+    assert "типы" not in merged
+
+
+def test_follow_up_detail_carry_skips_terms_already_in_latest_exchange(
+    tmp_path: Path,
+) -> None:
+    """A detail the latest exchange already repeats is not carried twice."""
+
+    retriever = FakeRetriever([0.91])
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = retriever
+
+    service.answer(
+        "А что с ней делать?",
+        history=[
+            {"role": "user", "content": "Ошибка 4021 и сбой службы sentinel"},
+            {"role": "assistant", "content": "Уточните код [1]."},
+            {"role": "user", "content": "Код 4021 повторяется"},
+            {"role": "assistant", "content": "Перезапустите службу."},
+        ],
+    )
+
+    merged = retriever.questions[1]
+    assert merged.count("4021") == 1
+    assert "sentinel" in merged
+
+
+def test_detail_carry_tokens_keep_versions_and_identifiers_only() -> None:
+    tokens = RAGService._detail_carry_tokens(
+        ["Падение с ошибкой 4021, версия 4.2, i7-10875h, Windows 11, папка temp, счёт 5"]
+    )
+
+    assert "4021" in tokens
+    assert "4.2" in tokens
+    assert "i7" in tokens
+    assert "10875h" in tokens
+    assert "windows" in tokens
+    assert "11" in tokens
+    assert "temp" in tokens
+    assert "5" not in tokens
+    assert all(not re.search(r"[а-я]", token) for token in tokens)
+
+
 def test_follow_up_merge_skips_abstention_assistant_answer(tmp_path: Path) -> None:
     """A stored NO_ANSWER assistant turn adds no topical terms to the merge."""
 
@@ -1286,6 +1399,29 @@ def test_follow_up_builds_strict_lexical_query_from_current_constraint_and_prior
     assert service._lexical_query(question, history, plan) == (
         "плоской деформации степени свободы"
     )
+
+
+def test_follow_up_lexical_queries_add_incident_detail_anchor(tmp_path: Path) -> None:
+    """A strict variant anchored in the incident's identifiers.
+
+    The primary strict query only sees the last exchange; the anchor variant
+    keeps an older error code usable together with the current constraint.
+    """
+
+    service = RAGService(rag_config(tmp_path))
+    question = "А где эти логи лежат?"
+    history = [
+        {"role": "user", "content": "Ошибка 4021 при запуске анализа"},
+        {"role": "assistant", "content": "Проверьте журнал [1]."},
+        {"role": "user", "content": "А как включить подробный журнал?"},
+        {"role": "assistant", "content": "Через настройки."},
+    ]
+    plan = service._retrieval_plan(question, history, None)
+
+    queries = service._lexical_queries(question, history, plan)
+
+    assert queries[0] == "где логи лежат включить подробный"
+    assert "4021 где логи" in queries
 
 
 @pytest.mark.parametrize(
@@ -2007,6 +2143,28 @@ def test_llm_condense_hook_prompt_renders_bounded_dialog_without_stale_citations
     assert "Ассистент: Для большинства товаров 30 дней" in prompt
     assert "[1]" not in prompt
     assert "Последнее сообщение пользователя: А для электроники?" in prompt
+
+
+def test_llm_condense_hook_renders_full_history_window(tmp_path: Path) -> None:
+    """The rewrite sees the opening report, not only the last exchanges.
+
+    Answer generation keeps the tighter six-message block, but the auxiliary
+    condense call renders the caller's full window so incident details stay
+    visible to the rewrite on later turns.
+    """
+
+    condense_llm = FakeLLM("самостоятельный вопрос")
+    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
+    history = [
+        {"role": "user", "content": f"сообщение-{index}"} for index in range(10)
+    ]
+
+    hook("Итоговый вопрос", history)
+
+    prompt = condense_llm.prompts[0]
+    assert "Пользователь: сообщение-0" in prompt
+    assert "Пользователь: сообщение-3" in prompt
+    assert "Пользователь: сообщение-9" in prompt
 
 
 def test_llm_condense_hook_skips_llm_without_usable_history(tmp_path: Path) -> None:

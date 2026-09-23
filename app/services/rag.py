@@ -68,7 +68,15 @@ FOLLOWUP_LEXICAL_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
 DIALOG_HISTORY_MESSAGES = 6
 DIALOG_MESSAGE_CHARS = 600
+# The condense prompt is auxiliary, so it can afford the caller's full
+# history window: incident details from the opening message (error codes,
+# versions, configuration) stay visible to the rewrite beyond the tighter
+# six-message block rendered for answer generation.
+CONDENSE_DIALOG_HISTORY_MESSAGES = 10
 FOLLOWUP_CONTEXT_CHARS = 400
+# Identifier tokens (codes, versions, latin terms) the heuristic follow-up
+# merge may carry from older user turns into the retrieval query.
+FOLLOWUP_DETAIL_CARRY_TOKENS = 8
 MAX_LEXICAL_QUERY_VARIANTS = 8
 MAX_DENSE_FALLBACK_QUERIES = 4
 RAW_CANDIDATE_MULTIPLIER = 3
@@ -546,6 +554,19 @@ _FOLLOWUP_FRAGMENT_PREPOSITIONS = {
 # ("ладно, а для них?" -> "а для них?").
 _FOLLOWUP_LEAD_PARTICLE_RE = re.compile(
     r"^(?:(?:okay|ладно|итак|вот|ну|ок|ok)\b[\s,;:—–-]*)+"
+)
+# Detail-carry tokenizer: dotted versions stay whole ("2024.1"), other
+# identifier candidates come out as plain word tokens.
+_FOLLOWUP_DETAIL_TOKEN_RE = re.compile(r"\d+(?:\.\d+)+|[a-zа-яё0-9]+", re.IGNORECASE)
+# Conversational markers, stop words and anaphora are dialogue glue, not
+# incident identifiers, so the detail carry excludes them together.
+_DETAIL_CARRY_EXCLUDED_TOKENS = frozenset(
+    _LEXICAL_STOP_WORDS
+    | _FOLLOWUP_REFERENCE_TERMS
+    | _FOLLOWUP_HEAD_MARKERS
+    | _FOLLOWUP_SINGLE_WORDS
+    | _FOLLOWUP_QUESTION_WORDS
+    | _FOLLOWUP_FRAGMENT_PREPOSITIONS
 )
 
 logger = get_logger("rag-service")
@@ -1425,6 +1446,9 @@ class RAGService:
         Short windows are tried from both ends towards the middle only when
         the stricter primary query has no product-scoped matches. This covers
         both a conversational prefix and a trailing phrase after the subject.
+        A heuristic follow-up additionally gets an incident-anchored variant —
+        identifiers from older user turns plus the current constraint — so the
+        strict path keeps working once the opening report has left the merge.
         """
 
         queries: list[str] = []
@@ -1432,6 +1456,20 @@ class RAGService:
             queries.append(primary)
         term_source = question if plan.mode == "follow_up" else plan.ranking_question
         current_terms = cls._fulltext_terms(term_source)
+        if plan.mode == "follow_up" and history:
+            # Incident-anchored variant: identifiers carried from older user
+            # turns plus the current constraint keep strict recall usable on
+            # "ошибка 4021"-style tickets after the opener left the merge.
+            anchor_terms = list(
+                dict.fromkeys(
+                    cls._detail_carry_tokens(cls._earlier_user_texts(history))[:2]
+                    + current_terms[:2]
+                )
+            )
+            if len(anchor_terms) >= 3 or (
+                len(anchor_terms) == 2 and sum(map(len, anchor_terms)) >= 9
+            ):
+                queries.append(" ".join(anchor_terms))
         for width in (3, 2):
             if len(current_terms) <= width:
                 continue
@@ -1743,7 +1781,61 @@ class RAGService:
         ]
         if not context_parts:
             return current, "none"
-        return " ".join((*context_parts, current)), "heuristic"
+        merged_context = " ".join(context_parts)
+        # Incident details reported in older user turns (error codes,
+        # versions, configuration) decay out of the query once the exchange
+        # moves on; carry them as a bounded keyword tail instead of
+        # resurrecting whole earlier questions.
+        detail_carry = " ".join(
+            token
+            for token in self._detail_carry_tokens(self._earlier_user_texts(history))
+            if token not in merged_context.casefold() and token not in current.casefold()
+        )
+        return " ".join(
+            part for part in (merged_context, current, detail_carry) if part
+        ), "heuristic"
+
+    @classmethod
+    def _earlier_user_texts(cls, history: Sequence[HistoryItem]) -> list[str]:
+        """Return user turns older than the latest one, in dialogue order.
+
+        The latest user message already enters the follow-up merge whole;
+        the earlier turns are where incident details sit once the exchange
+        has moved on.
+        """
+
+        user_texts = [
+            text
+            for item in history
+            if cls._history_value(item, "role") == "user"
+            and (text := cls._history_text(cls._history_value(item, "content", "")).strip())
+        ]
+        return user_texts[:-1]
+
+    @classmethod
+    def _detail_carry_tokens(cls, texts: Sequence[str]) -> list[str]:
+        """Collect identifier tokens — numbers, digit compounds, latin terms.
+
+        Only token-shaped details are carried forward: Cyrillic topic words
+        of older turns stay out on purpose, so a subject the dialogue has
+        already left is not dragged back into the retrieval query.
+        """
+
+        carried: list[str] = []
+        for text in texts:
+            for match in _FOLLOWUP_DETAIL_TOKEN_RE.finditer(text.casefold().replace("ё", "е")):
+                token = match.group()
+                if token in _DETAIL_CARRY_EXCLUDED_TOKENS or any(
+                    token.startswith(prefix) for prefix in _LEXICAL_IGNORED_PREFIXES
+                ):
+                    continue
+                has_digit = any(char.isdigit() for char in token)
+                if has_digit:
+                    if len(token) >= 2:
+                        carried.append(token)
+                elif token.isascii() and len(token) >= 3:
+                    carried.append(token)
+        return list(dict.fromkeys(carried))[:FOLLOWUP_DETAIL_CARRY_TOKENS]
 
     @classmethod
     def _followup_context_text(cls, content: Any, *, assistant: bool = False) -> str:
@@ -1866,7 +1958,12 @@ class RAGService:
         return self._ground_answer(answer, sources)
 
     @classmethod
-    def _dialog_context_section(cls, history: Sequence[HistoryItem] | None) -> str:
+    def _dialog_context_section(
+        cls,
+        history: Sequence[HistoryItem] | None,
+        *,
+        max_messages: int = DIALOG_HISTORY_MESSAGES,
+    ) -> str:
         """Render a bounded recent-dialog block placed before the retrieved context.
 
         The generation prompt previously received only the raw current wording,
@@ -1874,12 +1971,14 @@ class RAGService:
         LLM even though retrieval had already resolved its topic.  Citations
         inside previous assistant answers refer to an older context numbering
         and are stripped so they cannot collide with [1]..[N] fragments.
+        ``max_messages`` widens the window for consumers cheaper than answer
+        generation — the condense hook renders the caller's full window.
         """
 
         if not history:
             return ""
         lines: list[str] = []
-        for item in history[-DIALOG_HISTORY_MESSAGES:]:
+        for item in history[-max_messages:]:
             label = {"user": "Пользователь", "assistant": "Ассистент"}.get(
                 str(cls._history_value(item, "role"))
             )
@@ -2289,7 +2388,12 @@ def build_llm_condense_hook(config: RAGConfig, *, llm: Any | None = None) -> Con
     def condense(question: str, history: Sequence[HistoryItem]) -> str | None:
         if not history:
             return None
-        dialog_section = RAGService._dialog_context_section(history)
+        # The rewrite keeps incident details only while they stay inside the
+        # rendered window, so the hook sees the caller's full history, not the
+        # tighter six-message block used for answer generation.
+        dialog_section = RAGService._dialog_context_section(
+            history, max_messages=CONDENSE_DIALOG_HISTORY_MESSAGES
+        )
         if not dialog_section:
             return None
         condense_llm = state["llm"]
