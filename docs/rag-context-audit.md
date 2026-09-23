@@ -302,7 +302,14 @@ Telegram message
 - **Эффект:** редкие, но реальные ложные отказы при наличии хорошего
   кандидата.
 - **Вариант исправления:** считать confidence по пулу до dedup/лимита.
-- **Статус:** [ ]
+- **Статус:** [x] — `top_score` теперь максимум по пулу `ranked` до
+  `_deduplicate`/context-limit: выпадение топ-кандидата на дедупликации
+  (near-duplicate) или урезании контекста больше не даёт ложный
+  `low_score` → `NO_ANSWER`, т.к. его evidence выживает в оставшемся
+  близнеце/пуле. Телеметрия `rag_retrieval_completed` дополнительно пишет
+  `selected_top_score` — максимум по фактически отобранным источникам.
+  Тесты: `test_top_score_uses_candidate_pool_before_deduplication`;
+  обновлён `test_llamaindex_reranks_after_top_k_and_guards_before_llm`.
 
 ### F10. Overview-эвристика урезает контекст на не-обзорных вопросах
 
@@ -504,3 +511,4 @@ Telegram message
 | 2026-09-23 | F5 | `context_limit=1` для follow_up+reserved заменён лимитом `FOLLOWUP_LEXICAL_CONTEXT_SOURCES=3`: резерв идёт первым, до двух dense-альтернатив сохраняются в prompt | новый тест + полный прогон `tests` в `.venv` (`uv sync --extra eval`, CPython 3.13.15) — 350 passed, 9 skipped |
 | 2026-09-23 | F7 | `_ground_answer`: нормализация `【N】`/`[^N]`/«источник N»/mid-line `(N)` к `[N]`; ответ без валидных ссылок доставляется без списка источников вместо `NO_ANSWER`; warning `rag_answer_missing_citations` | 12 новых тестов grounding + обновлённый uncited-кейс; полный прогон `tests` — 386 passed, 9 skipped |
 | 2026-09-23 | F8 | `/ready` возвращает `rag` + `rag_error` (200 + degraded, без restart loop); SSE `notice`/`rag_unavailable` при включённом, но неподнявшемся RAG; `FALLBACK_SYSTEM_PROMPT` для non-RAG пути; `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=false` → startup-деградация `ExternalDataTransferNotAllowed`; бот показывает notice под ответом | 12 новых тестов (startup, ready, route notice, fallback prompt, bot notice) + обновлённые ready-assertions |
+| 2026-09-23 | F9 | `top_score` считается по пулу `ranked` до `_deduplicate`/context-limit вместо максимума по отобранным источникам — выпадение топ-кандидата на дедупе/лимите больше не даёт ложный `NO_ANSWER`; в телеметрию добавлен `selected_top_score` | новый тест near-duplicate + обновлённый reranker-кейс; прогон `tests` |

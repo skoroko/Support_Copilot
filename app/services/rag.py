@@ -748,16 +748,21 @@ class RAGService:
             context_limit = min(self._context_limit(), MAX_OVERVIEW_CONTEXT_SOURCES)
         else:
             context_limit = self._context_limit()
+        # Confidence is measured over the ranked candidate pool before
+        # deduplication and the context limit discard candidates: a dropped
+        # near-duplicate still means the retriever found confident evidence,
+        # which survives in the kept twin.  Cosine similarity remains the
+        # confidence signal even when a cross-encoder changes presentation
+        # order; cross-encoder scores are not calibrated to the embedding
+        # threshold.
+        top_score = max((float(item.score or 0.0) for item in ranked), default=0.0)
         ranked = self._deduplicate(
             ranked,
             limit=context_limit,
             max_per_file=1 if overview_question else None,
         )
         sources = [self._source_from_node(item) for item in ranked]
-        # Cosine similarity remains the confidence signal even when a
-        # cross-encoder changes presentation order.  Cross-encoder scores are
-        # not calibrated to the embedding threshold.
-        top_score = max((source["score"] for source in sources), default=0.0)
+        selected_top_score = max((source["score"] for source in sources), default=0.0)
         telemetry = {
             "question_hash": prompt_hash(question.strip()),
             "plan_mode": plan.mode,
@@ -776,6 +781,7 @@ class RAGService:
             "selected_candidate_count": len(sources),
             "answer_mode": "overview" if overview_question else "focused",
             "top_score": round(top_score, 6),
+            "selected_top_score": round(selected_top_score, 6),
             "retrieval_ms": round((time.perf_counter() - started_at) * 1000, 2),
         }
         has_lexical_evidence = any(self._node_identity(item) in lexical_ids for item in ranked)
