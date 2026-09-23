@@ -574,6 +574,8 @@ class RAGConfig:
     condense_enabled: bool = True
     condense_llm_enabled: bool = True
     lexical_retrieval_enabled: bool = True
+    lexical_term_weight: float = 0.7
+    lexical_pair_weight: float = 0.3
     allow_external_data_transfer: bool = False
     ingest_on_start: bool = True
     docstore_path: Path | None = None
@@ -595,6 +597,10 @@ class RAGConfig:
             raise ValueError("reranker_batch_size must be positive")
         if not 0 <= self.min_score <= 1:
             raise ValueError("min_score must be between 0 and 1")
+        if not 0 <= self.lexical_term_weight <= 1:
+            raise ValueError("lexical_term_weight must be between 0 and 1")
+        if not 0 <= self.lexical_pair_weight <= 1:
+            raise ValueError("lexical_pair_weight must be between 0 and 1")
         if self.collection_name == self.baremetal_collection_name:
             raise ValueError("LlamaIndex and bare-metal collections must be different")
 
@@ -644,6 +650,8 @@ class RAGConfig:
             lexical_retrieval_enabled=bool(
                 getattr(settings, "rag_lexical_retrieval_enabled", True)
             ),
+            lexical_term_weight=float(getattr(settings, "rag_lexical_term_weight", 0.7)),
+            lexical_pair_weight=float(getattr(settings, "rag_lexical_pair_weight", 0.3)),
             allow_external_data_transfer=bool(getattr(settings, "rag_allow_external_data_transfer", False)),
             ingest_on_start=bool(getattr(settings, "rag_ingest_on_start", True)),
             docstore_path=docstore_path,
@@ -1422,7 +1430,10 @@ class RAGService:
         Only informative query terms contribute.  Matching both the terms and
         their adjacent pairs rewards passages that contain the user's actual
         concept (for example ``конструкционный расчёт``), rather than generic
-        manual boilerplate that happens to repeat one common word.
+        manual boilerplate that happens to repeat one common word.  Term and
+        pair coverage are weighted by ``lexical_term_weight`` and
+        ``lexical_pair_weight``; setting both to ``0`` disables the lexical
+        boost entirely and restores a pure dense ordering.
         """
 
         query_terms = self._lexical_terms(question)
@@ -1440,7 +1451,10 @@ class RAGService:
             if query_pairs:
                 text_pairs = set(zip(text_terms, text_terms[1:]))
                 pair_coverage = len(query_pairs & text_pairs) / len(query_pairs)
-            lexical_relevance = 0.7 * term_coverage + 0.3 * pair_coverage
+            lexical_relevance = (
+                self.config.lexical_term_weight * term_coverage
+                + self.config.lexical_pair_weight * pair_coverage
+            )
             dense_score = float(source_node.score or 0.0)
             # Dense and lexical evidence have equal bounded influence.  The
             # original cosine score remains untouched for confidence checks.

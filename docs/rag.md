@@ -126,7 +126,12 @@ Lexical evidence ранжирует полный union (до 90 уникальн
 смешиваются как сопоставимые величины; лучший исходный cosine score сохраняется
 для confidence. Явный `standalone_question`, LLM-condensed rewrite и custom
 condense hook остаются одиночными запросами. После fusion действует прежнее dense + lexical
-ранжирование; его веса не менялись без широкого сравнительного прогона.
+ранжирование: `rank = cosine + TERM·term_coverage + PAIR·pair_coverage`, где
+`term_coverage` — доля информативных терминов запроса во фрагменте, а
+`pair_coverage` — доля покрытых соседних пар терминов. Веса настраиваются через
+`RAG_LEXICAL_TERM_WEIGHT` (по умолчанию `0.7`) и `RAG_LEXICAL_PAIR_WEIGHT` (по
+умолчанию `0.3`); значения подобраны на eval-наборе, а `0`/`0` полностью
+отключает lexical-буст и возвращает чистый dense-порядок.
 Если включён BGE re-ranker, он также получает весь отфильтрованный пул и
 возвращает его полное упорядочивание. Только после ранжирования
 удаляются точные и близкие дубли и применяется финальный лимит — не более пяти
@@ -206,7 +211,7 @@ score, retrieval latency, outcome и число процитированных �
 | Hybrid recall | strict full-text match, до 30 кандидатов; 1 reserved context slot |
 | Query fusion | deterministic RRF по node id; lexical selection полного union; лимит 30 после неё |
 | Product scope | `RAG_PRODUCT=gts_nx` |
-| Ranking | cosine similarity + deterministic lexical evidence; затем optional BGE |
+| Ranking | cosine + `RAG_LEXICAL_TERM_WEIGHT`·term_cov + `RAG_LEXICAL_PAIR_WEIGHT`·pair_cov (0.7/0.3); затем optional BGE |
 | Context | максимум 5 уникальных фрагментов без жёсткого лимита на документ |
 | Re-ranker | optional `BAAI/bge-reranker-v2-m3`, `top_n=5` |
 | Embedding | `text-embedding-3-large`, 1024 dimensions, cosine |

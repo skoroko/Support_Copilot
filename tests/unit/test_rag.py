@@ -1922,6 +1922,59 @@ def test_rag_config_reads_condense_llm_setting() -> None:
     assert config.condense_llm_enabled is False
 
 
+def test_rag_config_reads_lexical_rank_weights() -> None:
+    config = RAGConfig.from_settings(
+        SimpleNamespace(rag_lexical_term_weight=0.5, rag_lexical_pair_weight=0.5)
+    )
+
+    assert config.lexical_term_weight == 0.5
+    assert config.lexical_pair_weight == 0.5
+
+
+def test_rag_config_defaults_keep_eval_tuned_lexical_weights(tmp_path: Path) -> None:
+    config = rag_config(tmp_path)
+
+    assert config.lexical_term_weight == 0.7
+    assert config.lexical_pair_weight == 0.3
+
+
+@pytest.mark.parametrize("field", ["lexical_term_weight", "lexical_pair_weight"])
+@pytest.mark.parametrize("value", [-0.1, 1.1])
+def test_rag_config_rejects_out_of_range_lexical_weights(
+    tmp_path: Path, field: str, value: float
+) -> None:
+    with pytest.raises(ValueError, match=field):
+        rag_config(tmp_path, **{field: value})
+
+
+def test_lexical_rank_weights_zero_disables_lexical_boost(tmp_path: Path) -> None:
+    question = "степени свободы конструкционного расчёта"
+    lexical_hit = NodeWithScore(
+        node=TextNode(
+            text="Узел имеет степени свободы конструкционного расчёта по всем осям.",
+            metadata={"source": "manual.pdf"},
+        ),
+        score=0.50,
+    )
+    dense_only = NodeWithScore(
+        node=TextNode(
+            text="Несвязанное описание интерфейса программы.",
+            metadata={"source": "other.pdf"},
+        ),
+        score=0.90,
+    )
+
+    default_service = RAGService(rag_config(tmp_path))
+    ranked = default_service._rank_by_lexical_evidence(question, [dense_only, lexical_hit])
+    assert ranked[0] is lexical_hit
+
+    dense_service = RAGService(
+        rag_config(tmp_path, lexical_term_weight=0.0, lexical_pair_weight=0.0)
+    )
+    ranked = dense_service._rank_by_lexical_evidence(question, [dense_only, lexical_hit])
+    assert ranked[0] is dense_only
+
+
 def test_rag_requires_explicit_permission_before_embedding_question(tmp_path: Path) -> None:
     llm = FakeLLM()
     service = RAGService(rag_config(tmp_path), llm=llm)
