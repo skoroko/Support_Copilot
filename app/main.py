@@ -23,7 +23,7 @@ from app.observability.logging import bind_request_context, clear_request_contex
 from app.observability.tracing import setup_tracing
 from app.routers import agent, chat, documents, health, models, rag
 from app.services.agent_persistent import agent_lifespan
-from app.services.rag import RAGConfig, RAGService
+from app.services.rag import RAGConfig, RAGService, build_llm_condense_hook
 from app.services.security.output_filter import build_security_system_prompt
 from app.services.vector_store import VectorStore
 
@@ -70,7 +70,15 @@ def _initialize_rag(settings: Settings) -> tuple[RAGService | None, str | None]:
         error_type = "ExternalDataTransferNotAllowed"
         logger.warning("rag_startup_failed", error_type=error_type)
         return None, error_type
-    service = RAGService(config)
+    # LLM-based query rewriting resolves follow-up references the regex
+    # heuristics cannot; a hook failure degrades to the deterministic merge.
+    condense_hook = (
+        build_llm_condense_hook(config)
+        if getattr(config, "condense_enabled", True)
+        and getattr(config, "condense_llm_enabled", True)
+        else None
+    )
+    service = RAGService(config, condense_hook=condense_hook)
     try:
         service.build()
     except Exception as exc:

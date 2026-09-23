@@ -9,8 +9,9 @@ class FakeRAGService:
     instances: list["FakeRAGService"] = []
     build_error: Exception | None = None
 
-    def __init__(self, config: object) -> None:
+    def __init__(self, config: object, condense_hook: object = None) -> None:
         self.config = config
+        self.condense_hook = condense_hook
         self.closed = False
         self.instances.append(self)
 
@@ -82,3 +83,81 @@ def test_initialize_rag_builds_when_external_transfer_allowed(monkeypatch) -> No
 
     assert service is FakeRAGService.instances[0]
     assert error is None
+
+
+def test_initialize_rag_injects_llm_condense_hook(monkeypatch) -> None:
+    FakeRAGService.instances.clear()
+    FakeRAGService.build_error = None
+    sentinel_hook = object()
+    factory_calls: list[object] = []
+    monkeypatch.setattr(
+        main.RAGConfig,
+        "from_settings",
+        lambda _settings: SimpleNamespace(
+            allow_external_data_transfer=True,
+            condense_enabled=True,
+            condense_llm_enabled=True,
+        ),
+    )
+    monkeypatch.setattr(
+        main,
+        "build_llm_condense_hook",
+        lambda config: factory_calls.append(config) or sentinel_hook,
+    )
+    monkeypatch.setattr(main, "RAGService", FakeRAGService)
+
+    service, error = main._initialize_rag(SimpleNamespace())
+
+    assert error is None
+    assert service.condense_hook is sentinel_hook
+    assert factory_calls == [service.config]
+
+
+def test_initialize_rag_skips_condense_hook_when_llm_condense_disabled(monkeypatch) -> None:
+    FakeRAGService.instances.clear()
+    FakeRAGService.build_error = None
+    monkeypatch.setattr(
+        main.RAGConfig,
+        "from_settings",
+        lambda _settings: SimpleNamespace(
+            allow_external_data_transfer=True,
+            condense_enabled=True,
+            condense_llm_enabled=False,
+        ),
+    )
+    monkeypatch.setattr(
+        main,
+        "build_llm_condense_hook",
+        lambda _config: (_ for _ in ()).throw(AssertionError("hook factory must not run")),
+    )
+    monkeypatch.setattr(main, "RAGService", FakeRAGService)
+
+    service, error = main._initialize_rag(SimpleNamespace())
+
+    assert error is None
+    assert service.condense_hook is None
+
+
+def test_initialize_rag_skips_condense_hook_when_condense_disabled(monkeypatch) -> None:
+    FakeRAGService.instances.clear()
+    FakeRAGService.build_error = None
+    monkeypatch.setattr(
+        main.RAGConfig,
+        "from_settings",
+        lambda _settings: SimpleNamespace(
+            allow_external_data_transfer=True,
+            condense_enabled=False,
+            condense_llm_enabled=True,
+        ),
+    )
+    monkeypatch.setattr(
+        main,
+        "build_llm_condense_hook",
+        lambda _config: (_ for _ in ()).throw(AssertionError("hook factory must not run")),
+    )
+    monkeypatch.setattr(main, "RAGService", FakeRAGService)
+
+    service, error = main._initialize_rag(SimpleNamespace())
+
+    assert error is None
+    assert service.condense_hook is None

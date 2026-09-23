@@ -217,6 +217,10 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_CONDENSE_ENABLED"),
     )
+    rag_condense_llm_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RAG_CONDENSE_LLM_ENABLED"),
+    )
     rag_lexical_retrieval_enabled: bool = Field(
         default=True,
         validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
@@ -449,6 +453,9 @@ def get_settings() -> Settings:
         rag_min_score=float(os.getenv("RAG_SCORE_THRESHOLD") or os.getenv("RAG_MIN_SCORE") or 0.45),
         rag_condense_enabled=(
             os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+        ),
+        rag_condense_llm_enabled=(
+            os.getenv("RAG_CONDENSE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_eval_chunk_1024",
         rag_baremetal_collection=os.getenv("RAG_BAREMETAL_COLLECTION") or "rag_block_03_baremetal",
