@@ -434,7 +434,28 @@ Telegram message
   берётся одно последнее user-сообщение. Детали обращения из первого
   сообщения (версия, код ошибки, конфигурация) выпадают из запроса уже на
   3–4 ходе.
-- **Статус:** [ ]
+- **Статус:** [x] — закрыто на трёх слоях. LLM-condense теперь рендерит всё
+  переданное окно истории: `_dialog_context_section` получил параметр
+  `max_messages` (`CONDENSE_DIALOG_HISTORY_MESSAGES=10` для хука,
+  генерация по-прежнему ограничена 6 сообщениями), поэтому открывающее
+  сообщение обращения остаётся видимым для rewrite и на поздних ходах.
+  Детерминированный merge дополнен bounded keyword-tail
+  `_detail_carry_tokens`: из user-ходов старше последнего переносятся
+  только идентификаторы (числа и dotted-версии длиной ≥2, latin-термины
+  ≥3; стоп-слова, маркеры продолжения и анафоры исключены
+  `_DETAIL_CARRY_EXCLUDED_TOKENS`), до `FOLLOWUP_DETAIL_CARRY_TOKENS=8`
+  токенов и без повторения терминов, уже присутствующих в последнем
+  обмене; кириллические топик-слова сознательно не переносятся, чтобы
+  ушедшая тема не возвращалась в запрос. Для `follow_up` в
+  `_lexical_queries` добавлен incident-anchored вариант строгого запроса
+  (до 2 detail-токенов + до 2 терминов текущего ограничения) — он же
+  становится одним из dense-fallback запросов при провале strict-пула.
+  Тесты: `test_follow_up_merge_carries_incident_details_from_earlier_user_turns`,
+  `test_follow_up_detail_carry_skips_cyrillic_topic_words`,
+  `test_follow_up_detail_carry_skips_terms_already_in_latest_exchange`,
+  `test_detail_carry_tokens_keep_versions_and_identifiers_only`,
+  `test_follow_up_lexical_queries_add_incident_detail_anchor`,
+  `test_llm_condense_hook_renders_full_history_window`.
 
 ### F15. Групповые чаты делят историю
 
@@ -592,3 +613,4 @@ Telegram message
 | 2026-09-23 | F11 | `build_llm_condense_hook` инжектится в `_initialize_rag` (флаг `RAG_CONDENSE_LLM_ENABLED`): LLM-rewrite хода по ограниченному диалогу → одиночный dense-запрос `condense_hook`, эхо → `independent`; отказ/таймаут/невалидный вывод → `None` → deterministic `follow_up` merge (dual query) — `_standalone_question` теперь возвращает источник rewrite, чтобы падение hook не ломало эвристики; lexical-запросы берут термины из `plan.ranking_question` для переписанных режимов | 11 новых тестов (hook, план, fallback, lexical, config, startup-инжекция); полный прогон `tests` — 426 passed, 9 skipped |
 | 2026-09-23 | F12 | Реранкер остаётся opt-in выключенным; веса `0.7·term_cov + 0.3·pair_cov` выведены из констант в `RAG_LEXICAL_TERM_WEIGHT` / `RAG_LEXICAL_PAIR_WEIGHT` (Settings → RAGConfig → `_rank_by_lexical_evidence`), валидация [0,1], `0`/`0` отключает lexical-буст | 7 новых тестов (from_settings, дефолты, диапазон, отключение буста); полный прогон `tests` — 434 passed, 9 skipped |
 | 2026-09-23 | F13 | `RAG_PRODUCT_SCOPE` (`strict\|fallback\|all`, default `fallback`): GTS NX остаётся первичным пулом, при провале evidence-gate отбор повторяется по полному корпусу без доп. retrieval-запросов — уже лежащий Civil-мануал становится достижимым; отбор вынесен в `_select_context`; телеметрия `product_scope` + `cross_product_selected_count`; scope-токены `all`/`any`/`none` отклонены как `RAG_PRODUCT`/`default_product`; `infer_product` +`soilworks`; промпты обобщены до продуктов MIDAS; пробелы корпуса описаны в `data_inventory.md` | 8 новых тестов в `test_rag.py` (scope-режимы, fallback, reserved-токены) + параметризованный guard в `test_ingestion.py`; полный прогон `tests` — 447 passed, 9 skipped |
+| 2026-09-23 | F14 | condense-hook рендерит всё окно истории (`_dialog_context_section(max_messages=10)`; генерация по-прежнему 6 сообщений); heuristic-мердж дополнен keyword-tail `_detail_carry_tokens` — идентификаторы из user-ходов старше последнего (числа/dotted-версии ≥2, latin ≥3), до 8 токенов, без кириллических топик-слов и дублей; для `follow_up` добавлен incident-anchored вариант строгого lexical-запроса (details + current terms), попадающий и в dense-fallback | 6 новых тестов в `test_rag.py`; полный прогон `tests` — 453 passed, 9 skipped |
