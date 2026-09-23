@@ -321,7 +321,26 @@ Telegram message
 - **Эффект:** нехватка контекста на части сфокусированных вопросов.
 - **Вариант исправления:** сузить детекцию обзоров (требовать «обзор»/«что
   такое» без конкретного действия) или не резать контекст ниже 5.
-- **Статус:** [ ]
+- **Статус:** [x] — `_is_overview_question` нормализует вопрос до токенов
+  (пунктуация больше не влияет на префикс: «расскажи, как …» и «расскажи
+  как …» распознаются одинаково) и отклоняет обзорную трактовку при
+  признаках конкретного действия: wh-слова `_FOCUSED_QUESTION_WORDS`
+  («как», «почему», «где», «сколько», how/why/where…) и основы действий
+  `_FOCUSED_QUESTION_STEMS` («настро», «установ», «созда», «ошибк»,
+  configure/install/error…). «Расскажи, как настроить фильтрацию сетки»
+  теперь идёт по focused-пути с полным контекстом. Отдельный лимит
+  `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран: обзорные вопросы делят общий
+  `_context_limit()`, а `max_per_file` в `_deduplicate` стал мягким
+  предпочтением — отложенные кандидаты добираются в свободные слоты
+  (backfill), поэтому контекст не пустеет, даже если вся evidence лежит
+  в одном файле. Обзорный режим сохраняет инструкцию генерации, приоритет
+  разнообразия файлов, подавление lexical-резерва при уверенном dense и
+  телеметрию `answer_mode`.
+  Тесты: `test_overview_question_keeps_full_context_and_prefers_diverse_files`,
+  `test_survey_opener_with_focused_action_keeps_full_context`,
+  `test_overview_question_backfills_context_from_single_file`,
+  `test_overview_question_prefers_diverse_files_then_backfills`,
+  расширен `test_overview_question_detection`.
 
 ---
 
@@ -512,3 +531,4 @@ Telegram message
 | 2026-09-23 | F7 | `_ground_answer`: нормализация `【N】`/`[^N]`/«источник N»/mid-line `(N)` к `[N]`; ответ без валидных ссылок доставляется без списка источников вместо `NO_ANSWER`; warning `rag_answer_missing_citations` | 12 новых тестов grounding + обновлённый uncited-кейс; полный прогон `tests` — 386 passed, 9 skipped |
 | 2026-09-23 | F8 | `/ready` возвращает `rag` + `rag_error` (200 + degraded, без restart loop); SSE `notice`/`rag_unavailable` при включённом, но неподнявшемся RAG; `FALLBACK_SYSTEM_PROMPT` для non-RAG пути; `RAG_ALLOW_EXTERNAL_DATA_TRANSFER=false` → startup-деградация `ExternalDataTransferNotAllowed`; бот показывает notice под ответом | 12 новых тестов (startup, ready, route notice, fallback prompt, bot notice) + обновлённые ready-assertions |
 | 2026-09-23 | F9 | `top_score` считается по пулу `ranked` до `_deduplicate`/context-limit вместо максимума по отобранным источникам — выпадение топ-кандидата на дедупе/лимите больше не даёт ложный `NO_ANSWER`; в телеметрию добавлен `selected_top_score` | новый тест near-duplicate + обновлённый reranker-кейс; прогон `tests` |
+| 2026-09-23 | F10 | `_is_overview_question`: токен-нормализация (пунктуация не влияет) + veto по wh-словам и основам действий — «расскажи, как настроить …» больше не попадает под обзор; лимит `MAX_OVERVIEW_CONTEXT_SOURCES=3` убран, `max_per_file` стал мягким с backfill — контекст не режется ниже общего лимита ни на одном типе вопроса | 3 новых теста + переписанный overview-кейс + расширенный параметризованный детектор; полный прогон `tests` — 412 passed, 9 skipped |

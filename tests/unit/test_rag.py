@@ -376,21 +376,29 @@ def test_rag_keeps_factual_negative_statement_with_citation() -> None:
     assert cited_sources == [{"id": "solid"}]
 
 
-def test_overview_question_uses_three_coherent_context_slots(tmp_path: Path) -> None:
+def test_overview_question_keeps_full_context_and_prefers_diverse_files(tmp_path: Path) -> None:
     nodes = [
         NodeWithScore(
             node=TextNode(
                 id_=f"boundary-{index}",
-                text=f"Фрагмент {index} о граничных условиях.",
-                metadata={
-                    "source": "manual-shared.pdf" if index <= 2 else f"manual-{index}.pdf"
-                },
+                text=text,
+                metadata={"source": file_name},
             ),
-            score=0.9 - index / 100,
+            score=score,
         )
-        for index in range(1, 6)
+        for index, (file_name, text, score) in enumerate(
+            [
+                ("manual-shared.pdf", "Фрагмент о граничных условиях в опорах.", 0.95),
+                ("manual-shared.pdf", "Фрагмент о граничных условиях в опорах", 0.94),
+                ("manual-3.pdf", "Связи в узлах и закрепления конечной сетки.", 0.93),
+                ("manual-4.pdf", "Типы опорных реакций и перемещений.", 0.92),
+                ("manual-5.pdf", "Схемы приложения внешних нагрузок.", 0.91),
+                ("manual-6.pdf", "Особенности симметрии расчётной области.", 0.90),
+            ],
+            start=1,
+        )
     ]
-    llm = FakeLLM("Связный обзор [1][2][3].")
+    llm = FakeLLM("Связный обзор [1][2][3][4][5].")
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=llm,
@@ -399,21 +407,122 @@ def test_overview_question_uses_three_coherent_context_slots(tmp_path: Path) -> 
 
     result = service.answer("Расскажи про граничные условия")
 
-    assert len(result["sources"]) == 3
-    assert len({source["file_name"] for source in result["sources"]}) == 3
+    assert len(result["sources"]) == 5
+    assert len({source["file_name"] for source in result["sources"]}) == 5
     assert "Это широкий обзорный вопрос" in llm.prompts[0]
-    assert "Фрагмент 3" in llm.prompts[0]
-    assert "Фрагмент 2" not in llm.prompts[0]
-    assert "Фрагмент 4" in llm.prompts[0]
+    assert "Особенности симметрии расчётной области." in llm.prompts[0]
+    assert llm.prompts[0].count("Фрагмент о граничных условиях в опорах") == 1
+
+
+def test_survey_opener_with_focused_action_keeps_full_context(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                text=text,
+                metadata={"source": "manual-seepage.pdf"},
+            ),
+            score=score,
+        )
+        for text, score in [
+            ("Фильтрационный расчёт задаётся отдельным типом анализа.", 0.95),
+            ("Границы сетки фильтрации назначаются через набор узлов.", 0.94),
+            ("Коэффициенты проницаемости вводятся в свойствах грунта.", 0.93),
+            ("Параметры сетки фильтрации влияют на сходимость решения.", 0.92),
+            ("Результаты напоров выводятся после завершения расчёта.", 0.91),
+        ]
+    ]
+    llm = FakeLLM("Порядок настройки [1][2][3][4][5].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Расскажи, как настроить фильтрацию сетки")
+
+    assert len(result["sources"]) == 5
+    assert all(source["file_name"] == "manual-seepage.pdf" for source in result["sources"])
+    assert "Это широкий обзорный вопрос" not in llm.prompts[0]
+
+
+def test_overview_question_backfills_context_from_single_file(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(
+                text=text,
+                metadata={"source": "manual-boundary.pdf"},
+            ),
+            score=score,
+        )
+        for text, score in [
+            ("Граничные условия задают поведение модели на краях области.", 0.95),
+            ("Опорные закрепления ограничивают перемещения выбранных узлов.", 0.94),
+            ("Симметричные границы позволяют сократить расчётную область.", 0.93),
+            ("Кинематические условия назначаются через мастер границ.", 0.92),
+            ("Значения реакций проверяются после окончания расчёта.", 0.91),
+        ]
+    ]
+    llm = FakeLLM("Обзор граничных условий [1][2][3][4][5].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Что такое граничные условия?")
+
+    assert len(result["sources"]) == 5
+    assert all(source["file_name"] == "manual-boundary.pdf" for source in result["sources"])
+    assert "Это широкий обзорный вопрос" in llm.prompts[0]
+
+
+def test_overview_question_prefers_diverse_files_then_backfills(tmp_path: Path) -> None:
+    nodes = [
+        NodeWithScore(
+            node=TextNode(text=text, metadata={"source": file_name}),
+            score=score,
+        )
+        for file_name, text, score in [
+            ("manual-a.pdf", "Граничные условия в опорах.", 0.95),
+            ("manual-a.pdf", "Граничные условия в закреплениях.", 0.94),
+            ("manual-b.pdf", "Граничные условия при нагрузках.", 0.93),
+            ("manual-a.pdf", "Граничные условия для свай.", 0.92),
+        ]
+    ]
+    llm = FakeLLM("Обзор [1][2][3][4].")
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=llm,
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: nodes)
+
+    result = service.answer("Расскажи про граничные условия")
+
+    assert [source["file_name"] for source in result["sources"]] == [
+        "manual-a.pdf",
+        "manual-b.pdf",
+        "manual-a.pdf",
+        "manual-a.pdf",
+    ]
 
 
 @pytest.mark.parametrize(
     ("question", "expected"),
     [
         ("Расскажи про граничные условия", True),
+        ("Расскажи про типы расчётов", True),
+        ("Расскажи, что такое фильтрационный расчёт", True),
         ("Что такое модель Мора-Кулона?", True),
         ("Что ты знаешь о граничных условиях?", True),
         ("What is Mohr Coulomb?", True),
+        ("Расскажи, как настроить фильтрацию сетки", False),
+        ("Расскажи как настроить фильтрацию сетки", False),
+        ("Расскажи про установку программы", False),
+        ("Расскажи про ошибку лицензирования", False),
+        ("Объясни, почему расчёт не сходится", False),
+        ("Опиши шаги создания модели", False),
+        ("Explain how to fix mesh errors", False),
+        ("Tell me about the installation steps", False),
         ("Какие степени свободы используются?", False),
         ("Чем отличается модифицированная модель?", False),
     ],
