@@ -48,7 +48,6 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 """
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 MAX_CONTEXT_SOURCES = 5
-MAX_OVERVIEW_CONTEXT_SOURCES = 3
 FOLLOWUP_LEXICAL_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
 DIALOG_HISTORY_MESSAGES = 6
@@ -158,6 +157,110 @@ _OVERVIEW_PREFIXES = (
     "tell me about ",
     "what are ",
     "what is ",
+)
+# Wh-words that turn a survey opener into a concrete question:
+# «расскажи, как настроить …» asks for one procedure, not a topic survey.
+_FOCUSED_QUESTION_WORDS = {
+    "как",
+    "какая",
+    "какие",
+    "каким",
+    "какими",
+    "какого",
+    "какой",
+    "каком",
+    "какую",
+    "где",
+    "зачем",
+    "когда",
+    "куда",
+    "ли",
+    "откуда",
+    "почему",
+    "сколько",
+    "чем",
+    "how",
+    "why",
+    "when",
+    "where",
+    "which",
+    "who",
+}
+# Imperative verbs and procedure nouns mark a focused request even without a
+# wh-word («расскажи про установку …», «опиши шаги создания …»).  Erring
+# towards ``focused`` is the safe direction: it keeps the full context, while
+# a false ``overview`` used to starve the answer of evidence.
+_FOCUSED_QUESTION_STEMS = (
+    "включ",
+    "выключ",
+    "выполн",
+    "вычисл",
+    "вылет",
+    "генер",
+    "добав",
+    "зависа",
+    "зада",
+    "запус",
+    "измен",
+    "импорт",
+    "исправ",
+    "настро",
+    "назнач",
+    "найд",
+    "напиш",
+    "не выходит",
+    "не запуска",
+    "не могу",
+    "не получа",
+    "не работа",
+    "не удает",
+    "обнов",
+    "открыв",
+    "откро",
+    "ошибк",
+    "падает",
+    "показ",
+    "посчит",
+    "постро",
+    "прилож",
+    "проблем",
+    "провер",
+    "рассчит",
+    "сдела",
+    "смоделир",
+    "созда",
+    "удал",
+    "установ",
+    "фиксир",
+    "экспорт",
+    "apply",
+    "assign",
+    "build",
+    "can't",
+    "cannot",
+    "cant",
+    "config",
+    "connect",
+    "crash",
+    "creat",
+    "delet",
+    "doesn't",
+    "doesnt",
+    "error",
+    "fail",
+    "fix",
+    "import",
+    "install",
+    "issue",
+    "open",
+    "problem",
+    "remov",
+    "run",
+    "set",
+    "step",
+    "unable",
+    "won't",
+    "wont",
 )
 _RUSSIAN_SUFFIXES = tuple(
     sorted(
@@ -744,9 +847,10 @@ class RAGService:
             # context made the answer hostage to one all-token match: a wrong
             # hit left the generator no corrective dense evidence at all.
             context_limit = min(self._context_limit(), FOLLOWUP_LEXICAL_CONTEXT_SOURCES)
-        elif overview_question:
-            context_limit = min(self._context_limit(), MAX_OVERVIEW_CONTEXT_SOURCES)
         else:
+            # Overview questions share the regular context limit: breadth
+            # comes from the per-file diversity preference in ``_deduplicate``
+            # and the survey instruction, never from a smaller budget.
             context_limit = self._context_limit()
         # Confidence is measured over the ranked candidate pool before
         # deduplication and the context limit discard candidates: a dropped
@@ -1337,10 +1441,16 @@ class RAGService:
         limit: int,
         max_per_file: int | None = None,
     ) -> list[Any]:
-        """Remove duplicate chunks after ranking and cap the LLM context."""
+        """Remove duplicate chunks after ranking and cap the LLM context.
+
+        ``max_per_file`` is a diversity preference, not a hard cap: candidates
+        deferred by it backfill whatever slots the diversity pass left free,
+        so the context can never starve when the evidence lives in one manual.
+        """
 
         selected: list[Any] = []
         selected_texts: list[str] = []
+        deferred: list[tuple[Any, str]] = []
         file_counts: dict[str, int] = {}
         for source_node in source_nodes:
             normalized_text = self._normalized_chunk_text(self._node_text(source_node))
@@ -1348,10 +1458,18 @@ class RAGService:
                 continue
             file_name = str(self._source_from_node(source_node)["file_name"])
             if max_per_file is not None and file_counts.get(file_name, 0) >= max_per_file:
+                deferred.append((source_node, normalized_text))
                 continue
             selected.append(source_node)
             selected_texts.append(normalized_text)
             file_counts[file_name] = file_counts.get(file_name, 0) + 1
+            if len(selected) >= limit:
+                return selected
+        for source_node, normalized_text in deferred:
+            if any(self._near_duplicate(normalized_text, previous) for previous in selected_texts):
+                continue
+            selected.append(source_node)
+            selected_texts.append(normalized_text)
             if len(selected) >= limit:
                 break
         return selected
@@ -1761,8 +1879,20 @@ class RAGService:
 
     @staticmethod
     def _is_overview_question(question: str) -> bool:
-        normalized = " ".join(question.casefold().replace("ё", "е").split())
-        return normalized.startswith(_OVERVIEW_PREFIXES)
+        # Rejoining lexical tokens makes the prefix check punctuation-blind:
+        # «расскажи, как …» and «расскажи как …» normalize identically.
+        normalized = " ".join(
+            _LEXICAL_TOKEN_RE.findall(question.casefold().replace("ё", "е"))
+        )
+        if not normalized.startswith(_OVERVIEW_PREFIXES):
+            return False
+        # A survey opener alone does not make the question broad: «расскажи,
+        # как настроить фильтрацию сетки» asks for one concrete procedure and
+        # needs the complete focused context, not an overview-shaped answer.
+        tokens = set(normalized.split())
+        if tokens & _FOCUSED_QUESTION_WORDS:
+            return False
+        return not any(stem in normalized for stem in _FOCUSED_QUESTION_STEMS)
 
     @staticmethod
     def _ensure_citations(answer: str, sources: list[dict[str, Any]]) -> str:
