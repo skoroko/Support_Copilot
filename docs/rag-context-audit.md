@@ -165,7 +165,13 @@ Telegram message
   в support-диалоге.
 - **Вариант исправления:** убрать жёсткую единицу (минимум 2–3 фрагмента) или
   делать её условной на уверенность lexical match.
-- **Статус:** [ ]
+- **Статус:** [x] — `context_limit = 1` заменён на
+  `min(self._context_limit(), FOLLOWUP_LEXICAL_CONTEXT_SOURCES=3)`:
+  зарезервированный lexical-фрагмент остаётся первым в prompt, за ним идут
+  до двух сильнейших кандидатов — при ошибочном lexical match генератор
+  сохраняет корректирующий контекст вместо гарантированно неверного ответа.
+  История диалога в генерацию уже доходит после F1.
+  Тест: `test_follow_up_lexical_hit_keeps_dense_alternatives_in_context`.
 
 ---
 
@@ -428,3 +434,4 @@ Telegram message
 | 2026-09-22 | F23 | `JsonChatRepository`: добавлен `asyncio.Lock` поверх `AsyncFileLock(preserve_lock_file=True)` в `_locked()`; `filelock>=3.32.0` в pyproject | стресс-репродукция 20/20 без потерь (было до 14/40), флаки-тест 8/8, полный прогон `tests` зелёный |
 | 2026-09-23 | F2 | `send_message` строит вопрос для RAG через `_rag_question`: `part.type=="text"` склеивается в вопрос с bound'ом `RAG_MEDIA_TEXT_MAX_CHARS`; фото без подписи — явный отказ без retrieval, с подписью — поиск по подписи | 4 новых теста в `tests/chat/test_service_context.py`; полный прогон `tests` — 322 passed |
 | 2026-09-23 | F3, F21 | `validate_input` больше не применяется к extracted-тексту медиа; лимит пользовательского сообщения поднят до `MAX_MESSAGE_CHARS=16_000`; транскрипт whisper ограничен `MAX_DOCUMENT_CHARS`; бот разводит 400/403/413/415/422/429/5xx по понятным сообщениям | 4 новых route-теста + тесты валидатора, медиа-лимита и маппинга ошибок; полный прогон `tests` — 334 passed, 9 skipped |
+| 2026-09-23 | F5 | `context_limit=1` для follow_up+reserved заменён лимитом `FOLLOWUP_LEXICAL_CONTEXT_SOURCES=3`: резерв идёт первым, до двух dense-альтернатив сохраняются в prompt | новый тест + полный прогон `tests` в `.venv` (`uv sync --extra eval`, CPython 3.13.15) — 350 passed, 9 skipped |

@@ -49,6 +49,7 @@ RAG_SYSTEM_PROMPT = """Ты — помощник технической подд
 NO_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 MAX_CONTEXT_SOURCES = 5
 MAX_OVERVIEW_CONTEXT_SOURCES = 3
+FOLLOWUP_LEXICAL_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
 DIALOG_HISTORY_MESSAGES = 6
 DIALOG_MESSAGE_CHARS = 600
@@ -727,7 +728,10 @@ class RAGService:
             candidate.node.metadata["_lexical_focus_query"] = lexical_query
         ranked = self._prepend_reserved(reserved, ranked)
         if plan.mode == "follow_up" and reserved:
-            context_limit = 1
+            # The reserved lexical fragment still leads, but a single-fragment
+            # context made the answer hostage to one all-token match: a wrong
+            # hit left the generator no corrective dense evidence at all.
+            context_limit = min(self._context_limit(), FOLLOWUP_LEXICAL_CONTEXT_SOURCES)
         elif overview_question:
             context_limit = min(self._context_limit(), MAX_OVERVIEW_CONTEXT_SOURCES)
         else:
