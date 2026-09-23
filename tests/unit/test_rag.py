@@ -231,11 +231,122 @@ def test_rag_returns_only_cited_sources_and_renumbers_them() -> None:
     assert cited_sources == [{"id": "2"}, {"id": "4"}]
 
 
-def test_rag_rejects_uncited_generated_answer() -> None:
+def test_rag_delivers_uncited_answer_without_sources() -> None:
+    """A missing citation contract no longer masks a usable answer as a KB miss."""
+
     answer, cited_sources = RAGService._ground_answer("Неподтверждённый ответ.", [{"id": "1"}])
+
+    assert answer == "Неподтверждённый ответ."
+    assert cited_sources == []
+
+
+def test_rag_normalizes_cjk_citation_brackets() -> None:
+    sources = [{"id": "1"}, {"id": "2"}, {"id": "3"}]
+
+    answer, cited_sources = RAGService._ground_answer("Модуль 【3】 и нагрузки 【1】.", sources)
+
+    assert answer == "Модуль [2] и нагрузки [1]."
+    assert cited_sources == [{"id": "1"}, {"id": "3"}]
+
+
+def test_rag_normalizes_annotated_cjk_citation() -> None:
+    answer, cited_sources = RAGService._ground_answer(
+        "Метод описан в мануале 【1†source】.", [{"id": "1"}]
+    )
+
+    assert answer == "Метод описан в мануале [1]."
+    assert cited_sources == [{"id": "1"}]
+
+
+def test_rag_normalizes_footnote_citation() -> None:
+    answer, cited_sources = RAGService._ground_answer("Метод описан в мануале[^1].", [{"id": "1"}])
+
+    assert answer == "Метод описан в мануале[1]."
+    assert cited_sources == [{"id": "1"}]
+
+
+def test_rag_normalizes_source_word_citations() -> None:
+    sources = [{"id": "1"}, {"id": "2"}]
+
+    answer, cited_sources = RAGService._ground_answer("Согласно источнику 2.", sources)
+
+    assert answer == "Согласно источнику [1]."
+    assert cited_sources == [{"id": "2"}]
+
+
+def test_rag_normalizes_multi_number_source_word_citations() -> None:
+    sources = [{"id": "1"}, {"id": "2"}]
+
+    answer, cited_sources = RAGService._ground_answer("См. источники 1 и 2.", sources)
+
+    assert answer == "См. источники [1, 2]."
+    assert cited_sources == sources
+
+
+def test_rag_merges_mixed_citation_formats_into_one_numbering() -> None:
+    sources = [{"id": "1"}, {"id": "2"}, {"id": "3"}]
+
+    answer, cited_sources = RAGService._ground_answer("Шаг [1], детали 【3】.", sources)
+
+    assert answer == "Шаг [1], детали [2]."
+    assert cited_sources == [{"id": "1"}, {"id": "3"}]
+
+
+def test_rag_converts_midline_paren_citation_without_canonical_markers() -> None:
+    sources = [{"id": "1"}, {"id": "2"}]
+
+    answer, cited_sources = RAGService._ground_answer("Настройка описана в разделе (2).", sources)
+
+    assert answer == "Настройка описана в разделе [1]."
+    assert cited_sources == [{"id": "2"}]
+
+
+def test_rag_keeps_paren_numbers_when_canonical_citations_exist() -> None:
+    sources = [{"id": "1"}, {"id": "2"}]
+
+    answer, cited_sources = RAGService._ground_answer(
+        "Ответ [1]. Шаги: (1) откройте файл, (2) сохраните.", sources
+    )
+
+    assert answer == "Ответ [1]. Шаги: (1) откройте файл, (2) сохраните."
+    assert cited_sources == [{"id": "1"}]
+
+
+def test_rag_keeps_line_start_paren_enumeration_as_prose() -> None:
+    answer, cited_sources = RAGService._ground_answer(
+        "Шаги:\n(1) Откройте файл\n(2) Сохраните.",
+        [{"id": "1"}],
+    )
+
+    assert answer == "Шаги:\n(1) Откройте файл\n(2) Сохраните."
+    assert cited_sources == []
+
+
+def test_rag_strips_dangling_citations_but_delivers_answer() -> None:
+    answer, cited_sources = RAGService._ground_answer("Подтверждено [9].", [{"id": "1"}])
+
+    assert answer == "Подтверждено ."
+    assert cited_sources == []
+
+
+def test_rag_refuses_answer_that_is_only_dangling_citations() -> None:
+    answer, cited_sources = RAGService._ground_answer("[9] [8]", [{"id": "1"}])
 
     assert answer == NO_ANSWER
     assert cited_sources == []
+
+
+def test_rag_uncited_llm_answer_is_delivered_without_sources(tmp_path: Path) -> None:
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Шесть степеней свободы."),
+    )
+    service._retriever = FakeRetriever([0.91, 0.82])
+
+    result = service.answer("Сколько степеней свободы?")
+
+    assert result["answer"] == "Шесть степеней свободы."
+    assert result["sources"] == []
 
 
 @pytest.mark.parametrize(

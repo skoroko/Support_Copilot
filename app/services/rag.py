@@ -67,6 +67,18 @@ NEAR_DUPLICATE_RATIO = 0.9
 # 700 characters (for example, after a page header and introduction).
 MAX_SOURCE_SNIPPET_CHARS = 700
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+# Alternative citation shapes providers emit; all are normalized to canonical
+# ``[N]`` before grounding so the citation contract stays single-format.
+_CJK_CITATION_RE = re.compile(r"【(\d+(?:\s*[,;、]\s*\d+)*)\s*(?:†[^】\d]*)?】")
+_FOOTNOTE_CITATION_RE = re.compile(r"\[\^(\d+)\]")
+_SOURCE_WORD_CITATION_RE = re.compile(
+    r"\[?(\s*\b(?:источник\w*|sources?)\s*[:№]?\s*)(\d+(?:\s*(?:,|;|или|и|and|or)\s*\d+)*)\s*\]?",
+    re.IGNORECASE,
+)
+# ``(1)`` doubles as list enumeration, so only markers glued to same-line
+# text (non-space character plus optional spaces/tabs) qualify, and only as
+# a fallback when the answer has no canonical citations at all.
+_PAREN_CITATION_RE = re.compile(r"([^\s\n(][ \t]*)\((\d+(?:\s*,\s*\d+)*)\)")
 _LEGACY_PAGE_REF_RE = re.compile(r"_part_(\d+)$")
 _PRINTED_PAGE_RE = re.compile(r"(?m)^[ \t]*(\d{1,4})[ \t]*$")
 _LEXICAL_TOKEN_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
@@ -1587,21 +1599,33 @@ class RAGService:
         answer: str,
         sources: list[dict[str, Any]],
     ) -> tuple[str, list[dict[str, Any]]]:
-        """Validate citations, return only cited sources and keep numbering aligned."""
+        """Validate citations, return only cited sources and keep numbering aligned.
 
-        if cls._is_abstention_answer(answer):
-            return NO_ANSWER, []
+        Non-canonical citation shapes are normalized to ``[N]`` first, and an
+        answer that still has no usable citation is delivered without a source
+        list instead of being masked as a knowledge-base miss: the generation
+        prompt already restricts it to the retrieved context, while refusing
+        made correct answers indistinguishable from empty retrieval.
+        """
+
         source_count = len(sources)
-        cited_numbers = sorted(
-            {
-                number
-                for match in _CITATION_RE.finditer(answer)
-                for raw_number in match.group(1).split(",")
-                if 1 <= (number := int(raw_number.strip())) <= source_count
-            }
-        )
-        if not cited_numbers:
+        normalized = cls._normalize_citation_formats(answer, source_count)
+        if cls._is_abstention_answer(normalized):
             return NO_ANSWER, []
+        cited_numbers = cls._valid_cited_numbers(normalized, source_count)
+        if not cited_numbers:
+            normalized = cls._normalize_paren_citations(normalized, source_count)
+            cited_numbers = cls._valid_cited_numbers(normalized, source_count)
+        if not cited_numbers:
+            cleaned = _CITATION_RE.sub("", normalized).strip()
+            if not cleaned:
+                return NO_ANSWER, []
+            logger.warning(
+                "rag_answer_missing_citations",
+                answer_chars=len(cleaned),
+                source_count=source_count,
+            )
+            return cleaned, []
 
         number_map = {old: new for new, old in enumerate(cited_numbers, start=1)}
 
@@ -1613,9 +1637,84 @@ class RAGService:
                     mapped.append(new_number)
             return f"[{', '.join(str(number) for number in mapped)}]" if mapped else ""
 
-        grounded_answer = _CITATION_RE.sub(remap, answer)
+        grounded_answer = _CITATION_RE.sub(remap, normalized)
         cited_sources = [sources[number - 1] for number in cited_numbers]
         return grounded_answer, cited_sources
+
+    @staticmethod
+    def _valid_cited_numbers(text: str, source_count: int) -> list[int]:
+        return sorted(
+            {
+                number
+                for match in _CITATION_RE.finditer(text)
+                for raw_number in match.group(1).split(",")
+                if 1 <= (number := int(raw_number.strip())) <= source_count
+            }
+        )
+
+    @classmethod
+    def _normalize_citation_formats(cls, answer: str, source_count: int) -> str:
+        """Rewrite unambiguous non-canonical citation shapes as ``[N]`` markers.
+
+        ``【1】``, ``[^1]`` and word forms (``источник 1``, ``sources 1 и 2``)
+        only ever reference context fragments, so they are converted whenever
+        at least one of their numbers points at an existing source.  A match
+        whose numbers are all out of range is left untouched: there it is
+        more likely prose than a citation.
+        """
+
+        normalized = _CJK_CITATION_RE.sub(
+            lambda match: cls._alt_citation_replacement(match, source_count, numbers_group=1),
+            answer,
+        )
+        normalized = _FOOTNOTE_CITATION_RE.sub(
+            lambda match: cls._alt_citation_replacement(match, source_count, numbers_group=1),
+            normalized,
+        )
+        return _SOURCE_WORD_CITATION_RE.sub(
+            lambda match: cls._alt_citation_replacement(
+                match, source_count, numbers_group=2, prefix_group=1
+            ),
+            normalized,
+        )
+
+    @classmethod
+    def _normalize_paren_citations(cls, answer: str, source_count: int) -> str:
+        """Convert mid-line ``(1)`` markers to ``[N]``.
+
+        A parenthesized number at a line start is a list item rather than a
+        citation, so only markers preceded by a non-space character qualify.
+        Callers run this pass only when the answer has no canonical
+        citations: inside a ``[N]``-compliant answer ``(1)`` is enumeration
+        more often than not.
+        """
+
+        return _PAREN_CITATION_RE.sub(
+            lambda match: cls._alt_citation_replacement(
+                match, source_count, numbers_group=2, prefix_group=1
+            ),
+            answer,
+        )
+
+    @staticmethod
+    def _alt_citation_replacement(
+        match: re.Match[str],
+        source_count: int,
+        *,
+        numbers_group: int,
+        prefix_group: int | None = None,
+    ) -> str:
+        valid = [
+            number
+            for number in dict.fromkeys(
+                int(value) for value in re.findall(r"\d+", match.group(numbers_group))
+            )
+            if 1 <= number <= source_count
+        ]
+        if not valid:
+            return match.group(0)
+        prefix = match.group(prefix_group) if prefix_group is not None else ""
+        return f"{prefix}[{', '.join(str(number) for number in valid)}]"
 
     @classmethod
     def _is_abstention_answer(cls, answer: str) -> bool:
