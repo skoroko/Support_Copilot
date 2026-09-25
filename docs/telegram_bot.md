@@ -12,7 +12,7 @@ $env:BACKEND_URL='http://127.0.0.1:8000'
 python -m bot
 ```
 
-`bot.__main__` creates `Bot`, `Dispatcher(storage=MemoryStorage())`, registers
+`bot.__main__` creates `Bot`, `Dispatcher`, registers
 handlers, puts `BackendClient` into `dp["backend"]`, and starts polling.
 
 ## Backend Contract
@@ -47,8 +47,3 @@ the author of a question can rate its answer.
 - `/start` - creates or reuses the backend chat and shows a short instruction.
 - `/help` - lists available commands.
 - `/clear` - soft-clears backend history for the current Telegram chat.
-- `/cancel` - clears the active FSM state.
-- `/ask` - starts a guided support question flow with domain topics.
-
-The `/ask` topics are tied to Support Copilot: billing, installation, API
-errors, licensing, and escalation.

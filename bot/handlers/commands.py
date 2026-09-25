@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from bot.handlers._burst import flush_pending
@@ -11,12 +10,6 @@ from bot.services.backend_client import BackendClient
 
 
 router = Router()
-
-
-@router.message(Command("cancel"))
-async def cancel(message: Message, state: FSMContext) -> None:
-    await state.clear()
-    await message.answer("Сценарий отменен.")
 
 
 @router.message(Command("start"))
@@ -29,7 +22,7 @@ async def start(message: Message, backend: BackendClient) -> None:
 
     await message.answer(
         "Support Copilot подключен.\n\n"
-        "Пишите вопрос обычным сообщением, используйте /ask для сценария с темой, "
+        "Пишите вопрос обычным сообщением, используйте "
         "/clear для очистки истории и /help для списка команд."
     )
 
@@ -39,9 +32,7 @@ async def help_command(message: Message) -> None:
     await message.answer(
         "Команды:\n"
         "/start - создать чат и начать работу\n"
-        "/ask - задать вопрос через выбор темы\n"
         "/clear - очистить историю текущего чата\n"
-        "/cancel - отменить активный сценарий\n"
         "/help - показать эту справку"
     )
 
