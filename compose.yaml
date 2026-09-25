@@ -109,6 +109,9 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      # The bot creates the /notify idempotency store against Redis at startup.
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   postgres:

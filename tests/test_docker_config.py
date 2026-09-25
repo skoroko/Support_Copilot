@@ -13,7 +13,7 @@ class DockerConfigTests(unittest.TestCase):
 
         self.assertIn("# syntax=docker/dockerfile:1.7", dockerfile)
         self.assertEqual(dockerfile.count("python:3.13-slim-bookworm@sha256:"), 2)
-        self.assertIn("COPY --from=ghcr.io/astral-sh/uv:0.6.10@sha256:", dockerfile)
+        self.assertIn("COPY --from=ghcr.io/astral-sh/uv:0.12.18@sha256:", dockerfile)
         self.assertIn("UV_COMPILE_BYTECODE=1", dockerfile)
         self.assertIn("UV_LINK_MODE=copy", dockerfile)
         self.assertIn("UV_PYTHON_DOWNLOADS=0", dockerfile)
