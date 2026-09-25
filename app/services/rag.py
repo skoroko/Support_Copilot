@@ -814,6 +814,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
     ) -> dict[str, Any]:
         """Return the stable production response contract."""
 
@@ -822,6 +823,7 @@ class RAGService:
                 question,
                 history=history,
                 standalone_question=standalone_question,
+                system_prompt=system_prompt,
                 include_retrieved_contexts=False,
             )
 
@@ -831,6 +833,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Stream the production answer contract.
 
@@ -845,6 +848,7 @@ class RAGService:
                 question,
                 history=history,
                 standalone_question=standalone_question,
+                system_prompt=system_prompt,
             )
 
     def evaluate_inputs(
@@ -853,6 +857,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
     ) -> dict[str, Any]:
         """Return one production answer plus the complete contexts used for it.
 
@@ -865,6 +870,7 @@ class RAGService:
             question,
             history=history,
             standalone_question=standalone_question,
+            system_prompt=system_prompt,
             include_retrieved_contexts=True,
         )
 
@@ -874,6 +880,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
         include_retrieved_contexts: bool,
     ) -> dict[str, Any]:
         """Answer a question after guarded retrieval.
@@ -903,6 +910,7 @@ class RAGService:
             selection.ranked,
             overview_question=prepared.overview_question,
             history=history,
+            system_prompt=system_prompt,
         )
         self._log_answer_outcome(prepared, cited_sources)
         result = {"answer": answer, "top_score": selection.top_score, "sources": cited_sources}
@@ -916,6 +924,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Yield ``delta`` events during generation, then one ``final`` event.
 
@@ -945,6 +954,7 @@ class RAGService:
             selection.ranked,
             overview_question=prepared.overview_question,
             history=history,
+            system_prompt=system_prompt,
         )
         accumulated = ""
         llm = self._language_model()
@@ -1133,10 +1143,16 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        system_prompt: str | None = None,
     ) -> dict[str, Any]:
         """Alias for :meth:`answer` used by HTTP/chat integrations."""
 
-        return self.answer(question, history=history, standalone_question=standalone_question)
+        return self.answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+            system_prompt=system_prompt,
+        )
 
     def close(self) -> None:
         if self.client is not None:
@@ -2105,6 +2121,7 @@ class RAGService:
         *,
         overview_question: bool = False,
         history: Sequence[HistoryItem] | None = None,
+        system_prompt: str | None = None,
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate from complete selected chunks, not their API previews.
 
@@ -2122,6 +2139,7 @@ class RAGService:
             source_nodes,
             overview_question=overview_question,
             history=history,
+            system_prompt=system_prompt,
         )
         response = self._language_model().complete(prompt)
         answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
@@ -2135,6 +2153,7 @@ class RAGService:
         *,
         overview_question: bool = False,
         history: Sequence[HistoryItem] | None = None,
+        system_prompt: str | None = None,
     ) -> str:
         context = "\n\n".join(
             f"[{index}] {self._context_source_label(source)}\n"
@@ -2153,12 +2172,36 @@ class RAGService:
         )
         return (
             f"{RAG_SYSTEM_PROMPT}\n\n"
+            f"{self._chat_system_prompt_section(system_prompt)}"
             f"{self._dialog_context_section(history)}"
             f"Контекст:\n{context}\n\n"
             f"Вопрос пользователя: {question}\n\n"
             f"{overview_instruction}"
             f"Дай краткий проверяемый ответ. Используй только контекст и ссылайся только на "
             f"существующие номера от [1] до [{len(sources)}]."
+        )
+
+    @staticmethod
+    def _chat_system_prompt_section(system_prompt: str | None) -> str:
+        """Render a chat-level operator prompt as an additive instruction block.
+
+        ``chat.system_prompt`` is assigned when the chat is created, so it is
+        trusted persona/house-rules configuration rather than end-user input.
+        It still must not weaken the grounding contract — context-only
+        answering, ``[N]`` citations and the exact refusal sentence keep
+        ``_ground_answer`` and abstention detection working — so the block is
+        placed after the base rules with an explicit precedence note.
+        """
+
+        text = (system_prompt or "").strip()
+        if not text:
+            return ""
+        return (
+            "Дополнительные инструкции этого чата:\n"
+            f"{text}\n"
+            "Эти инструкции дополняют и не отменяют правила выше: отвечать "
+            "нужно только по контексту, с обязательными ссылками [N] и честным "
+            "отказом при нехватке надёжных сведений.\n\n"
         )
 
     @classmethod

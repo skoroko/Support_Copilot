@@ -607,7 +607,23 @@ Telegram message
 - **Суть:** для RAG всегда хардкод `RAG_SYSTEM_PROMPT`; кастомный промпт
   чата не применяется ни в RAG, ни (по сути) в non-RAG fallback, где у
   бот-чатов он `None`.
-- **Статус:** [ ]
+- **Статус:** [x] — `RAGService.answer`/`stream_answer`/`evaluate_inputs`/
+  `query` принимают `system_prompt`; `ChatService` передаёт
+  `chat.system_prompt` в оба пути (`stream_answer` и buffered `answer`)
+  через `_rag_call_kwargs`, причём kwarg уходит только когда промпт задан —
+  duck-typed сервисы без этого параметра не ломаются на чатах без промпта.
+  `_answer_prompt` рендерит блок «Дополнительные инструкции этого чата»
+  сразу после `RAG_SYSTEM_PROMPT` с явной оговоркой о приоритете базовых
+  правил — опора на контекст, цитаты `[N]` и дословный отказ остаются
+  обязательными, поэтому `_ground_answer` и abstention-детекция продолжают
+  работать. Тесты: состав промпта
+  (`test_answer_prompt_includes_chat_system_prompt`,
+  `test_answer_prompt_omits_chat_section_without_custom_prompt`,
+  `test_stream_answer_prompt_includes_chat_system_prompt`,
+  `test_query_forwards_system_prompt`) и forwarding из чата
+  (`test_rag_receives_chat_system_prompt_on_buffered_path`,
+  `test_rag_streaming_receives_chat_system_prompt`,
+  `test_rag_without_chat_system_prompt_gets_none`).
 
 ### F20. Два параллельных векторных хранилища
 
@@ -727,3 +743,4 @@ Telegram message
 | 2026-09-23 | F13 | `RAG_PRODUCT_SCOPE` (`strict\|fallback\|all`, default `fallback`): GTS NX остаётся первичным пулом, при провале evidence-gate отбор повторяется по полному корпусу без доп. retrieval-запросов — уже лежащий Civil-мануал становится достижимым; отбор вынесен в `_select_context`; телеметрия `product_scope` + `cross_product_selected_count`; scope-токены `all`/`any`/`none` отклонены как `RAG_PRODUCT`/`default_product`; `infer_product` +`soilworks`; промпты обобщены до продуктов MIDAS; пробелы корпуса описаны в `data_inventory.md` | 8 новых тестов в `test_rag.py` (scope-режимы, fallback, reserved-токены) + параметризованный guard в `test_ingestion.py`; полный прогон `tests` — 447 passed, 9 skipped |
 | 2026-09-23 | F14 | condense-hook рендерит всё окно истории (`_dialog_context_section(max_messages=10)`; генерация по-прежнему 6 сообщений); heuristic-мердж дополнен keyword-tail `_detail_carry_tokens` — идентификаторы из user-ходов старше последнего (числа/dotted-версии ≥2, latin ≥3), до 8 токенов, без кириллических топик-слов и дублей; для `follow_up` добавлен incident-anchored вариант строгого lexical-запроса (details + current terms), попадающий и в dense-fallback | 6 новых тестов в `test_rag.py`; полный прогон `tests` — 453 passed, 9 skipped |
 | 2026-09-23 | F18 | `RAGService.stream_answer` (delta→final, общий `_prepare_answer`/`_answer_prompt` с `answer()`); `ChatService.send_message` стримит RAG-дельты живьём через thread→queue мост с инкрементальным `check_output_fragment` и SSE-событием `replace` для канонического текста; бот обрабатывает `replace` в `stream_to_chat`; `RAG_GENERATION_TIMEOUT` (120с) отделён от `request_timeout` (30с, retrieval/Qdrant/embedding) | 13 новых тестов (rag streaming/timeouts, service deltas+replace+модерация, route SSE, client parse, bot replace); полный прогон `tests` — 514 passed, 9 skipped |
+| 2026-09-25 | F19 | `answer`/`stream_answer`/`evaluate_inputs`/`query` +`system_prompt`; `_answer_prompt` вставляет блок «Дополнительные инструкции этого чата» после `RAG_SYSTEM_PROMPT` с оговоркой о приоритете базовых правил (контекст, `[N]`-цитаты, дословный отказ); `ChatService._rag_call_kwargs` передаёт `chat.system_prompt` в `stream_answer` и buffered `answer` только когда промпт задан — сигнатура вызова для duck-typed сервисов без параметра не меняется | 7 новых тестов (состав промпта в `test_rag.py`, forwarding в `test_service_context.py`); полный прогон `tests` — 521 passed, 9 skipped |
