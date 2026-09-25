@@ -683,7 +683,25 @@ Telegram message
 - **Суть:** два быстрых сообщения → два параллельных `send_message` читают
   одну историю и делают `append_turn` в произвольном порядке — порядок пар
   «вопрос-ответ» может инвертироваться.
-- **Статус:** [ ]
+- **Статус:** [x] — per-chat сериализация ходов в `ChatService`: реестр
+  `turn_locks` (`WeakValueDictionary[UUID, asyncio.Lock]`) инжектится из
+  `request.app.state.chat_turn_locks` в `get_chat_service`, потому что сам
+  сервис пересоздаётся на каждый запрос, а гонка — между запросами.
+  `send_message` держит лок чата на всём пути `list_messages` → генерация →
+  `append_turn` (лок внутри async-генератора: захват на первом `__anext__`,
+  освобождение при завершении итерации или `aclose` отменённого стрима),
+  поэтому второй ход читает историю уже с первой парой, и пары пишутся в
+  порядке захвата лока. Тем же локом накрыты `clear_history` и
+  `append_system_message` — `/clear` ждёт незавершённый ход, admin-реплика
+  не вклинивается в него. Разные чаты друг друга не блокируют.
+  Ограничение: реестр процессный — при деплое с несколькими
+  uvicorn-воркерами гонка сохраняется (нужен pg advisory lock; отдельный
+  инкремент при необходимости). Тесты:
+  `test_concurrent_turns_serialize_and_keep_pair_order`,
+  `test_concurrent_turns_in_different_chats_do_not_block`,
+  `test_clear_history_waits_for_in_flight_turn`,
+  `test_shared_turn_locks_serialize_across_service_instances`,
+  `test_get_chat_service_shares_turn_locks_via_app_state`.
 
 ### F23. JsonChatRepository теряет сообщения при конкурентной записи
 
@@ -776,3 +794,4 @@ Telegram message
 | 2026-09-23 | F18 | `RAGService.stream_answer` (delta→final, общий `_prepare_answer`/`_answer_prompt` с `answer()`); `ChatService.send_message` стримит RAG-дельты живьём через thread→queue мост с инкрементальным `check_output_fragment` и SSE-событием `replace` для канонического текста; бот обрабатывает `replace` в `stream_to_chat`; `RAG_GENERATION_TIMEOUT` (120с) отделён от `request_timeout` (30с, retrieval/Qdrant/embedding) | 13 новых тестов (rag streaming/timeouts, service deltas+replace+модерация, route SSE, client parse, bot replace); полный прогон `tests` — 514 passed, 9 skipped |
 | 2026-09-25 | F19 | `answer`/`stream_answer`/`evaluate_inputs`/`query` +`system_prompt`; `_answer_prompt` вставляет блок «Дополнительные инструкции этого чата» после `RAG_SYSTEM_PROMPT` с оговоркой о приоритете базовых правил (контекст, `[N]`-цитаты, дословный отказ); `ChatService._rag_call_kwargs` передаёт `chat.system_prompt` в `stream_answer` и buffered `answer` только когда промпт задан — сигнатура вызова для duck-typed сервисов без параметра не меняется | 7 новых тестов (состав промпта в `test_rag.py`, forwarding в `test_service_context.py`); полный прогон `tests` — 521 passed, 9 skipped |
 | 2026-09-25 | F20 | Из app удалён параллельный store: lifespan больше не создаёт `app.state.vector_store` (убран скрытый `ensure_collection` на каждый старт и падение приложения при недоступном Qdrant даже с `RAG_ENABLED=false`); мёртвые `get_vector_store`/`VectorStoreDep` удалены из DI; `qdrant_collection`/`embedding_dim` убраны из `Settings` и `compose.yaml` — единственный vector store приложения живёт в `RAGService` (`RAG_COLLECTION`); homework-скрипты читают `QDRANT_COLLECTION`/`EMBEDDING_DIM` из env напрямую; `docs/vector_store.md`, `homework_5_2/README.md`, `.env.example` обновлены | 2 новых теста в `tests/test_app_fastapi.py`; прогон `tests` |
+| 2026-09-25 | F22 | Per-chat сериализация хода в `ChatService`: `turn_locks` (`WeakValueDictionary` UUID→`asyncio.Lock`) хранится в `app.state.chat_turn_locks` и инжектится в per-request сервис; `send_message` держит лок на `list_messages`→генерация→`append_turn`, второй ход видит первую пару в истории; `clear_history`/`append_system_message` под тем же локом; разные чаты не блокируются; ограничение — однопроцессный реестр (multi-worker → pg advisory lock) | 5 новых тестов в `tests/chat/test_service_context.py`; полный прогон `tests` — 535 passed, 9 skipped |

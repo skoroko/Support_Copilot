@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from uuid import UUID
+from weakref import WeakValueDictionary
 
 import pytest
 from pydantic import SecretStr
 
+from app.chat.deps import get_chat_service
 from app.chat.domain import Chat, ChatMessage
 from app.chat.repository import ChatRepository
 from app.chat.service import (
@@ -185,6 +189,52 @@ class FakeStreamingRAG:
         for delta in self.deltas:
             yield {"type": "delta", "delta": delta}
         yield {"type": "final", "answer": self.final, "sources": self.sources}
+
+
+class BlockingStream:
+    """Stream that emits one chunk, then blocks until ``release`` is set."""
+
+    def __init__(self, content: str, release: asyncio.Event) -> None:
+        self.content = content
+        self.release = release
+        self.sent = False
+
+    def __aiter__(self) -> "BlockingStream":
+        return self
+
+    async def __anext__(self) -> dict[str, Any]:
+        if not self.sent:
+            self.sent = True
+            return {"choices": [{"delta": {"content": self.content}}]}
+        await self.release.wait()
+        raise StopAsyncIteration
+
+
+class BlockingFirstLLM:
+    """First ``create()`` returns a stream held on ``release``; later calls answer instantly."""
+
+    def __init__(self, release: asyncio.Event) -> None:
+        self.release = release
+        self.started = asyncio.Event()
+        self.calls: list[dict[str, Any]] = []
+
+        async def create(**kwargs: Any) -> Any:
+            self.calls.append(kwargs)
+            if len(self.calls) == 1:
+                self.started.set()
+                return BlockingStream("ответ-1", self.release)
+            return FakeStream(["ответ-2"])
+
+        completions = type("Completions", (), {"create": staticmethod(create)})()
+        self.chat = type("Chat", (), {"completions": completions})()
+
+
+async def _collect_turn(
+    service: ChatService,
+    chat_id: UUID,
+    content: str,
+) -> list[str | StreamReplace]:
+    return [chunk async for chunk in service.send_message(chat_id, content)]
 
 
 def test_count_tokens_has_chatml_overhead() -> None:
@@ -656,3 +706,121 @@ async def test_moderation_content_covers_all_text_parts(tmp_path: Path) -> None:
     )
 
     assert merged == "проверь\nтекст первого документа\nтекст второго документа"
+
+
+@pytest.mark.asyncio
+async def test_concurrent_turns_serialize_and_keep_pair_order(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    release = asyncio.Event()
+    llm = BlockingFirstLLM(release)
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    first = asyncio.ensure_future(_collect_turn(service, chat.id, "первый вопрос"))
+    await llm.started.wait()
+    second = asyncio.ensure_future(_collect_turn(service, chat.id, "второй вопрос"))
+    for _ in range(5):
+        await asyncio.sleep(0)
+
+    # The second turn is queued behind the in-flight one: nothing appended yet.
+    assert await repo.list_messages(chat.id) == []
+
+    release.set()
+    first_chunks, second_chunks = await asyncio.gather(first, second)
+
+    assert first_chunks == ["ответ-1"]
+    assert second_chunks == ["ответ-2"]
+    stored = await repo.list_messages(chat.id)
+    assert [(message.role, message.content) for message in stored] == [
+        ("user", "первый вопрос"),
+        ("assistant", "ответ-1"),
+        ("user", "второй вопрос"),
+        ("assistant", "ответ-2"),
+    ]
+    # The serialized second turn read history that already contained the
+    # first pair instead of the same pre-turn snapshot as the first send.
+    second_contents = [message["content"] for message in llm.calls[1]["messages"]]
+    assert "первый вопрос" in second_contents
+    assert "ответ-1" in second_contents
+    assert "второй вопрос" in second_contents
+
+
+@pytest.mark.asyncio
+async def test_concurrent_turns_in_different_chats_do_not_block(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    release = asyncio.Event()
+    llm = BlockingFirstLLM(release)
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat_one = await service.create_chat("telegram-1", "telegram")
+    chat_two = await service.create_chat("telegram-2", "telegram")
+
+    first = asyncio.ensure_future(_collect_turn(service, chat_one.id, "вопрос A"))
+    await llm.started.wait()
+
+    second_chunks = await asyncio.wait_for(
+        _collect_turn(service, chat_two.id, "вопрос B"),
+        timeout=5,
+    )
+
+    assert second_chunks == ["ответ-2"]
+    assert await repo.list_messages(chat_one.id) == []
+    release.set()
+    assert await first == ["ответ-1"]
+
+
+@pytest.mark.asyncio
+async def test_clear_history_waits_for_in_flight_turn(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    release = asyncio.Event()
+    llm = BlockingFirstLLM(release)
+    service = ChatService(repo, llm, build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    first = asyncio.ensure_future(_collect_turn(service, chat.id, "вопрос"))
+    await llm.started.wait()
+    cleared = asyncio.ensure_future(service.clear_history(chat.id))
+    for _ in range(5):
+        await asyncio.sleep(0)
+    assert not cleared.done()
+
+    release.set()
+    await asyncio.gather(first, cleared)
+
+    # The turn persisted first; clear ran after it, so history is empty again.
+    assert await repo.list_messages(chat.id) == []
+
+
+@pytest.mark.asyncio
+async def test_shared_turn_locks_serialize_across_service_instances(tmp_path: Path) -> None:
+    # Mirrors production wiring: per-request ChatService instances share the
+    # turn-lock registry, so concurrent sends still serialize per chat.
+    repo: ChatRepository = InMemoryRepository()
+    release = asyncio.Event()
+    llm = BlockingFirstLLM(release)
+    settings = build_settings(tmp_path)
+    turn_locks: WeakValueDictionary[UUID, asyncio.Lock] = WeakValueDictionary()
+    service_one = ChatService(repo, llm, settings, turn_locks=turn_locks)
+    service_two = ChatService(repo, llm, settings, turn_locks=turn_locks)
+    chat = await service_one.create_chat("telegram-1", "telegram")
+
+    first = asyncio.ensure_future(_collect_turn(service_one, chat.id, "первый"))
+    await llm.started.wait()
+    second = asyncio.ensure_future(_collect_turn(service_two, chat.id, "второй"))
+    for _ in range(5):
+        await asyncio.sleep(0)
+    assert await repo.list_messages(chat.id) == []
+
+    release.set()
+    await asyncio.gather(first, second)
+    stored = await repo.list_messages(chat.id)
+    assert [message.content for message in stored] == ["первый", "ответ-1", "второй", "ответ-2"]
+
+
+def test_get_chat_service_shares_turn_locks_via_app_state(tmp_path: Path) -> None:
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
+    settings = build_settings(tmp_path)
+
+    service_one = get_chat_service(request, InMemoryRepository(), FakeLLM(), settings)
+    service_two = get_chat_service(request, InMemoryRepository(), FakeLLM(), settings)
+
+    assert service_one._turn_locks is service_two._turn_locks
