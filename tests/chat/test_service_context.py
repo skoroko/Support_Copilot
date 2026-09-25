@@ -112,10 +112,18 @@ class FakeRAG:
     def __init__(self) -> None:
         self.question: str | None = None
         self.history: list[dict[str, Any]] | None = None
+        self.system_prompt: str | None = None
 
-    def answer(self, question: str, *, history: list[dict[str, Any]]) -> dict[str, Any]:
+    def answer(
+        self,
+        question: str,
+        *,
+        history: list[dict[str, Any]],
+        system_prompt: str | None = None,
+    ) -> dict[str, Any]:
         self.question = question
         self.history = history
+        self.system_prompt = system_prompt
         return {
             "answer": "Для электроники действует отдельный срок возврата [1].",
             "sources": [
@@ -163,9 +171,17 @@ class FakeStreamingRAG:
         self.final = final
         self.sources = sources or []
         self.question: str | None = None
+        self.system_prompt: str | None = None
 
-    def stream_answer(self, question: str, *, history: list[dict[str, Any]]):
+    def stream_answer(
+        self,
+        question: str,
+        *,
+        history: list[dict[str, Any]],
+        system_prompt: str | None = None,
+    ):
         self.question = question
+        self.system_prompt = system_prompt
         for delta in self.deltas:
             yield {"type": "delta", "delta": delta}
         yield {"type": "final", "answer": self.final, "sources": self.sources}
@@ -318,6 +334,52 @@ async def test_rag_uses_prior_history_and_exposes_shown_sources(tmp_path: Path) 
     stored = await repo.list_messages(chat.id)
     assert stored[-1].rag_sources == service.last_response_sources(chat.id)
     assert await service.response_sources(chat.id, stored[-1].id) == service.last_response_sources(chat.id)
+
+
+@pytest.mark.asyncio
+async def test_rag_receives_chat_system_prompt_on_buffered_path(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    rag = FakeRAG()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram", "Отвечай как дежурный инженер MIDAS.")
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(chat.id, "Срок возврата?", rag_service=rag)
+    ]
+
+    assert chunks == ["Для электроники действует отдельный срок возврата [1]."]
+    assert rag.system_prompt == "Отвечай как дежурный инженер MIDAS."
+
+
+@pytest.mark.asyncio
+async def test_rag_streaming_receives_chat_system_prompt(tmp_path: Path) -> None:
+    repo = InMemoryRepository()
+    rag = FakeStreamingRAG(deltas=["Ответ"], final="Ответ")
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram", "Держи ответы в двух абзацах.")
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(chat.id, "Вопрос", rag_service=rag)
+    ]
+
+    assert rag.system_prompt == "Держи ответы в двух абзацах."
+
+
+@pytest.mark.asyncio
+async def test_rag_without_chat_system_prompt_gets_none(tmp_path: Path) -> None:
+    repo: ChatRepository = InMemoryRepository()
+    rag = FakeRAG()
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    _ = [
+        chunk
+        async for chunk in service.send_message(chat.id, "Срок возврата?", rag_service=rag)
+    ]
+
+    assert rag.system_prompt is None
 
 
 @pytest.mark.asyncio

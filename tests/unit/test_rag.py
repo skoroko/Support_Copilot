@@ -17,7 +17,14 @@ from qdrant_client.models import Distance
 from app.routers.rag import router as rag_router
 from app.schemas.rag import RAGHistoryMessage
 from app.services.chm_reader import CHMReader
-from app.services.rag import NO_ANSWER, RAGConfig, RAGService, RetrievalPlan, build_llm_condense_hook
+from app.services.rag import (
+    NO_ANSWER,
+    RAG_SYSTEM_PROMPT,
+    RAGConfig,
+    RAGService,
+    RetrievalPlan,
+    build_llm_condense_hook,
+)
 from app.services.rag_baremetal import BareMetalRAGService, TextRecord, naive_chunks
 
 
@@ -2784,3 +2791,50 @@ def test_stream_answer_derives_deltas_from_cumulative_text_chunks(tmp_path: Path
     deltas = [event["delta"] for event in events if event["type"] == "delta"]
     assert "".join(deltas) == "Ответ по базе [1]."
     assert events[-1]["type"] == "final"
+
+
+def test_answer_prompt_includes_chat_system_prompt(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ по базе [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    service.answer("Что такое степень свободы?", system_prompt="Отвечай как дежурный инженер MIDAS.")
+
+    prompt = llm.prompts[0]
+    assert prompt.startswith(RAG_SYSTEM_PROMPT)
+    custom_index = prompt.index("Дополнительные инструкции этого чата:")
+    assert prompt.index("не отменяют правила выше") > custom_index
+    assert "Отвечай как дежурный инженер MIDAS." in prompt[custom_index:]
+    assert prompt.index("Контекст:") > custom_index
+
+
+def test_answer_prompt_omits_chat_section_without_custom_prompt(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ по базе [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    service.answer("Вопрос")
+    service.answer("Вопрос", system_prompt="   ")
+
+    assert all("Дополнительные инструкции" not in prompt for prompt in llm.prompts)
+
+
+def test_stream_answer_prompt_includes_chat_system_prompt(tmp_path: Path) -> None:
+    llm = FakeStreamingLLM(["Ответ по базе [1]."])
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    list(service.stream_answer("Вопрос", system_prompt="Держи ответы в двух абзацах."))
+
+    assert llm.streamed_prompts
+    assert "Держи ответы в двух абзацах." in llm.streamed_prompts[0]
+
+
+def test_query_forwards_system_prompt(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ по базе [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    service.query("Вопрос", system_prompt="Отвечай как дежурный инженер MIDAS.")
+
+    assert "Отвечай как дежурный инженер MIDAS." in llm.prompts[0]

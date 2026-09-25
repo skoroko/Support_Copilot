@@ -286,7 +286,12 @@ class ChatService:
             else:
                 rag_out: dict[str, Any] = {}
                 async for delta in self._stream_with_rag(
-                    rag_service, rag_question, retrieval_history, chat_id, rag_out
+                    rag_service,
+                    rag_question,
+                    retrieval_history,
+                    chat_id,
+                    rag_out,
+                    system_prompt=chat.system_prompt,
                 ):
                     streamed_draft += delta
                     yield delta
@@ -471,15 +476,17 @@ class ChatService:
         rag_service: Any,
         question: str,
         history: Sequence[ChatMessage],
+        *,
+        system_prompt: str | None = None,
     ) -> dict[str, Any]:
         answer = getattr(rag_service, "answer", None)
         if answer is None:
             raise TypeError("RAG service must expose an answer method")
-        serialized_history = [message.model_dump(mode="json") for message in history]
+        kwargs = self._rag_call_kwargs(history, system_prompt)
         if inspect.iscoroutinefunction(answer):
-            result = answer(question, history=serialized_history)
+            result = answer(question, **kwargs)
         else:
-            result = await asyncio.to_thread(answer, question, history=serialized_history)
+            result = await asyncio.to_thread(answer, question, **kwargs)
         if inspect.isawaitable(result):
             result = await result
         if not isinstance(result, Mapping):
@@ -493,6 +500,8 @@ class ChatService:
         history: Sequence[ChatMessage],
         chat_id: UUID,
         out: dict[str, Any],
+        *,
+        system_prompt: str | None = None,
     ) -> AsyncIterator[str]:
         """Yield RAG answer deltas while generation is still running.
 
@@ -510,14 +519,16 @@ class ChatService:
 
         stream_answer = getattr(rag_service, "stream_answer", None)
         if not callable(stream_answer):
-            result = await self._answer_with_rag(rag_service, question, history)
+            result = await self._answer_with_rag(
+                rag_service, question, history, system_prompt=system_prompt
+            )
             out["final"] = str(result.get("answer") or "")
             out["sources"] = self._citation_array(result.get("sources"))
             return
 
-        serialized_history = [message.model_dump(mode="json") for message in history]
         accumulated = ""
-        async for item in self._rag_events(stream_answer, question, serialized_history):
+        call_kwargs = self._rag_call_kwargs(history, system_prompt)
+        async for item in self._rag_events(stream_answer, question, call_kwargs):
             if not isinstance(item, Mapping):
                 continue
             event_type = item.get("type")
@@ -536,15 +547,34 @@ class ChatService:
                 out["final"] = str(item.get("answer") or "")
                 out["sources"] = self._citation_array(item.get("sources"))
 
+    @staticmethod
+    def _rag_call_kwargs(
+        history: Sequence[ChatMessage],
+        system_prompt: str | None,
+    ) -> dict[str, Any]:
+        """Build the keyword args shared by ``answer`` and ``stream_answer``.
+
+        ``system_prompt`` is only forwarded when the chat actually defines
+        one: duck-typed RAG integrations that predate the parameter keep the
+        previous call signature for prompt-less chats.
+        """
+
+        kwargs: dict[str, Any] = {
+            "history": [message.model_dump(mode="json") for message in history]
+        }
+        if system_prompt and system_prompt.strip():
+            kwargs["system_prompt"] = system_prompt
+        return kwargs
+
     async def _rag_events(
         self,
         stream_answer: Any,
         question: str,
-        serialized_history: list[dict[str, Any]],
+        call_kwargs: dict[str, Any],
     ) -> AsyncIterator[Any]:
         """Normalize a sync or async RAG event source into an async iterator."""
 
-        produced = stream_answer(question, history=serialized_history)
+        produced = stream_answer(question, **call_kwargs)
         if inspect.isawaitable(produced):
             produced = await produced
         if hasattr(produced, "__aiter__"):
