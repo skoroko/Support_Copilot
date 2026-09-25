@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from typing import Annotated
+from weakref import WeakValueDictionary
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -34,8 +35,14 @@ async def get_repository(request: Request, settings: SettingsDep) -> AsyncIterat
 ChatRepositoryDep = Annotated[ChatRepository, Depends(get_repository)]
 
 
-def get_chat_service(repo: ChatRepositoryDep, llm: OpenAIDep, settings: SettingsDep) -> ChatService:
-    return ChatService(repository=repo, llm_client=llm, settings=settings)
+def get_chat_service(request: Request, repo: ChatRepositoryDep, llm: OpenAIDep, settings: SettingsDep) -> ChatService:
+    # Turn locks live on app.state: the service is rebuilt per request, but
+    # concurrent sends for the same chat must share one lock (F22).
+    turn_locks = getattr(request.app.state, "chat_turn_locks", None)
+    if turn_locks is None:
+        turn_locks = WeakValueDictionary()
+        request.app.state.chat_turn_locks = turn_locks
+    return ChatService(repository=repo, llm_client=llm, settings=settings, turn_locks=turn_locks)
 
 
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]

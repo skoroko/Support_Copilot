@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping, Sequence
+from collections.abc import AsyncIterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 import inspect
 import time
 from typing import Any
 from uuid import UUID
+from weakref import WeakValueDictionary
 
 import tiktoken
 
@@ -167,8 +168,12 @@ class ChatService:
         llm_client: Any,
         settings: Settings,
         moderation_service: ModerationService | None = None,
+        turn_locks: MutableMapping[UUID, asyncio.Lock] | None = None,
     ) -> None:
         self.repository = repository
+        self._turn_locks: MutableMapping[UUID, asyncio.Lock] = (
+            turn_locks if turn_locks is not None else WeakValueDictionary()
+        )
         self.llm_client = llm_client
         self.settings = settings
         self.moderation = moderation_service or ModerationService(
@@ -215,6 +220,31 @@ class ChatService:
         return result
 
     async def send_message(
+        self,
+        chat_id: UUID,
+        user_content: str,
+        *,
+        media_refs: dict[str, Any] | None = None,
+        input_moderated: bool = False,
+        rag_service: Any | None = None,
+    ) -> AsyncIterator[str | StreamReplace]:
+        # Serialize whole turns per chat: two concurrent sends must not
+        # interleave their read-history -> generate -> append_turn sequences,
+        # or stored question/answer pairs end up reordered (F22).  The lock
+        # is held across yields inside the generator, so it is acquired on
+        # the first ``__anext__`` and released when the consumer finishes or
+        # closes the stream.
+        async with self._turn_lock(chat_id):
+            async for event in self._send_message(
+                chat_id,
+                user_content,
+                media_refs=media_refs,
+                input_moderated=input_moderated,
+                rag_service=rag_service,
+            ):
+                yield event
+
+    async def _send_message(
         self,
         chat_id: UUID,
         user_content: str,
@@ -366,22 +396,43 @@ class ChatService:
                 yield part
 
     async def clear_history(self, chat_id: UUID) -> None:
-        await self.repository.soft_delete_messages(chat_id)
+        # Same turn lock: /clear must wait for an in-flight turn instead of
+        # interleaving with its history read or append_turn.
+        async with self._turn_lock(chat_id):
+            await self.repository.soft_delete_messages(chat_id)
 
     async def append_system_message(self, chat_id: UUID, content: str) -> Chat:
-        chat = await self.repository.get_chat(chat_id)
-        if chat is None:
-            raise ChatNotFoundError(f"Chat {chat_id} not found")
-        await self.repository.append_message(
-            chat_id,
-            ChatMessage(
-                chat_id=chat_id,
-                role="assistant",
-                content=content,
-                tokens=count_tokens([{"role": "assistant", "content": content}]),
-            ),
-        )
-        return chat
+        async with self._turn_lock(chat_id):
+            chat = await self.repository.get_chat(chat_id)
+            if chat is None:
+                raise ChatNotFoundError(f"Chat {chat_id} not found")
+            await self.repository.append_message(
+                chat_id,
+                ChatMessage(
+                    chat_id=chat_id,
+                    role="assistant",
+                    content=content,
+                    tokens=count_tokens([{"role": "assistant", "content": content}]),
+                ),
+            )
+            return chat
+
+    def _turn_lock(self, chat_id: UUID) -> asyncio.Lock:
+        """Return the per-chat lock serializing user/assistant turns.
+
+        The registry is injected (``turn_locks``, shared via ``app.state``)
+        because the service is rebuilt per request while the race it
+        prevents spans concurrent requests.  ``WeakValueDictionary`` keeps
+        it bounded: an entry survives only while an in-flight turn
+        references the lock.  Get-or-create below holds no ``await``, so
+        racing coroutines on one event loop still converge on one lock.
+        """
+
+        lock = self._turn_locks.get(chat_id)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._turn_locks[chat_id] = lock
+        return lock
 
     async def submit_feedback(
         self,
