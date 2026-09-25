@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -61,8 +62,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     api_key = args.api_key or (
         settings.qdrant_api_key.get_secret_value() if settings.qdrant_api_key else None
     )
-    base_name = args.collection or settings.qdrant_collection
-    dimensions = args.dimensions or settings.embedding_dim
+    base_name = args.collection or os.getenv("QDRANT_COLLECTION") or "documents"
+    dimensions = args.dimensions or int(os.getenv("EMBEDDING_DIM") or "1024")
     documents = load_documents(args.data)
     embedder = build_embedding_service(dimensions, offline=args.offline_smoke)
     vectors = embedder.embed_texts([str(item["text"]) for item in documents])

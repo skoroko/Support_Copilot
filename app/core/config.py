@@ -141,16 +141,6 @@ class _SettingsFields(BaseModel):
         default=None,
         validation_alias=AliasChoices("QDRANT_API_KEY"),
     )
-    qdrant_collection: str = Field(
-        default="documents",
-        min_length=1,
-        validation_alias=AliasChoices("QDRANT_COLLECTION"),
-    )
-    embedding_dim: int = Field(
-        default=1024,
-        gt=0,
-        validation_alias=AliasChoices("EMBEDDING_DIM"),
-    )
     rag_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_ENABLED"))
     rag_ingest_on_start: bool = Field(
         default=True,
@@ -444,8 +434,6 @@ def get_settings() -> Settings:
             if os.getenv("QDRANT_API_KEY")
             else None
         ),
-        qdrant_collection=os.getenv("QDRANT_COLLECTION") or "documents",
-        embedding_dim=int(os.getenv("EMBEDDING_DIM") or 1024),
         rag_enabled=(os.getenv("RAG_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         rag_ingest_on_start=(
             os.getenv("RAG_INGEST_ON_START", "true").strip().lower()

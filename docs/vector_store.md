@@ -8,19 +8,26 @@ Qdrant запускается сервисом `qdrant/qdrant:v1.19.0` в `compo
 передаётся из `.env` как `QDRANT__SERVICE__API_KEY`; для подключения из другой
 сети нужен HTTPS/TLS, потому что ключ нельзя передавать открытым HTTP.
 
-Настройки приложения читаются Pydantic Settings:
+Настройки подключения читаются Pydantic Settings и разделяются приложением и
+скриптами:
 
-| Переменная | Назначение | Значение для Compose |
-|---|---|---|
-| `QDRANT_URL` | адрес Qdrant | `http://qdrant:6333` |
-| `QDRANT_API_KEY` | секрет доступа | задаётся в `.env` |
-| `QDRANT_COLLECTION` | основная коллекция | `documents` |
-| `EMBEDDING_DIM` | размер вектора из ДЗ 5.1 | `1024` |
+| Переменная | Кто читает | Назначение | Значение для Compose |
+|---|---|---|---|
+| `QDRANT_URL` | app (RAG) + скрипты | адрес Qdrant | `http://qdrant:6333` |
+| `QDRANT_API_KEY` | app (RAG) + скрипты | секрет доступа | задаётся в `.env` |
+| `QDRANT_COLLECTION` | только скрипты | экспериментальная коллекция | `documents` |
+| `EMBEDDING_DIM` | только скрипты | размер вектора из ДЗ 5.1 | `1024` |
 
-`app/services/vector_store.py` создаёт один `AsyncQdrantClient`, который хранится
-в `app.state.vector_store`. Lifespan вызывает `ensure_collection()` при старте и
-закрывает клиент при остановке. Если `QDRANT_URL` не задан, Qdrant отключён — это
-позволяет запускать независимые части приложения и unit-тесты без инфраструктуры.
+`app/services/vector_store.py` — автономный адаптер над `AsyncQdrantClient` для
+скриптов `scripts/load_to_qdrant.py` и `scripts/vector_store_experiments.py`;
+каждый из них создаёт и закрывает свой клиент. В приложении адаптер не
+монтируется: единственный vector store приложения живёт внутри `RAGService` и
+работает с `RAG_COLLECTION` (см. `docs/rag.md`). Это осознанное разделение после
+аудита F20: экспериментальный корпус `documents` (синтетический
+`data/support_documents.json`) не должен пересекаться или рассинхронизироваться
+с боевой коллекцией, а старт приложения не должен зависеть от Qdrant, когда
+`RAG_ENABLED=false`. Раньше `app.state.vector_store` создавался в lifespan и
+вызывал `ensure_collection()` при каждом старте — без единого потребителя.
 
 Коллекция использует `COSINE`, `size=1024` и явно заданный HNSW:
 `m=16`, `ef_construct=100`. Это умеренный базовый профиль: достаточно связей и

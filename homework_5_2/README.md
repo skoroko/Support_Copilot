@@ -3,8 +3,10 @@
 Реализовано подключение Qdrant к накопительному проекту Support Copilot:
 
 - Docker-сервис Qdrant 1.19 с API key, named volume и TCP healthcheck;
-- Pydantic-настройки URL, ключа, коллекции и размерности;
-- один async-клиент в FastAPI lifespan;
+- настройки URL, ключа, коллекции и размерности;
+- один async-клиент, переиспользуемый внутри каждого скрипта (на момент сдачи —
+  в FastAPI lifespan; после аудита F20 приложение оставило единственный store
+  внутри `RAGService`, а `VectorStore` остался адаптером этих скриптов);
 - идемпотентная загрузка 120 предметных документов с UUID v5;
 - Cosine-коллекция 1024 dimensions, HNSW `m=16`, `ef_construct=100`;
 - шесть payload indexes, vector search и три вида фильтров;

@@ -192,6 +192,43 @@ class FastAPIAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok", "redis": "up", "rag": "up"})
 
+    def test_lifespan_does_not_build_parallel_vector_store(self) -> None:
+        # F20 regression: a configured QDRANT_URL must not make the app mount
+        # a second vector store; the only store lives inside RAGService.
+        os.environ["QDRANT_URL"] = "http://qdrant.test:6333"
+        os.environ["QDRANT_API_KEY"] = "test-qdrant-key"
+        os.environ["QDRANT_COLLECTION"] = "documents"
+        get_settings.cache_clear()
+        try:
+            with (
+                mock.patch("app.services.vector_store.VectorStore") as store_cls,
+                TestClient(app, headers=AUTH_HEADERS),
+            ):
+                pass
+        finally:
+            for name in ("QDRANT_URL", "QDRANT_API_KEY", "QDRANT_COLLECTION"):
+                os.environ.pop(name, None)
+            get_settings.cache_clear()
+
+        store_cls.assert_not_called()
+        self.assertFalse(hasattr(app.state, "vector_store"))
+
+    def test_settings_do_not_expose_experiment_vector_store_fields(self) -> None:
+        # F20 regression: the experiment collection is a script concern, so
+        # these env vars must not configure the application settings surface.
+        os.environ["QDRANT_COLLECTION"] = "documents"
+        os.environ["EMBEDDING_DIM"] = "1024"
+        get_settings.cache_clear()
+        try:
+            settings = get_settings()
+        finally:
+            os.environ.pop("QDRANT_COLLECTION", None)
+            os.environ.pop("EMBEDDING_DIM", None)
+            get_settings.cache_clear()
+
+        self.assertFalse(hasattr(settings, "qdrant_collection"))
+        self.assertFalse(hasattr(settings, "embedding_dim"))
+
     def test_chat_returns_json_response(self) -> None:
         with TestClient(app, headers=AUTH_HEADERS) as client:
             response = client.post(

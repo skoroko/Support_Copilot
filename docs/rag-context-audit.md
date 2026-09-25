@@ -631,7 +631,24 @@ Telegram message
 - **Суть:** чат-RAG использует `RAG_COLLECTION=rag_eval_chunk_1024`, агентные
   роутеры — `QDRANT_COLLECTION=documents` через отдельный `VectorStore`.
   Разные коллекции и разные сервисы — риск рассинхронизации и путаницы.
-- **Статус:** [ ]
+- **Статус:** [x] — приложение больше не содержит второго store. Фактически у
+  параллельного `app.state.vector_store` не было живых потребителей: единственный
+  инжектор `VectorStoreDep` не использовался ни одним роутером, а агентный путь
+  ищет по локальной stub-базе (`agent_naive_tools`), не по Qdrant. Lifespan не
+  создаёт и не закрывает store: `ensure_collection()` больше не является
+  скрытым Qdrant-запросом на каждый старт и не роняет приложение при
+  `QDRANT_URL` без доступного Qdrant (включая `RAG_ENABLED=false`). Мёртвый DI
+  `get_vector_store`/`VectorStoreDep` удалён из `app/deps/providers.py`;
+  `qdrant_collection`/`embedding_dim` удалены из `Settings` и `compose.yaml` —
+  приложение структурно не может описать вторую коллекцию. `VectorStore`
+  остаётся автономным адаптером homework-скриптов (`load_to_qdrant.py`,
+  `vector_store_experiments.py`), которые читают `QDRANT_COLLECTION`/
+  `EMBEDDING_DIM` из env напрямую с прежними дефолтами `documents`/`1024`;
+  синтетический корпус `support_documents.json` намеренно отделён от боевого
+  `RAG_COLLECTION`. `docs/vector_store.md`, `homework_5_2/README.md` и
+  `.env.example` отражают разделение.
+  Тесты: `test_lifespan_does_not_build_parallel_vector_store`,
+  `test_settings_do_not_expose_experiment_vector_store_fields`.
 
 ### F21. Безликий маппинг ошибок в боте
 
@@ -744,3 +761,4 @@ Telegram message
 | 2026-09-23 | F14 | condense-hook рендерит всё окно истории (`_dialog_context_section(max_messages=10)`; генерация по-прежнему 6 сообщений); heuristic-мердж дополнен keyword-tail `_detail_carry_tokens` — идентификаторы из user-ходов старше последнего (числа/dotted-версии ≥2, latin ≥3), до 8 токенов, без кириллических топик-слов и дублей; для `follow_up` добавлен incident-anchored вариант строгого lexical-запроса (details + current terms), попадающий и в dense-fallback | 6 новых тестов в `test_rag.py`; полный прогон `tests` — 453 passed, 9 skipped |
 | 2026-09-23 | F18 | `RAGService.stream_answer` (delta→final, общий `_prepare_answer`/`_answer_prompt` с `answer()`); `ChatService.send_message` стримит RAG-дельты живьём через thread→queue мост с инкрементальным `check_output_fragment` и SSE-событием `replace` для канонического текста; бот обрабатывает `replace` в `stream_to_chat`; `RAG_GENERATION_TIMEOUT` (120с) отделён от `request_timeout` (30с, retrieval/Qdrant/embedding) | 13 новых тестов (rag streaming/timeouts, service deltas+replace+модерация, route SSE, client parse, bot replace); полный прогон `tests` — 514 passed, 9 skipped |
 | 2026-09-25 | F19 | `answer`/`stream_answer`/`evaluate_inputs`/`query` +`system_prompt`; `_answer_prompt` вставляет блок «Дополнительные инструкции этого чата» после `RAG_SYSTEM_PROMPT` с оговоркой о приоритете базовых правил (контекст, `[N]`-цитаты, дословный отказ); `ChatService._rag_call_kwargs` передаёт `chat.system_prompt` в `stream_answer` и buffered `answer` только когда промпт задан — сигнатура вызова для duck-typed сервисов без параметра не меняется | 7 новых тестов (состав промпта в `test_rag.py`, forwarding в `test_service_context.py`); полный прогон `tests` — 521 passed, 9 skipped |
+| 2026-09-25 | F20 | Из app удалён параллельный store: lifespan больше не создаёт `app.state.vector_store` (убран скрытый `ensure_collection` на каждый старт и падение приложения при недоступном Qdrant даже с `RAG_ENABLED=false`); мёртвые `get_vector_store`/`VectorStoreDep` удалены из DI; `qdrant_collection`/`embedding_dim` убраны из `Settings` и `compose.yaml` — единственный vector store приложения живёт в `RAGService` (`RAG_COLLECTION`); homework-скрипты читают `QDRANT_COLLECTION`/`EMBEDDING_DIM` из env напрямую; `docs/vector_store.md`, `homework_5_2/README.md`, `.env.example` обновлены | 2 новых теста в `tests/test_app_fastapi.py`; прогон `tests` |
