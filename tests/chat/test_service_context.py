@@ -11,10 +11,12 @@ from app.chat.domain import Chat, ChatMessage
 from app.chat.repository import ChatRepository
 from app.chat.service import (
     FALLBACK_SYSTEM_PROMPT,
+    MODERATION_OUTPUT_REPLACEMENT,
     ChatNotFoundError,
     ChatService,
     MEDIA_IMAGE_NO_TEXT_REPLY,
     RAG_MEDIA_TEXT_MAX_CHARS,
+    StreamReplace,
     count_tokens,
     fit_to_budget,
 )
@@ -146,6 +148,27 @@ def build_settings(tmp_path: Path) -> Settings:
         chat_response_tokens=500,
         chat_safety_margin_tokens=500,
     )
+
+
+class FakeStreamingRAG:
+    """RAG double exposing the ``stream_answer`` delta/final contract."""
+
+    def __init__(
+        self,
+        deltas: list[str],
+        final: str,
+        sources: list[dict[str, Any]] | None = None,
+    ) -> None:
+        self.deltas = deltas
+        self.final = final
+        self.sources = sources or []
+        self.question: str | None = None
+
+    def stream_answer(self, question: str, *, history: list[dict[str, Any]]):
+        self.question = question
+        for delta in self.deltas:
+            yield {"type": "delta", "delta": delta}
+        yield {"type": "final", "answer": self.final, "sources": self.sources}
 
 
 def test_count_tokens_has_chatml_overhead() -> None:
@@ -489,6 +512,75 @@ async def test_rag_album_of_images_without_caption_still_refuses(tmp_path: Path)
 
     assert chunks == [MEDIA_IMAGE_NO_TEXT_REPLY]
     assert rag.question is None
+
+
+@pytest.mark.asyncio
+async def test_rag_streaming_yields_deltas_then_replaces_with_grounded(tmp_path: Path) -> None:
+    repo = InMemoryRepository()
+    sources = [{"id": "s1", "file_name": "returns.md", "page": 2, "score": 0.91, "snippet": "14 дней."}]
+    rag = FakeStreamingRAG(
+        deltas=["Черновик ", "ответа"],
+        final="Для электроники действует отдельный срок возврата [1].",
+        sources=sources,
+    )
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(chat.id, "Срок возврата?", rag_service=rag)
+    ]
+
+    assert chunks[:2] == ["Черновик ", "ответа"]
+    assert isinstance(chunks[-1], StreamReplace)
+    assert chunks[-1].text == "Для электроники действует отдельный срок возврата [1]."
+    assert rag.question == "Срок возврата?"
+    stored = await repo.list_messages(chat.id)
+    assert stored[-1].content == "Для электроники действует отдельный срок возврата [1]."
+    assert stored[-1].rag_sources == sources
+    assert service.last_response_sources(chat.id) == sources
+
+
+@pytest.mark.asyncio
+async def test_rag_streaming_skips_replace_when_draft_matches_final(tmp_path: Path) -> None:
+    rag = FakeStreamingRAG(deltas=["Ответ ", "целиком"], final="Ответ целиком")
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(chat.id, "Вопрос", rag_service=rag)
+    ]
+
+    assert chunks == ["Ответ ", "целиком"]
+    assert not any(isinstance(chunk, StreamReplace) for chunk in chunks)
+
+
+@pytest.mark.asyncio
+async def test_rag_stream_blocked_fragment_replaces_shown_draft(tmp_path: Path) -> None:
+    repo = InMemoryRepository()
+    rag = FakeStreamingRAG(
+        deltas=["Совет: ", "kill yourself", " — продолжение"],
+        final="Совет: kill yourself — продолжение",
+        sources=[{"id": "s1"}],
+    )
+    service = ChatService(repo, FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    chunks = [
+        chunk
+        async for chunk in service.send_message(chat.id, "обычный вопрос", rag_service=rag)
+    ]
+
+    assert chunks[0] == "Совет: "
+    # The blocked delta and everything after it never reach the consumer.
+    assert all("kill yourself" not in str(chunk) for chunk in chunks)
+    assert isinstance(chunks[-1], StreamReplace)
+    assert chunks[-1].text == MODERATION_OUTPUT_REPLACEMENT
+    stored = await repo.list_messages(chat.id)
+    assert stored[-1].content == MODERATION_OUTPUT_REPLACEMENT
+    assert stored[-1].rag_sources == []
+    assert service.last_response_sources(chat.id) == []
 
 
 @pytest.mark.asyncio

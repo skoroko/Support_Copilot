@@ -2654,3 +2654,133 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
         "confident",
     }
     assert not any(getattr(route, "path", None) == "/chat" for route in api.routes)
+
+
+class FakeStreamingLLM(FakeLLM):
+    """LLM double that streams completion chunks instead of one response."""
+
+    def __init__(self, deltas: list[str]) -> None:
+        super().__init__("".join(deltas))
+        self.deltas = deltas
+        self.streamed_prompts: list[str] = []
+
+    def stream_complete(self, prompt: str):
+        self.streamed_prompts.append(prompt)
+        text = ""
+        for delta in self.deltas:
+            text += delta
+            yield SimpleNamespace(delta=delta, text=text)
+
+
+def test_rag_config_separates_generation_timeout(tmp_path: Path) -> None:
+    config = rag_config(tmp_path, request_timeout=30.0, generation_timeout=95.0)
+
+    assert config.request_timeout == 30.0
+    assert config.generation_timeout == 95.0
+    with pytest.raises(ValueError, match="generation_timeout"):
+        rag_config(tmp_path, generation_timeout=0)
+
+
+def test_rag_config_reads_generation_timeout_setting() -> None:
+    config = RAGConfig.from_settings(
+        SimpleNamespace(request_timeout=30.0, rag_generation_timeout=45.0)
+    )
+
+    assert config.request_timeout == 30.0
+    assert config.generation_timeout == 45.0
+    # Generation gets a longer default budget than the shared request timeout.
+    assert RAGConfig.from_settings(SimpleNamespace(request_timeout=30.0)).generation_timeout == 120.0
+
+
+def test_rag_wires_generation_timeout_to_llm_and_request_timeout_to_embedding(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: dict[str, dict[str, Any]] = {}
+
+    class RecordingLLM:
+        def __init__(self, **kwargs: Any) -> None:
+            recorded["llm"] = kwargs
+
+    class RecordingEmbedding:
+        def __init__(self, **kwargs: Any) -> None:
+            recorded["embedding"] = kwargs
+
+    monkeypatch.setattr("app.services.rag.LlamaOpenAI", RecordingLLM)
+    monkeypatch.setattr("app.services.rag.OpenAIEmbedding", RecordingEmbedding)
+
+    service = RAGService(rag_config(tmp_path, request_timeout=30.0, generation_timeout=95.0))
+    service._language_model()
+    service._embedding_model()
+
+    assert recorded["llm"]["timeout"] == 95.0
+    assert recorded["embedding"]["timeout"] == 30.0
+
+
+def test_stream_answer_yields_deltas_then_grounded_final(tmp_path: Path) -> None:
+    llm = FakeStreamingLLM(["Ответ по базе ", "[2] и [3]."])
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91, 0.82, 0.73])
+
+    events = list(service.stream_answer("Что такое степень свободы?"))
+
+    assert [event["delta"] for event in events if event["type"] == "delta"] == [
+        "Ответ по базе ",
+        "[2] и [3].",
+    ]
+    final = events[-1]
+    assert final["type"] == "final"
+    # Grounding renumbers citations onto the cited-source list.
+    assert final["answer"] == "Ответ по базе [1] и [2]."
+    assert [source["file_name"] for source in final["sources"]] == [
+        "manual-2.pdf",
+        "manual-3.pdf",
+    ]
+    assert final["top_score"] == 0.91
+    assert llm.streamed_prompts and "Контекст:" in llm.streamed_prompts[0]
+    assert llm.prompts == []
+
+
+def test_stream_answer_low_score_emits_single_final_without_llm(tmp_path: Path) -> None:
+    llm = FakeStreamingLLM(["не должно вызываться"])
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.2, 0.1])
+
+    events = list(service.stream_answer("Вопрос вне базы"))
+
+    assert events == [
+        {"type": "final", "answer": NO_ANSWER, "top_score": 0.2, "sources": []}
+    ]
+    assert llm.streamed_prompts == []
+    assert llm.prompts == []
+
+
+def test_stream_answer_falls_back_to_complete_for_non_streaming_llm(tmp_path: Path) -> None:
+    llm = FakeLLM("Ответ [1].")
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    events = list(service.stream_answer("Вопрос"))
+
+    assert events[0] == {"type": "delta", "delta": "Ответ [1]."}
+    assert events[-1]["type"] == "final"
+    assert events[-1]["answer"] == "Ответ [1]."
+    assert len(events[-1]["sources"]) == 1
+
+
+def test_stream_answer_derives_deltas_from_cumulative_text_chunks(tmp_path: Path) -> None:
+    class CumulativeLLM(FakeLLM):
+        def stream_complete(self, prompt: str):
+            self.prompts.append(prompt)
+            yield SimpleNamespace(delta="", text="Ответ ")
+            yield SimpleNamespace(delta="", text="Ответ по базе [1].")
+
+    llm = CumulativeLLM()
+    service = RAGService(rag_config(tmp_path, allow_external_data_transfer=True), llm=llm)
+    service._retriever = FakeRetriever([0.91])
+
+    events = list(service.stream_answer("Вопрос"))
+
+    deltas = [event["delta"] for event in events if event["type"] == "delta"]
+    assert "".join(deltas) == "Ответ по базе [1]."
+    assert events[-1]["type"] == "final"

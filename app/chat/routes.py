@@ -13,7 +13,7 @@ from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage, telegram_chat_id_from_owner
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
 from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
-from app.chat.service import ChatNotFoundError, ModerationBlockedError, media_parts
+from app.chat.service import ChatNotFoundError, ModerationBlockedError, StreamReplace, media_parts
 from app.core.auth import PrincipalDep
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
@@ -141,7 +141,10 @@ async def send_message(
                 yield f"data: {notice}\n\n"
             stream = chat_service.send_message(chat_id, content, **message_kwargs)
             async for chunk in stream:
-                payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
+                if isinstance(chunk, StreamReplace):
+                    payload = json.dumps({"type": "replace", "text": chunk.text}, ensure_ascii=False)
+                else:
+                    payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
                 yield f"data: {payload}\n\n"
             latest = await chat_service.list_messages(chat_id, limit=1)
             message_id = str(latest[-1].id) if latest and latest[-1].role == "assistant" else None

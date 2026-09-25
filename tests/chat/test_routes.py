@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.chat.deps import get_chat_service
 from app.chat.domain import Chat, ChatMessage
+from app.chat.service import StreamReplace
 from app.main import app
 from app.services.security.input_validator import MAX_MESSAGE_CHARS
 
@@ -118,6 +119,27 @@ def test_chat_routes_create_get_stream_list_and_clear(fake_chat_service: FakeCha
         assert cleared.status_code == 200
         assert cleared.json() == {"status": "ok"}
         assert client.get(f"/chats/{chat_id}/messages").json() == []
+
+
+def test_chat_stream_emits_replace_event_for_canonical_answer(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="cli")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    async def streaming_send(chat_id: UUID, user_content: str, **_kwargs) -> AsyncIterator[object]:
+        yield "черновик"
+        yield StreamReplace("финальный ответ")
+
+    fake_chat_service.send_message = streaming_send  # type: ignore[method-assign]
+
+    with TestClient(app, headers=auth_headers()) as client:
+        response = client.post(f"/chats/{chat.id}/messages", data={"content": "Вопрос"})
+
+    body = response.text
+    assert response.status_code == 200
+    assert '"type": "token", "delta": "черновик"' in body
+    assert '"type": "replace", "text": "финальный ответ"' in body
+    assert body.index('"type": "replace"') < body.index('data: {"type":"done"}')
 
 
 def test_chat_routes_unknown_chat_returns_404(fake_chat_service: FakeChatService) -> None:

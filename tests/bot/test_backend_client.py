@@ -6,7 +6,7 @@ from uuid import UUID
 import httpx
 import pytest
 
-from bot.services.backend_client import BackendClient
+from bot.services.backend_client import BackendClient, StreamReplace
 
 
 INTERNAL_TOKEN = "test-internal-token-0000000000000001"
@@ -109,6 +109,31 @@ async def test_send_message_captures_notice_and_resets_between_responses() -> No
         chunks = [chunk async for chunk in client.send_message(chat_id, "again")]
         assert chunks == ["Ok"]
         assert client.last_response_notice(chat_id) == ""
+
+
+@pytest.mark.asyncio
+async def test_send_message_emits_replace_event_for_canonical_text() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000461")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=(
+                b'data: {"type":"token","delta":"\xd1\x87\xd0\xb5\xd1\x80\xd0\xbd\xd0\xbe\xd0\xb2\xd0\xb8\xd0\xba"}\n\n'
+                b'data: {"type":"replace","text":"\xd1\x84\xd0\xb8\xd0\xbd\xd0\xb0\xd0\xbb"}\n\n'
+                b'data: {"type":"done"}\n\n'
+            ),
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(base_url="http://backend", transport=transport) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+
+        chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
+
+    assert chunks == ["черновик", StreamReplace("финал")]
 
 
 @pytest.mark.asyncio

@@ -169,6 +169,14 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
+    # Answer generation gets a dedicated budget: retrieval (embedding + Qdrant)
+    # stays on the shared request_timeout, while a grounded completion over
+    # several fragments legitimately needs longer.
+    rag_generation_timeout: float = Field(
+        default=120.0,
+        gt=0,
+        validation_alias=AliasChoices("RAG_GENERATION_TIMEOUT"),
+    )
     rag_embedding_model: str = Field(
         default="text-embedding-3-large",
         min_length=1,
@@ -452,6 +460,7 @@ def get_settings() -> Settings:
             os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json"
         ),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
+        rag_generation_timeout=float(os.getenv("RAG_GENERATION_TIMEOUT") or 120.0),
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
         rag_chunk_strategy=os.getenv("RAG_CHUNK_STRATEGY") or "recursive",

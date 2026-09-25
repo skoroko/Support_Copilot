@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 import time
-from typing import Any, Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any
 
 from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import MetadataMode, NodeWithScore
@@ -605,6 +606,16 @@ class _ContextSelection:
 
 
 @dataclass(frozen=True)
+class _PreparedAnswer:
+    """Retrieval result shared by the buffered and the streamed answer paths."""
+
+    question: str
+    selection: _ContextSelection
+    telemetry: dict[str, Any]
+    overview_question: bool
+
+
+@dataclass(frozen=True)
 class RAGConfig:
     data_dir: Path
     qdrant_url: str
@@ -637,10 +648,17 @@ class RAGConfig:
     openai_api_key: str | None = None
     openai_base_url: str | None = None
     request_timeout: float = 60.0
+    # Generation runs on a longer budget than retrieval: condense + dense and
+    # lexical fallback variants already cost several requests before the answer
+    # prompt starts streaming, and the grounded completion itself is the
+    # slowest single call of the pipeline.
+    generation_timeout: float = 120.0
 
     def __post_init__(self) -> None:
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError("chunk_overlap must be smaller than chunk_size")
+        if self.generation_timeout <= 0:
+            raise ValueError("generation_timeout must be positive")
         if self.top_k < 3:
             raise ValueError("top_k must be at least 3")
         if not canonical_product(self.target_product):
@@ -718,6 +736,7 @@ class RAGConfig:
             openai_api_key=openai_api_key.get_secret_value() if openai_api_key else None,
             openai_base_url=getattr(settings, "openai_base_url", None),
             request_timeout=float(getattr(settings, "request_timeout", 60.0)),
+            generation_timeout=float(getattr(settings, "rag_generation_timeout", 120.0)),
         )
 
 
@@ -806,6 +825,28 @@ class RAGService:
                 include_retrieved_contexts=False,
             )
 
+    def stream_answer(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+    ) -> Iterator[dict[str, Any]]:
+        """Stream the production answer contract.
+
+        Yields ``{"type": "delta", "delta": ...}`` items while the grounded
+        completion is generated, then a single ``{"type": "final", ...}`` item
+        carrying the canonical answer, ``sources`` and ``top_score`` — the
+        same fields :meth:`answer` returns.
+        """
+
+        with trace_rag_query(question):
+            yield from self._stream_answer(
+                question,
+                history=history,
+                standalone_question=standalone_question,
+            )
+
     def evaluate_inputs(
         self,
         question: str,
@@ -841,6 +882,124 @@ class RAGService:
         has no dependency on a particular chat repository.  A caller that has
         already condensed the dialogue can pass ``standalone_question``.
         """
+        prepared = self._prepare_answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+        )
+        selection = prepared.selection
+        if not selection.has_evidence:
+            result: dict[str, Any] = {
+                "answer": NO_ANSWER,
+                "top_score": selection.top_score,
+                "sources": [],
+            }
+            if include_retrieved_contexts:
+                result["retrieved_contexts"] = selection.retrieved_contexts
+            return result
+        answer, cited_sources = self._generate_answer(
+            prepared.question,
+            selection.sources,
+            selection.ranked,
+            overview_question=prepared.overview_question,
+            history=history,
+        )
+        self._log_answer_outcome(prepared, cited_sources)
+        result = {"answer": answer, "top_score": selection.top_score, "sources": cited_sources}
+        if include_retrieved_contexts:
+            result["retrieved_contexts"] = selection.retrieved_contexts
+        return result
+
+    def _stream_answer(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+    ) -> Iterator[dict[str, Any]]:
+        """Yield ``delta`` events during generation, then one ``final`` event.
+
+        The retrieval gate is identical to :meth:`_answer`; only the grounded
+        completion is incremental.  The ``final`` event carries the grounded
+        answer and the cited sources, which may differ from the concatenated
+        raw deltas after citation normalization.
+        """
+
+        prepared = self._prepare_answer(
+            question,
+            history=history,
+            standalone_question=standalone_question,
+        )
+        selection = prepared.selection
+        if not selection.has_evidence:
+            yield {
+                "type": "final",
+                "answer": NO_ANSWER,
+                "top_score": selection.top_score,
+                "sources": [],
+            }
+            return
+        prompt = self._answer_prompt(
+            prepared.question,
+            selection.sources,
+            selection.ranked,
+            overview_question=prepared.overview_question,
+            history=history,
+        )
+        accumulated = ""
+        llm = self._language_model()
+        stream_complete = getattr(llm, "stream_complete", None)
+        if stream_complete is None:
+            # Injected providers without streaming still deliver one delta, so
+            # callers and tests need no separate non-streaming path.
+            response = llm.complete(prompt)
+            accumulated = str(getattr(response, "text", response) or "")
+            if accumulated:
+                yield {"type": "delta", "delta": accumulated}
+        else:
+            for chunk in stream_complete(prompt):
+                delta = str(getattr(chunk, "delta", "") or "")
+                if not delta:
+                    # Providers that report only cumulative text still stream.
+                    text = str(getattr(chunk, "text", "") or "")
+                    if text.startswith(accumulated):
+                        delta = text[len(accumulated) :]
+                if not delta:
+                    continue
+                accumulated += delta
+                yield {"type": "delta", "delta": delta}
+        answer, cited_sources = self._ground_answer(
+            accumulated.strip() or NO_ANSWER, selection.sources
+        )
+        self._log_answer_outcome(prepared, cited_sources)
+        yield {
+            "type": "final",
+            "answer": answer,
+            "top_score": selection.top_score,
+            "sources": cited_sources,
+        }
+
+    def _log_answer_outcome(
+        self,
+        prepared: _PreparedAnswer,
+        cited_sources: list[dict[str, Any]],
+    ) -> None:
+        outcome = "grounded" if cited_sources else "missing_valid_citation"
+        logger.info(
+            "rag_retrieval_completed",
+            **prepared.telemetry,
+            outcome=outcome,
+            cited_source_count=len(cited_sources),
+        )
+
+    def _prepare_answer(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None,
+        standalone_question: str | None,
+    ) -> _PreparedAnswer:
+        """Run the guarded retrieval pipeline shared by all answer paths."""
         if not question.strip():
             raise ValueError("question must not be blank")
         if self._retriever is None:
@@ -961,32 +1120,12 @@ class RAGService:
         }
         if not selection.has_evidence:
             logger.info("rag_retrieval_completed", **telemetry, outcome="low_score", cited_source_count=0)
-            result: dict[str, Any] = {
-                "answer": NO_ANSWER,
-                "top_score": selection.top_score,
-                "sources": [],
-            }
-            if include_retrieved_contexts:
-                result["retrieved_contexts"] = selection.retrieved_contexts
-            return result
-        answer, cited_sources = self._generate_answer(
-            question.strip(),
-            selection.sources,
-            selection.ranked,
+        return _PreparedAnswer(
+            question=question.strip(),
+            selection=selection,
+            telemetry=telemetry,
             overview_question=overview_question,
-            history=history,
         )
-        outcome = "grounded" if cited_sources else "missing_valid_citation"
-        logger.info(
-            "rag_retrieval_completed",
-            **telemetry,
-            outcome=outcome,
-            cited_source_count=len(cited_sources),
-        )
-        result = {"answer": answer, "top_score": selection.top_score, "sources": cited_sources}
-        if include_retrieved_contexts:
-            result["retrieved_contexts"] = selection.retrieved_contexts
-        return result
 
     def query(
         self,
@@ -1107,7 +1246,7 @@ class RAGService:
         if self._llm is None:
             self._llm = LlamaOpenAI(
                 model=self.config.llm_model, api_key=self.config.openai_api_key,
-                api_base=self.config.openai_base_url, timeout=self.config.request_timeout,
+                api_base=self.config.openai_base_url, timeout=self.config.generation_timeout,
                 temperature=0, system_prompt=RAG_SYSTEM_PROMPT,
             )
         return self._llm
@@ -1977,6 +2116,26 @@ class RAGService:
 
         if len(sources) != len(source_nodes):
             raise ValueError("sources and source_nodes must have the same length")
+        prompt = self._answer_prompt(
+            question,
+            sources,
+            source_nodes,
+            overview_question=overview_question,
+            history=history,
+        )
+        response = self._language_model().complete(prompt)
+        answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
+        return self._ground_answer(answer, sources)
+
+    def _answer_prompt(
+        self,
+        question: str,
+        sources: list[dict[str, Any]],
+        source_nodes: Sequence[Any],
+        *,
+        overview_question: bool = False,
+        history: Sequence[HistoryItem] | None = None,
+    ) -> str:
         context = "\n\n".join(
             f"[{index}] {self._context_source_label(source)}\n"
             f"{self._context_text(source_node)}"
@@ -1992,7 +2151,7 @@ class RAGService:
             if overview_question
             else ""
         )
-        prompt = (
+        return (
             f"{RAG_SYSTEM_PROMPT}\n\n"
             f"{self._dialog_context_section(history)}"
             f"Контекст:\n{context}\n\n"
@@ -2001,9 +2160,6 @@ class RAGService:
             f"Дай краткий проверяемый ответ. Используй только контекст и ссылайся только на "
             f"существующие номера от [1] до [{len(sources)}]."
         )
-        response = self._language_model().complete(prompt)
-        answer = str(getattr(response, "text", response) or "").strip() or NO_ANSWER
-        return self._ground_answer(answer, sources)
 
     @classmethod
     def _dialog_context_section(
@@ -2453,7 +2609,7 @@ def build_llm_condense_hook(config: RAGConfig, *, llm: Any | None = None) -> Con
                 model=config.llm_model,
                 api_key=config.openai_api_key,
                 api_base=config.openai_base_url,
-                timeout=min(float(config.request_timeout), LLM_CONDENSE_TIMEOUT_SECONDS),
+                timeout=min(float(config.generation_timeout), LLM_CONDENSE_TIMEOUT_SECONDS),
                 temperature=0,
             )
         prompt = (

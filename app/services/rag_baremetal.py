@@ -168,7 +168,7 @@ class BareMetalRAGService:
         if self._openai is None:
             kwargs: dict[str, Any] = {
                 "api_key": self.config.openai_api_key,
-                "timeout": self.config.request_timeout,
+                "timeout": self.config.generation_timeout,
             }
             if self.config.openai_base_url:
                 kwargs["base_url"] = self.config.openai_base_url

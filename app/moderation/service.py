@@ -38,6 +38,21 @@ class ModerationService:
     async def check_output(self, content: str) -> ModerationResult:
         return await self._check(content, direction="output")
 
+    def check_output_fragment(self, content: str) -> ModerationResult:
+        """Keyword-only screen for one streamed output prefix.
+
+        Runs per provider delta on the accumulated answer, so it stays
+        synchronous and never calls the optional moderation API — the
+        authoritative check remains ``check_output`` on the completed answer.
+        """
+
+        if not self.enabled:
+            return ModerationResult()
+        result = self._check_keywords(content)
+        if not result.allowed:
+            self._log_incident(content, result, direction="output")
+        return result
+
     async def _check(self, content: str, *, direction: str) -> ModerationResult:
         if not self.enabled or not content.strip():
             return ModerationResult()
