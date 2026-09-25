@@ -16,7 +16,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
 from bot.keyboards.inline import answer_kb
-from bot.services.backend_client import BackendClient, StreamReplace
+from bot.services.backend_client import BackendClient, BackendStreamError, StreamReplace
 
 
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
@@ -52,6 +52,7 @@ _SECURITY_RULE_DEFAULT = (
     "Сообщение отклонено проверкой безопасности. "
     "Уберите из него служебные инструкции и закодированные фрагменты."
 )
+_STREAM_ERROR_FALLBACK = "Ответ прервался. Повторите запрос или передайте обращение специалисту."
 
 
 def _is_private_chat_type(chat_type: object) -> bool:
@@ -189,9 +190,11 @@ def is_bot_or_channel_edit(message: Message) -> bool:
 
 
 def backend_error_message(exc: httpx.HTTPError) -> str:
-    if isinstance(exc, httpx.ConnectError):
+    if isinstance(exc, BackendStreamError):
+        return str(exc).strip() or _STREAM_ERROR_FALLBACK
+    if isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError)):
         return "Сервис недоступен, попробуйте позже."
-    if isinstance(exc, httpx.ReadTimeout):
+    if isinstance(exc, httpx.TimeoutException):
         return "Ответ занимает слишком долго. Попробуйте ещё раз позже."
     if isinstance(exc, httpx.HTTPStatusError):
         status_code = exc.response.status_code
