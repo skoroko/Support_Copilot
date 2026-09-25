@@ -25,7 +25,6 @@ from app.routers import agent, chat, documents, health, models, rag
 from app.services.agent_persistent import agent_lifespan
 from app.services.rag import RAGConfig, RAGService, build_llm_condense_hook
 from app.services.security.output_filter import build_security_system_prompt
-from app.services.vector_store import VectorStore
 
 try:
     from redis.asyncio import Redis
@@ -115,25 +114,17 @@ async def lifespan(app: FastAPI):
         timeout=settings.llm.request_timeout,
     )
     app.state.cache = _build_cache(settings)
-    app.state.vector_store = None
     app.state.rag_service = None
     app.state.ingestion_service = None
     app.state.rag_startup_error = None
     try:
         async with agent_lifespan(app):
-            if settings.qdrant_url:
-                qdrant_api_key = (
-                    settings.qdrant_api_key.get_secret_value()
-                    if settings.qdrant_api_key
-                    else None
-                )
-                app.state.vector_store = VectorStore(
-                    url=settings.qdrant_url,
-                    api_key=qdrant_api_key,
-                    collection_name=settings.qdrant_collection,
-                    embedding_dim=settings.embedding_dim,
-                )
-                await app.state.vector_store.ensure_collection()
+            # The application owns exactly one vector store: the one inside
+            # RAGService (RAG_COLLECTION).  The homework-5.2 VectorStore
+            # adapter remains script-only so the experiment ``documents``
+            # collection cannot drift out of sync with the production corpus
+            # (audit F20) — and Qdrant is not contacted at startup at all
+            # while RAG is disabled.
             if settings.rag_enabled:
                 app.state.rag_service, app.state.rag_startup_error = await run_in_threadpool(
                     _initialize_rag,
@@ -145,8 +136,6 @@ async def lifespan(app: FastAPI):
     finally:
         await _maybe_close(app.state.openai)
         await _maybe_close(app.state.cache)
-        if app.state.vector_store is not None:
-            await app.state.vector_store.close()
         if app.state.rag_service is not None:
             await run_in_threadpool(app.state.rag_service.close)
         chat_engine = getattr(app.state, "chat_engine", None)

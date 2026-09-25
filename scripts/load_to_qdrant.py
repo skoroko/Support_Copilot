@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import hashlib
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -107,8 +108,10 @@ async def run(args: argparse.Namespace) -> int:
     api_key = args.api_key or (
         settings.qdrant_api_key.get_secret_value() if settings.qdrant_api_key else None
     )
-    collection = args.collection or settings.qdrant_collection
-    dimensions = args.dimensions or settings.embedding_dim
+    # The experiment collection is a script concern, not an app setting:
+    # the application corpus lives exclusively in RAG_COLLECTION (F20).
+    collection = args.collection or os.getenv("QDRANT_COLLECTION") or "documents"
+    dimensions = args.dimensions or int(os.getenv("EMBEDDING_DIM") or "1024")
     documents = load_documents(args.data)
     embedder = build_embedding_service(dimensions, offline=args.offline_smoke)
 
