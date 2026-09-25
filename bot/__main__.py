@@ -9,7 +9,6 @@ from aiohttp import ThreadedResolver
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramNetworkError
-from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.observability.logging import get_logger
 from bot.background import broadcast_worker
@@ -61,7 +60,7 @@ async def main() -> None:
         internal_token=settings.internal_token.get_secret_value(),
         admin_token=settings.admin_token.get_secret_value(),
     )
-    dp = Dispatcher(storage=MemoryStorage())
+    dp = Dispatcher()
     dp["backend"] = backend
     dp["bot_admin_ids"] = settings.bot_admin_ids
     dp.include_router(router)

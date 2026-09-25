@@ -113,10 +113,6 @@ def make_message(
     )
 
 
-def make_state(state: str | None = None) -> SimpleNamespace:
-    return SimpleNamespace(get_state=AsyncMock(return_value=state))
-
-
 @pytest.fixture(autouse=True)
 def fast_debounce(monkeypatch):
     monkeypatch.setattr(_burst, "TEXT_DEBOUNCE_SECONDS", 0.05)
@@ -219,9 +215,8 @@ async def test_reply_quote_reaches_backend_content() -> None:
 @pytest.mark.asyncio
 async def test_edit_of_pending_message_replaces_its_text() -> None:
     backend = FakeBackend()
-    state = make_state()
     await handle_text(make_message(message_id=5, text="как настроить filtr"), backend)
-    await handle_edited_text(make_message(message_id=5, text="как настроить фильтр"), backend, state)
+    await handle_edited_text(make_message(message_id=5, text="как настроить фильтр"), backend)
     await wait_flush()
 
     assert len(backend.sent) == 1
@@ -231,10 +226,9 @@ async def test_edit_of_pending_message_replaces_its_text() -> None:
 @pytest.mark.asyncio
 async def test_edit_of_flushed_message_sends_new_request() -> None:
     backend = FakeBackend()
-    state = make_state()
     await handle_text(make_message(message_id=5, text="исходный вопрос"), backend)
     await wait_flush()
-    await handle_edited_text(make_message(message_id=5, text="исправленный вопрос"), backend, state)
+    await handle_edited_text(make_message(message_id=5, text="исправленный вопрос"), backend)
     await wait_flush()
 
     assert [sent["content"] for sent in backend.sent] == ["исходный вопрос", "исправленный вопрос"]
@@ -243,20 +237,9 @@ async def test_edit_of_flushed_message_sends_new_request() -> None:
 @pytest.mark.asyncio
 async def test_bot_own_edits_are_ignored() -> None:
     backend = FakeBackend()
-    state = make_state()
     await handle_edited_text(
-        make_message(message_id=9, text="Готовлю ответ…", is_bot=True), backend, state
+        make_message(message_id=9, text="Готовлю ответ…", is_bot=True), backend
     )
-    await wait_flush()
-
-    assert backend.sent == []
-
-
-@pytest.mark.asyncio
-async def test_edit_is_ignored_during_fsm_question_flow() -> None:
-    backend = FakeBackend()
-    state = make_state("AskFlow:waiting_for_question")
-    await handle_edited_text(make_message(message_id=9, text="edit"), backend, state)
     await wait_flush()
 
     assert backend.sent == []
@@ -413,7 +396,6 @@ async def test_group_members_get_separate_histories() -> None:
 @pytest.mark.asyncio
 async def test_group_edit_lands_in_owning_member_batch() -> None:
     backend = FakeBackend()
-    state = make_state()
     await handle_text(
         make_message(message_id=5, text="вопрос А", chat_id=-100, chat_type="supergroup", user_id=7),
         backend,
@@ -425,7 +407,6 @@ async def test_group_edit_lands_in_owning_member_batch() -> None:
     await handle_edited_text(
         make_message(message_id=5, text="вопрос А2", chat_id=-100, chat_type="supergroup", user_id=7),
         backend,
-        state,
     )
     await wait_flush()
 

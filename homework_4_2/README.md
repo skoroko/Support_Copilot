@@ -2,14 +2,13 @@
 
 ## Что реализовано
 
-- `bot/__main__.py` - запуск aiogram 3 polling, `MemoryStorage`, `dp["backend"]`.
+- `bot/__main__.py` - запуск aiogram 3 polling, `dp["backend"]`.
 - `bot/config.py` - настройки `BOT_TOKEN`, `BACKEND_URL`, `BOT_ADMIN_IDS` через pydantic-settings.
 - `bot/services/backend_client.py` - async `httpx` client к `/chats`.
-- `bot/handlers/commands.py` - `/start`, `/help`, `/clear`, `/cancel`.
+- `bot/handlers/commands.py` - `/start`, `/help`, `/clear`.
 - `bot/handlers/text.py` - обычный текст отправляется в backend, SSE рендерится через `edit_text`.
-- `bot/states.py` и `bot/handlers/fsm.py` - FSM-сценарий `/ask`.
-- `bot/keyboards/inline.py` - inline-темы из домена Support Copilot.
-- `tests/bot/` - тесты BackendClient и FSM-перехода.
+- `bot/keyboards/inline.py` - inline-клавиатуры источников и оценки ответа.
+- `tests/bot/` - тесты BackendClient и burst-обработки.
 
 ## Запуск
 
