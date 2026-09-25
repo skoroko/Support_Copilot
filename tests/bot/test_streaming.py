@@ -7,6 +7,7 @@ import pytest
 from aiogram.enums import ParseMode
 
 from bot.handlers._common import _render_telegram_html, format_all_sources, source_document_count, stream_to_chat
+from bot.services.backend_client import StreamReplace
 
 
 async def token_stream():
@@ -126,6 +127,29 @@ def test_format_all_sources_keeps_physical_and_printed_page_pairs() -> None:
         "Документы:\n[1, 2] GTS NX manual.pdf, PDF стр. 32 (в документе 45); "
         "PDF стр. 60 (в документе 79)"
     )
+
+
+@pytest.mark.asyncio
+async def test_stream_to_chat_replace_event_rewrites_draft() -> None:
+    editable = SimpleNamespace(edit_text=AsyncMock())
+    bot = SimpleNamespace(send_chat_action=AsyncMock(), send_message_draft=AsyncMock(), send_message=AsyncMock())
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=bot,
+        answer=AsyncMock(return_value=editable),
+    )
+
+    async def replacing_stream():
+        yield "Чер"
+        yield "новик"
+        yield StreamReplace("Финальный ответ")
+
+    result = await stream_to_chat(message, replacing_stream())
+
+    assert result == "Финальный ответ"
+    assert editable.edit_text.await_args_list[-1].args == ("Финальный ответ",)
+    assert editable.edit_text.await_args_list[-1].kwargs == {"parse_mode": ParseMode.HTML}
+    bot.send_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio

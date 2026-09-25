@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator, Sequence
+from dataclasses import dataclass
 from uuid import UUID
 
 import httpx
-
 
 DEFAULT_TIMEOUT = httpx.Timeout(connect=3.0, read=60.0, write=10.0, pool=5.0)
 STREAM_TIMEOUT = httpx.Timeout(connect=3.0, read=120.0, write=10.0, pool=5.0)
@@ -17,6 +17,17 @@ class BackendStreamError(httpx.HTTPError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+@dataclass(frozen=True)
+class StreamReplace:
+    """Canonical answer text replacing the accumulated streamed draft.
+
+    The backend emits it after grounding/moderation when the final text can
+    differ from the token deltas already shown.
+    """
+
+    text: str
 
 
 class BackendClient:
@@ -60,7 +71,7 @@ class BackendClient:
         chat_id: UUID | str,
         content: str,
         media: Sequence[tuple[bytes, str]] | None = None,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[str | StreamReplace]:
         files = None
         if media:
             files = [
@@ -109,6 +120,9 @@ class BackendClient:
                         if event_type == "token":
                             yielded_data = True
                             yield str(payload.get("delta", ""))
+                        elif event_type == "replace":
+                            yielded_data = True
+                            yield StreamReplace(str(payload.get("text", "")))
                         elif event_type == "message":
                             message_id = payload.get("message_id")
                             if message_id:

@@ -16,7 +16,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
 from bot.keyboards.inline import answer_kb
-from bot.services.backend_client import BackendClient
+from bot.services.backend_client import BackendClient, StreamReplace
 
 
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
@@ -250,7 +250,7 @@ def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKey
 
 async def stream_to_chat(
     message: Message,
-    tokens: AsyncIterator[str],
+    tokens: AsyncIterator[str | StreamReplace],
     *,
     reply_markup_factory: Callable[[], InlineKeyboardMarkup | None] | None = None,
     sources_factory: Callable[[], list[dict]] | None = None,
@@ -265,11 +265,15 @@ async def stream_to_chat(
     typing_task = asyncio.create_task(_typing(message, stop_typing))
     try:
         async for delta in tokens:
-            if not delta:
-                continue
-            if not buffer:
-                stop_typing.set()
-            buffer += delta
+            if isinstance(delta, StreamReplace):
+                # Canonical post-moderation text replaces the shown draft.
+                buffer = delta.text
+            else:
+                if not delta:
+                    continue
+                if not buffer:
+                    stop_typing.set()
+                buffer += delta
             now = time.monotonic()
             if not buffer.strip() or now < draft_paused_until or now - last_edit_at < EDIT_DEBOUNCE_SECONDS:
                 continue

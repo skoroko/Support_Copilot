@@ -574,12 +574,32 @@ Telegram message
 
 ### F18. RAG-ответ не стримится; общий request_timeout=30с
 
-- **Файлы:** `app/chat/service.py:230-234`, `app/services/rag.py:723-730`,
-  `app/core/config.py:48-51`
+- **Файлы:** `app/chat/service.py`, `app/services/rag.py`,
+  `app/core/config.py`, `app/chat/routes.py`, `app/moderation/service.py`,
+  `bot/services/backend_client.py`, `bot/handlers/_common.py`
 - **Суть:** `_answer_with_rag` ждёт полный ответ → «Готовлю ответ…» висит до
   конца. `LLM_REQUEST_TIMEOUT` применён и к retrieval-embedding, и к
   генерации — сложный запрос с fallback-вариантами может упереться в 30 с.
-- **Статус:** [ ]
+- **Статус:** [x] — `RAGService.stream_answer()` отдаёт `delta`-события из
+  `stream_complete` во время генерации и финальное `final`-событие с
+  grounded-ответом, `top_score` и цитированными источниками (тот же
+  retrieval-gate и `_ground_answer`, что у `answer()`). В
+  `ChatService.send_message` синхронный генератор работает в worker-потоке
+  и проксирует дельты в SSE немедленно через asyncio-очередь; каждый
+  накопленный префикс проходит keyword-скрин
+  `ModerationService.check_output_fragment` (заблокированный фрагмент не
+  доходит до клиента; финальная `check_output` и запись в репозиторий
+  сохранены), а `StreamReplace` после grounding/модерации подменяет
+  показанный черновик каноническим текстом. Событие `replace` проходит
+  через SSE-роут и `BackendClient` в `stream_to_chat`. Таймауты разделены:
+  `request_timeout` (30 с) остаётся на Qdrant/embedding/retrieval, новый
+  `RAG_GENERATION_TIMEOUT` (default 120 с) — на генерацию (`LlamaOpenAI` и
+  bare-metal клиент); condense-hook ограничен `LLM_CONDENSE_TIMEOUT_SECONDS`
+  как прежде. RAG-сервисы без `stream_answer` получают прежний буферный
+  ответ. Тесты: стриминг/grounding/low-score/cumulative-chunks и разделение
+  таймаутов в `test_rag.py`; живые дельты, replace и mid-stream модерация в
+  `test_service_context.py`; SSE `replace` в `test_routes.py`; парсинг в
+  `test_backend_client.py`; перезапись драфта в `test_streaming.py`.
 
 ### F19. `chat.system_prompt` игнорируется в RAG-пути
 
@@ -706,3 +726,4 @@ Telegram message
 | 2026-09-23 | F17 | `_LEXICAL_TOKEN_RE` → `[^\W_]+` (Unicode-буквы/цифры не дробятся); короткие токены с цифрой («3D», «4021») принимаются через `_is_lexical_term`; `_light_stem` +консервативные английские plural/gerund редукции (симметрично для запроса и документа); достаточность терминов в `_sufficient_lexical_terms` — пара с идентификатором или одиночный идентификатор; Qdrant-индекс без изменений (один stemmer на поле — RUSSIAN сохранён, латиница в `MatchText` идёт exact-match) | 10 новых тестов (25 кейсов) в `test_rag.py`; полный прогон `tests` — 501 passed, 9 skipped |
 | 2026-09-23 | F13 | `RAG_PRODUCT_SCOPE` (`strict\|fallback\|all`, default `fallback`): GTS NX остаётся первичным пулом, при провале evidence-gate отбор повторяется по полному корпусу без доп. retrieval-запросов — уже лежащий Civil-мануал становится достижимым; отбор вынесен в `_select_context`; телеметрия `product_scope` + `cross_product_selected_count`; scope-токены `all`/`any`/`none` отклонены как `RAG_PRODUCT`/`default_product`; `infer_product` +`soilworks`; промпты обобщены до продуктов MIDAS; пробелы корпуса описаны в `data_inventory.md` | 8 новых тестов в `test_rag.py` (scope-режимы, fallback, reserved-токены) + параметризованный guard в `test_ingestion.py`; полный прогон `tests` — 447 passed, 9 skipped |
 | 2026-09-23 | F14 | condense-hook рендерит всё окно истории (`_dialog_context_section(max_messages=10)`; генерация по-прежнему 6 сообщений); heuristic-мердж дополнен keyword-tail `_detail_carry_tokens` — идентификаторы из user-ходов старше последнего (числа/dotted-версии ≥2, latin ≥3), до 8 токенов, без кириллических топик-слов и дублей; для `follow_up` добавлен incident-anchored вариант строгого lexical-запроса (details + current terms), попадающий и в dense-fallback | 6 новых тестов в `test_rag.py`; полный прогон `tests` — 453 passed, 9 skipped |
+| 2026-09-23 | F18 | `RAGService.stream_answer` (delta→final, общий `_prepare_answer`/`_answer_prompt` с `answer()`); `ChatService.send_message` стримит RAG-дельты живьём через thread→queue мост с инкрементальным `check_output_fragment` и SSE-событием `replace` для канонического текста; бот обрабатывает `replace` в `stream_to_chat`; `RAG_GENERATION_TIMEOUT` (120с) отделён от `request_timeout` (30с, retrieval/Qdrant/embedding) | 13 новых тестов (rag streaming/timeouts, service deltas+replace+модерация, route SSE, client parse, bot replace); полный прогон `tests` — 514 passed, 9 skipped |

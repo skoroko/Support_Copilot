@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Mapping, Sequence
+from dataclasses import dataclass
 from functools import lru_cache
 import inspect
 import time
@@ -69,6 +70,18 @@ class ModerationBlockedError(ValueError):
     def __init__(self, result: ModerationResult) -> None:
         super().__init__("Message blocked by moderation")
         self.result = result
+
+
+@dataclass(frozen=True)
+class StreamReplace:
+    """Canonical answer that replaces every previously streamed delta.
+
+    RAG deltas show the raw draft while it is generated; grounding and final
+    output moderation can change the text, so consumers substitute ``text``
+    for whatever they accumulated.
+    """
+
+    text: str
 
 
 def count_tokens(messages: Sequence[ChatMLMessage]) -> int:
@@ -209,7 +222,7 @@ class ChatService:
         media_refs: dict[str, Any] | None = None,
         input_moderated: bool = False,
         rag_service: Any | None = None,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[str | StreamReplace]:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
             raise ChatNotFoundError(f"Chat {chat_id} not found")
@@ -263,16 +276,24 @@ class ChatService:
 
         assistant_parts: list[str] = []
         rag_sources: list[dict[str, Any]] = []
+        streamed_draft = ""
+        blocked_screen: ModerationResult | None = None
         started_at = time.perf_counter()
         if rag_service is not None:
             rag_question = self._rag_question(user_content, media_refs)
             if rag_question is None:
-                answer = MEDIA_IMAGE_NO_TEXT_REPLY
+                assistant_parts = [MEDIA_IMAGE_NO_TEXT_REPLY]
             else:
-                rag_result = await self._answer_with_rag(rag_service, rag_question, retrieval_history)
-                answer = str(rag_result.get("answer") or "").strip() or RAG_EMPTY_ANSWER
-                rag_sources = self._citation_array(rag_result.get("sources"))
-            assistant_parts = [answer]
+                rag_out: dict[str, Any] = {}
+                async for delta in self._stream_with_rag(
+                    rag_service, rag_question, retrieval_history, chat_id, rag_out
+                ):
+                    streamed_draft += delta
+                    yield delta
+                blocked_screen = rag_out.get("blocked_result")
+                rag_sources = list(rag_out.get("sources") or [])
+                generated = str(rag_out.get("final") or streamed_draft).strip()
+                assistant_parts = [generated or RAG_EMPTY_ANSWER]
         else:
             try:
                 stream = await self.llm_client.chat.completions.create(
@@ -294,14 +315,16 @@ class ChatService:
                 raise
 
         generated_content = "".join(assistant_parts)
-        output_result = await self.moderation.check_output(generated_content)
-        await self._record_moderation(chat_id, "output", output_result)
+        if blocked_screen is not None:
+            # The mid-stream keyword screen already logged and recorded the hit.
+            output_result = blocked_screen
+        else:
+            output_result = await self.moderation.check_output(generated_content)
+            await self._record_moderation(chat_id, "output", output_result)
         if output_result.allowed:
-            visible_parts = assistant_parts
             visible_content = generated_content
             self._last_response_sources[chat_id] = rag_sources
         else:
-            visible_parts = [MODERATION_OUTPUT_REPLACEMENT]
             visible_content = MODERATION_OUTPUT_REPLACEMENT
             self._last_response_sources[chat_id] = []
 
@@ -322,8 +345,20 @@ class ChatService:
                 chat_id,
                 assistant_message,
             )
-        for part in visible_parts:
-            yield part
+        if rag_service is not None:
+            if streamed_draft:
+                # Deltas already went out; publish the canonical text when it
+                # differs from the accumulated draft (grounding or moderation
+                # may have rewritten it).
+                if visible_content != streamed_draft:
+                    yield StreamReplace(visible_content)
+            else:
+                # Nothing streamed (service without stream_answer): keep the
+                # buffered contract and yield the answer as one token.
+                yield visible_content
+        else:
+            for part in assistant_parts if output_result.allowed else [MODERATION_OUTPUT_REPLACEMENT]:
+                yield part
 
     async def clear_history(self, chat_id: UUID) -> None:
         await self.repository.soft_delete_messages(chat_id)
@@ -450,6 +485,100 @@ class ChatService:
         if not isinstance(result, Mapping):
             raise TypeError("RAG answer must be a mapping")
         return dict(result)
+
+    async def _stream_with_rag(
+        self,
+        rag_service: Any,
+        question: str,
+        history: Sequence[ChatMessage],
+        chat_id: UUID,
+        out: dict[str, Any],
+    ) -> AsyncIterator[str]:
+        """Yield RAG answer deltas while generation is still running.
+
+        ``rag_service.stream_answer`` is a synchronous generator, so a worker
+        thread feeds an async queue and the caller sees deltas live instead of
+        waiting for the grounded answer.  Each accumulated prefix is screened
+        by ``check_output_fragment``; a hit stops the stream, records the
+        incident once, and marks ``out["blocked_result"]`` so the caller
+        substitutes the moderation replacement.  ``out`` also receives the
+        grounded ``final`` text and ``sources`` from the terminal event.
+
+        Services without ``stream_answer`` fall back to the buffered
+        ``answer`` contract with no delta events.
+        """
+
+        stream_answer = getattr(rag_service, "stream_answer", None)
+        if not callable(stream_answer):
+            result = await self._answer_with_rag(rag_service, question, history)
+            out["final"] = str(result.get("answer") or "")
+            out["sources"] = self._citation_array(result.get("sources"))
+            return
+
+        serialized_history = [message.model_dump(mode="json") for message in history]
+        accumulated = ""
+        async for item in self._rag_events(stream_answer, question, serialized_history):
+            if not isinstance(item, Mapping):
+                continue
+            event_type = item.get("type")
+            if event_type == "delta":
+                delta = str(item.get("delta") or "")
+                if not delta:
+                    continue
+                accumulated += delta
+                screen = self.moderation.check_output_fragment(accumulated)
+                if not screen.allowed:
+                    await self._record_moderation(chat_id, "output", screen)
+                    out["blocked_result"] = screen
+                    return
+                yield delta
+            elif event_type == "final":
+                out["final"] = str(item.get("answer") or "")
+                out["sources"] = self._citation_array(item.get("sources"))
+
+    async def _rag_events(
+        self,
+        stream_answer: Any,
+        question: str,
+        serialized_history: list[dict[str, Any]],
+    ) -> AsyncIterator[Any]:
+        """Normalize a sync or async RAG event source into an async iterator."""
+
+        produced = stream_answer(question, history=serialized_history)
+        if inspect.isawaitable(produced):
+            produced = await produced
+        if hasattr(produced, "__aiter__"):
+            async for item in produced:
+                yield item
+            return
+
+        queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+
+        def worker() -> None:
+            try:
+                for item in produced:
+                    loop.call_soon_threadsafe(queue.put_nowait, ("item", item))
+                loop.call_soon_threadsafe(queue.put_nowait, ("done", None))
+            except BaseException as exc:  # noqa: BLE001 - relayed to the consumer below
+                loop.call_soon_threadsafe(queue.put_nowait, ("error", exc))
+
+        runner = asyncio.create_task(asyncio.to_thread(worker))
+        try:
+            while True:
+                kind, payload = await queue.get()
+                if kind == "item":
+                    yield payload
+                elif kind == "error":
+                    raise payload
+                else:
+                    return
+        finally:
+            # to_thread cannot cancel the worker; it keeps filling the
+            # unbounded queue and exits, while cancelling the awaiter task
+            # keeps asyncio from reporting an abandoned task.
+            if not runner.done():
+                runner.cancel()
 
     @staticmethod
     def _citation_array(value: Any) -> list[dict[str, Any]]:
