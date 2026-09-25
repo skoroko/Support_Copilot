@@ -16,7 +16,7 @@ from bot.keyboards.inline import (
     encode_message_context,
     feedback_kb,
 )
-from bot.services.backend_client import BackendClient
+from bot.services.backend_client import BackendClient, BackendStreamError
 
 
 @pytest.mark.asyncio
@@ -116,6 +116,46 @@ def test_media_processing_422_surfaces_server_reason() -> None:
 def test_media_processing_422_without_reason_uses_fallback() -> None:
     exc = _status_error(422, {"error": {"code": "media_processing_failed"}})
     assert "прочитать" in backend_error_message(exc)
+
+
+def test_stream_error_surfaces_server_message() -> None:
+    exc = BackendStreamError(
+        "chat_stream_failed",
+        "Не удалось завершить ответ. Повторите запрос или передайте обращение специалисту.",
+    )
+    assert backend_error_message(exc) == (
+        "Не удалось завершить ответ. Повторите запрос или передайте обращение специалисту."
+    )
+
+
+def test_stream_error_without_message_uses_fallback() -> None:
+    exc = BackendStreamError("chat_stream_failed", "  ")
+    assert "прервался" in backend_error_message(exc)
+
+
+def test_connect_timeout_maps_to_unavailable() -> None:
+    exc = httpx.ConnectTimeout("timed out")
+    assert "недоступен" in backend_error_message(exc)
+
+
+def test_remote_protocol_error_maps_to_unavailable() -> None:
+    exc = httpx.RemoteProtocolError("Server disconnected without sending a response.")
+    assert "недоступен" in backend_error_message(exc)
+
+
+def test_write_timeout_maps_to_timeout_hint() -> None:
+    exc = httpx.WriteTimeout("timed out")
+    assert "долго" in backend_error_message(exc)
+
+
+def test_pool_timeout_maps_to_timeout_hint() -> None:
+    exc = httpx.PoolTimeout("timed out")
+    assert "долго" in backend_error_message(exc)
+
+
+def test_unmapped_400_uses_generic_fallback() -> None:
+    exc = _status_error(400, {"error": {"code": "unknown_code"}})
+    assert "Не удалось обработать запрос" in backend_error_message(exc)
 
 
 class _FeedbackBackend:

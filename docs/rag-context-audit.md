@@ -662,6 +662,20 @@ Telegram message
   `moderation_blocked`, 413 `media_too_large`, 415 `unsupported_media_type`,
   422 `media_processing_failed` (прокидывает серверный `message`), 429 и
   5xx; прочее — прежний общий ответ.
+  Добивка F21: `BackendStreamError` больше не теряет пользовательское
+  `message` SSE-события `error` (`chat_stream_failed` — прокидывается
+  серверный текст, пустое `message` → фолбэк «Ответ прервался…»), а
+  транспортные сбои разведены: `ConnectError`/`ConnectTimeout`/
+  `RemoteProtocolError` → «Сервис недоступен», любой `TimeoutException`
+  (`Read`/`Write`/`Pool`) → «Ответ занимает слишком долго» — раньше все они
+  падали в «Проверьте данные и попробуйте ещё раз».
+  Тесты: `test_stream_error_surfaces_server_message`,
+  `test_stream_error_without_message_uses_fallback`,
+  `test_connect_timeout_maps_to_unavailable`,
+  `test_remote_protocol_error_maps_to_unavailable`,
+  `test_write_timeout_maps_to_timeout_hint`,
+  `test_pool_timeout_maps_to_timeout_hint`,
+  `test_unmapped_400_uses_generic_fallback`.
 
 ### F22. Конкурентные сообщения могут перемешать историю
 
