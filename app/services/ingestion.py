@@ -7,11 +7,13 @@ until the caller explicitly confirms that transfer.
 
 from __future__ import annotations
 
+import logging
+import re
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import logging
 from pathlib import Path
-import re
+from threading import Lock
 from typing import Any, Iterable, Sequence
 from urllib.parse import urlparse
 
@@ -19,16 +21,26 @@ from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.core.ingestion import DocstoreStrategy, IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.readers.base import BaseReader
-from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.schema import MetadataMode
+from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.readers.file import FlatReader, HTMLTagReader, MarkdownReader, PDFReader
+from llama_index.readers.file import (
+    FlatReader,
+    HTMLTagReader,
+    MarkdownReader,
+    PDFReader,
+)
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    VectorParams,
+)
 
 from app.services.chm_reader import CHMReader
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 logger = logging.getLogger(__name__)
@@ -450,6 +462,7 @@ class IngestionService:
             else requires_external_data_transfer
         )
         self._pipeline: IngestionPipeline | None = None
+        self._ingest_lock = Lock()
 
     @classmethod
     def from_settings(cls, settings: Any, **kwargs: Any) -> "IngestionService":
@@ -505,7 +518,6 @@ class IngestionService:
                 else:
                     failures.append(str(moved))
 
-        changed, unchanged = self._change_counts(documents)
         if not documents:
             return IngestionResult(
                 source_files=len(source_files),
@@ -516,16 +528,56 @@ class IngestionService:
                 failed_files=tuple(failures),
             )
 
-        self._ensure_collection()
-        nodes = self._pipeline_or_create().run(documents=documents, show_progress=False)
-        self._persist_docstore()
+        # File I/O and parsing can proceed concurrently. Only the shared
+        # docstore/pipeline/Qdrant transaction must be serialized per service.
+        with self._ingest_lock:
+            return self._index_documents(documents, len(source_files), tuple(failures))
+
+    def _index_documents(
+        self, documents: list[Document], source_files: int, failures: tuple[str, ...]
+    ) -> IngestionResult:
+        """Apply one ingestion batch while holding the service's state lock."""
+
+        changed, unchanged = self._change_counts(documents)
+        # The docstore retains each indexed document's source path and ID.
+        # Snapshot the old IDs before UPSERTS mutates it, and only remove IDs
+        # missing from a successfully indexed replacement of that same source.
+        old_ids = self._source_ref_doc_ids()
+        new_ids: dict[str, set[str]] = {}
+        for document in documents:
+            source = str(document.metadata["file_path"])
+            new_ids.setdefault(source, set()).add(document.id_)
+
+        docstore_snapshot = deepcopy(self._docstore.to_dict())
+        try:
+            self._ensure_collection()
+            nodes = self._pipeline_or_create().run(documents=documents, show_progress=False)
+            for source, current_ids in new_ids.items():
+                for ref_doc_id in old_ids.get(source, set()) - current_ids:
+                    # Qdrant must acknowledge deletion before the docstore
+                    # forgets this ID, so a failed attempt remains retryable.
+                    self._client_or_create().delete(
+                        collection_name=self.config.collection_name,
+                        points_selector=Filter(
+                            must=[FieldCondition(key="doc_id", match=MatchValue(value=ref_doc_id))]
+                        ),
+                        wait=True,
+                    )
+                    self._docstore.delete_document(ref_doc_id, raise_error=False)
+            self._persist_docstore()
+        except Exception:
+            # UPSERTS may modify the in-memory store before embeddings or Qdrant
+            # complete. Keep the last persisted IDs available for a retry.
+            self._docstore = SimpleDocumentStore.from_dict(docstore_snapshot)
+            self._pipeline = None
+            raise
         return IngestionResult(
-            source_files=len(source_files),
+            source_files=source_files,
             loaded_documents=len(documents),
             changed_documents=changed,
             unchanged_documents=unchanged,
             indexed_nodes=len(nodes),
-            failed_files=tuple(failures),
+            failed_files=failures,
         )
 
     def close(self) -> None:
@@ -596,6 +648,17 @@ class IngestionService:
             self._docstore.get_document_hash(document.id_) != document.hash for document in documents
         )
         return changed, len(documents) - changed
+
+    def _source_ref_doc_ids(self) -> dict[str, set[str]]:
+        """Group persisted page/document IDs by their exact source path."""
+
+        by_source: dict[str, set[str]] = {}
+        for node in self._docstore.docs.values():
+            source = node.metadata.get("file_path")
+            ref_doc_id = node.ref_doc_id or node.id_
+            if source and ref_doc_id:
+                by_source.setdefault(str(source), set()).add(ref_doc_id)
+        return by_source
 
     @staticmethod
     def _load_docstore(path: Path) -> SimpleDocumentStore:

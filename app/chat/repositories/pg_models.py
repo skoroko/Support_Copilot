@@ -90,6 +90,12 @@ class BroadcastQueueRow(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     interface: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    recipients: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    invalid_recipient_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    lease_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    lease_seconds: Mapped[int] = mapped_column(Integer, nullable=False, server_default="300")
+    review_required: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 

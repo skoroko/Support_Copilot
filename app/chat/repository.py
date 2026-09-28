@@ -64,5 +64,19 @@ class ChatRepository(Protocol):
     async def list_pending_broadcasts(self, limit: int = 10) -> list[BroadcastItem]:
         ...
 
-    async def update_broadcast_status(self, broadcast_id: UUID, status: str) -> BroadcastItem | None:
+    async def list_review_broadcasts(self, limit: int = 10, offset: int = 0) -> list[BroadcastItem]:
+        ...
+
+    async def get_broadcast(self, broadcast_id: UUID) -> BroadcastItem | None:
+        ...
+
+    async def claim_broadcasts(self, limit: int = 10, lease_seconds: int = 300) -> list[BroadcastItem]:
+        ...
+
+    async def update_broadcast_recipient(
+        self, broadcast_id: UUID, lease_id: UUID, chat_id: int, attempt_id: UUID, status: str,
+    ) -> BroadcastItem | None:
+        ...
+
+    async def finish_broadcast(self, broadcast_id: UUID, lease_id: UUID) -> BroadcastItem | None:
         ...

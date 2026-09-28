@@ -232,21 +232,34 @@ class BackendClient:
         response.raise_for_status()
         return response.json()
 
-    async def get_pending_broadcasts(self, *, limit: int = 10) -> list[dict]:
+    async def claim_broadcasts(self, *, limit: int = 10, lease_seconds: int = 300) -> list[dict]:
         response = await self._request_with_connect_retry(
-            "GET",
-            "/chats/admin/broadcasts/pending",
-            params={"limit": limit},
+            "POST",
+            "/chats/admin/broadcasts/claim",
+            json={"limit": limit, "lease_seconds": lease_seconds},
             headers=self._admin_headers,
         )
         response.raise_for_status()
         return list(response.json())
 
-    async def update_broadcast_status(self, broadcast_id: UUID | str, status: str) -> dict:
+    async def update_broadcast_recipient(
+        self, broadcast_id: UUID | str, lease_id: UUID | str,
+        chat_id: int, attempt_id: UUID | str, status: str,
+    ) -> dict:
         response = await self._request_with_connect_retry(
             "POST",
-            f"/chats/admin/broadcasts/{broadcast_id}/status",
-            json={"status": status},
+            f"/chats/admin/broadcasts/{broadcast_id}/recipients/{chat_id}/state",
+            json={"lease_id": str(lease_id), "attempt_id": str(attempt_id), "status": status},
+            headers=self._admin_headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def finish_broadcast(self, broadcast_id: UUID | str, lease_id: UUID | str) -> dict:
+        response = await self._request_with_connect_retry(
+            "POST",
+            f"/chats/admin/broadcasts/{broadcast_id}/finish",
+            json={"lease_id": str(lease_id)},
             headers=self._admin_headers,
         )
         response.raise_for_status()

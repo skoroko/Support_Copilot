@@ -63,6 +63,20 @@ def test_upload_rejects_unsupported_format(tmp_path: Path) -> None:
     assert service.calls == []
 
 
+def test_upload_rejects_multiple_files(tmp_path: Path) -> None:
+    api, service = build_app(tmp_path)
+    response = TestClient(api).post(
+        "/documents/upload",
+        headers=ADMIN_HEADERS,
+        files=[
+            ("file", ("one.pdf", b"%PDF", "application/pdf")),
+            ("file", ("two.pdf", b"%PDF", "application/pdf")),
+        ],
+    )
+    assert response.status_code == 400
+    assert service.calls == []
+
+
 def test_upload_requires_document_transfer_approval(tmp_path: Path) -> None:
     api, service = build_app(tmp_path, allow_external=False)
 

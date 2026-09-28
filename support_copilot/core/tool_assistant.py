@@ -1,17 +1,36 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from support_copilot.infrastructure.tool_calling import ToolCallingClient, ToolCallingResult
+from support_copilot.core.log_safety import content_fields
+from support_copilot.infrastructure.tool_calling import (
+    ToolCallingClient,
+    ToolCallingResult,
+)
 from support_copilot.prompts.loader import render_system_prompt
 from support_copilot.tools import TOOL_HANDLERS, available_tools
 
+_LOG_EVENTS = frozenset({
+    "command", "final_answer", "input", "log", "model_request", "provider_error",
+    "service_unavailable", "session_start", "tool_call", "tool_result", "tool_skipped", "usage",
+})
+_LOG_FIELDS = frozenset({
+    "answer", "arguments", "attempt", "cached_tokens", "code", "completion_tokens",
+    "cost_usd", "direct_answer", "max_tokens", "mode", "model", "name", "note",
+    "prompt_tokens", "provider", "reason", "reasoning_tokens", "result", "stage",
+    "temperature", "text", "tool_call_id", "total_tokens",
+})
+_LOG_METRICS = frozenset({
+    "attempt", "cached_tokens", "completion_tokens", "cost_usd", "direct_answer",
+    "max_tokens", "prompt_tokens", "reasoning_tokens", "temperature", "total_tokens",
+})
+
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class JSONLToolLogger:
@@ -22,11 +41,23 @@ class JSONLToolLogger:
             self.path.write_text("", encoding="utf-8")
 
     def write_event(self, event: str, payload: dict[str, Any]) -> None:
+        # Only internal field names and scalar metrics survive. All model/user
+        # supplied strings and structured tool data become keyed fingerprints.
         record = {
             "ts": utc_now(),
-            "event": event,
-            **payload,
+            "event": event if event in _LOG_EVENTS else "other",
         }
+        for index, (name, value) in enumerate(payload.items()):
+            safe_name = name if name in _LOG_FIELDS else f"field_{index}"
+            if name in _LOG_METRICS and isinstance(value, (bool, int, float)):
+                record[safe_name] = value
+            elif value is None:
+                record[f"{safe_name}_present"] = False
+            else:
+                serialized = value if isinstance(value, str) else json.dumps(
+                    value, ensure_ascii=False, sort_keys=True, default=str
+                )
+                record.update(content_fields(safe_name, serialized))
         with self.path.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 

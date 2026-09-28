@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import aclosing
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from starlette.datastructures import FormData, UploadFile
 
 from app.admin.auth import require_admin
 from app.chat.deps import ChatServiceDep
@@ -15,12 +18,38 @@ from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFe
 from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
 from app.chat.service import ChatNotFoundError, ModerationBlockedError, StreamReplace, media_parts
 from app.core.auth import PrincipalDep
+from app.core.upload_boundary import CHAT_MEDIA_MAX_FILES
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
 from app.services.security.input_validator import MAX_MESSAGE_CHARS, decoded_fragments, validate_input
 
 
 router = APIRouter(tags=["chats"])
+
+
+class _ClosingStreamingResponse(StreamingResponse):
+    """Close the SSE generator and release its request slot on disconnect."""
+
+    def __init__(
+        self,
+        content: AsyncIterator[str],
+        *,
+        on_close: Callable[[], Awaitable[None]] | None,
+    ) -> None:
+        super().__init__(content, media_type="text/event-stream")
+        self._on_close = on_close
+
+    async def __call__(self, scope, receive, send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            try:
+                close = getattr(self.body_iterator, "aclose", None)
+                if callable(close):
+                    await close()
+            finally:
+                if self._on_close is not None:
+                    await self._on_close()
 
 RAG_UNAVAILABLE_NOTICE = (
     "База знаний временно недоступна — ответ дан без опоры на документацию. "
@@ -35,6 +64,15 @@ class CreateChatOut(BaseModel):
 class SystemMessageIn(BaseModel):
     text: str = Field(min_length=1)
     notify: bool = False
+
+
+async def _authenticated_message_form(
+    request: Request,
+    _principal: PrincipalDep,
+) -> AsyncIterator[FormData]:
+    # Resolve service auth/principal and budget before parsing multipart.
+    async with request.form(max_files=CHAT_MEDIA_MAX_FILES, max_fields=1) as form:
+        yield form
 
 
 @router.post("/chats", response_model=CreateChatOut)
@@ -62,15 +100,43 @@ async def list_messages(
     return await chat_service.list_messages(chat_id, limit)
 
 
-@router.post("/chats/{chat_id}/messages")
+@router.post(
+    "/chats/{chat_id}/messages",
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "content": {"type": "string", "minLength": 1},
+                            "media": {
+                                "type": "array",
+                                "items": {"type": "string", "format": "binary"},
+                                "maxItems": CHAT_MEDIA_MAX_FILES,
+                            },
+                        },
+                        "required": ["content"],
+                    },
+                },
+            },
+        },
+    },
+)
 async def send_message(
     chat_id: UUID,
     request: Request,
     chat_service: ChatServiceDep,
     principal: PrincipalDep,
-    content: str = Form(..., min_length=1),
-    media: list[UploadFile] | None = File(None),
+    form: FormData = Depends(_authenticated_message_form),
 ) -> StreamingResponse:
+    content = form.get("content")
+    if not isinstance(content, str) or not content:
+        raise HTTPException(status_code=422, detail={"code": "content_required", "message": "Content is required"})
+    media = form.getlist("media")
+    if any(not isinstance(item, UploadFile) for item in media):
+        raise HTTPException(status_code=422, detail={"code": "invalid_media", "message": "Media must be files"})
     decoded = _validate_user_content(content)
     await _owned_chat(chat_id, chat_service, principal)
 
@@ -140,12 +206,13 @@ async def send_message(
                 )
                 yield f"data: {notice}\n\n"
             stream = chat_service.send_message(chat_id, content, **message_kwargs)
-            async for chunk in stream:
-                if isinstance(chunk, StreamReplace):
-                    payload = json.dumps({"type": "replace", "text": chunk.text}, ensure_ascii=False)
-                else:
-                    payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
-                yield f"data: {payload}\n\n"
+            async with aclosing(stream):
+                async for chunk in stream:
+                    if isinstance(chunk, StreamReplace):
+                        payload = json.dumps({"type": "replace", "text": chunk.text}, ensure_ascii=False)
+                    else:
+                        payload = json.dumps({"type": "token", "delta": chunk}, ensure_ascii=False)
+                    yield f"data: {payload}\n\n"
             latest = await chat_service.list_messages(chat_id, limit=1)
             message_id = str(latest[-1].id) if latest and latest[-1].role == "assistant" else None
             if message_id is not None:
@@ -169,7 +236,9 @@ async def send_message(
             yield f"event: error\ndata: {payload}\n\n"
             return
 
-    return StreamingResponse(events(), media_type="text/event-stream")
+    lease = getattr(request.state, "request_budget_lease", None)
+    release_stream = lease.hold() if lease is not None else None
+    return _ClosingStreamingResponse(events(), on_close=release_stream)
 
 
 @router.get("/chats/{chat_id}/messages/{message_id}/sources")

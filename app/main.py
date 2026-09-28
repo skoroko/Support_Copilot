@@ -18,6 +18,7 @@ from app.admin import routes as admin_routes
 from app.chat import routes as chat_routes
 from app.core.config import Settings, get_settings
 from app.core.auth import InMemoryRequestBudget
+from app.core.upload_boundary import UploadBoundaryMiddleware
 from app.core.exceptions import LLMAuthError, LLMError, LLMOutputBlockedError, LLMRateLimitError, LLMTimeoutError
 from app.observability.logging import bind_request_context, clear_request_context, get_logger, setup_logging
 from app.observability.tracing import setup_tracing
@@ -166,6 +167,7 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Request-ID"],
 )
+app.add_middleware(UploadBoundaryMiddleware)
 
 
 @app.middleware("http")

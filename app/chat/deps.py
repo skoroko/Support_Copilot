@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from typing import Annotated
 from weakref import WeakValueDictionary
@@ -42,7 +43,17 @@ def get_chat_service(request: Request, repo: ChatRepositoryDep, llm: OpenAIDep, 
     if turn_locks is None:
         turn_locks = WeakValueDictionary()
         request.app.state.chat_turn_locks = turn_locks
-    return ChatService(repository=repo, llm_client=llm, settings=settings, turn_locks=turn_locks)
+    def track_rag_worker(task: asyncio.Task[None]) -> None:
+        # The principal dependency may run after this factory; resolve its
+        # lease when generation starts, after all route dependencies finish.
+        lease = getattr(request.state, "request_budget_lease", None)
+        if lease is not None:
+            lease.track_worker(task)
+
+    return ChatService(
+        repository=repo, llm_client=llm, settings=settings,
+        turn_locks=turn_locks, track_rag_worker=track_rag_worker,
+    )
 
 
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]

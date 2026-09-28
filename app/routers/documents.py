@@ -6,11 +6,13 @@ import os
 import re
 import uuid
 from pathlib import Path
+from collections.abc import AsyncIterator
 from typing import Any
 
 import aiofiles
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
+from starlette.datastructures import FormData, UploadFile
 
 from app.admin.auth import require_admin
 
@@ -114,6 +116,16 @@ def _index_uploaded_document(service: Any, target: Path, allow_external_data_tra
         logger.exception("document_indexing_failed", extra={"file_name": target.name})
 
 
+async def _authenticated_upload_form(
+    request: Request,
+    _admin: None = Depends(require_admin),
+) -> AsyncIterator[FormData]:
+    # FastAPI parses File/Form parameters before dependencies. This dependency
+    # authenticates first and closes temporary files after request processing.
+    async with request.form(max_files=1, max_fields=1) as form:
+        yield form
+
+
 async def _run_indexing_task(
     budget: IngestionQueueBudget,
     service: Any,
@@ -130,14 +142,35 @@ async def _run_indexing_task(
     "/upload",
     status_code=status.HTTP_202_ACCEPTED,
     summary="Upload a document and schedule incremental RAG indexing",
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "file": {"type": "string", "format": "binary"},
+                            "category": {"type": "string", "default": "uploads"},
+                        },
+                        "required": ["file"],
+                    },
+                },
+            },
+        },
+    },
 )
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
-    _admin: None = Depends(require_admin),
-    file: UploadFile = File(...),
-    category: str = Form("uploads"),
+    form: FormData = Depends(_authenticated_upload_form),
 ) -> dict[str, Any]:
+    file = form.get("file")
+    if not isinstance(file, UploadFile):
+        raise HTTPException(status_code=422, detail={"code": "file_required", "message": "One file is required"})
+    category = form.get("category", "uploads")
+    if not isinstance(category, str):
+        raise HTTPException(status_code=422, detail={"code": "invalid_category", "message": "Category must be text"})
     service = getattr(request.app.state, "ingestion_service", None)
     if service is None:
         raise HTTPException(

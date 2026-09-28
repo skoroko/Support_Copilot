@@ -1,18 +1,29 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+import asyncio
 import hashlib
+import time
+from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event
 from types import SimpleNamespace
+from typing import TypedDict
 from unittest.mock import AsyncMock
 
 import pytest
+from fastapi import Request
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.graph import START, StateGraph
+from starlette.requests import ClientDisconnect
 
+import app.routers.agent as agent_router
 import app.services.agent_persistent as persistent
+from app.core.auth import InMemoryRequestBudget
 from app.main import app
+from app.routers.agent import AgentStreamRequest, stream_agent
 from app.services.agent_persistent import (
     APPROVAL_NODE,
     MAX_ITERATIONS,
@@ -105,9 +116,11 @@ async def test_sqlite_graph_approve_executes_injected_effect_after_resume() -> N
         await saver.setup()
         graph = build_agent(saver, model=model, send_message=sender)
         config = _config("midas-alice-approve")
-        await graph.ainvoke({"messages": [HumanMessage(content="Отправь эскалацию")], "tool_results": []}, config)
+        paused = await graph.ainvoke({"messages": [HumanMessage(content="Отправь эскалацию")], "tool_results": []}, config)
         result = await graph.ainvoke(Command(resume=True), config)
 
+    assert paused["iteration_count"] == 1
+    assert result["iteration_count"] == 2
     assert result["sent"] is True
     expected_key = hashlib.sha256(b"midas-alice-approve\0call-telegram-1").hexdigest()
     sender.assert_awaited_once_with("4242", "Инцидент передан инженеру.", expected_key)
@@ -267,6 +280,34 @@ async def test_persistent_graph_preserves_six_turn_safety_ceiling() -> None:
 
 
 @pytest.mark.asyncio
+async def test_persistent_iteration_limit_resets_for_each_new_input() -> None:
+    responses = []
+    for number in range(4):
+        responses.extend(
+            [
+                AIMessage(
+                    content="Проверю инструмент.",
+                    tool_calls=[{"name": "unknown_tool", "args": {}, "id": f"turn-{number}"}],
+                ),
+                AIMessage(content=f"Ответ {number}"),
+            ]
+        )
+    model = _ScriptedModel(responses)
+    async with AsyncSqliteSaver.from_conn_string(":memory:") as saver:
+        await saver.setup()
+        graph = build_agent(saver, model=model)
+        config = _config("midas-alice-repeated-turns")
+        results = [
+            await graph.ainvoke({"messages": [HumanMessage(content=f"Вопрос {number}")]}, config)
+            for number in range(4)
+        ]
+
+    assert [result["iteration_count"] for result in results] == [2, 2, 2, 2]
+    assert results[-1]["messages"][-1].content == "Ответ 3"
+    assert len(model.received) == 8
+
+
+@pytest.mark.asyncio
 async def test_lifespan_runs_sqlite_setup_once_and_exposes_one_graph(monkeypatch, tmp_path) -> None:
     calls = 0
     original_setup = AsyncSqliteSaver.setup
@@ -418,6 +459,250 @@ def test_agent_stream_emits_safe_terminal_error(monkeypatch) -> None:
     assert "agent_stream_failed" in response.text
     assert "sensitive details" not in response.text
     assert '"type":"done"' not in response.text
+
+
+class _BlockingSseGraph:
+    def __init__(self) -> None:
+        self.entered = Event()
+        self.release = Event()
+        self.active = 0
+        self.max_active = 0
+        self.calls = 0
+
+    async def astream(self, _input, *, config, stream_mode):
+        del config, stream_mode
+        self.calls += 1
+        self.active += 1
+        self.max_active = max(self.max_active, self.active)
+        self.entered.set()
+        try:
+            await asyncio.to_thread(self.release.wait)
+            yield "updates", {"call_model": {"messages": ["ready"]}}
+        finally:
+            self.active -= 1
+
+    async def aget_state(self, _config):
+        return SimpleNamespace(tasks=())
+
+
+def _agent_headers() -> dict[str, str]:
+    return {
+        "X-Internal-Token": app.state.settings.internal_token.get_secret_value(),
+        "X-User-ID": "alice",
+    }
+
+
+def _agent_input(thread_id: str) -> dict[str, object]:
+    return {"thread_id": thread_id, "input": {"messages": [{"role": "user", "content": "Привет"}]}}
+
+
+def test_agent_stream_uses_shared_rate_budget(monkeypatch) -> None:
+    monkeypatch.setenv("TRACING_ENABLED", "false")
+    with TestClient(app) as client:
+        graph = _FakeSseGraph()
+        app.state.agent_graph = graph
+        app.state.request_budget = InMemoryRequestBudget(requests_per_minute=1, max_concurrency=2)
+        first = client.post("/agent/stream", json=_agent_input("midas-alice-sse"), headers=_agent_headers())
+        second = client.post("/agent/stream", json=_agent_input("midas-alice-sse"), headers=_agent_headers())
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert second.json()["error"]["code"] == "principal_rate_limited"
+    assert len(graph.inputs) == 1
+
+
+def test_agent_stream_holds_and_releases_concurrency_slot(monkeypatch) -> None:
+    monkeypatch.setenv("TRACING_ENABLED", "false")
+    with TestClient(app) as client:
+        graph = _BlockingSseGraph()
+        app.state.agent_graph = graph
+        app.state.request_budget = InMemoryRequestBudget(requests_per_minute=3, max_concurrency=1)
+        headers = _agent_headers()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first_future = pool.submit(client.post, "/agent/stream", json=_agent_input("one"), headers=headers)
+            assert graph.entered.wait(timeout=5)
+            try:
+                blocked = client.post("/agent/stream", json=_agent_input("two"), headers=headers)
+                assert blocked.status_code == 429
+                assert blocked.json()["error"]["code"] == "principal_concurrency_limited"
+            finally:
+                graph.release.set()
+            first = first_future.result(timeout=5)
+        again = client.post("/agent/stream", json=_agent_input("two"), headers=headers)
+
+    assert first.status_code == 200
+    assert again.status_code == 200
+    assert graph.calls == 2
+
+
+def test_agent_stream_serializes_same_checkpoint_thread(monkeypatch) -> None:
+    monkeypatch.setenv("TRACING_ENABLED", "false")
+    with TestClient(app) as client:
+        graph = _BlockingSseGraph()
+        app.state.agent_graph = graph
+        budget = InMemoryRequestBudget(requests_per_minute=2, max_concurrency=2)
+        app.state.request_budget = budget
+        headers = _agent_headers()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first_future = pool.submit(client.post, "/agent/stream", json=_agent_input("one"), headers=headers)
+            assert graph.entered.wait(timeout=5)
+            second_future = pool.submit(client.post, "/agent/stream", json=_agent_input("one"), headers=headers)
+            try:
+                deadline = time.monotonic() + 5
+                while budget._active.get("alice", 0) < 2 and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                assert budget._active.get("alice") == 2
+                assert graph.calls == 1
+                assert graph.max_active == 1
+            finally:
+                graph.release.set()
+            first = first_future.result(timeout=5)
+            second = second_future.result(timeout=5)
+
+    assert first.status_code == second.status_code == 200
+    assert graph.calls == 2
+    assert graph.max_active == 1
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+def test_agent_stream_send_disconnect_closes_graph_before_releasing_budget(monkeypatch, cancelled) -> None:
+    monkeypatch.setenv("TRACING_ENABLED", "false")
+
+    class ClosingGraph:
+        closed = False
+
+        async def astream(self, _input, *, config, stream_mode):
+            del config, stream_mode
+            try:
+                yield "updates", {"call_model": {"messages": ["ready"]}}
+                await asyncio.Event().wait()
+            finally:
+                self.closed = True
+
+        async def aget_state(self, _config):
+            return SimpleNamespace(tasks=())
+
+    with TestClient(app):
+        graph = ClosingGraph()
+        held_locks = []
+
+        class CheckedBudget(InMemoryRequestBudget):
+            async def release(self, principal):
+                assert graph.closed
+                assert held_locks and not held_locks[0].locked()
+                await super().release(principal)
+
+        budget = CheckedBudget(requests_per_minute=2, max_concurrency=1)
+        app.state.agent_graph = graph
+        app.state.request_budget = budget
+
+        async def exercise() -> None:
+            request = Request({"type": "http", "app": app})
+            response = await stream_agent(
+                AgentStreamRequest.model_validate(_agent_input("disconnect")),
+                request,
+                x_internal_token=app.state.settings.internal_token.get_secret_value(),
+                x_user_id="alice",
+            )
+            async def receive():
+                return {"type": "http.request", "body": b"", "more_body": False}
+
+            async def send(message):
+                if message["type"] == "http.response.body" and message["body"]:
+                    held_locks.append(next(iter(app.state.agent_turn_locks.values())))
+                    assert held_locks[0].locked()
+                    assert budget._active["alice"] == 1
+                    if cancelled:
+                        raise asyncio.CancelledError
+                    raise OSError("synthetic ASGI disconnect")
+
+            expected = asyncio.CancelledError if cancelled else ClientDisconnect
+            with pytest.raises(expected):
+                await response({"type": "http", "asgi": {"spec_version": "2.4"}}, receive, send)
+
+            assert graph.closed
+            assert held_locks and not held_locks[0].locked()
+            assert budget._active.get("alice", 0) == 0
+
+        asyncio.run(exercise())
+
+
+def test_agent_stream_asgi23_disconnect_retains_graph_cleanup_and_budget(monkeypatch) -> None:
+    monkeypatch.setenv("TRACING_ENABLED", "false")
+    monkeypatch.setattr(agent_router, "_CLEANUP_WAIT_SECONDS", 0.01)
+
+    class State(TypedDict):
+        messages: list[dict[str, str]]
+        value: int
+
+    async def exercise() -> None:
+        second_entered = asyncio.Event()
+        allow_cleanup = asyncio.Event()
+        cleanup_finished = asyncio.Event()
+        budget_released = asyncio.Event()
+
+        async def first(_state: State) -> State:
+            return {"value": 1}
+
+        async def second(_state: State) -> State:
+            second_entered.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                await allow_cleanup.wait()
+                cleanup_finished.set()
+
+        builder = StateGraph(State)
+        builder.add_node("first", first)
+        builder.add_node("second", second)
+        builder.add_edge(START, "first")
+        builder.add_edge("first", "second")
+        graph = builder.compile()
+
+        class CheckedBudget(InMemoryRequestBudget):
+            async def release(self, principal):
+                assert cleanup_finished.is_set()
+                assert held_lock and not held_lock[0].locked()
+                await super().release(principal)
+                budget_released.set()
+
+        budget = CheckedBudget(requests_per_minute=2, max_concurrency=1)
+        app.state.agent_graph = graph
+        app.state.request_budget = budget
+        held_lock: list[asyncio.Lock] = []
+        request = Request({"type": "http", "app": app})
+        response = await stream_agent(
+            AgentStreamRequest.model_validate(_agent_input("asgi23-disconnect")),
+            request,
+            x_internal_token=app.state.settings.internal_token.get_secret_value(),
+            x_user_id="alice",
+        )
+
+        async def receive():
+            await second_entered.wait()
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            if message["type"] == "http.response.body" and message["body"]:
+                held_lock[:] = list(app.state.agent_turn_locks.values())
+
+        try:
+            await asyncio.wait_for(
+                response({"type": "http", "asgi": {"spec_version": "2.3"}}, receive, send),
+                timeout=2,
+            )
+            assert not cleanup_finished.is_set()
+            assert held_lock and held_lock[0].locked()
+            assert budget._active.get("alice") == 1
+        finally:
+            allow_cleanup.set()
+        await asyncio.wait_for(budget_released.wait(), timeout=2)
+        assert cleanup_finished.is_set()
+        assert not held_lock[0].locked()
+        assert budget._active.get("alice", 0) == 0
+
+    with TestClient(app):
+        asyncio.run(exercise())
 
 
 def test_alembic_excludes_exact_langgraph_checkpoint_tables() -> None:

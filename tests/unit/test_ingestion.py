@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from pathlib import Path
+from threading import Event
 
 import pytest
 from docx import Document as DocxDocument
-from llama_index.core.embeddings import MockEmbedding
 from llama_index.core import Document
+from llama_index.core.embeddings import MockEmbedding
+from pypdf import PdfWriter
+from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 from qdrant_client import QdrantClient
 
 from app.services.ingestion import (
@@ -38,6 +43,38 @@ def make_service(tmp_path: Path) -> IngestionService:
         client=QdrantClient(":memory:"),
         embed_model=MockEmbedding(embed_dim=8),
     )
+
+
+def write_pdf(path: Path, pages: list[str]) -> None:
+    """Write extractable text into a real PDF without a rendering dependency."""
+
+    writer = PdfWriter()
+    for text in pages:
+        page = writer.add_blank_page(width=300, height=300)
+        font = writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/Type"): NameObject("/Font"),
+                    NameObject("/Subtype"): NameObject("/Type1"),
+                    NameObject("/BaseFont"): NameObject("/Helvetica"),
+                }
+            )
+        )
+        page[NameObject("/Resources")] = DictionaryObject(
+            {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})}
+        )
+        content = DecodedStreamObject()
+        content.set_data(f"BT /F1 12 Tf 50 250 Td ({text}) Tj ET".encode("ascii"))
+        page[NameObject("/Contents")] = writer._add_object(content)
+    with path.open("wb") as output:
+        writer.write(output)
+
+
+def indexed_points(service: IngestionService) -> list:
+    points, _ = service._client.scroll(
+        service.config.collection_name, limit=100, with_payload=True, with_vectors=False
+    )
+    return points
 
 
 def test_loaders_and_metadata_cover_markdown_html_docx_and_txt(tmp_path: Path) -> None:
@@ -99,6 +136,135 @@ def test_second_ingest_is_idempotent_and_persists_docstore(tmp_path: Path) -> No
     assert repeated.unchanged_documents == 1
     assert repeated.indexed_nodes == 0
     assert repeated.summary.startswith("0 changed, 1 unchanged")
+
+
+def test_replacing_pdf_removes_only_disappeared_source_pages(tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    data.mkdir()
+    replaced = data / "manual.pdf"
+    other = data / "other.pdf"
+    write_pdf(replaced, ["CURRENT_PAGE_CONTENT", "OBSOLETE_REMOVED_PAGE"])
+    write_pdf(other, ["UNRELATED_DOCUMENT_PAGE"])
+    service = make_service(tmp_path)
+
+    assert service.ingest(data).loaded_documents == 3
+    old_ids = service._source_ref_doc_ids()
+    assert len(old_ids[str(replaced.resolve())]) == 2
+    assert len(indexed_points(service)) == 3
+
+    write_pdf(replaced, ["CURRENT_PAGE_CONTENT_UPDATED"])
+    result = service.ingest(replaced)
+
+    assert result.failed_count == 0
+    assert len(indexed_points(service)) == 2
+    assert len(service._source_ref_doc_ids()[str(replaced.resolve())]) == 1
+    assert service._source_ref_doc_ids()[str(other.resolve())] == old_ids[str(other.resolve())]
+    payloads = [point.payload or {} for point in indexed_points(service)]
+    assert not any("OBSOLETE_REMOVED_PAGE" in str(payload) for payload in payloads)
+    assert any("UNRELATED_DOCUMENT_PAGE" in str(payload) for payload in payloads)
+
+    reopened = IngestionService(
+        service.config, client=service._client, embed_model=MockEmbedding(embed_dim=8)
+    )
+    assert reopened._source_ref_doc_ids() == service._source_ref_doc_ids()
+    assert reopened.ingest(replaced).changed_documents == 0
+
+
+def test_failed_stale_page_delete_keeps_replacement_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data = tmp_path / "data"
+    data.mkdir()
+    source = data / "manual.pdf"
+    write_pdf(source, ["CURRENT_PAGE_CONTENT", "OBSOLETE_REMOVED_PAGE"])
+    service = make_service(tmp_path)
+    service.ingest(source)
+    old_ids = service._source_ref_doc_ids()
+    original_delete = service._client.delete
+    failures = 0
+
+    def fail_once(*args: object, **kwargs: object):
+        nonlocal failures
+        selector = kwargs["points_selector"]
+        deleting_id = selector.must[0].match.value
+        if deleting_id.endswith("_part_1") and failures == 0:
+            failures += 1
+            raise RuntimeError("temporary Qdrant failure")
+        return original_delete(*args, **kwargs)
+
+    write_pdf(source, ["CURRENT_PAGE_CONTENT_UPDATED"])
+    monkeypatch.setattr(service._client, "delete", fail_once)
+    with pytest.raises(RuntimeError, match="temporary Qdrant failure"):
+        service.ingest(source)
+    assert service._source_ref_doc_ids() == old_ids
+
+    retry = service.ingest(source)
+    assert retry.failed_count == 0
+    assert len(indexed_points(service)) == 1
+    assert len(service._source_ref_doc_ids()[str(source.resolve())]) == 1
+
+
+def test_concurrent_failure_cannot_erase_another_upload_from_docstore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data = tmp_path / "data"
+    data.mkdir()
+    first = data / "first.pdf"
+    second = data / "second.pdf"
+    write_pdf(first, ["A_CURRENT", "A_OBSOLETE"])
+    service = make_service(tmp_path)
+    service.ingest(first)
+    write_pdf(first, ["A_REPLACEMENT"])
+    write_pdf(second, ["B_CURRENT", "B_OBSOLETE_PAGE"])
+
+    a_at_delete = Event()
+    release_a = Event()
+    b_loaded = Event()
+    original_delete = service._client.delete
+    original_load = _load_one_file
+
+    def pause_and_fail(*args: object, **kwargs: object):
+        selector = kwargs["points_selector"]
+        deleting_id = selector.must[0].match.value
+        if deleting_id.endswith("first.pdf_part_1"):
+            a_at_delete.set()
+            assert release_a.wait(timeout=10)
+            raise RuntimeError("A delete failed")
+        return original_delete(*args, **kwargs)
+
+    def load_and_signal(path: Path, **kwargs: object) -> list[Document]:
+        loaded = original_load(path, **kwargs)
+        if path == second.resolve():
+            b_loaded.set()
+        return loaded
+
+    monkeypatch.setattr(service._client, "delete", pause_and_fail)
+    monkeypatch.setattr("app.services.ingestion._load_one_file", load_and_signal)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        a_future = executor.submit(service.ingest, first)
+        assert a_at_delete.wait(timeout=10)
+        b_future = executor.submit(service.ingest, second)
+        assert b_loaded.wait(timeout=10)
+        try:
+            # B has finished parsing but cannot commit over A's snapshot.
+            with pytest.raises(FutureTimeoutError):
+                b_future.result(timeout=1)
+        finally:
+            release_a.set()
+        with pytest.raises(RuntimeError, match="A delete failed"):
+            a_future.result(timeout=10)
+        assert b_future.result(timeout=10).loaded_documents == 2
+
+    b_ids = service._source_ref_doc_ids()[str(second.resolve())]
+    assert len(b_ids) == 2
+    b_obsolete_id = next(doc_id for doc_id in b_ids if doc_id.endswith("_part_1"))
+    assert b_obsolete_id in {(point.payload or {}).get("doc_id") for point in indexed_points(service)}
+
+    write_pdf(second, ["B_REPLACEMENT"])
+    service.ingest(second)
+    assert b_obsolete_id not in service._source_ref_doc_ids()[str(second.resolve())]
+    assert b_obsolete_id not in {(point.payload or {}).get("doc_id") for point in indexed_points(service)}
 
 
 def test_failure_is_renamed_and_does_not_abort_other_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

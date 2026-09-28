@@ -29,6 +29,13 @@ router = APIRouter(tags=["chat"])
 logger = get_logger("llm-service")
 
 
+def _sse_data(payload: str) -> str:
+    """Encode text as an SSE data event, including embedded newlines."""
+
+    normalized = payload.replace("\r\n", "\n").replace("\r", "\n")
+    return "".join(f"data: {line}\n" for line in normalized.split("\n")) + "\n"
+
+
 @router.post(
     "/chat",
     response_model=ChatResponse,
@@ -67,9 +74,9 @@ async def stream_chat(
             try:
                 async for delta in service.stream(req.model_copy(update={"stream": True}), security_enabled=False):
                     if delta.usage is not None:
-                        yield f"data: {json.dumps({'usage': delta.usage.model_dump()}, ensure_ascii=False)}\n\n"
+                        yield _sse_data(json.dumps({'usage': delta.usage.model_dump()}, ensure_ascii=False))
                     elif delta.content is not None:
-                        yield f"data: {delta.content}\n\n"
+                        yield _sse_data(delta.content)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - terminal SSE boundary
@@ -91,9 +98,9 @@ async def stream_chat(
                 canary=canary,
             ):
                 if delta.usage is not None:
-                    yield f"data: {json.dumps({'usage': delta.usage.model_dump()}, ensure_ascii=False)}\n\n"
+                    yield _sse_data(json.dumps({'usage': delta.usage.model_dump()}, ensure_ascii=False))
                 elif delta.content is not None:
-                    yield f"data: {delta.content}\n\n"
+                    yield _sse_data(delta.content)
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001 - terminal SSE boundary

@@ -88,11 +88,15 @@ Support Copilot лучше подходит HuggingFace pipeline, а облач�
 Для Gradio выбрана лучшая HuggingFace-модель по accuracy:
 `tabularisai/multilingual-sentiment-analysis`.
 
-Запуск:
+Демо использует отдельное окружение Python 3.13: его зависимости не следует
+устанавливать поверх основного `uv`-окружения Support Copilot.
+
+Запуск из корня проекта:
 
 ```powershell
-pip install -r .\homework_1_5\requirements.txt
-python .\homework_1_5\gradio_demo.py
+uv venv --python 3.13 ..\tmp\hw15-venv
+uv pip install --python ..\tmp\hw15-venv\Scripts\python.exe -r .\homework_1_5\requirements.txt
+..\tmp\hw15-venv\Scripts\python.exe .\homework_1_5\gradio_demo.py
 ```
 
 Демо загружает модель из локального кеша HuggingFace. На новой машине перед
@@ -105,11 +109,13 @@ python .\homework_1_5\gradio_demo.py
 http://127.0.0.1:7860
 ```
 
-Локальная проверка выполнена 16.06.2026: при запуске команды выше страница
-`http://127.0.0.1:7860` вернула HTTP `200`.
+Историческая локальная проверка от 16.06.2026 относилась к прежним версиям
+зависимостей. Для обновлённого набора от 28.09.2026 подтверждено разрешение
+зависимостей под Python 3.13; загрузка модели и HTTP smoke test пока не
+выполнялись.
 
-Если нужна публичная ссылка для преподавателя, в `gradio_demo.py` можно заменить
-`demo.launch()` на `demo.launch(share=True)`.
+Демо слушает только `127.0.0.1`. Публичную ссылку включать только после
+отдельного решения о доступе и допустимых данных.
 
 ## Вывод
 

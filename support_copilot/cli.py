@@ -26,6 +26,7 @@ from support_copilot.core.vision import (  # noqa: E402
     analyze_image_real_with_fallback,
     image_info,
 )
+from support_copilot.core.log_safety import content_metadata  # noqa: E402
 from support_copilot.core.tool_assistant import JSONLToolLogger, SupportToolAssistant  # noqa: E402
 from support_copilot.infrastructure.cache import LLMCache  # noqa: E402
 from support_copilot.infrastructure.llm import ProviderConfig, RobustLLMClient  # noqa: E402
@@ -275,7 +276,7 @@ def token_usage_line(
     app_cache: bool = False,
 ) -> str:
     return (
-        f"{now_utc()} TOKENS kind={kind} source={source} model={model or '-'} "
+        f"{now_utc()} TOKENS kind={kind} source={log_source_kind(source)} model_present={bool(model)} "
         f"app_cache={str(app_cache).lower()} "
         f"input={usage_value(usage, 'prompt_tokens')} "
         f"cached_input={usage_value(usage, 'cached_tokens')} "
@@ -300,6 +301,16 @@ class FileSessionLogger:
     def section(self, title: str) -> None:
         self.write("")
         self.write(f"=== {title} | {now_utc()} ===")
+
+
+def log_source_kind(source: str) -> str:
+    if source == "cache":
+        return "cache"
+    if source in {"fallback", "offline_vision", "vision_unavailable->offline_vision"}:
+        return "fallback"
+    if source.startswith("vision:"):
+        return "vision_provider"
+    return "provider"
 
 
 class SupportAssistant:
@@ -343,17 +354,17 @@ class SupportAssistant:
         self.classification_counts[classification.category] = (
             self.classification_counts.get(classification.category, 0) + 1
         )
-        self.logger.write(f"{now_utc()} USER {user_text}")
+        self.logger.write(f"{now_utc()} USER {content_metadata(user_text)}")
         self.logger.write(
             f"{now_utc()} CLASS category={classification.category} "
             f"priority={classification.priority} escalation={classification.escalation}"
         )
 
-        cache_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_text},
-        ]
-        cached = self.cache.get(self.model_cache_id, cache_messages, self.temperature)
+        llm_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        llm_messages.extend(self.history[-self.history_limit :])
+        llm_messages.append({"role": "user", "content": user_text})
+        cache_model_id = f"{self.model_cache_id}:max_tokens={self.max_tokens}"
+        cached = self.cache.get(cache_model_id, llm_messages, self.temperature)
         if cached is not None:
             answer = str(cached)
             source = "cache"
@@ -369,9 +380,6 @@ class SupportAssistant:
             )
         else:
             self.logger.write(f"{now_utc()} CACHE miss")
-            llm_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-            llm_messages.extend(self.history[-self.history_limit :])
-            llm_messages.append({"role": "user", "content": user_text})
             stream_prefix = ""
             if self.stream and on_token is not None and classification.escalation:
                 stream_prefix = "Передаю вопрос специалисту.\n"
@@ -403,7 +411,7 @@ class SupportAssistant:
                 )
             )
             if not result.unavailable and classification.category not in {"prompt_injection"}:
-                self.cache.set(self.model_cache_id, cache_messages, self.temperature, answer)
+                self.cache.set(cache_model_id, llm_messages, self.temperature, answer)
             self._flush_provider_log()
 
         if classification.escalation and not (self.stream and on_token is not None and cached is None):
@@ -415,9 +423,9 @@ class SupportAssistant:
         elif on_token is not None:
             on_token(f"\n\nИсточник: {source}")
         self._append_history(user_text, answer)
-        self.logger.write(f"{now_utc()} ASSISTANT source={source}")
-        for line in answer.splitlines():
-            self.logger.write(f"  {line}")
+        self.logger.write(
+            f"{now_utc()} ASSISTANT source={log_source_kind(source)} {content_metadata(answer)}"
+        )
         return decorated
 
     def answer_image(self, raw_path: str, question: str, on_token: Any | None = None) -> str:
@@ -428,9 +436,13 @@ class SupportAssistant:
         self.classification_counts["image_analysis"] = (
             self.classification_counts.get("image_analysis", 0) + 1
         )
-        self.logger.write(f"{now_utc()} USER_IMAGE path={path} question={question}")
         self.logger.write(
-            f"{now_utc()} IMAGE_INFO mime={info.mime_type} "
+            f"{now_utc()} USER_IMAGE path_{content_metadata(str(path))} "
+            f"question_{content_metadata(question)}"
+        )
+        safe_mime = info.mime_type if info.mime_type in {"image/png", "image/jpeg"} else "other"
+        self.logger.write(
+            f"{now_utc()} IMAGE_INFO mime={safe_mime} "
             f"size_bytes={info.size_bytes} width={info.width} height={info.height}"
         )
 
@@ -460,10 +472,11 @@ class SupportAssistant:
                 )
                 if result.fallback_events:
                     for event in result.fallback_events:
-                        self.logger.write(f"{now_utc()} VISION_FALLBACK {event}")
+                        self.logger.write(f"{now_utc()} VISION_FALLBACK {content_metadata(str(event))}")
             except Exception as exc:
                 self.logger.write(
-                    f"{now_utc()} VISION_ERROR type={type(exc).__name__} message={exc}"
+                    f"{now_utc()} VISION_ERROR type={type(exc).__name__} "
+                    f"message_{content_metadata(str(exc))}"
                 )
                 fallback_answer = analyze_image_offline(path, question)
                 answer = (
@@ -498,9 +511,10 @@ class SupportAssistant:
             )
 
         self._append_history(f"[image: {path.name}] {question}", answer)
-        self.logger.write(f"{now_utc()} ASSISTANT_IMAGE source={source}")
-        for line in answer.splitlines():
-            self.logger.write(f"  {line}")
+        self.logger.write(
+            f"{now_utc()} ASSISTANT_IMAGE source={log_source_kind(source)} "
+            f"{content_metadata(answer)}"
+        )
 
         decorated = f"{answer}\n\nИсточник: {source}"
         if on_token is not None:
@@ -550,7 +564,13 @@ class SupportAssistant:
     def _flush_provider_log(self) -> None:
         events = self.llm_client.events[self.last_event_count :]
         for event in events:
-            self.logger.write("PROVIDER " + event.to_line())
+            self.logger.write(
+                f"{now_utc()} PROVIDER attempt={event.attempt} "
+                f"code_{content_metadata(str(event.code))} "
+                f"name_{content_metadata(str(event.provider))} "
+                f"message_{content_metadata(str(event.message))} "
+                f"delay_sec={event.delay_sec}"
+            )
         self.last_event_count = len(self.llm_client.events)
 
 
@@ -800,7 +820,8 @@ def handle_command(
             return True, "" if on_token is not None else answer
         except Exception as exc:
             assistant.logger.write(
-                f"{now_utc()} COMMAND_IMAGE_ERROR type={type(exc).__name__} message={exc}"
+                f"{now_utc()} COMMAND_IMAGE_ERROR type={type(exc).__name__} "
+                f"message_{content_metadata(str(exc))}"
             )
             return True, f"Не удалось обработать изображение: {exc}"
     return True, f"Неизвестная команда. Доступны: {COMMAND_LIST_TEXT}"

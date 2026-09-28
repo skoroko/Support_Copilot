@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 import aiofiles
 from filelock import AsyncFileLock
 
+from app.admin.broadcast_state import claim_item, finish_item, update_recipient
 from app.admin.models import BroadcastItem, StatsOut, UserOut
 from app.chat.domain import Chat, ChatMessage
 from app.chat.feedback import MessageFeedback
@@ -238,20 +239,96 @@ class JsonChatRepository:
         items.sort(key=lambda item: item.created_at)
         return items[: max(0, limit)]
 
-    async def update_broadcast_status(self, broadcast_id: UUID, status: str) -> BroadcastItem | None:
+    async def list_review_broadcasts(self, limit: int = 10, offset: int = 0) -> list[BroadcastItem]:
+        items = [
+            BroadcastItem.model_validate(row)
+            for row in await self._read_jsonl(self._broadcast_file())
+            if row.get("review_required") is True
+        ]
+        items.sort(key=lambda item: (item.created_at, item.id.hex))
+        return items[max(0, offset): max(0, offset) + max(0, limit)]
+
+    async def get_broadcast(self, broadcast_id: UUID) -> BroadcastItem | None:
+        for row in await self._read_jsonl(self._broadcast_file()):
+            if row.get("id") == str(broadcast_id):
+                return BroadcastItem.model_validate(row)
+        return None
+
+    async def claim_broadcasts(self, limit: int = 10, lease_seconds: int = 300) -> list[BroadcastItem]:
         async with self._locked():
             rows = await self._read_jsonl_unlocked(self._broadcast_file())
-            updated: BroadcastItem | None = None
-            output: list[dict] = []
-            for row in rows:
+            now = datetime.now(timezone.utc)
+            claimed: list[BroadcastItem] = []
+            changed = False
+            owners_by_interface: dict[str, list[str]] = {}
+            for index in sorted(range(len(rows)), key=lambda position: self._row_timestamp(rows[position])):
+                row = rows[index]
                 item = BroadcastItem.model_validate(row)
-                if item.id == broadcast_id:
-                    item = item.model_copy(update={"status": status, "updated_at": datetime.now(timezone.utc)})
-                    updated = item
-                output.append(item.model_dump(mode="json"))
-            if updated is not None:
-                await self._write_jsonl_unlocked(self._broadcast_file(), output)
-        return updated
+                if item.status == "processing" and item.lease_expires_at is None:
+                    # Old processing rows have no recipient progress, so their
+                    # delivery history is unknowable and must not be replayed.
+                    item = item.model_copy(update={"status": "failed", "review_required": True, "updated_at": now})
+                    rows[index] = item.model_dump(mode="json")
+                    changed = True
+                    continue
+                if len(claimed) >= limit:
+                    continue
+                if item.status == "pending" and item.interface not in owners_by_interface:
+                    owners_by_interface[item.interface] = self._broadcast_owners_unlocked(item.interface)
+                updated = claim_item(
+                    item, owners_by_interface.get(item.interface, []),
+                    now=now, lease_seconds=lease_seconds,
+                )
+                if updated is not None:
+                    rows[index] = updated.model_dump(mode="json")
+                    claimed.append(updated)
+                    changed = True
+            if changed:
+                await self._write_jsonl_unlocked(self._broadcast_file(), rows)
+            return claimed
+
+    async def update_broadcast_recipient(
+        self, broadcast_id: UUID, lease_id: UUID, chat_id: int, attempt_id: UUID, status: str,
+    ) -> BroadcastItem | None:
+        async with self._locked():
+            rows = await self._read_jsonl_unlocked(self._broadcast_file())
+            for index, row in enumerate(rows):
+                item = BroadcastItem.model_validate(row)
+                if item.id != broadcast_id:
+                    continue
+                updated = update_recipient(
+                    item, lease_id=lease_id, chat_id=chat_id,
+                    attempt_id=attempt_id, status=status, now=datetime.now(timezone.utc),
+                )
+                if updated is not None:
+                    rows[index] = updated.model_dump(mode="json")
+                    await self._write_jsonl_unlocked(self._broadcast_file(), rows)
+                return updated
+            return None
+
+    async def finish_broadcast(self, broadcast_id: UUID, lease_id: UUID) -> BroadcastItem | None:
+        async with self._locked():
+            rows = await self._read_jsonl_unlocked(self._broadcast_file())
+            for index, row in enumerate(rows):
+                item = BroadcastItem.model_validate(row)
+                if item.id != broadcast_id:
+                    continue
+                updated = finish_item(item, lease_id=lease_id, now=datetime.now(timezone.utc))
+                if updated is not None:
+                    rows[index] = updated.model_dump(mode="json")
+                    await self._write_jsonl_unlocked(self._broadcast_file(), rows)
+                return updated
+            return None
+
+    def _broadcast_owners_unlocked(self, interface: str) -> list[str]:
+        owners: list[str] = []
+        for path in (self.base_dir / "chats").glob("*/chat.json"):
+            # Unlike a best-effort admin listing, a broadcast snapshot must
+            # either include every chat or leave the queue item pending.
+            chat = Chat.model_validate_json(path.read_text(encoding="utf-8"))
+            if chat.interface == interface:
+                owners.append(chat.owner_external_id)
+        return owners
 
     async def _load_chats(self) -> list[Chat]:
         async with self._locked():

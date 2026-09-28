@@ -15,6 +15,15 @@ python -m bot
 `bot.__main__` creates `Bot`, `Dispatcher`, registers
 handlers, puts `BackendClient` into `dp["backend"]`, and starts polling.
 
+The bot denies all incoming Telegram updates until `BOT_ALLOWED_USER_IDS` is
+configured with verified employee Telegram IDs. Private dialogs require the
+chat ID to equal the allowed user ID. Groups and supergroups also require the
+chat ID in `BOT_ALLOWED_CHAT_IDS`; anonymous senders, channels, bots, and
+updates without both a user and chat are denied. IDs may be comma-separated.
+`BOT_ADMIN_IDS` grants admin commands only and does not bypass admission: add
+an administrator to `BOT_ALLOWED_USER_IDS` as well. The backend service token
+authenticates the bot process, while this gate admits individual users.
+
 ## Backend Contract
 
 `bot/services/backend_client.py` wraps the 4.1 chat API:
@@ -22,8 +31,7 @@ handlers, puts `BackendClient` into `dp["backend"]`, and starts polling.
 - `get_or_create_chat(owner_external_id, interface)` calls `POST /chats` and
   keeps an in-process chat id cache for repeated calls from the same owner.
   The owner key is `chat.id` for private dialogs and
-  `"<chat_id>:<sender_id>"` per member in group chats (`from_user`, or
-  `sender_chat` for anonymous admins/linked channels), so group members do
+  `"<chat_id>:<sender_id>"` per admitted member in group chats, so members do
   not share history. The leading segment stays parseable as the Telegram
   delivery chat (`telegram_chat_id_from_owner` in `app/chat/domain.py`),
   which admin notifications and broadcasts use; broadcasts deduplicate

@@ -18,10 +18,20 @@ curl http://localhost:6006
 
 Логи приложения не содержат сырой prompt: пишутся только `prompt_hash` и
 `prompt_preview` после `redact_pii()`.
+При `TRACING_ENABLED=true` OpenAI и LlamaIndex instrumentors получают один
+явный `TraceConfig`: содержимое inputs/outputs, сообщений, prompts/choices,
+изображений, embedding text/vectors и параметров вызова модели скрывается.
+Если версия optional tracing extra не поддерживает эту конфигурацию, tracing
+не запускается. Токены, latency и другие числовые метрики остаются доступны.
 
 Примечание: в Docker Compose переменная `PHOENIX_COLLECTOR_ENDPOINT` задана как
 `http://phoenix:6006`, а приложение нормализует ее до OTLP HTTP endpoint
 `http://phoenix:6006/v1/traces`.
+
+Privacy boundary for optional tracing: all `retrieval.documents.*` attributes
+(including corpus text, metadata, document IDs, and scores) are omitted. Span
+events and exception details are omitted; status codes remain available without
+descriptions. This applies to the OpenAI and LlamaIndex instrumentors.
 
 ## Артефакт
 

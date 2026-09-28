@@ -4,7 +4,7 @@ import asyncio
 import secrets
 import time
 from collections import defaultdict, deque
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
 from typing import Annotated
 
@@ -62,7 +62,40 @@ class InMemoryRequestBudget:
                 self._active[principal] = active - 1
 
 
-def _budget(request: Request, settings: SettingsDep) -> InMemoryRequestBudget:
+class RequestBudgetLease:
+    """Keep one admitted request slot until its stream and workers all exit."""
+
+    def __init__(self, budget: InMemoryRequestBudget, principal: str) -> None:
+        self._budget = budget
+        self._principal = principal
+        self._holds = 0
+        self.release_request = self.hold()
+
+    def hold(self) -> Callable[[], Awaitable[None]]:
+        self._holds += 1
+        released = False
+
+        async def release() -> None:
+            nonlocal released
+            if released:
+                return
+            released = True
+            self._holds -= 1
+            if self._holds == 0:
+                await self._budget.release(self._principal)
+
+        return release
+
+    def track_worker(self, task: asyncio.Task[None]) -> None:
+        release = self.hold()
+
+        def worker_finished(_task: asyncio.Task[None]) -> None:
+            asyncio.create_task(release())
+
+        task.add_done_callback(worker_finished)
+
+
+def request_budget(request: Request, settings: SettingsDep) -> InMemoryRequestBudget:
     budget = getattr(request.app.state, "request_budget", None)
     if budget is None:
         budget = InMemoryRequestBudget(
@@ -73,13 +106,13 @@ def _budget(request: Request, settings: SettingsDep) -> InMemoryRequestBudget:
     return budget
 
 
-async def require_principal(
-    request: Request,
+def authenticate_principal(
     settings: SettingsDep,
-    x_internal_token: Annotated[str | None, Header(alias="X-Internal-Token")] = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-ID")] = None,
-    x_user_interface: Annotated[str | None, Header(alias="X-User-Interface")] = None,
-) -> AsyncIterator[Principal]:
+    *,
+    x_internal_token: str | None,
+    x_user_id: str | None,
+    x_user_interface: str | None,
+) -> Principal:
     expected = settings.internal_token.get_secret_value()
     if not x_internal_token or not secrets.compare_digest(x_internal_token, expected):
         raise HTTPException(
@@ -99,12 +132,30 @@ async def require_principal(
             detail={"code": "principal_interface_invalid", "message": "A valid principal interface is required."},
         )
 
-    budget = _budget(request, settings)
-    await budget.acquire(user_id)
+    return Principal(user_id=user_id, interface=interface)
+
+
+async def require_principal(
+    request: Request,
+    settings: SettingsDep,
+    x_internal_token: Annotated[str | None, Header(alias="X-Internal-Token")] = None,
+    x_user_id: Annotated[str | None, Header(alias="X-User-ID")] = None,
+    x_user_interface: Annotated[str | None, Header(alias="X-User-Interface")] = None,
+) -> AsyncIterator[Principal]:
+    principal = authenticate_principal(
+        settings,
+        x_internal_token=x_internal_token,
+        x_user_id=x_user_id,
+        x_user_interface=x_user_interface,
+    )
+    budget = request_budget(request, settings)
+    await budget.acquire(principal.user_id)
+    lease = RequestBudgetLease(budget, principal.user_id)
+    request.state.request_budget_lease = lease
     try:
-        yield Principal(user_id=user_id, interface=interface)
+        yield principal
     finally:
-        await budget.release(user_id)
+        await lease.release_request()
 
 
 PrincipalDep = Annotated[Principal, Depends(require_principal)]

@@ -240,6 +240,12 @@ def build_agent(
 
     resolved_model = model
 
+    def begin_turn(state: PersistentState) -> dict[str, int]:
+        # START is entered for a fresh input, but not for Command(resume=...).
+        # Keep the bound on one user turn instead of the lifetime of its thread.
+        del state
+        return {"iteration_count": 0}
+
     async def call_model(state: PersistentState, config: RunnableConfig) -> dict[str, Any]:
         # ``config`` is accepted as a LangGraph node argument so its
         # configurable contract remains available to model adapters later.
@@ -417,12 +423,14 @@ def build_agent(
         return {}
 
     graph = StateGraph(PersistentState)
+    graph.add_node("begin_turn", begin_turn)
     graph.add_node("call_model", call_model)
     graph.add_node("execute_safe_tool", execute_safe_tool)
     graph.add_node(PREPARE_NODE, prepare_telegram_message)
     graph.add_node(APPROVAL_NODE, confirm_and_execute_telegram_message)
     graph.add_node("finish", finish)
-    graph.add_edge(START, "call_model")
+    graph.add_edge(START, "begin_turn")
+    graph.add_edge("begin_turn", "call_model")
     graph.add_conditional_edges(
         "call_model",
         route_after_model,
