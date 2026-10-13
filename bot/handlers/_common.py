@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 import uuid
 from collections.abc import AsyncIterator, Callable
 from html import escape
-import re
 from typing import Any
 from uuid import UUID
 
@@ -15,9 +15,8 @@ from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
-from bot.keyboards.inline import answer_kb
+from bot.keyboards.inline import answer_kb, approval_kb
 from bot.services.backend_client import BackendClient, BackendStreamError, StreamReplace
-
 
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
 EDIT_DEBOUNCE_SECONDS = 0.8
@@ -245,6 +244,9 @@ async def _typing(message: Message, stop: asyncio.Event) -> None:
 
 
 def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKeyboardMarkup | None:
+    draft = getattr(backend, "last_approval", lambda _id: None)(chat_id)
+    if isinstance(draft, dict) and draft.get("approval_id"):
+        return approval_kb(chat_id, draft["approval_id"])
     message_id = backend.last_response_message_id(chat_id)
     if message_id is None:
         return None
@@ -306,8 +308,11 @@ async def stream_to_chat(
             final_text += f"\n\n{notice}"
     if sources_factory is not None:
         final_text += _format_cited_sources(final_text, sources_factory())
-    final_html = _render_telegram_html(final_text)
     reply_markup = reply_markup_factory() if reply_markup_factory is not None else None
+    final_html = escape(final_text) if _has_approval_buttons(reply_markup) else _render_telegram_html(final_text)
+    if len(final_text) > 1800:
+        await send_rendered_answer(message, final_text, reply_markup=reply_markup, editable=editable_response)
+        return buffer
     if editable_response is not None:
         try:
             if reply_markup is None:
@@ -334,6 +339,32 @@ async def stream_to_chat(
 
 
 render_stream = stream_to_chat
+
+
+async def send_rendered_answer(message: Message, text: str, *, reply_markup=None, editable=None) -> None:
+    # Telegram counts UTF-16 units. 1800 Python characters fit even if every
+    # character is an astral emoji. Split before escaping/adding HTML tags.
+    chunks = [text[index:index + 1800] for index in range(0, len(text), 1800)] or [""]
+    render = escape if _has_approval_buttons(reply_markup) else _render_telegram_html
+    for index, chunk in enumerate(chunks):
+        markup = reply_markup if index == len(chunks) - 1 else None
+        if index == 0 and editable is not None:
+            try:
+                await editable.edit_text(render(chunk), parse_mode=ParseMode.HTML, reply_markup=markup)
+                continue
+            except TelegramAPIError:
+                pass
+        await send_answer(message, render(chunk), parse_mode=ParseMode.HTML, reply_markup=markup)
+
+
+def _has_approval_buttons(markup: InlineKeyboardMarkup | None) -> bool:
+    """Approval previews must preserve literal Markdown in the outgoing text."""
+
+    return any(
+        str(getattr(button, "callback_data", "") or "").startswith("ap:")
+        for row in getattr(markup, "inline_keyboard", ())
+        for button in row
+    )
 
 
 async def send_answer(message: Message, text: str, **kwargs):

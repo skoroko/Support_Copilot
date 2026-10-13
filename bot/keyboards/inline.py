@@ -29,6 +29,15 @@ def answer_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int) ->
     return builder.as_markup()
 
 
+def approval_kb(chat_id: UUID | str, approval_id: UUID | str) -> InlineKeyboardMarkup:
+    context = encode_message_context(chat_id, approval_id)
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Подтвердить", callback_data=f"ap:y:{context}")
+    builder.button(text="Отменить", callback_data=f"ap:n:{context}")
+    builder.adjust(2)
+    return builder.as_markup()
+
+
 def sources_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int) -> InlineKeyboardMarkup | None:
     if source_count < 1:
         return None

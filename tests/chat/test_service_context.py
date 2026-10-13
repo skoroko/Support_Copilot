@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from threading import Event, get_ident
 from types import SimpleNamespace
 from typing import Any
 from uuid import UUID
@@ -189,6 +190,66 @@ class FakeStreamingRAG:
         for delta in self.deltas:
             yield {"type": "delta", "delta": delta}
         yield {"type": "final", "answer": self.final, "sources": self.sources}
+
+
+class CountingStreamingRAG:
+    """Fast synchronous producer with observable cleanup and worker identity."""
+
+    def __init__(self, *, blocked_delta: int | None = None, error_at: int | None = None) -> None:
+        self.blocked_delta = blocked_delta
+        self.error_at = error_at
+        self.produced = 0
+        self.worker_ident: int | None = None
+        self.close_ident: int | None = None
+        self.closed = Event()
+
+    def stream_answer(self, question: str, *, history: list[dict[str, Any]]):
+        self.worker_ident = get_ident()
+        try:
+            for index in range(100):
+                if index == self.error_at:
+                    raise RuntimeError("provider disconnected")
+                self.produced += 1
+                yield {
+                    "type": "delta",
+                    "delta": "kill yourself" if index == self.blocked_delta else "safe ",
+                }
+            yield {"type": "final", "answer": "safe " * 100, "sources": []}
+        finally:
+            self.close_ident = get_ident()
+            self.closed.set()
+
+
+class BlockingStreamingRAG:
+    def __init__(self) -> None:
+        self.read_started = Event()
+        self.release = Event()
+        self.closed = Event()
+        self.produced = 0
+
+    def stream_answer(self, question: str, *, history: list[dict[str, Any]]):
+        try:
+            self.produced += 1
+            yield {"type": "delta", "delta": "safe "}
+            self.read_started.set()
+            self.release.wait(timeout=2)
+            self.produced += 1
+            yield {"type": "delta", "delta": "tail"}
+        finally:
+            self.closed.set()
+
+
+class AsyncStreamingRAG:
+    def __init__(self) -> None:
+        self.closed = asyncio.Event()
+
+    async def stream_answer(self, question: str, *, history: list[dict[str, Any]]):
+        try:
+            yield {"type": "delta", "delta": "safe "}
+            await asyncio.sleep(10)
+            yield {"type": "delta", "delta": "tail"}
+        finally:
+            self.closed.set()
 
 
 class BlockingStream:
@@ -651,6 +712,8 @@ async def test_rag_streaming_yields_deltas_then_replaces_with_grounded(tmp_path:
     assert stored[-1].content == "Для электроники действует отдельный срок возврата [1]."
     assert stored[-1].rag_sources == sources
     assert service.last_response_sources(chat.id) == sources
+    await asyncio.sleep(0)
+    assert not service._rag_worker_tasks
 
 
 @pytest.mark.asyncio
@@ -693,6 +756,108 @@ async def test_rag_stream_blocked_fragment_replaces_shown_draft(tmp_path: Path) 
     assert stored[-1].content == MODERATION_OUTPUT_REPLACEMENT
     assert stored[-1].rag_sources == []
     assert service.last_response_sources(chat.id) == []
+
+
+@pytest.mark.asyncio
+async def test_closing_rag_consumer_stops_sync_provider_and_worker(tmp_path: Path) -> None:
+    rag = CountingStreamingRAG()
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    stream = service.send_message(chat.id, "Вопрос", rag_service=rag)
+
+    assert await asyncio.wait_for(anext(stream), 1) == "safe "
+    await asyncio.sleep(0.05)
+    assert rag.produced <= 3  # one consumed, one queued, one pending the full queue
+    await asyncio.wait_for(stream.aclose(), 1)
+    await asyncio.sleep(0)  # worker completion callback
+
+    assert rag.closed.is_set()
+    assert 1 <= rag.produced < 100
+    assert rag.close_ident == rag.worker_ident
+    assert not service._rag_worker_tasks
+
+
+@pytest.mark.asyncio
+async def test_rag_moderation_stops_sync_provider_before_tail(tmp_path: Path) -> None:
+    rag = CountingStreamingRAG(blocked_delta=1)
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    chunks = [chunk async for chunk in service.send_message(chat.id, "Вопрос", rag_service=rag)]
+    await asyncio.sleep(0)
+
+    assert chunks[0] == "safe "
+    assert chunks[-1] == StreamReplace(MODERATION_OUTPUT_REPLACEMENT)
+    assert rag.closed.is_set()
+    assert rag.produced < 100
+    assert rag.close_ident == rag.worker_ident
+    assert not service._rag_worker_tasks
+
+
+@pytest.mark.asyncio
+async def test_rag_sync_provider_error_closes_worker_and_propagates(tmp_path: Path) -> None:
+    rag = CountingStreamingRAG(error_at=2)
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+
+    with pytest.raises(RuntimeError, match="provider disconnected"):
+        async for _ in service.send_message(chat.id, "Вопрос", rag_service=rag):
+            pass
+    await asyncio.sleep(0)
+
+    assert rag.closed.is_set()
+    assert rag.produced == 2
+    assert rag.close_ident == rag.worker_ident
+    assert not service._rag_worker_tasks
+
+
+@pytest.mark.asyncio
+async def test_rag_cancel_waits_only_briefly_for_blocked_provider_read(tmp_path: Path) -> None:
+    rag = BlockingStreamingRAG()
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    first_seen = asyncio.Event()
+
+    async def consume() -> None:
+        async for _ in service.send_message(chat.id, "Вопрос", rag_service=rag):
+            first_seen.set()
+
+    task = asyncio.create_task(consume())
+    try:
+        await asyncio.wait_for(first_seen.wait(), 1)
+        assert await asyncio.to_thread(rag.read_started.wait, 1)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 1)
+        # The in-flight synchronous read is still alive and remains tracked.
+        assert service._rag_worker_tasks
+    finally:
+        rag.release.set()
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    for _ in range(50):
+        if not service._rag_worker_tasks:
+            break
+        await asyncio.sleep(0.01)
+    assert rag.closed.is_set()
+    assert rag.produced == 2  # only the unavoidable in-flight read completed
+    assert not service._rag_worker_tasks
+
+
+@pytest.mark.asyncio
+async def test_closing_rag_consumer_closes_async_provider(tmp_path: Path) -> None:
+    rag = AsyncStreamingRAG()
+    service = ChatService(InMemoryRepository(), FakeLLM(), build_settings(tmp_path))
+    chat = await service.create_chat("telegram-1", "telegram")
+    stream = service.send_message(chat.id, "Вопрос", rag_service=rag)
+
+    assert await asyncio.wait_for(anext(stream), 1) == "safe "
+    await asyncio.wait_for(stream.aclose(), 1)
+
+    assert rag.closed.is_set()
+    assert not service._rag_worker_tasks
 
 
 @pytest.mark.asyncio

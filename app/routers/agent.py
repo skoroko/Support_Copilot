@@ -2,20 +2,30 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
+import logging
 import secrets
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated, Any, Literal
+from weakref import WeakValueDictionary
 
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.services.agent_persistent import Command
-
+from app.core.auth import (
+    InMemoryRequestBudget,
+    RequestBudgetLease,
+    authenticate_principal,
+    request_budget,
+)
+from app.services.agent_persistent import Command, retrieval_worker_tracker
 
 router = APIRouter(prefix="/agent", tags=["agent"])
+logger = logging.getLogger(__name__)
+_CLEANUP_WAIT_SECONDS = 1.0
 
 
 class AgentUserMessage(BaseModel):
@@ -44,11 +54,14 @@ class AgentStreamRequest(BaseModel):
     input: AgentTurnInput | None = None
     resume: bool | None = None
     user_role: Literal["read-only", "write-with-approve", "full"] = "write-with-approve"
+    approval_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
 
     @model_validator(mode="after")
-    def require_exactly_one_action(self) -> "AgentStreamRequest":
+    def require_exactly_one_action(self) -> AgentStreamRequest:
         if (self.input is None) == (self.resume is None):
             raise ValueError("Provide exactly one of input or resume")
+        if self.resume is not None and self.approval_id is None:
+            raise ValueError("Resume requires the exact approval_id from the preview")
         return self
 
 
@@ -82,33 +95,80 @@ def _snapshot_interrupts(snapshot: Any) -> list[Any]:
     return interrupts
 
 
-def _authorize(
-    request: Request,
-    *,
-    user_role: str,
-    internal_token: str | None,
-    admin_token: str | None,
-    user_id: str | None,
-) -> str:
-    """Authenticate the internal caller and derive a private thread namespace."""
+def _authorize_role(settings: Any, *, user_role: str, admin_token: str | None) -> None:
+    """Keep the full agent role restricted to the administrative caller."""
 
-    settings = getattr(request.app.state, "settings", None)
-    if settings is None:
-        raise HTTPException(status_code=503, detail="Application settings are not initialized")
-    expected_internal = settings.internal_token.get_secret_value()
-    if not internal_token or not secrets.compare_digest(internal_token, expected_internal):
-        raise HTTPException(status_code=401, detail="Valid X-Internal-Token is required")
-    if not user_id or len(user_id) > 200:
-        raise HTTPException(status_code=401, detail="Valid X-User-ID is required")
     if user_role == "full":
         expected_admin = settings.admin_token.get_secret_value()
         if not admin_token or not secrets.compare_digest(admin_token, expected_admin):
-            raise HTTPException(status_code=403, detail="The full role requires X-Admin-Token")
-    return user_id
+            raise HTTPException(
+                status_code=403, detail="The full role requires X-Admin-Token"
+            )
+
+
+class _BudgetedStreamingResponse(StreamingResponse):
+    """Hold the shared principal slot until ASGI finishes or disconnects."""
+
+    def __init__(
+        self,
+        *args: Any,
+        budget: InMemoryRequestBudget,
+        principal: str,
+        drive: Callable[[], Awaitable[None]],
+        lease: RequestBudgetLease | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self._budget = budget
+        self._principal = principal
+        self._drive = drive
+        self._lease = lease
+        self._driver: asyncio.Task[None] | None = None
+
+    async def _finish(self) -> None:
+        try:
+            await self.body_iterator.aclose()
+        finally:
+            try:
+                if self._driver is not None:
+                    try:
+                        await self._driver
+                    except asyncio.CancelledError:
+                        if not self._driver.cancelled():
+                            raise
+            finally:
+                if self._lease is None:
+                    await self._budget.release(self._principal)
+                else:
+                    await self._lease.release_request()
+
+    @staticmethod
+    def _report_background_failure(task: asyncio.Task[None]) -> None:
+        if not task.cancelled() and task.exception() is not None:
+            logger.error("Agent stream cleanup failed after disconnect")
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        # Starlette's ASGI 2.3 disconnect task group cancels the body iterator
+        # repeatedly. Keep the graph outside that cancel scope so its async
+        # finalizers receive only one controlled cancellation.
+        self._driver = asyncio.create_task(self._drive())
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            self._driver.cancel()
+            finish = asyncio.create_task(self._finish())
+            finish.add_done_callback(self._report_background_failure)
+            try:
+                await asyncio.wait_for(
+                    asyncio.shield(finish), timeout=_CLEANUP_WAIT_SECONDS
+                )
+            except TimeoutError:
+                # The cleanup task retains the budget until the graph exits.
+                pass
 
 
 def _private_thread_id(user_id: str, client_thread_id: str) -> str:
-    material = f"{user_id}\0{client_thread_id}".encode("utf-8")
+    material = f"{user_id}\0{client_thread_id}".encode()
     return f"agent-{hashlib.sha256(material).hexdigest()}"
 
 
@@ -119,20 +179,38 @@ async def stream_agent(
     x_internal_token: Annotated[str | None, Header(alias="X-Internal-Token")] = None,
     x_admin_token: Annotated[str | None, Header(alias="X-Admin-Token")] = None,
     x_user_id: Annotated[str | None, Header(alias="X-User-ID")] = None,
+    x_user_interface: Annotated[str | None, Header(alias="X-User-Interface")] = None,
 ) -> StreamingResponse:
     """Stream graph updates/messages and surface an approval pause as SSE JSON."""
 
+    settings = getattr(request.app.state, "settings", None)
+    if settings is None:
+        raise HTTPException(
+            status_code=503, detail="Application settings are not initialized"
+        )
+    principal = authenticate_principal(
+        settings,
+        x_internal_token=x_internal_token,
+        x_user_id=x_user_id,
+        x_user_interface=x_user_interface,
+    )
+    _authorize_role(settings, user_role=body.user_role, admin_token=x_admin_token)
     graph = getattr(request.app.state, "agent_graph", None)
     if graph is None:
-        raise HTTPException(status_code=503, detail="Persistent agent is not initialized")
+        raise HTTPException(
+            status_code=503, detail="Persistent agent is not initialized"
+        )
 
-    user_id = _authorize(
-        request,
-        user_role=body.user_role,
-        internal_token=x_internal_token,
-        admin_token=x_admin_token,
-        user_id=x_user_id,
-    )
+    thread_id = _private_thread_id(principal.user_id, body.thread_id)
+    turn_locks = getattr(request.app.state, "agent_turn_locks", None)
+    if turn_locks is None:
+        turn_locks = WeakValueDictionary()
+        request.app.state.agent_turn_locks = turn_locks
+    turn_lock = turn_locks.get(thread_id)
+    if turn_lock is None:
+        turn_lock = asyncio.Lock()
+        turn_locks[thread_id] = turn_lock
+
     graph_input: Any = (
         Command(resume=body.resume)
         if body.resume is not None
@@ -140,47 +218,118 @@ async def stream_agent(
     )
     config = {
         "configurable": {
-            "thread_id": _private_thread_id(user_id, body.thread_id),
+            "thread_id": thread_id,
             "user_role": body.user_role,
         }
     }
 
-    async def events() -> AsyncIterator[str]:
+    queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=1)
+
+    async def drive() -> None:
+        tracker_token = retrieval_worker_tracker.set(lease.track_worker)
         interrupt_emitted = False
-        try:
-            async for stream_type, payload in graph.astream(
-                graph_input,
-                config=config,
-                stream_mode=["updates", "messages"],
-            ):
-                event = {"type": stream_type, "payload": _json_safe(payload)}
-                if stream_type == "updates" and isinstance(payload, dict) and "__interrupt__" in payload:
-                    interrupt_emitted = True
-                    event["interrupt"] = _json_safe(payload["__interrupt__"])
-                yield _sse(event)
+        cleanup_tasks: set[asyncio.Task[Any]] = set()
 
-            # Some graph versions emit ``__interrupt__`` only in the final
-            # state, not in the updates stream.  Emit one portable pause event.
-            if not interrupt_emitted:
-                snapshot = await graph.aget_state(config)
-                interrupts = _snapshot_interrupts(snapshot)
-                if interrupts:
-                    yield _sse({"type": "interrupt", "payload": _json_safe(interrupts)})
-        except Exception:
-            yield _sse(
-                {
-                    "type": "error",
-                    "error": {
-                        "code": "agent_stream_failed",
-                        "message": "Agent stream failed; retry or escalate to support.",
-                    },
-                }
+        def remember_cleanup(exc: asyncio.CancelledError) -> None:
+            cleanup_tasks.update(
+                arg for arg in exc.args if isinstance(arg, asyncio.Task)
             )
-            return
-        yield _sse({"type": "done"})
 
-    return StreamingResponse(
+        try:
+            async with turn_lock:
+                snapshot = (
+                    await graph.aget_state(config)
+                    if body.resume is not None
+                    or getattr(graph, "checkpointer", None) is not None
+                    else None
+                )
+                if body.resume is not None:
+                    draft = getattr(snapshot, "values", {}).get("telegram_draft") or {}
+                    if (
+                        not getattr(snapshot, "next", ())
+                        or draft.get("approval_id") != body.approval_id
+                    ):
+                        raise ValueError("Stale approval")
+                elif getattr(snapshot, "next", ()):
+                    raise ValueError("Approval is pending")
+                graph_stream = graph.astream(
+                    graph_input,
+                    config=config,
+                    stream_mode=["updates", "messages"],
+                )
+                try:
+                    async for stream_type, payload in graph_stream:
+                        event = {"type": stream_type, "payload": _json_safe(payload)}
+                        if (
+                            stream_type == "updates"
+                            and isinstance(payload, dict)
+                            and "__interrupt__" in payload
+                        ):
+                            interrupt_emitted = True
+                            event["interrupt"] = _json_safe(payload["__interrupt__"])
+                        await queue.put(_sse(event))
+                except asyncio.CancelledError as exc:
+                    remember_cleanup(exc)
+                    raise
+                finally:
+                    try:
+                        await graph_stream.aclose()
+                    except asyncio.CancelledError as exc:
+                        remember_cleanup(exc)
+                        raise
+                    finally:
+                        if cleanup_tasks:
+                            results = await asyncio.gather(
+                                *cleanup_tasks, return_exceptions=True
+                            )
+                            for result in results:
+                                if isinstance(result, BaseException):
+                                    raise result
+
+                # Some graph versions emit ``__interrupt__`` only in the final
+                # state, not in the updates stream. Emit one portable pause event.
+                if not interrupt_emitted:
+                    snapshot = await graph.aget_state(config)
+                    interrupts = _snapshot_interrupts(snapshot)
+                    if interrupts:
+                        await queue.put(
+                            _sse(
+                                {"type": "interrupt", "payload": _json_safe(interrupts)}
+                            )
+                        )
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - send only a fixed safe error after headers
+            await queue.put(
+                _sse(
+                    {
+                        "type": "error",
+                        "error": {
+                            "code": "agent_stream_failed",
+                            "message": "Agent stream failed; retry or escalate to support.",
+                        },
+                    }
+                )
+            )
+        else:
+            await queue.put(_sse({"type": "done"}))
+        finally:
+            retrieval_worker_tracker.reset(tracker_token)
+        await queue.put(None)
+
+    async def events() -> AsyncIterator[str]:
+        while (event := await queue.get()) is not None:
+            yield event
+
+    budget = request_budget(request, settings)
+    await budget.acquire(principal.user_id)
+    lease = RequestBudgetLease(budget, principal.user_id)
+    return _BudgetedStreamingResponse(
         events(),
+        budget=budget,
+        principal=principal.user_id,
+        drive=drive,
+        lease=lease,
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

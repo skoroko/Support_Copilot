@@ -322,6 +322,22 @@ def test_chat_message_route_accepts_multiple_media_files(fake_chat_service: Fake
     assert [meta["filename"] for meta in stored.media_refs["files"]] == ["one.png", "two.png"]
 
 
+def test_chat_message_route_rejects_more_than_four_media_files(fake_chat_service: FakeChatService) -> None:
+    chat = Chat(owner_external_id="test-1", interface="telegram")
+    fake_chat_service.chats[chat.id] = chat
+    fake_chat_service.messages[chat.id] = []
+
+    with TestClient(app, headers=auth_headers(interface="telegram")) as client:
+        response = client.post(
+            f"/chats/{chat.id}/messages",
+            data={"content": "five attachments"},
+            files=[("media", (f"{index}.png", b"image", "image/png")) for index in range(5)],
+        )
+
+    assert response.status_code == 400
+    assert fake_chat_service.processed_filenames == []
+
+
 def test_chat_message_route_rejects_second_failing_media_file(fake_chat_service: FakeChatService) -> None:
     chat = Chat(owner_external_id="test-1", interface="telegram")
     fake_chat_service.chats[chat.id] = chat

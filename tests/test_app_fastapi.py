@@ -22,6 +22,27 @@ AUTH_HEADERS = {
     "X-User-Interface": "web",
 }
 
+def parse_sse_data_events(body: str) -> list[tuple[str, str]]:
+    """Parse SSE event and data fields using the standard line-based format."""
+
+    parsed: list[tuple[str, str]] = []
+    event_name = "message"
+    data_lines: list[str] = []
+    for line in body.splitlines():
+        if not line:
+            if data_lines:
+                parsed.append((event_name, "\n".join(data_lines)))
+            event_name = "message"
+            data_lines = []
+        elif line.startswith("event:"):
+            event_name = line[6:].lstrip(" ")
+        elif line.startswith("data:"):
+            data_lines.append(line[5:].lstrip(" "))
+    if data_lines:
+        parsed.append((event_name, "\n".join(data_lines)))
+    return parsed
+
+
 class FakeLLMService:
     def __init__(self) -> None:
         self.last_req = None
@@ -294,6 +315,67 @@ class FastAPIAppTests(unittest.TestCase):
         self.assertIn("data: Привет", body)
         self.assertIn('"usage": {"prompt_tokens": 4, "completion_tokens": 2, "total_tokens": 6}', body)
         self.assertIn("data: [DONE]", body)
+
+    def test_chat_stream_preserves_multiline_content_in_both_security_modes(self) -> None:
+        async def multiline_stream(
+            _req,
+            *,
+            system_prompt: str = "",
+            canary: str = "",
+            security_enabled: bool = True,
+        ) -> AsyncIterator[ChatDelta]:
+            yield ChatDelta(content="first\nsecond")
+            yield ChatDelta(usage=Usage(prompt_tokens=2, completion_tokens=2, total_tokens=4))
+
+        self.fake_service.stream = multiline_stream  # type: ignore[method-assign]
+        for security_enabled in (True, False):
+            if security_enabled:
+                os.environ.pop("APP_SECURITY_ENABLED", None)
+            else:
+                os.environ["APP_SECURITY_ENABLED"] = "false"
+            get_settings.cache_clear()
+            try:
+                with TestClient(app, headers=AUTH_HEADERS) as client:
+                    response = client.post(
+                        "/chat/stream",
+                        json={"messages": [{"role": "user", "content": "multiline"}]},
+                    )
+            finally:
+                os.environ.pop("APP_SECURITY_ENABLED", None)
+                get_settings.cache_clear()
+
+            parsed = parse_sse_data_events(response.text)
+            event_data = [data for _, data in parsed]
+            self.assertEqual(event_data[0], "first\nsecond")
+            self.assertIn(
+                '{"usage": {"prompt_tokens": 2, "completion_tokens": 2, "total_tokens": 4}}',
+                event_data,
+            )
+            self.assertEqual(event_data[-1], "[DONE]")
+
+    def test_chat_stream_keeps_error_event_contract(self) -> None:
+        async def failing_stream(
+            _req,
+            *,
+            system_prompt: str = "",
+            canary: str = "",
+            security_enabled: bool = True,
+        ) -> AsyncIterator[ChatDelta]:
+            yield ChatDelta(content="partial")
+            raise RuntimeError("internal failure")
+
+        self.fake_service.stream = failing_stream  # type: ignore[method-assign]
+        with TestClient(app, headers=AUTH_HEADERS) as client:
+            response = client.post(
+                "/chat/stream",
+                json={"messages": [{"role": "user", "content": "failure case"}]},
+            )
+
+        events = parse_sse_data_events(response.text)
+        self.assertEqual(events[0], ("message", "partial"))
+        self.assertEqual(events[1][0], "error")
+        self.assertIn('"code": "chat_stream_failed"', events[1][1])
+        self.assertNotIn("[DONE]", [data for _, data in events])
 
     def test_validation_errors_use_stable_error_contract(self) -> None:
         with TestClient(app, headers=AUTH_HEADERS) as client:

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
-from sqlalchemy import distinct, func, select, update
+from sqlalchemy import and_, distinct, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.admin.broadcast_state import claim_item, finish_item, update_recipient
 from app.admin.models import BroadcastItem, StatsOut, UserOut
 from app.chat.domain import Chat, ChatMessage
 from app.chat.feedback import MessageFeedback
@@ -23,6 +24,18 @@ from app.moderation.models import ModerationResult
 class PostgresChatRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def get_or_create_chat(self, owner_external_id: str, interface: str) -> Chat:
+        row = (await self.session.execute(select(ChatRow).where(
+            ChatRow.owner_external_id == owner_external_id, ChatRow.interface == interface,
+        ).order_by(ChatRow.created_at).limit(1))).scalar_one_or_none()
+        if row is not None:
+            return Chat.model_validate(row, from_attributes=True)
+        chat = Chat(id=uuid5(NAMESPACE_URL, f"support-copilot:{interface}:{owner_external_id}"),
+                    owner_external_id=owner_external_id, interface=interface)
+        await self.session.execute(insert(ChatRow).values(**chat.model_dump()).on_conflict_do_nothing(index_elements=[ChatRow.id]))
+        await self.session.commit()
+        return await self.get_chat(chat.id)
 
     async def create_chat(
         self,
@@ -250,7 +263,7 @@ class PostgresChatRepository:
 
     async def enqueue_broadcast(self, message: str, interface: str) -> BroadcastItem:
         item = BroadcastItem(message=message, interface=interface)
-        self.session.add(BroadcastQueueRow(**item.model_dump()))
+        self.session.add(BroadcastQueueRow(**item.model_dump(exclude={"recipients"}), recipients=[]))
         await self.session.commit()
         return item
 
@@ -263,13 +276,98 @@ class PostgresChatRepository:
         )
         return [BroadcastItem.model_validate(row, from_attributes=True) for row in result.scalars().all()]
 
-    async def update_broadcast_status(self, broadcast_id: UUID, status: str) -> BroadcastItem | None:
+    async def list_review_broadcasts(self, limit: int = 10, offset: int = 0) -> list[BroadcastItem]:
         result = await self.session.execute(
-            update(BroadcastQueueRow)
-            .where(BroadcastQueueRow.id == broadcast_id)
-            .values(status=status, updated_at=datetime.now(timezone.utc))
-            .returning(BroadcastQueueRow)
+            select(BroadcastQueueRow)
+            .where(BroadcastQueueRow.review_required.is_(True))
+            .order_by(BroadcastQueueRow.created_at, BroadcastQueueRow.id)
+            .offset(offset)
+            .limit(limit)
         )
-        row = result.scalar_one_or_none()
-        await self.session.commit()
+        return [BroadcastItem.model_validate(row, from_attributes=True) for row in result.scalars().all()]
+
+    async def get_broadcast(self, broadcast_id: UUID) -> BroadcastItem | None:
+        row = await self.session.get(BroadcastQueueRow, broadcast_id)
         return BroadcastItem.model_validate(row, from_attributes=True) if row is not None else None
+
+    async def claim_broadcasts(self, limit: int = 10, lease_seconds: int = 300) -> list[BroadcastItem]:
+        now = datetime.now(timezone.utc)
+        result = await self.session.execute(
+            select(BroadcastQueueRow)
+            .where(or_(
+                BroadcastQueueRow.status == "pending",
+                and_(BroadcastQueueRow.status == "processing", BroadcastQueueRow.lease_expires_at <= now),
+            ))
+            .order_by(BroadcastQueueRow.created_at)
+            .limit(limit)
+            .with_for_update(skip_locked=True)
+        )
+        owners_by_interface: dict[str, list[str]] = {}
+        claimed: list[BroadcastItem] = []
+        for row in result.scalars().all():
+            if row.status == "pending" and row.interface not in owners_by_interface:
+                owners = await self.session.scalars(
+                    select(distinct(ChatRow.owner_external_id)).where(ChatRow.interface == row.interface)
+                )
+                owners_by_interface[row.interface] = list(owners.all())
+            item = claim_item(
+                BroadcastItem.model_validate(row, from_attributes=True),
+                owners_by_interface.get(row.interface, []), now=now, lease_seconds=lease_seconds,
+            )
+            if item is not None:
+                self._store_broadcast(row, item)
+                claimed.append(item)
+        await self.session.commit()
+        return claimed
+
+    async def update_broadcast_recipient(
+        self, broadcast_id: UUID, lease_id: UUID, chat_id: int, attempt_id: UUID, status: str,
+    ) -> BroadcastItem | None:
+        row = await self._locked_broadcast(broadcast_id)
+        if row is None:
+            await self.session.rollback()
+            return None
+        updated = update_recipient(
+            BroadcastItem.model_validate(row, from_attributes=True),
+            lease_id=lease_id, chat_id=chat_id, attempt_id=attempt_id,
+            status=status, now=datetime.now(timezone.utc),
+        )
+        if updated is None:
+            await self.session.rollback()
+            return None
+        self._store_broadcast(row, updated)
+        await self.session.commit()
+        return updated
+
+    async def finish_broadcast(self, broadcast_id: UUID, lease_id: UUID) -> BroadcastItem | None:
+        row = await self._locked_broadcast(broadcast_id)
+        if row is None:
+            await self.session.rollback()
+            return None
+        updated = finish_item(
+            BroadcastItem.model_validate(row, from_attributes=True), lease_id=lease_id,
+            now=datetime.now(timezone.utc),
+        )
+        if updated is None:
+            await self.session.rollback()
+            return None
+        self._store_broadcast(row, updated)
+        await self.session.commit()
+        return updated
+
+    async def _locked_broadcast(self, broadcast_id: UUID) -> BroadcastQueueRow | None:
+        result = await self.session.execute(
+            select(BroadcastQueueRow).where(BroadcastQueueRow.id == broadcast_id).with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    def _store_broadcast(row: BroadcastQueueRow, item: BroadcastItem) -> None:
+        row.status = item.status
+        row.recipients = [recipient.model_dump(mode="json") for recipient in item.recipients]
+        row.invalid_recipient_count = item.invalid_recipient_count
+        row.lease_id = item.lease_id
+        row.lease_expires_at = item.lease_expires_at
+        row.lease_seconds = item.lease_seconds
+        row.review_required = item.review_required
+        row.updated_at = item.updated_at

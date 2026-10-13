@@ -9,7 +9,9 @@
 - system prompt вынесен в `support_copilot/prompts/system_v1.j2`;
 - description tool вынесен в `support_copilot/prompts/tools/search_knowledge_base.md`;
 - полный цикл tool call реализован в `support_copilot/infrastructure/tool_calling.py`;
-- JSONL-лог пишется в `homework_3_1/results/tool_call_demo.jsonl`.
+- JSONL-лог пишется в `homework_3_1/results/tool_call_demo.jsonl`;
+  текст запросов и ответов, аргументы и результаты tools сохраняются только
+  как длина и временный HMAC-отпечаток, числовые usage-поля остаются в явном виде.
 
 ## Запуск
 

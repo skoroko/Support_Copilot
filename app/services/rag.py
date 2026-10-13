@@ -1008,6 +1008,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None,
         standalone_question: str | None,
+        deadline: float | None = None,
     ) -> _PreparedAnswer:
         """Run the guarded retrieval pipeline shared by all answer paths."""
         if not question.strip():
@@ -1018,8 +1019,15 @@ class RAGService:
         self._require_external_transfer_allowed("embed a retrieval question")
         started_at = time.perf_counter()
         plan = self._retrieval_plan(question, history, standalone_question)
+        def retrieve(query: str) -> list[Any]:
+            if deadline is not None and time.perf_counter() >= deadline:
+                raise TimeoutError("Retrieval budget exhausted")
+            items = list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            if deadline is not None and time.perf_counter() >= deadline:
+                raise TimeoutError("Retrieval budget exhausted")
+            return items
         retrieved_by_query = [
-            list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            retrieve(query)
             for query in plan.queries
         ]
         product_rankings = [
@@ -1036,6 +1044,8 @@ class RAGService:
         lexical_fallback_candidates: list[Any] = []
         if self._lexical_available:
             for candidate_query in lexical_queries:
+                if deadline is not None and time.perf_counter() >= deadline:
+                    raise TimeoutError("Retrieval budget exhausted")
                 unscoped_candidates = self._retrieve_lexical_candidates(candidate_query)
                 candidates = self._product_scoped(unscoped_candidates)
                 if unscoped_candidates and not lexical_fallback_candidates:
@@ -1054,9 +1064,7 @@ class RAGService:
             for fallback_query in lexical_queries[1:]:
                 if fallback_query in plan.queries:
                     continue
-                fallback_ranking = list(self._retriever.retrieve(fallback_query))[
-                    : self._raw_candidate_limit()
-                ]
+                fallback_ranking = retrieve(fallback_query)
                 fallback_product_ranking = self._product_scoped(fallback_ranking)
                 retrieved_by_query.append(fallback_ranking)
                 product_rankings.append(fallback_product_ranking)
@@ -1136,6 +1144,58 @@ class RAGService:
             telemetry=telemetry,
             overview_question=overview_question,
         )
+
+    def retrieve(
+        self,
+        question: str,
+        *,
+        history: Sequence[HistoryItem] | None = None,
+        standalone_question: str | None = None,
+        timeout_seconds: float | None = None,
+        max_context_chars: int = 24_000,
+    ) -> dict[str, Any]:
+        """Return guarded manual evidence without generating a support answer.
+
+        Shares product scope, follow-up rewriting, ranking and the coverage /
+        confidence gate with ``answer``. No synthetic fallback is consulted.
+        Unavailable infrastructure remains distinct from a genuine corpus miss.
+        """
+        if max_context_chars < 1:
+            raise ValueError("max_context_chars must be positive")
+        timeout = self.config.request_timeout if timeout_seconds is None else timeout_seconds
+        if timeout <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        deadline = time.perf_counter() + timeout
+        prepared = self._prepare_answer(
+            question, history=history, standalone_question=standalone_question,
+            deadline=deadline,
+        )
+        if time.perf_counter() >= deadline:
+            raise TimeoutError("Retrieval budget exhausted")
+        selection = prepared.selection
+        sources: list[dict[str, Any]] = []
+        contexts: list[str] = []
+        remaining = max_context_chars
+        if selection.has_evidence:
+            for source, context in zip(selection.sources, selection.retrieved_contexts):
+                if remaining <= 0:
+                    break
+                bounded = context[:remaining]
+                sources.append({**source, "snippet": bounded[:MAX_SOURCE_SNIPPET_CHARS]})
+                contexts.append(bounded)
+                remaining -= len(bounded)
+        return {
+            "status": "ok" if sources else "no_evidence",
+            "question": prepared.question,
+            "sources": sources,
+            "contexts": contexts,
+            "telemetry": dict(prepared.telemetry),
+        }
+
+    @classmethod
+    def ground_answer(cls, answer: str, sources: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
+        """Validate final citations against the evidence actually returned."""
+        return cls._ground_answer(answer, sources)
 
     def query(
         self,
@@ -2571,6 +2631,8 @@ class RAGService:
         snippet = self._context_text(source_node)[:MAX_SOURCE_SNIPPET_CHARS]
         return {
             "id": str(metadata.get("doc_id") or node.node_id),
+            "chunk_id": str(node.node_id),
+            "document_id": str(metadata.get("doc_id") or getattr(node, "ref_doc_id", "") or node.node_id),
             "file_name": Path(source).name,
             "page": page,
             "printed_page": printed_page,

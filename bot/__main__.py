@@ -11,6 +11,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramNetworkError
 
 from app.observability.logging import get_logger
+from bot.admission import AdmissionMiddleware
 from bot.background import broadcast_worker
 from bot.config import get_settings
 from bot.handlers import router
@@ -61,6 +62,12 @@ async def main() -> None:
         admin_token=settings.admin_token.get_secret_value(),
     )
     dp = Dispatcher()
+    dp.update.outer_middleware(
+        AdmissionMiddleware(
+            user_ids=settings.bot_allowed_user_ids,
+            chat_ids=settings.bot_allowed_chat_ids,
+        )
+    )
     dp["backend"] = backend
     dp["bot_admin_ids"] = settings.bot_admin_ids
     dp.include_router(router)

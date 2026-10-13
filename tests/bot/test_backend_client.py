@@ -19,6 +19,35 @@ def build_client(http_client: httpx.AsyncClient) -> BackendClient:
 def bind_owner(client: BackendClient, chat_id: UUID, owner: str = "telegram-1") -> None:
     client._chat_owners[str(chat_id)] = owner
 
+
+@pytest.mark.asyncio
+async def test_broadcast_client_uses_claim_and_guarded_progress_routes() -> None:
+    calls: list[tuple[str, dict]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append((request.url.path, json.loads(request.content)))
+        assert request.headers["x-admin-token"] == "admin-secret"
+        if request.url.path.endswith("/claim"):
+            return httpx.Response(200, json=[{"id": "broadcast-1"}])
+        return httpx.Response(200, json={"status": "processing"})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient(
+            "http://backend", client=http_client,
+            internal_token=INTERNAL_TOKEN, admin_token="admin-secret",
+        )
+        assert await client.claim_broadcasts(limit=2, lease_seconds=60) == [{"id": "broadcast-1"}]
+        await client.update_broadcast_recipient("broadcast-1", "lease-1", 42, "attempt-1", "in_flight")
+        await client.finish_broadcast("broadcast-1", "lease-1")
+
+    assert calls == [
+        ("/chats/admin/broadcasts/claim", {"limit": 2, "lease_seconds": 60}),
+        ("/chats/admin/broadcasts/broadcast-1/recipients/42/state", {
+            "lease_id": "lease-1", "attempt_id": "attempt-1", "status": "in_flight",
+        }),
+        ("/chats/admin/broadcasts/broadcast-1/finish", {"lease_id": "lease-1"}),
+    ]
+
 @pytest.mark.asyncio
 async def test_get_or_create_chat_returns_uuid_and_is_idempotent() -> None:
     chat_id = UUID("00000000-0000-0000-0000-000000000123")

@@ -1,9 +1,9 @@
-transformers<5
-torch
-huggingface_hub<1.0
+transformers==5.17.0
+torch==2.14.0
+huggingface_hub==1.16.0
 scikit-learn
 python-dotenv
 openai
-gradio==4.44.1
-fastapi==0.112.2
-starlette==0.38.6
+gradio==6.27.0
+fastapi==0.141.1
+starlette==1.6.0

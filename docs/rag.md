@@ -72,11 +72,16 @@ flowchart LR
     N --> U[Deduplicate и максимум 5 context fragments]
     U --> G{cosine >= threshold или strict lexical evidence?}
     G -->|нет| D[Честный ответ: данных нет]
-    G -->|да| L[LLM по контексту]
+    G -->|да, direct answer API| L[LLM по контексту]
+    G -->|да, agent retrieval tool| E[Evidence sources + contexts]
+    E --> AG[Persistent agent: reasoning и финальный ответ]
+    AG --> A
     L --> A[Проверка и перенумерация цитат]
     D --> O[JSON / SSE]
     A --> O
-    O --> T[Telegram editMessageText + feedback]
+    O --> API[Direct RAG API]
+    A --> CHAT[ChatService: moderation + persistence]
+    CHAT --> T[Telegram editMessageText + feedback + approval]
 ```
 
 Retrieval и генерация разделены. `RAG_TOP_K=10` задаёт базовый размер dense-поиска, а
@@ -321,11 +326,12 @@ fallback-LLM с дефолтным system prompt, а SSE-поток открыв
 | Endpoint | Назначение |
 |---|---|
 | `POST /rag/query` | Синхронный вопрос; optional history; ответ и sources |
-| `POST /chats/{id}/messages` | Диалоговый SSE: token, notice, message, `event: sources`, done |
+| `POST /rag/retrieve` | Только retrieval: question/history, status, sources, contexts, telemetry |
+| `POST /chats/{id}/messages` | Диалоговый SSE: token, notice, message, `event: sources`, approval, done |
 | `POST /documents/upload` | PDF/DOCX/HTML/MD, сохранение в `data/`, ответ 202 и background UPSERT |
 | `POST /chats/{id}/messages/{mid}/feedback` | Оценка `up/down` вместе с показанными sources |
 
-Объект источника имеет поля `id`, `file_name`, `page`, `printed_page`, `score`,
+Объект источника имеет поля `id`, `chunk_id`, `document_id`, `file_name`, `page`, `printed_page`, `score`,
 `snippet` и `confident`. `page` — физическая 1-based PDF-страница, а
 `printed_page` — необязательный номер, напечатанный внутри руководства. Ответ
 использует нумерованные ссылки `[1]`, `[2]`. SSE-токены
@@ -348,6 +354,28 @@ Telegram HTML: `**жирный текст**` превращается в bold, �
 code; текст и имена файлов перед этим экранируются. Кнопки 👍/👎 сохраняют не
 только голос, но и полный массив показанных процитированных источников, сохранённый у assistant
 message; кнопки остаются рабочими после перезапуска bot/API-процесса.
+
+### Retrieval для persistent agent
+
+`RAGService.retrieve(question, history=..., standalone_question=...,
+timeout_seconds=..., max_context_chars=...)` использует тот же `_prepare_answer`,
+что answer/stream_answer: follow-up condense, product scope, dense/lexical
+recall, reranking, coverage/score gate, deduplication и лимит context fragments.
+Метод не вызывает генерацию ответа. По умолчанию retrieval ограничен
+`request_timeout` и 24 000 символов context; agent запрашивает до 8 000 на поиск.
+Deadline проверяется между retrieval вызовами и перед возвратом; уже начатый
+синхронный сетевой вызов ограничивается таймаутом провайдера. Источник и snippet
+возвращаются только для выбранных context fragments. `no_evidence` означает
+реальный miss/gate rejection; недоступный индекс/провайдер даёт API 503, а tool —
+`unavailable`. Синтетический `support_documents.json` не используется.
+
+Persistent graph получает RAG лениво из `app.state`, поэтому порядок startup
+не создаёт отдельный индекс. Несколько поисков имеют общую стабильную
+`citation_numbers` нумерацию текущего вопроса. Финальный ответ очищается от
+неизвестных `[N]`; сохраняются только реально процитированные источники.
+Timeout/disconnect не освобождает principal budget до завершения tracked
+retrieval worker. Для Telegram факты генерирует agent после evidence tool;
+обычный `/rag/query` и остальные chat-интерфейсы сохраняют прежнюю генерацию.
 
 ## Запуск
 

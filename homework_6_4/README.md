@@ -46,9 +46,16 @@ Production smoke проверен на этом compose: сервис `app` ст
 
 Не создавайте новый `thread_id` для каждого HTTP-вызова. Используйте стабильное
 значение, например `tg-123456-license-escalation`, затем передавайте его же при
-`{"resume": true}` с теми же `X-Internal-Token` и `X-User-ID`. Сервер хеширует
+`{"resume": true, "approval_id": "<точный 32-символьный ID из preview>"}`
+с теми же `X-Internal-Token` и `X-User-ID`. Сервер хеширует
 identity и thread id; роль `full` дополнительно требует `X-Admin-Token`.
 
 Опасная доставка использует детерминированный idempotency key. Bot резервирует
 его через Redis `SET NX`; compose включает AOF, поэтому повторный resume не
 дублирует Telegram-сообщение.
+
+Текущая интеграция Telegram не требует ручных HTTP-команд или `/agent`:
+обычные сообщения идут в persistent graph через `/chats`, а точный recipient
+и текст подтверждаются кнопками. История, sources/feedback и pending draft
+сохраняются после перезапуска; `/clear` отменяет pending. Production search
+использует мануалы RAG, без синтетической базы. См. `docs/unified_agent.md`.

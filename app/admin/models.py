@@ -26,14 +26,37 @@ class BroadcastIn(BaseModel):
     interface_filter: Literal["telegram"] = "telegram"
 
 
+class BroadcastRecipient(BaseModel):
+    chat_id: int
+    status: Literal["pending", "in_flight", "sent", "failed", "unknown"] = "pending"
+    attempt_id: UUID | None = None
+
+
 class BroadcastItem(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     message: str
     interface: str
     status: Literal["pending", "processing", "sent", "failed"] = "pending"
+    recipients: list[BroadcastRecipient] = Field(default_factory=list)
+    invalid_recipient_count: int = 0
+    lease_id: UUID | None = None
+    lease_expires_at: datetime | None = None
+    lease_seconds: int = 300
+    review_required: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-class BroadcastStatusIn(BaseModel):
-    status: Literal["processing", "sent", "failed"]
+class BroadcastClaimIn(BaseModel):
+    limit: int = Field(default=10, ge=1, le=100)
+    lease_seconds: int = Field(default=300, ge=30, le=3600)
+
+
+class BroadcastRecipientStateIn(BaseModel):
+    lease_id: UUID
+    attempt_id: UUID
+    status: Literal["in_flight", "sent", "failed", "unknown"]
+
+
+class BroadcastFinishIn(BaseModel):
+    lease_id: UUID

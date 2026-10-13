@@ -1,19 +1,28 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping, MutableMapping, Sequence
-from dataclasses import dataclass
-from functools import lru_cache
 import inspect
 import time
+from collections.abc import AsyncIterator, Callable, Mapping, MutableMapping, Sequence
+from concurrent.futures import TimeoutError as FutureTimeoutError
+from contextlib import aclosing
+from dataclasses import dataclass
+from functools import lru_cache
+from threading import Event
 from typing import Any
 from uuid import UUID
 from weakref import WeakValueDictionary
 
 import tiktoken
 
+from app.chat.agent import ChatAgent, StaleApprovalError
 from app.chat.domain import Chat, ChatMessage
-from app.chat.feedback import FeedbackService, FeedbackTargetNotFoundError, FeedbackValue, MessageFeedback
+from app.chat.feedback import (
+    FeedbackService,
+    FeedbackTargetNotFoundError,
+    FeedbackValue,
+    MessageFeedback,
+)
 from app.chat.media import media_to_part
 from app.chat.repository import ChatRepository
 from app.core.config import Settings
@@ -21,13 +30,15 @@ from app.moderation.models import ModerationResult
 from app.moderation.service import ModerationService
 from app.observability.logging import get_logger
 
-
 DEFAULT_CONTEXT_TOKENS = 128_000
 DEFAULT_RESPONSE_TOKENS = 500
 DEFAULT_SAFETY_MARGIN_TOKENS = 500
 MODERATION_OUTPUT_REPLACEMENT = "Не могу показать ответ — он мог нарушить правила"
 RAG_EMPTY_ANSWER = "В предоставленной базе знаний нет достаточно надёжных сведений для ответа на этот вопрос."
 RAG_MEDIA_TEXT_MAX_CHARS = 16_000
+RAG_STREAM_QUEUE_SIZE = 1
+RAG_QUEUE_PUT_POLL_SECONDS = 0.05
+RAG_WORKER_STOP_WAIT_SECONDS = 0.2
 MEDIA_IMAGE_NO_TEXT_REPLY = (
     "Я пока не умею искать по базе знаний по изображению без описания. "
     "Добавьте подпись к фото или опишите проблему текстом."
@@ -169,8 +180,12 @@ class ChatService:
         settings: Settings,
         moderation_service: ModerationService | None = None,
         turn_locks: MutableMapping[UUID, asyncio.Lock] | None = None,
+        track_rag_worker: Callable[[asyncio.Task[None]], None] | None = None,
+        agent: ChatAgent | None = None,
     ) -> None:
         self.repository = repository
+        self.agent = agent
+        self._last_approvals: dict[UUID, dict[str, str] | None] = {}
         self._turn_locks: MutableMapping[UUID, asyncio.Lock] = (
             turn_locks if turn_locks is not None else WeakValueDictionary()
         )
@@ -186,6 +201,8 @@ class ChatService:
         )
         self.feedback = FeedbackService(repository)
         self._last_response_sources: dict[UUID, list[dict[str, Any]]] = {}
+        self._rag_worker_tasks: set[asyncio.Task[None]] = set()
+        self._track_rag_worker = track_rag_worker
         if settings.chat_context_strategy != "sliding":
             raise ValueError("Only CHAT_CONTEXT_STRATEGY=sliding is implemented in homework 4.1")
         self.context_strategy = SlidingWindowContextStrategy(settings.chat_context_window)
@@ -196,6 +213,9 @@ class ChatService:
         interface: str,
         system_prompt: str | None = None,
     ) -> Chat:
+        resolve = getattr(self.repository, "get_or_create_chat", None)
+        if interface == "telegram" and system_prompt is None and callable(resolve):
+            return await resolve(owner_external_id, interface)
         return await self.repository.create_chat(owner_external_id, interface, system_prompt)
 
     async def get_chat(self, chat_id: UUID) -> Chat | None:
@@ -235,14 +255,17 @@ class ChatService:
         # the first ``__anext__`` and released when the consumer finishes or
         # closes the stream.
         async with self._turn_lock(chat_id):
-            async for event in self._send_message(
-                chat_id,
-                user_content,
-                media_refs=media_refs,
-                input_moderated=input_moderated,
-                rag_service=rag_service,
-            ):
-                yield event
+            async with aclosing(
+                self._send_message(
+                    chat_id,
+                    user_content,
+                    media_refs=media_refs,
+                    input_moderated=input_moderated,
+                    rag_service=rag_service,
+                )
+            ) as events:
+                async for event in events:
+                    yield event
 
     async def _send_message(
         self,
@@ -309,22 +332,42 @@ class ChatService:
         streamed_draft = ""
         blocked_screen: ModerationResult | None = None
         started_at = time.perf_counter()
-        if rag_service is not None:
+        use_agent = self.agent is not None and chat.interface == "telegram"
+        if use_agent:
+            # Media extraction and input moderation have already run. Use
+            # captions/transcripts/document text; raw image bytes stay out of
+            # durable checkpoints, as they do in the chat repository.
+            agent_content = self._rag_question(user_content, media_refs)
+            result = (await self.agent.turn(chat, agent_content, list(retrieval_history)) if agent_content is not None
+                      else {"answer": MEDIA_IMAGE_NO_TEXT_REPLY, "sources": [], "approval": None})
+            assistant_parts = [str(result.get("answer") or RAG_EMPTY_ANSWER)]
+            rag_sources = self._citation_array(result.get("sources"))
+            self._last_approvals[chat_id] = result.get("approval")
+            draft = result.get("approval")
+            if draft:
+                screen = await self.moderation.check_output(draft["text"])
+                await self._record_moderation(chat_id, "output", screen)
+                if not screen.allowed:
+                    blocked_screen = screen
+        elif rag_service is not None:
             rag_question = self._rag_question(user_content, media_refs)
             if rag_question is None:
                 assistant_parts = [MEDIA_IMAGE_NO_TEXT_REPLY]
             else:
                 rag_out: dict[str, Any] = {}
-                async for delta in self._stream_with_rag(
-                    rag_service,
-                    rag_question,
-                    retrieval_history,
-                    chat_id,
-                    rag_out,
-                    system_prompt=chat.system_prompt,
-                ):
-                    streamed_draft += delta
-                    yield delta
+                async with aclosing(
+                    self._stream_with_rag(
+                        rag_service,
+                        rag_question,
+                        retrieval_history,
+                        chat_id,
+                        rag_out,
+                        system_prompt=chat.system_prompt,
+                    )
+                ) as deltas:
+                    async for delta in deltas:
+                        streamed_draft += delta
+                        yield delta
                 blocked_screen = rag_out.get("blocked_result")
                 rag_sources = list(rag_out.get("sources") or [])
                 generated = str(rag_out.get("final") or streamed_draft).strip()
@@ -362,6 +405,10 @@ class ChatService:
         else:
             visible_content = MODERATION_OUTPUT_REPLACEMENT
             self._last_response_sources[chat_id] = []
+            self._last_approvals[chat_id] = None
+            if use_agent:
+                # A blocked preview cannot be approved using a hidden draft.
+                await self.agent.clear(chat)
 
         assistant_message = ChatMessage(
             chat_id=chat_id,
@@ -380,7 +427,7 @@ class ChatService:
                 chat_id,
                 assistant_message,
             )
-        if rag_service is not None:
+        if rag_service is not None or use_agent:
             if streamed_draft:
                 # Deltas already went out; publish the canonical text when it
                 # differs from the accumulated draft (grounding or moderation
@@ -399,7 +446,49 @@ class ChatService:
         # Same turn lock: /clear must wait for an in-flight turn instead of
         # interleaving with its history read or append_turn.
         async with self._turn_lock(chat_id):
+            chat = await self.repository.get_chat(chat_id)
+            if self.agent is not None and chat is not None:
+                await self.agent.clear(chat)
             await self.repository.soft_delete_messages(chat_id)
+
+    def last_approval(self, chat_id: UUID) -> dict[str, str] | None:
+        return self._last_approvals.get(chat_id)
+
+    async def pending_approval(self, chat_id: UUID) -> dict[str, str] | None:
+        chat = await self.repository.get_chat(chat_id)
+        if chat is None:
+            raise ChatNotFoundError(f"Chat {chat_id} not found")
+        return await self.agent.pending(chat) if self.agent is not None else None
+
+    async def approve(self, chat_id: UUID, approval_id: str, approved: bool) -> dict[str, Any]:
+        async with self._turn_lock(chat_id):
+            chat = await self.repository.get_chat(chat_id)
+            if chat is None:
+                raise ChatNotFoundError(f"Chat {chat_id} not found")
+            if self.agent is None:
+                raise StaleApprovalError("Агент недоступен.")
+            draft = await self.agent.pending(chat)
+            if draft is None or draft.get("approval_id") != approval_id:
+                raise StaleApprovalError("Подтверждение устарело или уже обработано.")
+            if approved:
+                # Screen the exact external text before the graph can execute.
+                result = await self.moderation.check_output(draft["text"])
+                await self._record_moderation(chat_id, "output", result)
+                if not result.allowed:
+                    raise ModerationBlockedError(result)
+            result = await self.agent.resume(chat, approval_id, approved)
+            text = str(result.get("answer") or "Действие завершено.")
+            screen = await self.moderation.check_output(text)
+            await self._record_moderation(chat_id, "output", screen)
+            sources = self._citation_array(result.get("sources")) if screen.allowed else []
+            if not screen.allowed:
+                text = MODERATION_OUTPUT_REPLACEMENT
+                await self.agent.clear(chat)
+                result["approval"] = None
+            message = ChatMessage(chat_id=chat_id, role="assistant", content=text, rag_sources=sources,
+                                  tokens=count_tokens([{"role": "assistant", "content": text}]))
+            await self.repository.append_message(chat_id, message)
+            return {"answer": text, "sources": sources, "approval": result.get("approval"), "message_id": str(message.id)}
 
     async def append_system_message(self, chat_id: UUID, content: str) -> Chat:
         async with self._turn_lock(chat_id):
@@ -579,24 +668,25 @@ class ChatService:
 
         accumulated = ""
         call_kwargs = self._rag_call_kwargs(history, system_prompt)
-        async for item in self._rag_events(stream_answer, question, call_kwargs):
-            if not isinstance(item, Mapping):
-                continue
-            event_type = item.get("type")
-            if event_type == "delta":
-                delta = str(item.get("delta") or "")
-                if not delta:
+        async with aclosing(self._rag_events(stream_answer, question, call_kwargs)) as events:
+            async for item in events:
+                if not isinstance(item, Mapping):
                     continue
-                accumulated += delta
-                screen = self.moderation.check_output_fragment(accumulated)
-                if not screen.allowed:
-                    await self._record_moderation(chat_id, "output", screen)
-                    out["blocked_result"] = screen
-                    return
-                yield delta
-            elif event_type == "final":
-                out["final"] = str(item.get("answer") or "")
-                out["sources"] = self._citation_array(item.get("sources"))
+                event_type = item.get("type")
+                if event_type == "delta":
+                    delta = str(item.get("delta") or "")
+                    if not delta:
+                        continue
+                    accumulated += delta
+                    screen = self.moderation.check_output_fragment(accumulated)
+                    if not screen.allowed:
+                        await self._record_moderation(chat_id, "output", screen)
+                        out["blocked_result"] = screen
+                        return
+                    yield delta
+                elif event_type == "final":
+                    out["final"] = str(item.get("answer") or "")
+                    out["sources"] = self._citation_array(item.get("sources"))
 
     @staticmethod
     def _rag_call_kwargs(
@@ -629,22 +719,74 @@ class ChatService:
         if inspect.isawaitable(produced):
             produced = await produced
         if hasattr(produced, "__aiter__"):
-            async for item in produced:
-                yield item
+            iterator = aiter(produced)
+            try:
+                async for item in iterator:
+                    yield item
+            finally:
+                close = getattr(iterator, "aclose", None)
+                if callable(close):
+                    await close()
             return
 
-        queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+        queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue(maxsize=RAG_STREAM_QUEUE_SIZE)
         loop = asyncio.get_running_loop()
+        stop = Event()
+
+        def publish(kind: str, payload: Any) -> bool:
+            # Waiting for queue space in the worker applies backpressure without
+            # ever blocking the event loop. Poll the stop flag so a closed
+            # consumer also releases a worker waiting on a full queue.
+            if stop.is_set():
+                return False
+            future = asyncio.run_coroutine_threadsafe(queue.put((kind, payload)), loop)
+            while not stop.is_set():
+                try:
+                    future.result(timeout=RAG_QUEUE_PUT_POLL_SECONDS)
+                    return True
+                except FutureTimeoutError:
+                    continue
+            future.cancel()
+            return False
 
         def worker() -> None:
+            iterator = None
+            terminal: tuple[str, Any] = ("done", None)
             try:
-                for item in produced:
-                    loop.call_soon_threadsafe(queue.put_nowait, ("item", item))
-                loop.call_soon_threadsafe(queue.put_nowait, ("done", None))
+                iterator = iter(produced)
+                while not stop.is_set():
+                    try:
+                        item = next(iterator)
+                    except StopIteration:
+                        break
+                    if not publish("item", item):
+                        break
             except BaseException as exc:  # noqa: BLE001 - relayed to the consumer below
-                loop.call_soon_threadsafe(queue.put_nowait, ("error", exc))
+                terminal = ("error", exc)
+            finally:
+                # A generator must be closed by the same worker that was
+                # advancing it. Closing its provider stream releases the HTTP
+                # connection and prevents further paid generation.
+                close = getattr(iterator, "close", None)
+                if callable(close):
+                    try:
+                        close()
+                    except BaseException as exc:  # noqa: BLE001 - relayed to the consumer below
+                        if terminal[0] == "done":
+                            terminal = ("error", exc)
+                publish(*terminal)
 
         runner = asyncio.create_task(asyncio.to_thread(worker))
+        self._rag_worker_tasks.add(runner)
+        if self._track_rag_worker is not None:
+            self._track_rag_worker(runner)
+
+        def worker_finished(task: asyncio.Task[None]) -> None:
+            self._rag_worker_tasks.discard(task)
+            if not task.cancelled() and (exc := task.exception()) is not None:
+                logger.warning("rag_stream_worker_failed", error_type=type(exc).__name__)
+
+        runner.add_done_callback(worker_finished)
         try:
             while True:
                 kind, payload = await queue.get()
@@ -655,11 +797,14 @@ class ChatService:
                 else:
                     return
         finally:
-            # to_thread cannot cancel the worker; it keeps filling the
-            # unbounded queue and exits, while cancelling the awaiter task
-            # keeps asyncio from reporting an abandoned task.
-            if not runner.done():
-                runner.cancel()
+            stop.set()
+            # A synchronous provider read already in progress cannot be
+            # interrupted by asyncio. Its configured provider timeout bounds
+            # that read; keep the task tracked until the worker really exits.
+            try:
+                await asyncio.wait_for(asyncio.shield(runner), RAG_WORKER_STOP_WAIT_SECONDS)
+            except TimeoutError:
+                logger.warning("rag_stream_worker_still_running")
 
     @staticmethod
     def _citation_array(value: Any) -> list[dict[str, Any]]:

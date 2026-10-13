@@ -1,5 +1,11 @@
 # Homework 6.4 - Persistent LangGraph agent
 
+Current integration (2026-10-13): ordinary Telegram messages use this graph
+through the existing `/chats` facade, with production manual retrieval and
+owned exact-draft approval buttons. See [unified_agent.md](unified_agent.md).
+Historical Docker smoke transcripts below describe the homework snapshot;
+the persistent graph no longer imports the synthetic knowledge-base search.
+
 ## 1. Backend selection
 
 `app/services/agent_persistent.py` keeps the Б6.3 graph untouched and adds a
@@ -57,15 +63,19 @@ the wrong support chat and is externally observable. The model may request the
 tool, but never calls its handler directly. The graph has two explicit nodes:
 `prepare_telegram_message -> confirm_and_execute_telegram_message`.
 
-**Before `interrupt`:** argument validation and deterministic draft creation
-(`chat_id`, `text`, `tool_call_id`, `idempotency_key`, `sent=False`) only. This
-`prepare` node is idempotent and has no API/network side effect. **After
+**Before `interrupt`:** argument validation and side-effect-free draft creation
+(`chat_id`, `text`, `tool_call_id`, `approval_id`, `idempotency_key`, `sent=False`)
+only. The random draft UUID is persisted with an immutable preview; its stable
+idempotency key includes the private thread, tool call ID and draft UUID, so
+two intentional deliveries do not collide if a model reuses a call ID. This
+`prepare` node has no API/network side effect. **After
 `interrupt`:** only an approved resume may invoke the injected `send_message`
-adapter and set `sent=True`. The production adapter passes the deterministic
+adapter and set `sent=True`. The production adapter passes the saved
 key to the authenticated bot `POST /notify` endpoint. The bot claims that key
 with Redis `SET NX` before Telegram delivery; Redis uses AOF with synchronous
-fsync in compose. A repeated resume therefore returns a deduplicated success
-instead of sending twice. If Telegram fails before delivery completes, the
+fsync in compose. Repeated HTTP resumes are rejected as stale; execution replay
+with the same saved key is deduplicated by the delivery guard. If Telegram
+fails before delivery completes, the
 claim is retained as `unknown`; an automatic retry is blocked until an
 operator reconciles the outcome. Unit tests inject doubles at both network
 boundaries, so no Telegram call occurs offline.
@@ -132,6 +142,14 @@ used because its event tree is broader and more expensive for this minimum SSE
 endpoint. Provider/graph failures finish with a safe `agent_stream_failed` SSE
 event without exception text.
 
+Resume now also requires the exact 32-character `approval_id` returned in
+the preview. Under its private thread lock the endpoint rejects stale IDs,
+repeated resumes and new input while an approval is pending. Telegram uses
+the higher-level `/chats/{id}/approvals/{approval_id}` endpoint, which preserves
+chat ownership, moderation, history and feedback. Legacy raw previews without
+an approval ID belong to the earlier homework contract; start a fresh raw
+thread instead of approving an unidentified action.
+
 The offline endpoint test emitted the following SSE shape using a fake graph:
 
 ```text
@@ -156,7 +174,7 @@ service headers (values intentionally omitted here):
 
 ```powershell
 curl.exe -N -X POST http://localhost:8000/agent/stream -H "Content-Type: application/json" -H "X-Internal-Token: <configured>" -H "X-User-ID: alice" -d '{"thread_id":"midas-alice-license","input":{"messages":[{"role":"user","content":"Передай инженеру проверку лицензии"}]}}'
-curl.exe -N -X POST http://localhost:8000/agent/stream -H "Content-Type: application/json" -H "X-Internal-Token: <configured>" -H "X-User-ID: alice" -d '{"thread_id":"midas-alice-license","resume":true}'
+curl.exe -N -X POST http://localhost:8000/agent/stream -H "Content-Type: application/json" -H "X-Internal-Token: <configured>" -H "X-User-ID: alice" -d '{"thread_id":"midas-alice-license","resume":true,"approval_id":"<exact 32-character ID from preview>"}'
 ```
 
 ## 7. Permission policy

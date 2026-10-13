@@ -33,7 +33,12 @@ fake repositories without inheritance.
 
 `POST /chats/{chat_id}/messages` reuses the project input security validator
 before calling the LLM, so the new stateful endpoint does not bypass the M3
-prompt-injection and encoded-payload guards.
+prompt-injection and encoded-payload guards. It checks service authentication
+before parsing multipart input. It accepts at most four media files and a total raw request body of
+`2 * CHAT_MEDIA_MAX_BYTES + 1 MiB`; the limit counts multipart framing and
+is enforced on streamed requests without `Content-Length` too. Document
+uploads require admin authentication before parsing, one file at most, and a
+51 MiB total raw request body limit (50 MiB document plus framing).
 
 ## Context Strategy
 
@@ -94,44 +99,69 @@ rows.
 
 ## Endpoints
 
-Create a chat:
+Every stateful chat request requires the service token and an authenticated
+principal. Set the app's `INTERNAL_TOKEN` in your local PowerShell session;
+keep its value out of documentation and shell history. Replace the example user
+id and interface with the authenticated caller's values.
 
 ```powershell
-curl -X POST http://localhost:8000/chats `
-  -H "Content-Type: application/json" `
-  -d '{"owner_external_id":"test-1","interface":"cli","system_prompt":"Отвечай как помощник техподдержки MIDAS."}'
+$chatHeaders = @(
+  "-H", "X-Internal-Token: $env:INTERNAL_TOKEN",
+  "-H", "X-User-ID: support-engineer-1",
+  "-H", "X-User-Interface: web"
+)
+```
+
+Create a chat. The owner and interface are taken from the authenticated headers;
+the endpoint does not accept a JSON body:
+
+```powershell
+curl.exe @chatHeaders -X POST http://localhost:8000/chats
+```
+
+Copy the returned `chat_id` into `$chatId`:
+
+```powershell
+$chatId = "<chat-id-from-create-response>"
 ```
 
 Get chat metadata:
 
 ```powershell
-curl http://localhost:8000/chats/<chat_id>
+curl.exe @chatHeaders "http://localhost:8000/chats/$chatId"
 ```
 
-Send a message and receive SSE chunks:
+Send a text message as multipart form data and receive SSE chunks:
 
 ```powershell
-curl -N -X POST http://localhost:8000/chats/<chat_id>/messages `
-  -H "Content-Type: application/json" `
-  -d '{"content":"Привет, меня зовут Аня"}'
+curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
+  -F "content=Please help diagnose this issue"
 ```
 
-Ask a follow-up. The backend will include recent history:
+Attach media using the `media` form field. Repeat that field for each file (up
+to four files per request); the message text remains the `content` field:
 
 ```powershell
-curl -N -X POST http://localhost:8000/chats/<chat_id>/messages `
-  -H "Content-Type: application/json" `
-  -d '{"content":"Как меня зовут?"}'
+curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
+  -F "content=What does this screenshot show?" `
+  -F "media=@C:\path\to\image.png;type=image/png"
+```
+
+Ask a follow-up. The backend includes recent history:
+
+```powershell
+curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
+  -F "content=Can you explain the next step?"
 ```
 
 List messages in chronological order:
 
 ```powershell
-curl "http://localhost:8000/chats/<chat_id>/messages?limit=50"
+curl.exe @chatHeaders "http://localhost:8000/chats/$chatId/messages?limit=50"
 ```
 
 Clear chat history:
 
 ```powershell
-curl -X DELETE http://localhost:8000/chats/<chat_id>/messages
+curl.exe @chatHeaders -X DELETE "http://localhost:8000/chats/$chatId/messages"
 ```

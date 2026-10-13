@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
@@ -8,11 +9,12 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import update
 
 from app.chat.domain import ChatMessage
 from app.chat.feedback import MessageFeedback
 from app.chat.repositories.json_repo import JsonChatRepository
-from app.chat.repositories.pg_models import Base
+from app.chat.repositories.pg_models import Base, BroadcastQueueRow
 from app.chat.repositories.pg_repo import PostgresChatRepository
 from app.chat.repository import ChatRepository
 
@@ -183,11 +185,125 @@ async def test_feedback_is_unique_per_owner_and_message(repository: ChatReposito
 
 @pytest.mark.asyncio
 async def test_broadcast_queue_lifecycle(repository: ChatRepository) -> None:
+    await repository.create_chat("42", "telegram")
     item = await repository.enqueue_broadcast("Maintenance", "telegram")
 
     pending = await repository.list_pending_broadcasts()
-    updated = await repository.update_broadcast_status(item.id, "sent")
-
     assert [queued.id for queued in pending] == [item.id]
-    assert updated is not None and updated.status == "sent"
+    claimed = await repository.claim_broadcasts()
+    assert len(claimed) == 1
+    lease = claimed[0].lease_id
+    assert lease is not None
+    assert [recipient.chat_id for recipient in claimed[0].recipients] == [42]
+    assert await repository.claim_broadcasts() == []
     assert await repository.list_pending_broadcasts() == []
+
+    attempt = uuid4()
+    assert await repository.finish_broadcast(item.id, lease) is None
+    assert await repository.update_broadcast_recipient(item.id, uuid4(), 42, attempt, "in_flight") is None
+    started = await repository.update_broadcast_recipient(item.id, lease, 42, attempt, "in_flight")
+    assert started is not None and started.recipients[0].status == "in_flight"
+    assert await repository.update_broadcast_recipient(item.id, lease, 42, uuid4(), "sent") is None
+    delivered = await repository.update_broadcast_recipient(item.id, lease, 42, attempt, "sent")
+    assert delivered is not None and delivered.recipients[0].status == "sent"
+    finished = await repository.finish_broadcast(item.id, lease)
+    assert finished is not None and finished.status == "sent"
+    assert await repository.claim_broadcasts() == []
+
+
+@pytest.mark.asyncio
+async def test_broadcast_reclaim_preserves_progress_and_quarantines_uncertain_delivery(
+    repository: ChatRepository,
+) -> None:
+    for owner in ("41", "42", "43:7", "43:8"):
+        await repository.create_chat(owner, "telegram")
+    item = await repository.enqueue_broadcast("Maintenance", "telegram")
+    first = (await repository.claim_broadcasts())[0]
+    assert [recipient.chat_id for recipient in first.recipients] == [41, 42, 43]
+    assert first.lease_id is not None
+
+    sent_attempt = uuid4()
+    uncertain_attempt = uuid4()
+    await repository.update_broadcast_recipient(item.id, first.lease_id, 41, sent_attempt, "in_flight")
+    await repository.update_broadcast_recipient(item.id, first.lease_id, 41, sent_attempt, "sent")
+    await repository.update_broadcast_recipient(item.id, first.lease_id, 42, uncertain_attempt, "in_flight")
+
+    expired = datetime.now(timezone.utc) - timedelta(seconds=1)
+    if isinstance(repository, JsonChatRepository):
+        path = repository._broadcast_file()
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["lease_expires_at"] = expired.isoformat()
+        await repository._write_jsonl(path, rows)
+    else:
+        await repository.session.execute(
+            update(BroadcastQueueRow)
+            .where(BroadcastQueueRow.id == item.id)
+            .values(lease_expires_at=expired)
+        )
+        await repository.session.commit()
+
+    reclaimed = (await repository.claim_broadcasts())[0]
+    assert reclaimed.lease_id != first.lease_id
+    assert [recipient.status for recipient in reclaimed.recipients] == ["sent", "unknown", "pending"]
+    assert reclaimed.review_required is True
+    assert [review.id for review in await repository.list_review_broadcasts()] == [item.id]
+    assert (await repository.get_broadcast(item.id)).recipients[1].status == "unknown"
+    assert await repository.finish_broadcast(item.id, first.lease_id) is None
+    assert await repository.update_broadcast_recipient(
+        item.id, first.lease_id, 42, uncertain_attempt, "sent",
+    ) is None
+    assert reclaimed.lease_id is not None
+    final_attempt = uuid4()
+    await repository.update_broadcast_recipient(item.id, reclaimed.lease_id, 43, final_attempt, "in_flight")
+    await repository.update_broadcast_recipient(item.id, reclaimed.lease_id, 43, final_attempt, "sent")
+    finished = await repository.finish_broadcast(item.id, reclaimed.lease_id)
+    assert finished is not None and finished.status == "failed" and finished.review_required
+
+
+@pytest.mark.asyncio
+async def test_legacy_json_processing_broadcast_requires_manual_review(tmp_path) -> None:
+    repository = JsonChatRepository(tmp_path)
+    item = await repository.enqueue_broadcast("Maintenance", "telegram")
+    path = repository._broadcast_file()
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    rows[0]["status"] = "processing"
+    await repository._write_jsonl(path, rows)
+
+    assert await repository.claim_broadcasts() == []
+    stored = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()][0]
+    assert stored["id"] == str(item.id)
+    assert stored["status"] == "failed"
+    assert stored["review_required"] is True
+    assert [review.id for review in await repository.list_review_broadcasts()] == [item.id]
+
+
+@pytest.mark.asyncio
+async def test_broadcast_review_listing_is_bounded_and_paginated(repository: ChatRepository) -> None:
+    await repository.create_chat("unparseable-owner", "telegram")
+    first = await repository.enqueue_broadcast("First", "telegram")
+    second = await repository.enqueue_broadcast("Second", "telegram")
+    claims = await repository.claim_broadcasts(limit=2)
+    assert [claim.id for claim in claims] == [first.id, second.id]
+    for claim in claims:
+        assert claim.lease_id is not None
+        assert claim.review_required is True
+        finished = await repository.finish_broadcast(claim.id, claim.lease_id)
+        assert finished is not None and finished.status == "failed"
+
+    assert [item.id for item in await repository.list_review_broadcasts(limit=1)] == [first.id]
+    assert [item.id for item in await repository.list_review_broadcasts(limit=1, offset=1)] == [second.id]
+    assert await repository.list_review_broadcasts(limit=1, offset=2) == []
+    assert (await repository.get_broadcast(second.id)).invalid_recipient_count == 1
+    assert await repository.get_broadcast(uuid4()) is None
+
+
+@pytest.mark.asyncio
+async def test_json_broadcast_claim_does_not_silently_skip_corrupt_chat(tmp_path) -> None:
+    repository = JsonChatRepository(tmp_path)
+    chat = await repository.create_chat("42", "telegram")
+    item = await repository.enqueue_broadcast("Maintenance", "telegram")
+    repository._chat_file(chat.id).write_text("not valid JSON", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        await repository.claim_broadcasts()
+    assert [queued.id for queued in await repository.list_pending_broadcasts()] == [item.id]

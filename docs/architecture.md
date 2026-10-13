@@ -1,7 +1,7 @@
 # Архитектурный паспорт Support Copilot
 
-Статус: черновик для домашнего задания 3.2 и следующих модулей.
-Последнее обновление: 2026-06-15.
+Статус: реализованный Telegram/agent/RAG-контур и исторические ADR.
+Последнее обновление: 2026-10-13.
 
 ## Область применения
 
@@ -11,9 +11,67 @@ Support Copilot - внутренний ИИ-ассистент для инжен
 связь. Он не принимает решения вместо инженера поддержки: финальный ответ
 проверяет и отправляет человек.
 
-Текущий пользовательский интерфейс - CLI в пакете `support_copilot`. Следующий
-ожидаемый интерфейс - FastAPI с той же сервисной логикой за эндпоинтами
-`/chat`, `/chat/stream`, `/health` и `/ready`.
+Текущие интерфейсы — CLI и Telegram через FastAPI. Telegram всегда использует
+persistent agent внутри существующего chat facade; переключателя режима нет.
+CLI и прямые RAG API сохраняют собственные пути.
+
+## Текущий Telegram-контур
+
+```mermaid
+flowchart LR
+    User[Инженер в Telegram] --> Bot[aiogram: admission и per-user chat binding]
+    Bot --> Chat[FastAPI /chats: auth, budgets, input/media moderation]
+    Chat --> Service[ChatService: turn lock, output moderation, persistence]
+    Service --> Adapter[ChatAgent: private owner + chat thread]
+    Adapter --> Graph[Persistent graph: bounded context, ReAct tools]
+    Graph --> Search[search_knowledge_base: evidence only]
+    Search --> RAG[RAGService.retrieve: production retrieval gates]
+    RAG --> Manuals[(Qdrant: production manual corpus)]
+    Graph --> Saver[(SQLite or existing Postgres checkpoints)]
+    Graph --> Preview[Durable exact recipient + text preview]
+    Preview --> Buttons[Telegram Confirm / Cancel]
+    Buttons --> Approval[Owned chat + exact draft ID + shared turn lock]
+    Approval --> Graph
+    Graph -->|approved only| Notifier[Internal notifier + bot idempotency guard]
+    Service --> History[(JSON or Postgres history + cited sources + feedback)]
+    Service --> Bot
+```
+
+`ChatAgent` — адаптер графа, а не второй chat transport. Все Telegram-запросы
+сохраняют существующие multipart extraction, admission, moderation,
+request-budget lease и feedback. RAG service инъецируется в graph лениво из
+`app.state`; отдельный индекс или synthetic fallback не создаётся. Public
+`POST /rag/retrieve` возвращает те же выбранные evidence fragments без answer
+generation. Несколько поисков используют стабильные citation numbers, а
+финальные sources проходят проверку по реально возвращённым фрагментам.
+
+В checkpoint хранится максимум пять human-turn groups и 24 tool results;
+provider context дополнительно подчиняется `CHAT_CONTEXT_WINDOW` и token
+budget `CHAT_MODEL_CONTEXT_TOKENS - CHAT_RESPONSE_TOKENS -
+CHAT_SAFETY_MARGIN_TOKENS`. При переполнении текущей группы graph возвращает
+явный отказ без модельного вызова. Raw image payload не сохраняется; captions,
+transcripts и document text доступны агенту. У старого chat history graph
+восстанавливает ограниченный контекст при пустом checkpoint.
+
+Telegram owner/interface разрешается сервером в один durable chat, включая
+перезапуск бота. Approval принадлежит точному owner + chat + draft UUID.
+Callback не может изменить recipient/text, повторить исполненное действие или
+одобрить более новый draft. `/clear` удаляет и chat history, и checkpoint под
+тем же turn lock. Send/cancel/unknown delivery status формируется из observed
+tool result без следующего LLM-вызова. Таймаут/disconnect оставляет request
+budget занятым, пока retrieval worker реально не завершится.
+
+Chat repository и checkpoint saver имеют отдельные транзакции. При аварии
+между graph completion и chat append history может отставать; это ограничение
+не следует трактовать как общую exactly-once транзакцию. Delivery защищена
+существующим notifier/bot idempotency guard; неизвестный исход отправки требует
+проверки у получателя. Подробности и offline check: [unified_agent.md](unified_agent.md).
+
+## Исторический эскиз CLI (домашнее задание 3.2)
+
+Следующие исходные слои и ADR фиксируют учебный дизайн июня 2026 года. Метки
+«будущее», JSON knowledge base и API «позже» относятся к этому историческому
+эскизу; текущий Telegram-контур описан выше.
 
 ## Архитектура из четырех слоев
 

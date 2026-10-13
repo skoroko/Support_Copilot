@@ -162,6 +162,8 @@ def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
     assert len(result["sources"]) == 2
     assert set(result["sources"][0]) == {
         "id",
+        "chunk_id",
+        "document_id",
         "file_name",
         "page",
         "printed_page",
@@ -2653,6 +2655,8 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
     assert len(response.json()["sources"]) == 3
     assert set(response.json()["sources"][0]) == {
         "id",
+        "chunk_id",
+        "document_id",
         "file_name",
         "page",
         "printed_page",
