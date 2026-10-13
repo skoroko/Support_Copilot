@@ -8,13 +8,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.datastructures import FormData, UploadFile
 
 from app.admin.auth import require_admin
 from app.chat.agent import StaleApprovalError
 from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage, telegram_chat_id_from_owner
+from app.chat.expansion import ExpansionUnavailableError
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
 from app.chat.media import (
     MediaExtractionError,
@@ -82,6 +83,18 @@ class SystemMessageIn(BaseModel):
 
 class ApprovalIn(BaseModel):
     approved: bool
+
+
+class ExpansionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: StrictBool
+
+    @field_validator("confirmed")
+    @classmethod
+    def require_confirmation(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Explicit confirmation is required")
+        return value
 
 
 def _approval_preview(draft: dict | None) -> dict | None:
@@ -240,7 +253,8 @@ async def send_message(
             latest = await chat_service.list_messages(chat_id, limit=1)
             message_id = str(latest[-1].id) if latest and latest[-1].role == "assistant" else None
             if message_id is not None:
-                metadata = json.dumps({"type": "message", "message_id": message_id}, ensure_ascii=False)
+                metadata = json.dumps({"type": "message", "message_id": message_id,
+                                       "answer_info": (latest[-1].media_refs or {}).get("answer", {})}, ensure_ascii=False)
                 yield f"data: {metadata}\n\n"
             yield 'data: {"type":"done"}\n\n'
             sources = _last_response_sources(chat_service, chat_id)
@@ -273,6 +287,28 @@ async def send_message(
 async def pending_approval(chat_id: UUID, chat_service: ChatServiceDep, principal: PrincipalDep) -> dict:
     await _owned_chat(chat_id, chat_service, principal)
     return {"approval": _approval_preview(await chat_service.pending_approval(chat_id))}
+
+
+@router.get("/chats/{chat_id}/messages/{message_id}/expansion")
+async def preview_expansion(chat_id: UUID, message_id: UUID, chat_service: ChatServiceDep,
+                            principal: PrincipalDep) -> dict:
+    await _owned_chat(chat_id, chat_service, principal)
+    try:
+        return await chat_service.expansion_availability(chat_id, message_id)
+    except ExpansionUnavailableError as exc:
+        raise HTTPException(status_code=409, detail={"code": "expansion_unavailable", "message": str(exc)}) from exc
+
+
+@router.post("/chats/{chat_id}/messages/{message_id}/expand")
+async def confirm_expansion(chat_id: UUID, message_id: UUID, payload: ExpansionIn,
+                            chat_service: ChatServiceDep, principal: PrincipalDep) -> dict:
+    await _owned_chat(chat_id, chat_service, principal)
+    try:
+        return await chat_service.expand_response(chat_id, message_id)
+    except ExpansionUnavailableError as exc:
+        raise HTTPException(status_code=409, detail={"code": "expansion_unavailable", "message": str(exc)}) from exc
+    except ModerationBlockedError as exc:
+        raise HTTPException(status_code=403, detail={"code": "moderation_blocked"}) from exc
 
 
 @router.post("/chats/{chat_id}/approvals/{approval_id}")

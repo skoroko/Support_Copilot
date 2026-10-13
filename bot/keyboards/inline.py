@@ -16,16 +16,27 @@ def feedback_kb(message_id: UUID | str) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def answer_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int) -> InlineKeyboardMarkup:
+def answer_kb(chat_id: UUID | str, message_id: UUID | str, source_count: int, *, expandable: bool = False) -> InlineKeyboardMarkup:
     """Keyboard for a generated answer without placing document data in callbacks."""
 
     token = encode_message_context(chat_id, message_id)
     builder = InlineKeyboardBuilder()
     if source_count > 0:
         builder.button(text=f"📚 Документы ({source_count})", callback_data=f"src:{token}")
+    if expandable:
+        builder.button(text="Подробнее", callback_data=f"exp:a:{token}")
     builder.button(text="👍", callback_data=f"fb:u:{token}")
     builder.button(text="👎", callback_data=f"fb:d:{token}")
-    builder.adjust(1, 2) if source_count > 0 else builder.adjust(2)
+    builder.adjust(*([1] * (int(source_count > 0) + int(expandable)) + [2]))
+    return builder.as_markup()
+
+
+def expansion_kb(chat_id: UUID | str, message_id: UUID | str) -> InlineKeyboardMarkup:
+    token = encode_message_context(chat_id, message_id)
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Подготовить подробный ответ", callback_data=f"exp:y:{token}")
+    builder.button(text="Оставить краткий", callback_data=f"exp:n:{token}")
+    builder.adjust(1)
     return builder.as_markup()
 
 

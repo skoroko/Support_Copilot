@@ -30,17 +30,19 @@ class ChatAgent:
         self.track_worker = track_worker
         self.settings = settings
 
-    async def _invoke(self, value: Any, chat: Chat) -> dict:
+    async def _invoke(self, value: Any, chat: Chat, *, expanded: bool = False) -> dict:
         token = retrieval_worker_tracker.set(self.track_worker)
         try:
             config = self.config(chat)
+            response_tokens = getattr(self.settings, "chat_expanded_response_tokens", 1500) if expanded else getattr(self.settings, "chat_response_tokens", 500)
+            config["configurable"].update(response_tokens=response_tokens, expanded_mode=expanded)
             if self.settings is not None:
                 config["configurable"].update(
                     {
                         "context_budget": max(
                             1,
                             self.settings.chat_model_context_tokens
-                            - self.settings.chat_response_tokens
+                            - response_tokens
                             - self.settings.chat_safety_margin_tokens,
                         ),
                         "history_window": self.settings.chat_context_window,
@@ -110,6 +112,34 @@ class ChatAgent:
         state = await self._invoke(Command(resume=approved), chat)
         return self._result(state, await self.pending(chat))
 
+    async def expansion_claim(self, chat: Chat, message_id: str) -> str | None:
+        snapshot = await self.graph.aget_state(self.config(chat))
+        return (snapshot.values.get("expansion_claims") or {}).get(message_id)
+
+    async def claim_expansion(self, chat: Chat, message_id: str, result_id: str) -> None:
+        # Caller holds the shared chat turn lock. Commit the one-use claim
+        # before a billed call; failures remain claimed across API restarts.
+        snapshot = await self.graph.aget_state(self.config(chat))
+        claims = dict(snapshot.values.get("expansion_claims") or {})
+        claims[message_id] = result_id
+        await self.graph.aupdate_state(self.config(chat), {"expansion_claims": dict(list(claims.items())[-20:])})
+
+    async def expand(self, chat: Chat, content: str) -> dict[str, Any]:
+        state = await self._invoke({"messages": [HumanMessage(content=content)]}, chat, expanded=True)
+        return self._result(state, await self.pending(chat))
+
+    async def redact_output(self, chat: Chat, replacement: str) -> None:
+        """Remove a blocked answer from live context without deleting claims."""
+        snapshot = await self.graph.aget_state(self.config(chat))
+        latest = next((item for item in reversed(snapshot.values.get("messages", []))
+                       if isinstance(item, AIMessage)), None)
+        update = {"sources": [], "answer_evidence": [], "knowledge_status": "unused",
+                  "answer_incomplete": False, "telegram_draft": None}
+        if latest is not None:
+            update["messages"] = [latest.model_copy(update={"content": replacement,
+                                                           "tool_calls": [], "invalid_tool_calls": []})]
+        await self.graph.aupdate_state(self.config(chat), update)
+
     async def clear(self, chat: Chat) -> None:
         await self.checkpointer.adelete_thread(
             self.config(chat)["configurable"]["thread_id"]
@@ -131,4 +161,8 @@ class ChatAgent:
             str(latest.content or "") if latest else "Не удалось подготовить ответ.",
             list(state.get("sources") or []),
         )
-        return {"answer": answer, "sources": sources, "approval": pending}
+        mode = state.get("answer_mode", "brief")
+        return {"answer": answer, "sources": sources, "approval": pending,
+                "answer_info": {"mode": mode, "incomplete": bool(state.get("answer_incomplete")),
+                                "expandable": mode == "brief" and bool(state.get("answer_evidence"))
+                                and state.get("knowledge_status") == "ok" and pending is None}}

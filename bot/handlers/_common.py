@@ -3,20 +3,21 @@ from __future__ import annotations
 import asyncio
 import re
 import time
-import uuid
 from collections.abc import AsyncIterator, Callable
+from contextlib import suppress
 from html import escape
 from typing import Any
 from uuid import UUID
 
 import httpx
 from aiogram.enums import ChatAction, ChatType, ParseMode
-from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
+from aiogram.exceptions import TelegramAPIError, TelegramBadRequest, TelegramRetryAfter
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.text_decorations import add_surrogates, remove_surrogates
 
 from bot.keyboards.inline import answer_kb, approval_kb
 from bot.services.backend_client import BackendClient, BackendStreamError, StreamReplace
+from bot.text_chunks import split_text
 
 BACKEND_EXCEPTIONS = (httpx.HTTPError,)
 EDIT_DEBOUNCE_SECONDS = 0.8
@@ -243,6 +244,33 @@ async def _typing(message: Message, stop: asyncio.Event) -> None:
             continue
 
 
+async def _stop_typing(stop: asyncio.Event, task: asyncio.Task, *, cancel: bool = False) -> None:
+    """Drain requests before delivery; cancel only when abandoning the turn."""
+    stop.set()
+    if cancel:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
+    else:
+        await task
+
+
+async def _delete_waiting_response(placeholder: Message | None) -> None:
+    delete = getattr(placeholder, "delete", None)
+    if callable(delete):
+        with suppress(TelegramAPIError):
+            await delete()
+
+
+async def _edit_answer(message: Message, text: str, **kwargs) -> None:
+    """An unchanged Telegram message is already delivered, not a send failure."""
+    try:
+        await message.edit_text(text, **kwargs)
+    except TelegramBadRequest as exc:
+        if "message is not modified" not in exc.message.lower():
+            raise
+
+
 def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKeyboardMarkup | None:
     draft = getattr(backend, "last_approval", lambda _id: None)(chat_id)
     if isinstance(draft, dict) and draft.get("approval_id"):
@@ -250,7 +278,9 @@ def response_feedback_markup(backend: BackendClient, chat_id: UUID) -> InlineKey
     message_id = backend.last_response_message_id(chat_id)
     if message_id is None:
         return None
-    return answer_kb(chat_id, message_id, source_document_count(backend.last_response_sources(chat_id)))
+    info = getattr(backend, "last_answer_info", lambda _id: {})(chat_id)
+    return answer_kb(chat_id, message_id, source_document_count(backend.last_response_sources(chat_id)),
+                     expandable=bool(isinstance(info, dict) and info.get("expandable")))
 
 
 async def stream_to_chat(
@@ -260,12 +290,13 @@ async def stream_to_chat(
     reply_markup_factory: Callable[[], InlineKeyboardMarkup | None] | None = None,
     sources_factory: Callable[[], list[dict]] | None = None,
     notice_factory: Callable[[], str] | None = None,
+    cleanup_waiting_on_error: bool = False,
 ) -> str:
-    draft_id = uuid.uuid4().int & 0xFFFFFFFF
     buffer = ""
     last_edit_at = 0.0
     draft_paused_until = 0.0
-    editable_response = await _start_editable_response(message)
+    placeholder = await _start_editable_response(message)
+    editable_response = None
     stop_typing = asyncio.Event()
     typing_task = asyncio.create_task(_typing(message, stop_typing))
     try:
@@ -276,15 +307,22 @@ async def stream_to_chat(
             else:
                 if not delta:
                     continue
-                if not buffer:
-                    stop_typing.set()
                 buffer += delta
+            if buffer.strip() and placeholder is not None:
+                # Edits/drafts do not guarantee clearing typing. Drain any
+                # in-flight action, then send a NEW answer before editing it.
+                await _stop_typing(stop_typing, typing_task)
+                editable_response = await send_answer(message, split_text(buffer)[0], parse_mode=None)
+                await _delete_waiting_response(placeholder)
+                placeholder = None
+                last_edit_at = time.monotonic()
+                continue
             now = time.monotonic()
             if not buffer.strip() or now < draft_paused_until or now - last_edit_at < EDIT_DEBOUNCE_SECONDS:
                 continue
             if editable_response is not None:
                 try:
-                    await editable_response.edit_text(buffer)
+                    await _edit_answer(editable_response, split_text(buffer)[0])
                     last_edit_at = now
                     continue
                 except TelegramRetryAfter as exc:
@@ -292,14 +330,13 @@ async def stream_to_chat(
                     continue
                 except TelegramAPIError:
                     editable_response = None
-            try:
-                await message.bot.send_message_draft(chat_id=message.chat.id, text=buffer, draft_id=draft_id)
-                last_edit_at = now
-            except TelegramRetryAfter as exc:
-                draft_paused_until = time.monotonic() + exc.retry_after
-    finally:
-        stop_typing.set()
-        await typing_task
+            # Without an editable response, buffer until the final new message.
+        await _stop_typing(stop_typing, typing_task)
+    except (Exception, asyncio.CancelledError):
+        await _stop_typing(stop_typing, typing_task, cancel=True)
+        if cleanup_waiting_on_error:
+            await _delete_waiting_response(placeholder)
+        raise
 
     final_text = buffer or "Backend вернул пустой ответ."
     if notice_factory is not None:
@@ -312,13 +349,14 @@ async def stream_to_chat(
     final_html = escape(final_text) if _has_approval_buttons(reply_markup) else _render_telegram_html(final_text)
     if len(final_text) > 1800:
         await send_rendered_answer(message, final_text, reply_markup=reply_markup, editable=editable_response)
+        await _delete_waiting_response(placeholder)
         return buffer
     if editable_response is not None:
         try:
             if reply_markup is None:
-                await editable_response.edit_text(final_html, parse_mode=ParseMode.HTML)
+                await _edit_answer(editable_response, final_html, parse_mode=ParseMode.HTML)
             else:
-                await editable_response.edit_text(
+                await _edit_answer(editable_response,
                     final_html,
                     parse_mode=ParseMode.HTML,
                     reply_markup=reply_markup,
@@ -335,6 +373,7 @@ async def stream_to_chat(
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup,
         )
+    await _delete_waiting_response(placeholder)
     return buffer
 
 
@@ -342,15 +381,13 @@ render_stream = stream_to_chat
 
 
 async def send_rendered_answer(message: Message, text: str, *, reply_markup=None, editable=None) -> None:
-    # Telegram counts UTF-16 units. 1800 Python characters fit even if every
-    # character is an astral emoji. Split before escaping/adding HTML tags.
-    chunks = [text[index:index + 1800] for index in range(0, len(text), 1800)] or [""]
+    chunks = split_text(text)
     render = escape if _has_approval_buttons(reply_markup) else _render_telegram_html
     for index, chunk in enumerate(chunks):
         markup = reply_markup if index == len(chunks) - 1 else None
         if index == 0 and editable is not None:
             try:
-                await editable.edit_text(render(chunk), parse_mode=ParseMode.HTML, reply_markup=markup)
+                await _edit_answer(editable, render(chunk), parse_mode=ParseMode.HTML, reply_markup=markup)
                 continue
             except TelegramAPIError:
                 pass
@@ -383,10 +420,10 @@ async def send_answer(message: Message, text: str, **kwargs):
 
 
 async def _start_editable_response(message: Message) -> Message | None:
-    """Create one bot response to update in-place while SSE tokens arrive.
+    """Create temporary progress status, removed after a NEW answer is sent.
 
-    The fallback intentionally keeps the old draft/final-message path for tests
-    and for transports that cannot return an editable Telegram message.
+    A transport without message objects buffers until its final send instead
+    of relying on edits or ephemeral drafts to clear Telegram typing.
     """
 
     send = getattr(message, "reply" if is_group_chat(message) else "answer", None)

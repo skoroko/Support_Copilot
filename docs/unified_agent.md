@@ -23,7 +23,7 @@
 - `bot`: прежний chat transport/SSE и feedback; added approval callback,
   `/history`, recovery preview при `/start`, полный split длинного текста.
 
-Новых runtime dependencies, model IDs, pricing или env variables нет.
+Новых runtime dependencies, model IDs или pricing нет. Настройки ответа: `CHAT_RESPONSE_TOKENS=500`, `CHAT_EXPANDED_RESPONSE_TOKENS=1500`.
 `AGENT_CHECKPOINTER=sqlite` — durable local default; production может использовать
 existing PostgreSQL saver. Memory saver подходит для offline tests/demo и
 не сохраняет pending после перезапуска процесса.
@@ -57,8 +57,65 @@ approve/cancel/error завершает turn детерминированным 
 Provider input дополнительно подчиняется `CHAT_CONTEXT_WINDOW` и configured
 token budget; удаляются целые human/tool groups, а переполнение текущей группы
 даёт явный ответ без LLM call. Default model имеет output cap
-`CHAT_RESPONSE_TOKENS`. Production retrieval сохраняет не более пяти выбранных
+`CHAT_RESPONSE_TOKENS` (по умолчанию 500). Production retrieval сохраняет не более пяти выбранных
 fragments на вызов, агент ограничивает context 8 000 символами на поиск.
+
+Перед финализацией агент проверяет provider `finish_reason=length`, пустой ответ
+и смешение кириллицы/латиницы внутри слова. Детерминированное сокращение сохраняет
+законченные предложения, пункты, технические литералы и цитаты, удаляет оборванный
+Markdown и дефектную прозу. Дополнительного LLM-вызова для исправления нет.
+Заголовки и отдельные обозначения параметров сохраняются только вместе с полным
+следующим объяснением, пунктом, блоком кода или строкой таблицы; оборванный хвост
+с его заголовком удаляется. Prompt просит писать каждый параметр как
+`**обозначение** — смысл` в одном законченном пункте и начинать сразу с ответа.
+Truncated tool call не создаёт approval. Метаданные завершения сохраняются.
+Уведомление различает сокращение по лимиту длины и удаление дефектного текста.
+Оно предлагает «Подробнее» только при доступном brief expansion; иначе отдельный
+вопрос о нужном пункте. Формулировка не приписывает неполноту вопросу пользователя.
+Текст уведомления сохраняется вместе с ответом.
+
+RAG возвращает фрагменты, а модель формулирует ответ. Prompt требует повторного
+поиска и для технических уточнений, ссылку именно на подтверждающий фрагмент,
+условия и метку «Пояснение» для выводов сверх прямого текста, отдельные ссылки
+при расхождении документов. Citation grounding проверяет номера/наличие sources
+и перенумерацию; это не семантическая проверка каждого утверждения. Модель может
+нарушить prompt, в том числе пропустить поиск и ответить по истории без источников.
+Усиление prompt снижает этот риск, но не является доказательством достоверности.
+
+Кнопка «Подробнее» доступна для последнего краткого ответа с надёжным evidence.
+Она сначала показывает уведомление о дополнительном запросе и расходе токенов;
+только «Подготовить подробный ответ» запускает отдельную генерацию с ceiling
+`CHAT_EXPANDED_RESPONSE_TOKENS` (1 500), `tool_choice=none` и прежними доказательствами.
+Неожиданные tool calls отклоняются. Сохраняются исходные номера evidence до
+перенумерации brief citations. Недоверенные фрагменты передаются в human data,
+фиксированные правила — в system. Отмена и preview не вызывают LLM.
+
+`GET /chats/{chat}/messages/{message}/expansion` возвращает доступность и ceiling;
+`POST .../expand` принимает только strict `confirmed: true`. Ownership проверяется
+до graph. Под shared turn lock проверяются точный persisted UUID, актуальность,
+режим и отсутствие approval. Перед генерацией checkpoint получает одноразовый
+claim и result UUID (последние 20 claims). Повтор возвращает сохранённый ответ
+или 409 без новой генерации, включая рестарт после сбоя. Expanded/approval/
+no-evidence/outage/moderated ответы не предлагают новое раскрытие.
+Миграции не нужны: metadata находится в существующем JSON(B) `media_refs`.
+Claims не передаются модели; graph и chat storage имеют отдельные транзакции.
+Single API worker остаётся эксплуатационным ограничением shared locks.
+Токеновый потолок не оценивает стоимость input+output; цены и model IDs прежние.
+
+```mermaid
+flowchart TD
+    Q[Вопрос] --> R[Поиск evidence]
+    R --> B[Краткий ответ: ceiling 500]
+    B --> C[Детерминированное завершение и citations]
+    C --> D[Подробнее]
+    D --> P[Уведомление о дополнительном расходе]
+    P --> N[Оставить краткий: без LLM]
+    P --> Y[Подготовить подробный ответ]
+    Y --> O[Owner + UUID + актуальность + shared lock]
+    O --> K[Durable one-use claim до вызова]
+    K --> E[Один ответ: ceiling 1500, без tools]
+    E --> M[Moderation + сохранение текста и sources]
+```
 
 Raw image bytes не попадают в checkpoint; captions, voice transcripts и
 extracted document text проходят прежний media path. Фото без описания
@@ -105,6 +162,127 @@ production RAG selection с injected retriever. Telegram sender заменён
 11. public retrieval API без answer generation и с 503 для unavailable.
 
 ## Результаты проверки 2026-10-13
+
+Проверка всего накопленного изменения перед публикацией:
+
+- `.venv/Scripts/python -m pytest tests -q` — **740 passed, 11 skipped**.
+  Пропуски PostgreSQL contract tests требуют выделенной тестовой БД.
+- Differential Ruff по всем 31 изменённым Python-файлам — **0 новых замечаний**:
+  15 baseline / 11 current. `git diff --check` — PASS.
+- В составе 36 файлов нет `.env`, runtime data/cache или TEMP; `.env` игнорируется,
+  сканирование изменённых файлов не обнаружило секретных credential patterns.
+
+Ожидание подтверждённого подробного ответа:
+
+- Полный набор `tests/bot` — **178 passed**; differential Ruff по трём
+  затронутым Python-файлам — **0 новых замечаний**; whitespace PASS.
+- Exp:y переиспользует общий renderer с одним expand_response и StreamReplace.
+  Preview/cancel не запускают ожидание или генерацию; callback ack первым.
+  Sources/feedback остаются в последней части без повторного expansion.
+- Real aiogram CallbackQuery/Message + локальный clear-on-send BaseSession:
+  private/group × short/long, дополнительно HTTP timeout — **6 PASS**. Проверены
+  placeholder/typing до результата, drain/newsend/delete ordering, точный footer,
+  one backend call, отсутствие оставшихся tasks и error без кнопок. Cancellation
+  во время backend wait/drain покрыта dispatcher tests.
+- API/state flow, workflow diagram, caps и `.env.example` не менялись.
+- Docker build/recreate bot — PASS; тот же six-scenario runtime smoke в новом
+  контейнере — PASS. Read-only getMe — PASS, `/ready` 200/ok (Redis/RAG up).
+  Backend и datastore container IDs сохранены; live Telegram sends/LLM calls нет.
+
+Уточнение пользователя: typing сохраняется при подготовке и исчезает с ответом:
+
+- `.venv/Scripts/python -m pytest tests/bot -q` — PASS: **172 passed**.
+- Differential Ruff по двум изменённым Python-файлам — **0 новых замечаний**;
+  whitespace PASS. API/state flow, token caps и `.env.example` не менялись,
+  workflow diagram актуальна.
+- Реальные aiogram Message + локальный BaseSession, моделирующий typing clear
+  только при SendMessage: private/group × short/long — PASS. Во время placeholder
+  typing активен; in-flight request завершается до нового body message, после
+  него typing выключен, placeholder удалён, полный текст/last-part buttons
+  сохранены. Ошибка unchanged edit не дублирует первую часть. Нет live sends/LLM.
+- Unit coverage также проверяет отмену во время drain, ошибки send/delete,
+  replacement/empty, group reply и fallback без редактируемого placeholder.
+- `docker compose build app` и `docker compose up -d --no-deps --force-recreate bot`
+  — PASS. Тот же aiogram runtime smoke внутри нового bot-контейнера — PASS во
+  всех четырёх сценариях; read-only Telegram getMe — PASS. Backend `/ready`
+  200/ok, Redis/RAG up. App и все datastore container IDs сохранены.
+
+Предыдущая проверка статуса (typing отключался; заменено уточнением выше), причины сокращения и атрибуции:
+
+- `.venv/Scripts/python -m pytest tests -q` — PASS: **720 passed, 11 skipped**.
+  Профильный набор graph/quality/streaming/burst/expansion/menu — **160 passed**;
+  после эквивалентной lint-правки условия graph/expansion — **60 passed**.
+- Differential Ruff по шести изменённым Python-файлам — **0 новых замечаний**;
+  `git diff --check` — PASS. `.env.example` актуален, caps и публичные контракты
+  не менялись; workflow diagram не требует изменений.
+- Контейнерный offline smoke — PASS: actual graph/ChatAgent caps 500/1500,
+  правильные brief/expanded notices, 0 automatic repair calls. Bot renderer
+  с `StreamReplace` использует один editable placeholder, 0 typing calls и
+  0 pending tasks; no live sends. Ошибки/отмена/fallback покрыты unit tests.
+- Docker build/recreate `app bot` — PASS; `/ready` внутри app: 200/ok,
+  Redis/RAG up. PostgreSQL/Qdrant/Redis/Phoenix container IDs сохранены.
+  Read-only Telegram `getMe` — PASS; реальных сообщений не отправляли.
+- Read-only metadata/manual diagnostic: прежний длинный ответ имел length stop
+  и не вызывал новый поиск; ответ по m вызывал поиск. Диапазон/рекомендации были
+  в CHM evidence, а итоговая ссылка указывала PDF. Проверка номеров источников
+  не обнаруживает такую семантическую ошибку; уточнение prompt не гарантирует
+  её устранения во всех будущих ответах. Чужие данные во внешнюю LLM не отправлялись.
+
+Сохранение обозначений параметров и структуры длинного ответа:
+
+- `.venv/Scripts/python.exe -X utf8 -m pytest tests -q` — PASS:
+  **709 passed, 11 skipped**; профильный набор compaction/graph/expansion/bot —
+  **108 passed**. Differential Ruff — **0 новых замечаний**; whitespace — PASS.
+- Воспроизведение: `### E50ref`, `### Eoedref`, `### Eurref` сохраняются с
+  законченными пояснениями; одинокий заголовок и оборванный диапазон `m`
+  удаляются. Проверены numbered/bold/code labels, decimal formulas, таблицы,
+  Markdown внутри code и неизменность полного текста при Telegram chunking.
+- Docker build/recreate `app bot` — PASS, datastore containers сохранены.
+  SDK HTTP-stub runtime — PASS: параметрические заголовки сохранены после
+  length-stop, caps 500/1 500, extra repair calls 0. Renderer runtime — PASS:
+  heading/body пары, literal text и кнопки на последней части. `/ready`: `ok`,
+  Redis/RAG `up`, Telegram API доступен. Реальных LLM-вызовов и Telegram-отправок нет.
+
+Предыдущая проверка экономной политики и подтверждённого раскрытия:
+
+- `.venv/Scripts/python.exe -X utf8 -m pytest tests -q` — PASS:
+  **691 passed, 11 skipped** (PostgreSQL contract tests требуют отдельной БД).
+- `tests/test_async_llm.py` — PASS: **7 passed**. Нестабильное сравнение времени
+  заменено прямым измерением перекрытия вызовов и ограничения concurrency;
+  два предшествующих полных прогона падали только на старом timing assertion.
+- `.venv/Scripts/python.exe -X utf8 -m pytest tests/bot/test_expansion.py tests/bot/test_admin_feedback.py tests/chat/test_expansion.py tests/unit/test_answer_quality.py tests/chat/test_unified_agent.py tests/test_agent_persistent.py tests/chat/test_service_context.py -q`
+  — PASS: **132 passed** (offline, mocked provider/Telegram transport).
+- Differential Ruff: **11 baseline, 11 current, 0 новых замечаний**;
+  `git diff --check` — PASS.
+- Проверены strict consent, preview/cancel без LLM, caps/context reservation,
+  owner/group isolation, shared-lock concurrency, SQLite restart/failure,
+  clear, исходные citation IDs, trust boundary evidence и aiogram Dispatcher.
+- Docker build/recreate `app bot` — PASS, контейнеры данных сохранены.
+  Runtime smoke SDK с HTTP stub — PASS: реальные request caps 500/1 500,
+  ноль дополнительных вызовов для compaction, `tool_choice=none` при раскрытии;
+  `/ready`: `ok`, Redis/RAG `up`. Внешних LLM-вызовов и отправок в Telegram нет.
+- Общий production aiogram router + admission runtime smoke — PASS:
+  cost panel, preview/cancel (0 generation calls), confirm (1 mocked call),
+  denied user. Telegram API доступен; реальные сообщения не отправлялись.
+
+Историческая проверка прежней политики 2 000 + repair (заменена DEC-2026-10-13-004):
+
+- `.venv/Scripts/python.exe -X utf8 -m pytest tests -q` — PASS:
+  **672 passed, 11 skipped** (PostgreSQL contract tests требуют отдельной БД).
+- Профильный набор `tests/unit/test_answer_quality.py`,
+  `tests/test_agent_persistent.py`, `tests/chat/test_unified_agent.py`,
+  `tests/chat/test_service_context.py` — PASS: **92 passed**.
+- Differential Ruff по затронутым Python-файлам — **0 новых замечаний**;
+  `git diff --check` — PASS.
+- Docker build/recreate `app bot` — PASS; `/ready`: `ok`, Redis/RAG `up`.
+  Идентификаторы контейнеров данных не изменились. Runtime smoke в контейнере
+  с реальными LangChain/OpenAI SDK и HTTP stub — PASS: cap 2 000,
+  `tool_choice=none` при repair, сохранённый `finish_reason=stop` и обозначения.
+  Внешних LLM-вызовов и Telegram-отправок в smoke нет. Повторная отправка
+  сохранённого диалога внешнему провайдеру не выполнялась: auto-review отклонил
+  чувствительный egress.
+
+Первоначальная проверка объединения RAG/agent (до меню и исправления ответов):
 
 - `.venv/Scripts/python.exe -X utf8 -m pytest tests -q` — PASS:
   **628 passed, 11 skipped** (PostgreSQL repository checks требуют

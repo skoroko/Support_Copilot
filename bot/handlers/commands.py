@@ -9,9 +9,11 @@ from bot.handlers._common import (
     BACKEND_EXCEPTIONS,
     backend_error_message,
     get_telegram_chat_id,
+    message_owner_external_id,
     send_rendered_answer,
 )
-from bot.keyboards.inline import approval_kb
+from bot.handlers.menu import HELP, HOME, cancel_reset_confirmation, render_pending
+from bot.keyboards.menu import back_kb, home_kb
 from bot.services.backend_client import BackendClient
 
 router = Router()
@@ -19,42 +21,34 @@ router = Router()
 
 @router.message(Command("start"))
 async def start(message: Message, backend: BackendClient) -> None:
+    cancel_reset_confirmation(message)
     try:
         chat_id = await get_telegram_chat_id(message, backend)
     except BACKEND_EXCEPTIONS as exc:
         await message.answer(backend_error_message(exc))
         return
 
-    await message.answer(
-        "Support Copilot подключен.\n\n"
-        "Пишите вопрос обычным сообщением, используйте "
-        "/clear для очистки истории и /help для списка команд."
-    )
+    if message.from_user:
+        await send_rendered_answer(message, HOME, reply_markup=home_kb(message.from_user.id))
     if isinstance(backend, BackendClient):
         try:
             draft = await backend.pending_approval(chat_id)
-            if draft:
-                await send_rendered_answer(message, backend.last_response_notice(chat_id),
-                                           reply_markup=approval_kb(chat_id, draft["approval_id"]))
+            if draft and message.from_user:
+                await render_pending(message, chat_id, message.from_user.id, draft)
         except BACKEND_EXCEPTIONS as exc:
             await message.answer(backend_error_message(exc))
 
 
 @router.message(Command("help"))
 async def help_command(message: Message) -> None:
-    await message.answer(
-        "Команды:\n"
-        "/start - создать чат и начать работу\n"
-        "/clear - очистить историю текущего чата\n"
-        "/history - последние сообщения\n"
-        "/help - показать эту справку"
-    )
+    await send_rendered_answer(message, HELP, reply_markup=back_kb(message.from_user.id) if message.from_user else None)
 
 
 @router.message(Command("clear"))
 async def clear(message: Message, backend: BackendClient) -> None:
+    cancel_reset_confirmation(message)
     # A debounced question must reach the backend before its history is wiped.
-    await flush_pending(message.chat.id, backend)
+    await flush_pending(message.chat.id, backend, owner_key=message_owner_external_id(message))
     try:
         chat_id = await get_telegram_chat_id(message, backend)
         await backend.clear_messages(chat_id)

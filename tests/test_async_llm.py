@@ -5,7 +5,10 @@ import time
 import unittest
 
 from support_copilot.config import SupportCopilotSettings
-from support_copilot.infrastructure.async_llm import AsyncLLMClient, build_demo_async_client
+from support_copilot.infrastructure.async_llm import (
+    AsyncLLMClient,
+    build_demo_async_client,
+)
 
 
 class AsyncLLMClientTests(unittest.IsolatedAsyncioTestCase):
@@ -52,20 +55,31 @@ class AsyncLLMClientTests(unittest.IsolatedAsyncioTestCase):
         self.assertLess(first_token_at - start, total_time)
         self.assertIn("Support Copilot", "".join(chunks))
 
-    async def test_async_batch_is_faster_than_sync_shape_at_higher_concurrency(self) -> None:
+    async def test_batch_overlaps_provider_calls_without_exceeding_concurrency(self) -> None:
         prompts = [f"Промпт {index}" for index in range(10)]
-        sequential = build_demo_async_client(concurrency=1, delay_sec=0.02)
-        parallel = build_demo_async_client(concurrency=5, delay_sec=0.02)
+        for concurrency in (1, 5):
+            client = build_demo_async_client(concurrency=concurrency, delay_sec=0)
+            completions = client.providers[0].client.chat.completions
+            original_create = completions.create
+            active = peak = 0
 
-        start = time.perf_counter()
-        await sequential.batch_chat(prompts, concurrency=1)
-        sequential_time = time.perf_counter() - start
+            async def tracked_create(_create=original_create, **params):
+                nonlocal active, peak
+                active += 1
+                peak = max(peak, active)
+                try:
+                    # The demo provider yields to the event loop even at zero
+                    # delay, so overlap can be measured without wall-clock noise.
+                    return await _create(**params)
+                finally:
+                    active -= 1
 
-        start = time.perf_counter()
-        await parallel.batch_chat(prompts, concurrency=5)
-        parallel_time = time.perf_counter() - start
-
-        self.assertLess(parallel_time, sequential_time / 2)
+            completions.create = tracked_create
+            results = await client.batch_chat(prompts, concurrency=concurrency)
+            self.assertEqual(len(results), len(prompts))
+            self.assertTrue(all(isinstance(result, str) for result in results))
+            self.assertEqual(peak, concurrency)
+            self.assertEqual(active, 0)
 
     def test_semaphore_is_instance_attribute_not_method_local(self) -> None:
         client = build_demo_async_client(concurrency=3, delay_sec=0)

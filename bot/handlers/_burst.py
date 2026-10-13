@@ -99,10 +99,11 @@ async def deliver_now(item: BurstItem, backend: BackendClient) -> None:
     await _deliver(batch, backend)
 
 
-async def flush_pending(chat_id: int, backend: BackendClient) -> None:
+async def flush_pending(chat_id: int, backend: BackendClient, *, owner_key: str | None = None) -> None:
     """Deliver queued batches immediately (used by /clear to keep update order)."""
 
-    keys = [key for key, batch in _pending.items() if batch.chat_id == chat_id]
+    keys = [key for key, batch in _pending.items()
+            if batch.chat_id == chat_id and (owner_key is None or key == owner_key)]
     for key in keys:
         batch = _pending.pop(key, None)
         if batch is None:
@@ -113,6 +114,13 @@ async def flush_pending(chat_id: int, backend: BackendClient) -> None:
             await _deliver(batch, backend)
         except Exception:
             logger.exception("burst_flush_failed", chat_id=chat_id)
+
+
+def discard_pending(owner_key: str) -> None:
+    """Drop only this owner's unsent batch when they start a new dialog."""
+    batch = _pending.pop(owner_key, None)
+    if batch is not None and batch.task is not None:
+        batch.task.cancel()
 
 
 def _enqueue(owner_key: str, chat_id: int, backend: BackendClient, item: BurstItem) -> None:

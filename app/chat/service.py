@@ -275,6 +275,8 @@ class ChatService:
         media_refs: dict[str, Any] | None = None,
         input_moderated: bool = False,
         rag_service: Any | None = None,
+        expanded_from: UUID | None = None,
+        result_message_id: UUID | None = None,
     ) -> AsyncIterator[str | StreamReplace]:
         chat = await self.repository.get_chat(chat_id)
         if chat is None:
@@ -331,6 +333,7 @@ class ChatService:
         rag_sources: list[dict[str, Any]] = []
         streamed_draft = ""
         blocked_screen: ModerationResult | None = None
+        answer_info = {"mode": "expanded" if expanded_from else "brief", "incomplete": False, "expandable": False}
         started_at = time.perf_counter()
         use_agent = self.agent is not None and chat.interface == "telegram"
         if use_agent:
@@ -338,8 +341,10 @@ class ChatService:
             # captions/transcripts/document text; raw image bytes stay out of
             # durable checkpoints, as they do in the chat repository.
             agent_content = self._rag_question(user_content, media_refs)
-            result = (await self.agent.turn(chat, agent_content, list(retrieval_history)) if agent_content is not None
+            result = (await self.agent.expand(chat, agent_content) if expanded_from else
+                      await self.agent.turn(chat, agent_content, list(retrieval_history)) if agent_content is not None
                       else {"answer": MEDIA_IMAGE_NO_TEXT_REPLY, "sources": [], "approval": None})
+            answer_info = result.get("answer_info", answer_info)
             assistant_parts = [str(result.get("answer") or RAG_EMPTY_ANSWER)]
             rag_sources = self._citation_array(result.get("sources"))
             self._last_approvals[chat_id] = result.get("approval")
@@ -404,11 +409,17 @@ class ChatService:
             self._last_response_sources[chat_id] = rag_sources
         else:
             visible_content = MODERATION_OUTPUT_REPLACEMENT
+            answer_info = {"mode": answer_info["mode"], "incomplete": False, "expandable": False}
             self._last_response_sources[chat_id] = []
             self._last_approvals[chat_id] = None
             if use_agent:
                 # A blocked preview cannot be approved using a hidden draft.
-                await self.agent.clear(chat)
+                # Expansion cannot create drafts; keep its durable claim even
+                # if moderation or the subsequent history write fails.
+                if expanded_from:
+                    await self.agent.redact_output(chat, MODERATION_OUTPUT_REPLACEMENT)
+                else:
+                    await self.agent.clear(chat)
 
         assistant_message = ChatMessage(
             chat_id=chat_id,
@@ -417,7 +428,10 @@ class ChatService:
             rag_sources=rag_sources if output_result.allowed else [],
             tokens=count_tokens([{"role": "assistant", "content": visible_content}]),
             latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+            media_refs={"answer": answer_info},
         )
+        if result_message_id is not None:
+            assistant_message.id = result_message_id
         append_turn = getattr(self.repository, "append_turn", None)
         if append_turn is not None:
             await append_turn(chat_id, user_message, assistant_message)
@@ -450,6 +464,14 @@ class ChatService:
             if self.agent is not None and chat is not None:
                 await self.agent.clear(chat)
             await self.repository.soft_delete_messages(chat_id)
+
+    async def expansion_availability(self, chat_id: UUID, message_id: UUID) -> dict:
+        from app.chat.expansion import expansion_availability
+        return await expansion_availability(self, chat_id, message_id)
+
+    async def expand_response(self, chat_id: UUID, message_id: UUID) -> dict:
+        from app.chat.expansion import expand_response
+        return await expand_response(self, chat_id, message_id)
 
     def last_approval(self, chat_id: UUID) -> dict[str, str] | None:
         return self._last_approvals.get(chat_id)

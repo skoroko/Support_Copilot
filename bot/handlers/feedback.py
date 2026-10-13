@@ -49,9 +49,17 @@ async def save_feedback(callback: CallbackQuery, backend: BackendClient) -> None
         await callback.answer("Не удалось сохранить оценку. Попробуйте позже.", show_alert=True)
         return
 
-    await callback.message.edit_reply_markup(
-        reply_markup=sources_kb(chat_id, message_id, source_document_count(sources))
-    )
+    # Retain the exact response's documents and expansion button after voting.
+    markup = getattr(callback.message, "reply_markup", None)
+    if markup is not None:
+        rows = [[button for button in row if not (button.callback_data or "").startswith("fb:")]
+                for row in markup.inline_keyboard]
+        rows = [row for row in rows if row]
+        from aiogram.types import InlineKeyboardMarkup
+        markup = InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
+    else:
+        markup = sources_kb(chat_id, message_id, source_document_count(sources))
+    await callback.message.edit_reply_markup(reply_markup=markup)
     await callback.answer("Спасибо за оценку!")
 
 

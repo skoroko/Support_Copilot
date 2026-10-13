@@ -15,6 +15,7 @@ import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import START, StateGraph
 from starlette.requests import ClientDisconnect
@@ -32,6 +33,7 @@ from app.services.agent_persistent import (
     agent_lifespan,
     build_agent,
 )
+from app.services.answer_quality import ANSWER_QUALITY_UNAVAILABLE
 
 
 class _ScriptedModel:
@@ -40,10 +42,104 @@ class _ScriptedModel:
     def __init__(self, responses: list[AIMessage]):
         self._responses = iter(responses)
         self.received: list[list[object]] = []
+        self.invocation_kwargs: list[dict] = []
 
     async def ainvoke(self, messages, **_kwargs) -> AIMessage:
         self.received.append(list(messages))
+        self.invocation_kwargs.append(_kwargs)
         return next(self._responses)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "broken",
+    [
+        AIMessage(content="Параметры:\n- **c, φ, ψ", response_metadata={"finish_reason": "length"}),
+        AIMessage(content="Как это понимать практичесki", response_metadata={"finish_reason": "stop"}),
+    ],
+)
+async def test_bad_final_answer_is_compacted_without_regeneration(broken):
+    model = _ScriptedModel([broken])
+    graph = build_agent(InMemorySaver(), model=model)
+    result = await graph.ainvoke({"messages": [HumanMessage(content="Объясни параметры модели")]}, _config("compact"))
+    assert result["messages"][-1].content == ANSWER_QUALITY_UNAVAILABLE
+    assert result["messages"][-1].response_metadata == broken.response_metadata
+    assert result["answer_incomplete"] is True
+    assert result["iteration_count"] == 1
+    assert len(model.received) == 1
+    assert model.invocation_kwargs == [{"max_tokens": 500}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("second", [
+    AIMessage(content="Вновь оборванный", response_metadata={"finish_reason": "length"}),
+    AIMessage(content="Опять практичесki", response_metadata={"finish_reason": "stop"}),
+    AIMessage(content="", response_metadata={"finish_reason": "stop"}),
+    RuntimeError("provider temporarily unavailable"),
+])
+async def test_quality_failure_is_explicit_and_never_retries(second):
+    model = SimpleNamespace(ainvoke=AsyncMock(side_effect=[
+        AIMessage(content="Параметры **", response_metadata={"finish_reason": "length"}), second,
+    ]))
+    graph = build_agent(InMemorySaver(), model=model)
+    result = await graph.ainvoke({"messages": [HumanMessage(content="Параметры?")]}, _config("failed-repair"))
+
+    assert result["messages"][-1].content == ANSWER_QUALITY_UNAVAILABLE
+    assert result["sources"] == []
+    assert model.ainvoke.await_count == 1
+    assert result["iteration_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_truncated_or_repair_tool_calls_never_prepare_or_execute_delivery():
+    truncated = _telegram_request()
+    truncated.response_metadata["finish_reason"] = "length"
+    model = _ScriptedModel([truncated, _telegram_request()])
+    sender = AsyncMock()
+    graph = build_agent(InMemorySaver(), model=model, send_message=sender)
+    config = _config("truncated-delivery")
+    result = await graph.ainvoke({"messages": [HumanMessage(content="Отправь сообщение")]}, config)
+
+    assert result["messages"][-1].content == ANSWER_QUALITY_UNAVAILABLE
+    assert not result.get("telegram_draft")
+    assert (await graph.aget_state(config)).next == ()
+    sender.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_repair_respects_six_call_ceiling():
+    model = _ScriptedModel([
+        AIMessage(content="Проверю.", tool_calls=[{"name": "unknown", "args": {}, "id": f"step-{i}"}])
+        for i in range(MAX_ITERATIONS - 1)
+    ] + [AIMessage(content="Оборвано", response_metadata={"finish_reason": "length"})])
+    graph = build_agent(InMemorySaver(), model=model)
+    config = _config("repair-ceiling")
+    config["recursion_limit"] = 25
+    result = await graph.ainvoke({"messages": [HumanMessage(content="Вопрос")]}, config)
+
+    assert len(model.received) == MAX_ITERATIONS
+    assert result["iteration_count"] == MAX_ITERATIONS
+    assert result["messages"][-1].content == ANSWER_QUALITY_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_repair_does_not_overflow_context_budget():
+    from app.chat.service import count_tokens
+
+    question = "Вопрос"
+    budget = count_tokens([
+        {"role": "system", "content": persistent.PERSISTENT_SYSTEM_PROMPT + "[]"},
+        {"role": "human", "content": question + "[]"},
+    ])
+    model = _ScriptedModel([AIMessage(content="Оборвано", response_metadata={"finish_reason": "length"})])
+    graph = build_agent(InMemorySaver(), model=model)
+    config = _config("repair-context-budget")
+    config["configurable"]["context_budget"] = budget
+    result = await graph.ainvoke({"messages": [HumanMessage(content=question)]}, config)
+
+    assert len(model.received) == 1
+    assert result["iteration_count"] == 1
+    assert result["messages"][-1].content == ANSWER_QUALITY_UNAVAILABLE
 
 
 def _telegram_request() -> AIMessage:

@@ -56,6 +56,7 @@ CHAT_CONTEXT_STRATEGY=sliding
 CHAT_CONTEXT_WINDOW=10
 CHAT_MODEL_CONTEXT_TOKENS=128000
 CHAT_RESPONSE_TOKENS=500
+CHAT_EXPANDED_RESPONSE_TOKENS=1500
 CHAT_SAFETY_MARGIN_TOKENS=500
 ```
 
@@ -165,3 +166,35 @@ Clear chat history:
 ```powershell
 curl.exe @chatHeaders -X DELETE "http://localhost:8000/chats/$chatId/messages"
 ```
+
+
+## Brief answers and confirmed expansion
+
+Telegram answers use a 500 output-token ceiling by default. The graph requests
+3–5 key points with complete sentences. Length stops, empty output and defective
+mixed-script prose are handled by deterministic compaction, without an automatic
+repair generation. Code, technical literals and valid citations remain intact.
+A compacted explanation carries a persisted notice distinguishing the length
+ceiling from defective text. It offers expansion only when eligible; an expanded
+answer instead suggests a separate question about the desired point. It never
+describes an output limit as missing information in the user's question.
+
+Assistant `media_refs.answer` stores `mode`, `incomplete`, `expandable`; SSE
+`type=message` includes the same `answer_info` with the exact persisted UUID.
+`GET /chats/{chat}/messages/{message}/expansion` checks owner, current response,
+evidence, pending approval and one-use claim, returning availability and the
+configured expanded ceiling without a model call. `POST .../expand` requires
+`{"confirmed": true}` (strict boolean; extra fields rejected). It returns the
+canonical answer, sources, result message UUID and answer metadata.
+
+Only an eligible latest brief response can expand. The confirmed call uses a
+1,500 output-token ceiling and existing evidence, with tools disabled. It follows
+the original moderation and append-turn path, recording consent and the detailed
+response. A durable graph claim is written before generation, under the shared
+chat lock; repeated confirmation returns the saved result or 409 without another
+model call. Clear deletes history and checkpoint and invalidates these buttons.
+This relies on the documented single API worker; graph and chat persistence are
+separate transactions. A failed/unknown generation remains claimed, so a user
+must ask a new question rather than silently retrying a potentially billed call.
+Token caps are ceilings, not estimates of total input/output cost. This policy
+is independent of coding-agent model routing and does not change model IDs/prices.

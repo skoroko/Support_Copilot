@@ -11,7 +11,6 @@ import argparse
 import json
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
 CHECKED_VARIABLES = (
@@ -24,6 +23,9 @@ CHECKED_VARIABLES = (
     "OLLAMA_BASE_URL",
     "OLLAMA_MODEL",
     "BOT_TOKEN",
+    "BOT_ADMIN_IDS",
+    "BOT_ALLOWED_USER_IDS",
+    "BOT_ALLOWED_CHAT_IDS",
     "INTERNAL_TOKEN",
     "ADMIN_TOKEN",
 )
