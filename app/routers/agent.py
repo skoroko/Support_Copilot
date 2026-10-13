@@ -15,8 +15,13 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.core.auth import InMemoryRequestBudget, authenticate_principal, request_budget
-from app.services.agent_persistent import Command
+from app.core.auth import (
+    InMemoryRequestBudget,
+    RequestBudgetLease,
+    authenticate_principal,
+    request_budget,
+)
+from app.services.agent_persistent import Command, retrieval_worker_tracker
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 logger = logging.getLogger(__name__)
@@ -49,11 +54,14 @@ class AgentStreamRequest(BaseModel):
     input: AgentTurnInput | None = None
     resume: bool | None = None
     user_role: Literal["read-only", "write-with-approve", "full"] = "write-with-approve"
+    approval_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
 
     @model_validator(mode="after")
     def require_exactly_one_action(self) -> AgentStreamRequest:
         if (self.input is None) == (self.resume is None):
             raise ValueError("Provide exactly one of input or resume")
+        if self.resume is not None and self.approval_id is None:
+            raise ValueError("Resume requires the exact approval_id from the preview")
         return self
 
 
@@ -93,7 +101,9 @@ def _authorize_role(settings: Any, *, user_role: str, admin_token: str | None) -
     if user_role == "full":
         expected_admin = settings.admin_token.get_secret_value()
         if not admin_token or not secrets.compare_digest(admin_token, expected_admin):
-            raise HTTPException(status_code=403, detail="The full role requires X-Admin-Token")
+            raise HTTPException(
+                status_code=403, detail="The full role requires X-Admin-Token"
+            )
 
 
 class _BudgetedStreamingResponse(StreamingResponse):
@@ -105,12 +115,14 @@ class _BudgetedStreamingResponse(StreamingResponse):
         budget: InMemoryRequestBudget,
         principal: str,
         drive: Callable[[], Awaitable[None]],
+        lease: RequestBudgetLease | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._budget = budget
         self._principal = principal
         self._drive = drive
+        self._lease = lease
         self._driver: asyncio.Task[None] | None = None
 
     async def _finish(self) -> None:
@@ -125,7 +137,10 @@ class _BudgetedStreamingResponse(StreamingResponse):
                         if not self._driver.cancelled():
                             raise
             finally:
-                await self._budget.release(self._principal)
+                if self._lease is None:
+                    await self._budget.release(self._principal)
+                else:
+                    await self._lease.release_request()
 
     @staticmethod
     def _report_background_failure(task: asyncio.Task[None]) -> None:
@@ -144,7 +159,9 @@ class _BudgetedStreamingResponse(StreamingResponse):
             finish = asyncio.create_task(self._finish())
             finish.add_done_callback(self._report_background_failure)
             try:
-                await asyncio.wait_for(asyncio.shield(finish), timeout=_CLEANUP_WAIT_SECONDS)
+                await asyncio.wait_for(
+                    asyncio.shield(finish), timeout=_CLEANUP_WAIT_SECONDS
+                )
             except TimeoutError:
                 # The cleanup task retains the budget until the graph exits.
                 pass
@@ -168,7 +185,9 @@ async def stream_agent(
 
     settings = getattr(request.app.state, "settings", None)
     if settings is None:
-        raise HTTPException(status_code=503, detail="Application settings are not initialized")
+        raise HTTPException(
+            status_code=503, detail="Application settings are not initialized"
+        )
     principal = authenticate_principal(
         settings,
         x_internal_token=x_internal_token,
@@ -178,7 +197,9 @@ async def stream_agent(
     _authorize_role(settings, user_role=body.user_role, admin_token=x_admin_token)
     graph = getattr(request.app.state, "agent_graph", None)
     if graph is None:
-        raise HTTPException(status_code=503, detail="Persistent agent is not initialized")
+        raise HTTPException(
+            status_code=503, detail="Persistent agent is not initialized"
+        )
 
     thread_id = _private_thread_id(principal.user_id, body.thread_id)
     turn_locks = getattr(request.app.state, "agent_turn_locks", None)
@@ -205,14 +226,32 @@ async def stream_agent(
     queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=1)
 
     async def drive() -> None:
+        tracker_token = retrieval_worker_tracker.set(lease.track_worker)
         interrupt_emitted = False
         cleanup_tasks: set[asyncio.Task[Any]] = set()
 
         def remember_cleanup(exc: asyncio.CancelledError) -> None:
-            cleanup_tasks.update(arg for arg in exc.args if isinstance(arg, asyncio.Task))
+            cleanup_tasks.update(
+                arg for arg in exc.args if isinstance(arg, asyncio.Task)
+            )
 
         try:
             async with turn_lock:
+                snapshot = (
+                    await graph.aget_state(config)
+                    if body.resume is not None
+                    or getattr(graph, "checkpointer", None) is not None
+                    else None
+                )
+                if body.resume is not None:
+                    draft = getattr(snapshot, "values", {}).get("telegram_draft") or {}
+                    if (
+                        not getattr(snapshot, "next", ())
+                        or draft.get("approval_id") != body.approval_id
+                    ):
+                        raise ValueError("Stale approval")
+                elif getattr(snapshot, "next", ()):
+                    raise ValueError("Approval is pending")
                 graph_stream = graph.astream(
                     graph_input,
                     config=config,
@@ -221,7 +260,11 @@ async def stream_agent(
                 try:
                     async for stream_type, payload in graph_stream:
                         event = {"type": stream_type, "payload": _json_safe(payload)}
-                        if stream_type == "updates" and isinstance(payload, dict) and "__interrupt__" in payload:
+                        if (
+                            stream_type == "updates"
+                            and isinstance(payload, dict)
+                            and "__interrupt__" in payload
+                        ):
                             interrupt_emitted = True
                             event["interrupt"] = _json_safe(payload["__interrupt__"])
                         await queue.put(_sse(event))
@@ -236,7 +279,9 @@ async def stream_agent(
                         raise
                     finally:
                         if cleanup_tasks:
-                            results = await asyncio.gather(*cleanup_tasks, return_exceptions=True)
+                            results = await asyncio.gather(
+                                *cleanup_tasks, return_exceptions=True
+                            )
                             for result in results:
                                 if isinstance(result, BaseException):
                                     raise result
@@ -247,21 +292,29 @@ async def stream_agent(
                     snapshot = await graph.aget_state(config)
                     interrupts = _snapshot_interrupts(snapshot)
                     if interrupts:
-                        await queue.put(_sse({"type": "interrupt", "payload": _json_safe(interrupts)}))
+                        await queue.put(
+                            _sse(
+                                {"type": "interrupt", "payload": _json_safe(interrupts)}
+                            )
+                        )
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 - send only a fixed safe error after headers
-            await queue.put(_sse(
-                {
-                    "type": "error",
-                    "error": {
-                        "code": "agent_stream_failed",
-                        "message": "Agent stream failed; retry or escalate to support.",
-                    },
-                }
-            ))
+            await queue.put(
+                _sse(
+                    {
+                        "type": "error",
+                        "error": {
+                            "code": "agent_stream_failed",
+                            "message": "Agent stream failed; retry or escalate to support.",
+                        },
+                    }
+                )
+            )
         else:
             await queue.put(_sse({"type": "done"}))
+        finally:
+            retrieval_worker_tracker.reset(tracker_token)
         await queue.put(None)
 
     async def events() -> AsyncIterator[str]:
@@ -270,11 +323,13 @@ async def stream_agent(
 
     budget = request_budget(request, settings)
     await budget.acquire(principal.user_id)
+    lease = RequestBudgetLease(budget, principal.user_id)
     return _BudgetedStreamingResponse(
         events(),
         budget=budget,
         principal=principal.user_id,
         drive=drive,
+        lease=lease,
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

@@ -6,7 +6,7 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import aiofiles
 from filelock import AsyncFileLock
@@ -59,6 +59,19 @@ class JsonChatRepository:
             chat_dir.mkdir(parents=True, exist_ok=False)
             await self._atomic_write_text(self._chat_file(chat.id), chat.model_dump_json())
         return chat
+
+    async def get_or_create_chat(self, owner_external_id: str, interface: str) -> Chat:
+        async with self._locked():
+            for path in sorted((self.base_dir / "chats").glob("*/chat.json")):
+                async with aiofiles.open(path, encoding="utf-8") as file:
+                    existing = Chat.model_validate_json(await file.read())
+                if existing.owner_external_id == owner_external_id and existing.interface == interface:
+                    return existing
+            chat = Chat(id=uuid5(NAMESPACE_URL, f"support-copilot:{interface}:{owner_external_id}"),
+                        owner_external_id=owner_external_id, interface=interface)
+            self._chat_dir(chat.id).mkdir(parents=True, exist_ok=True)
+            await self._atomic_write_text(self._chat_file(chat.id), chat.model_dump_json())
+            return chat
 
     async def get_chat(self, chat_id: UUID) -> Chat | None:
         async with self._locked():

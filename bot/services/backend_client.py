@@ -47,6 +47,7 @@ class BackendClient:
         self._last_message_ids: dict[str, UUID] = {}
         self._last_sources: dict[str, list[dict]] = {}
         self._last_notices: dict[str, str] = {}
+        self._last_approvals: dict[str, dict | None] = {}
         self._chat_owners: dict[str, str] = {}
         self._internal_token = internal_token
         self._admin_headers = {"X-Admin-Token": admin_token} if admin_token else {}
@@ -83,6 +84,7 @@ class BackendClient:
         chat_key = str(chat_id)
         self._last_sources[chat_key] = []
         self._last_notices[chat_key] = ""
+        self._last_approvals[chat_key] = None
         for attempt in range(1, self._max_connect_attempts + 1):
             try:
                 async with self._client.stream(
@@ -131,6 +133,8 @@ class BackendClient:
                             notice = str(payload.get("message") or "").strip()
                             if notice:
                                 self._last_notices[chat_key] = notice
+                        elif event_type == "approval":
+                            self._last_approvals[chat_key] = payload.get("approval")
                         elif event_type == "done":
                             message_id = payload.get("message_id")
                             if message_id:
@@ -151,6 +155,14 @@ class BackendClient:
             headers=self._principal_headers_for_chat(chat_id),
         )
         response.raise_for_status()
+        self._last_approvals[str(chat_id)] = None
+
+    async def list_messages(self, chat_id: UUID | str, limit: int = 10) -> list[dict]:
+        response = await self._request_with_connect_retry("GET", f"/chats/{chat_id}/messages",
+                                                          params={"limit": limit},
+                                                          headers=self._principal_headers_for_chat(chat_id))
+        response.raise_for_status()
+        return list(response.json())
 
     def last_response_message_id(self, chat_id: UUID | str) -> UUID | None:
         return self._last_message_ids.get(str(chat_id))
@@ -159,7 +171,38 @@ class BackendClient:
         return [dict(source) for source in self._last_sources.get(str(chat_id), [])]
 
     def last_response_notice(self, chat_id: UUID | str) -> str:
-        return self._last_notices.get(str(chat_id), "")
+        notice = self._last_notices.get(str(chat_id), "")
+        draft = self.last_approval(chat_id)
+        if draft:
+            notice += f"\n\nПодтвердите отправку.\nПолучатель (chat_id): {draft['chat_id']}\nТочный текст:\n{draft['text']}"
+        return notice.strip()
+
+    def last_approval(self, chat_id: UUID | str) -> dict | None:
+        return self._last_approvals.get(str(chat_id))
+
+    async def pending_approval(self, chat_id: UUID | str) -> dict | None:
+        response = await self._request_with_connect_retry("GET", f"/chats/{chat_id}/approval",
+                                                          headers=self._principal_headers_for_chat(chat_id))
+        response.raise_for_status()
+        draft = response.json().get("approval")
+        self._last_approvals[str(chat_id)] = draft
+        return draft
+
+    async def resume_approval(self, chat_id: UUID | str, approval_id: UUID | str, approved: bool,
+                              *, owner_external_id: str) -> dict:
+        # Never retry an approval mutation. A lost response must not turn a
+        # repeated callback into approval of a different pending operation.
+        response = await self._client.post(f"/chats/{chat_id}/approvals/{approval_id}",
+                                          json={"approved": approved},
+                                          headers=self._principal_headers_for_chat(chat_id, owner_external_id),
+                                          timeout=STREAM_TIMEOUT)
+        response.raise_for_status()
+        result = response.json()
+        self._last_approvals[str(chat_id)] = result.get("approval")
+        self._last_sources[str(chat_id)] = self._sources_from_payload(result)
+        if result.get("message_id"):
+            self._last_message_ids[str(chat_id)] = UUID(str(result["message_id"]))
+        return result
 
     async def get_message_sources(
         self,

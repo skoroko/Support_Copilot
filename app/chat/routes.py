@@ -12,17 +12,31 @@ from pydantic import BaseModel, Field
 from starlette.datastructures import FormData, UploadFile
 
 from app.admin.auth import require_admin
+from app.chat.agent import StaleApprovalError
 from app.chat.deps import ChatServiceDep
 from app.chat.domain import Chat, ChatMessage, telegram_chat_id_from_owner
 from app.chat.feedback import FeedbackIn, FeedbackTargetNotFoundError, MessageFeedback
-from app.chat.media import MediaExtractionError, MediaProcessingError, MediaTooLargeError, UnsupportedMediaTypeError
-from app.chat.service import ChatNotFoundError, ModerationBlockedError, StreamReplace, media_parts
+from app.chat.media import (
+    MediaExtractionError,
+    MediaProcessingError,
+    MediaTooLargeError,
+    UnsupportedMediaTypeError,
+)
+from app.chat.service import (
+    ChatNotFoundError,
+    ModerationBlockedError,
+    StreamReplace,
+    media_parts,
+)
 from app.core.auth import PrincipalDep
 from app.core.upload_boundary import CHAT_MEDIA_MAX_FILES
 from app.deps.providers import SettingsDep
 from app.services.notifier import notify_user
-from app.services.security.input_validator import MAX_MESSAGE_CHARS, decoded_fragments, validate_input
-
+from app.services.security.input_validator import (
+    MAX_MESSAGE_CHARS,
+    decoded_fragments,
+    validate_input,
+)
 
 router = APIRouter(tags=["chats"])
 
@@ -64,6 +78,16 @@ class CreateChatOut(BaseModel):
 class SystemMessageIn(BaseModel):
     text: str = Field(min_length=1)
     notify: bool = False
+
+
+class ApprovalIn(BaseModel):
+    approved: bool
+
+
+def _approval_preview(draft: dict | None) -> dict | None:
+    if not draft:
+        return None
+    return {key: draft[key] for key in ("approval_id", "chat_id", "text")}
 
 
 async def _authenticated_message_form(
@@ -195,7 +219,7 @@ async def send_message(
             rag_service = getattr(request.app.state, "rag_service", None)
             if rag_service is not None:
                 message_kwargs["rag_service"] = rag_service
-            elif _rag_enabled(request):
+            elif _rag_enabled(request) and getattr(chat_service, "agent", None) is None:
                 notice = json.dumps(
                     {
                         "type": "notice",
@@ -222,6 +246,10 @@ async def send_message(
             sources = _last_response_sources(chat_service, chat_id)
             sources_payload = json.dumps({"sources": sources}, ensure_ascii=False)
             yield f"event: sources\ndata: {sources_payload}\n\n"
+            approval = getattr(chat_service, "last_approval", lambda _id: None)(chat_id)
+            if approval:
+                preview = json.dumps({"type": "approval", "approval": _approval_preview(approval)}, ensure_ascii=False)
+                yield f"data: {preview}\n\n"
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 - response headers have already been sent
@@ -239,6 +267,26 @@ async def send_message(
     lease = getattr(request.state, "request_budget_lease", None)
     release_stream = lease.hold() if lease is not None else None
     return _ClosingStreamingResponse(events(), on_close=release_stream)
+
+
+@router.get("/chats/{chat_id}/approval")
+async def pending_approval(chat_id: UUID, chat_service: ChatServiceDep, principal: PrincipalDep) -> dict:
+    await _owned_chat(chat_id, chat_service, principal)
+    return {"approval": _approval_preview(await chat_service.pending_approval(chat_id))}
+
+
+@router.post("/chats/{chat_id}/approvals/{approval_id}")
+async def resume_approval(chat_id: UUID, approval_id: UUID, payload: ApprovalIn,
+                          chat_service: ChatServiceDep, principal: PrincipalDep) -> dict:
+    await _owned_chat(chat_id, chat_service, principal)
+    try:
+        result = await chat_service.approve(chat_id, approval_id.hex, payload.approved)
+    except StaleApprovalError as exc:
+        raise HTTPException(status_code=409, detail={"code": "stale_approval", "message": str(exc)}) from exc
+    except ModerationBlockedError as exc:
+        raise HTTPException(status_code=403, detail={"code": "moderation_blocked"}) from exc
+    result["approval"] = _approval_preview(result.get("approval"))
+    return result
 
 
 @router.get("/chats/{chat_id}/messages/{message_id}/sources")

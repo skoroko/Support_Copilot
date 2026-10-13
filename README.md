@@ -490,3 +490,33 @@ guard выполняются до вызова LLM. Ответ содержит 
 
 Материалы и команды проверки: `homework_5_5/README.md`,
 `homework_5_5/TEACHER_CHECK.md`, `docs/rag.md` и `docs/data_inventory.md`.
+
+## Единый Telegram-ассистент
+
+Обычные сообщения Telegram проходят через persistent agent в существующем
+`POST /chats/{id}/messages`. Он ищет доказательства в production RAG по мануалам,
+отвечает с проверенными ссылками, готовит черновики и показывает точного
+получателя и текст перед отправкой. Пользователь выбирает «Подтвердить» или
+«Отменить»; отдельного режима `/agent` нет. Ошибка поиска и отсутствие сведений
+различаются, синтетическая база не используется.
+
+История и привязка чата переживают перезапуск бота; pending approval хранится
+в SQLite/Postgres checkpoint. `/start` восстанавливает кнопки, `/history`
+показывает последние сообщения, `/clear` очищает историю и отменяет pending
+действие. Callback привязан к автору, чату и точному draft ID; повторный или
+устаревший callback не отправляет сообщение. Медиа, moderation и feedback с
+источниками остаются в общем chat-контуре. Новых переменных окружения нет.
+
+`RAGService.retrieve(...)` и защищённый `POST /rag/retrieve` возвращают evidence
+без генерации ответа: `status`, `sources`, `contexts`, telemetry. Источники
+включают chunk/document ID и PDF-страницу.
+
+Воспроизводимая проверка без внешних вызовов:
+
+```powershell
+.venv/Scripts/python.exe -m pytest tests/chat/test_unified_agent.py tests/test_agent_persistent.py tests/bot tests/unit/test_rag.py -q
+```
+
+Тесты используют scripted LLM, локальный SQLite, production retrieval pipeline
+с инъецированным retriever и mock Telegram sender. Подробности:
+`docs/unified_agent.md`, `docs/telegram_bot.md`, `docs/rag.md`.

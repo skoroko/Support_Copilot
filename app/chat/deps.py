@@ -8,6 +8,7 @@ from weakref import WeakValueDictionary
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.chat.agent import ChatAgent
 from app.chat.repositories.json_repo import JsonChatRepository
 from app.chat.repositories.pg_repo import PostgresChatRepository
 from app.chat.repository import ChatRepository
@@ -53,6 +54,8 @@ def get_chat_service(request: Request, repo: ChatRepositoryDep, llm: OpenAIDep, 
     return ChatService(
         repository=repo, llm_client=llm, settings=settings,
         turn_locks=turn_locks, track_rag_worker=track_rag_worker,
+        agent=ChatAgent(request.app.state.agent_graph, request.app.state.agent_checkpointer, track_rag_worker, settings)
+        if getattr(request.app.state, "agent_graph", None) is not None else None,
     )
 
 

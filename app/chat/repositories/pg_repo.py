@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from sqlalchemy import and_, distinct, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -24,6 +24,18 @@ from app.moderation.models import ModerationResult
 class PostgresChatRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def get_or_create_chat(self, owner_external_id: str, interface: str) -> Chat:
+        row = (await self.session.execute(select(ChatRow).where(
+            ChatRow.owner_external_id == owner_external_id, ChatRow.interface == interface,
+        ).order_by(ChatRow.created_at).limit(1))).scalar_one_or_none()
+        if row is not None:
+            return Chat.model_validate(row, from_attributes=True)
+        chat = Chat(id=uuid5(NAMESPACE_URL, f"support-copilot:{interface}:{owner_external_id}"),
+                    owner_external_id=owner_external_id, interface=interface)
+        await self.session.execute(insert(ChatRow).values(**chat.model_dump()).on_conflict_do_nothing(index_elements=[ChatRow.id]))
+        await self.session.commit()
+        return await self.get_chat(chat.id)
 
     async def create_chat(
         self,

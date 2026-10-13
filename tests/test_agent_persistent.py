@@ -120,11 +120,11 @@ async def test_sqlite_graph_approve_executes_injected_effect_after_resume() -> N
         result = await graph.ainvoke(Command(resume=True), config)
 
     assert paused["iteration_count"] == 1
-    assert result["iteration_count"] == 2
+    assert result["iteration_count"] == 1
     assert result["sent"] is True
-    expected_key = hashlib.sha256(b"midas-alice-approve\0call-telegram-1").hexdigest()
+    expected_key = paused["telegram_draft"]["idempotency_key"]
     sender.assert_awaited_once_with("4242", "Инцидент передан инженеру.", expected_key)
-    assert result["messages"][-1].content == "Уведомление отправлено."
+    assert result["messages"][-1].content == "отправлено"
 
 
 @pytest.mark.asyncio
@@ -140,7 +140,7 @@ async def test_sqlite_graph_reject_never_calls_side_effect() -> None:
 
     assert result["sent"] is False
     sender.assert_not_called()
-    assert result["messages"][-1].content == "Отправка отменена."
+    assert "Отправка отменена пользователем" in result["messages"][-1].content
 
 
 @pytest.mark.asyncio
@@ -155,11 +155,12 @@ async def test_unknown_delivery_never_marks_checkpoint_sent() -> None:
             {"messages": [HumanMessage(content="Отправь эскалацию")], "tool_results": []},
             config,
         )
-        with pytest.raises(RuntimeError, match="delivery outcome unknown"):
-            await graph.ainvoke(Command(resume=True), config)
+        result = await graph.ainvoke(Command(resume=True), config)
         snapshot = await graph.aget_state(config)
 
     assert snapshot.values["sent"] is False
+    assert "Не удалось подтвердить доставку" in result["messages"][-1].content
+    assert snapshot.next == ()
     sender.assert_awaited_once()
 
 
@@ -344,7 +345,8 @@ class _FakeSseGraph:
         yield "updates", {"__interrupt__": [{"value": {"type": "approve_send_telegram_message"}}]}
 
     async def aget_state(self, _config):
-        return SimpleNamespace(tasks=())
+        return SimpleNamespace(tasks=(), next=(APPROVAL_NODE,) if self.inputs else (),
+                               values={"telegram_draft": {"approval_id": "0" * 32}})
 
 
 def test_agent_stream_endpoint_emits_json_sse_and_supports_resume(monkeypatch) -> None:
@@ -368,7 +370,7 @@ def test_agent_stream_endpoint_emits_json_sse_and_supports_resume(monkeypatch) -
         )
         resumed = client.post(
             "/agent/stream",
-            json={"thread_id": "midas-alice-sse", "resume": True},
+            json={"thread_id": "midas-alice-sse", "resume": True, "approval_id": "0" * 32},
             headers=headers,
         )
 

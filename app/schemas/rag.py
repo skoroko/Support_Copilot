@@ -27,6 +27,8 @@ class RAGQuery(BaseModel):
 
 class RAGSource(BaseModel):
     id: str
+    chunk_id: str | None = None
+    document_id: str | None = None
     file_name: str
     # ``page`` is the 1-based physical page in the PDF.  ``printed_page`` is
     # the optional page number printed inside the manual and can differ because
@@ -42,3 +44,11 @@ class RAGResponse(BaseModel):
     answer: str
     top_score: float
     sources: list[RAGSource] = Field(default_factory=list)
+
+
+class RAGRetrievalResponse(BaseModel):
+    status: Literal["ok", "no_evidence"]
+    question: str
+    sources: list[RAGSource] = Field(default_factory=list)
+    contexts: list[str] = Field(default_factory=list)
+    telemetry: dict = Field(default_factory=dict)
