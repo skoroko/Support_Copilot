@@ -45,7 +45,7 @@ class ScriptedModel:
         self.responses = iter(responses)
         self.received = []
 
-    async def ainvoke(self, messages):
+    async def ainvoke(self, messages, **kwargs):
         self.received.append(messages)
         return next(self.responses)
 
@@ -131,6 +131,37 @@ async def collect(backend, chat, text):
         str(delta)
         for delta in [item async for item in backend.send_message(chat, text)]
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("finish_reason", ["length", "stop"])
+async def test_compacted_answer_reaches_chat_transport_and_persistent_history(tmp_path, finish_reason):
+    from app.services.answer_quality import INCOMPLETE_NOTICE
+    rag, _ = rag_service(tmp_path)
+    complete = "Mesh Generate задаёт параметры генерации сетки [1]."
+    model = ScriptedModel([
+        search(),
+        AIMessage(content=complete + "\nКак это понимать практичесki\n- **", response_metadata={"finish_reason": finish_reason}),
+    ])
+    saver = InMemorySaver()
+    graph = build_agent(saver, model=model, rag_provider=lambda: rag)
+    repository = JsonChatRepository(tmp_path / "chat-data")
+    service = ChatService(repository, object(), settings(), agent=ChatAgent(graph, saver))
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.ASGITransport(app=api_for(service))) as client:
+        backend = BackendClient("http://backend", client=client, internal_token=INTERNAL)
+        chat = await backend.get_or_create_chat("compact-user", "telegram")
+        answer = await collect(backend, chat, "Как понимать параметры Mesh Generate?")
+    notice = INCOMPLETE_NOTICE if finish_reason == "length" else (
+        "Из ответа удалён фрагмент с ошибкой текста. "
+        "Расширенный ответ можно запросить кнопкой «Подробнее»."
+    )
+    assert answer == complete + "\n\n" + notice
+    assert backend.last_answer_info(chat) == {"mode": "brief", "incomplete": True, "expandable": True}
+    assert backend.last_response_sources(chat)[0]["chunk_id"] == "chunk-mesh"
+    history = await repository.list_messages(chat)
+    assert history[-1].content == answer
+    assert history[-1].rag_sources[0]["chunk_id"] == "chunk-mesh"
+    assert len(model.received) == 2
 
 
 def api_for(service):

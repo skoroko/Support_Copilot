@@ -14,6 +14,9 @@ def test_configuration_status_never_returns_secret_values(tmp_path):
                 f"OPENAI_API_KEY={secret}",
                 "OPENAI_BASE_URL=https://api.openai.com/v1",
                 "OPENAI_MODEL=\"gpt-5.4-mini\"",
+                "BOT_ADMIN_IDS=123456789",
+                "BOT_ALLOWED_USER_IDS=123456789,987654321",
+                "BOT_ALLOWED_CHAT_IDS=   ",
                 "OPENROUTER_API_KEY=   ",
                 "UNRELATED_PRIVATE_VALUE=must-not-be-listed",
             ]
@@ -27,6 +30,11 @@ def test_configuration_status_never_returns_secret_values(tmp_path):
     assert tuple(status) == CHECKED_VARIABLES
     assert status["OPENAI_API_KEY"] == "configured"
     assert status["OPENROUTER_API_KEY"] == "missing"
+    assert status["BOT_ADMIN_IDS"] == "configured"
+    assert status["BOT_ALLOWED_USER_IDS"] == "configured"
+    assert status["BOT_ALLOWED_CHAT_IDS"] == "missing"
+    assert "123456789" not in serialized
+    assert "987654321" not in serialized
     assert secret not in serialized
     assert "must-not-be-listed" not in serialized
     assert "UNRELATED_PRIVATE_VALUE" not in serialized

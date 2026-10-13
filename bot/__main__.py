@@ -5,19 +5,19 @@ import asyncio
 import httpx
 import redis.asyncio as redis
 import uvicorn
-from aiohttp import ThreadedResolver
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramNetworkError
+from aiohttp import ThreadedResolver
 
 from app.observability.logging import get_logger
 from bot.admission import AdmissionMiddleware
 from bot.background import broadcast_worker
 from bot.config import get_settings
 from bot.handlers import router
+from bot.navigation import register_menu
 from bot.services.backend_client import BackendClient
 from bot.web import build_api
-
 
 logger = get_logger("telegram-bot")
 
@@ -33,6 +33,7 @@ async def poll_with_retry(
     delay = initial_delay
     while True:
         try:
+            await register_menu(bot)
             await dispatcher.start_polling(bot)
             return
         except asyncio.CancelledError:

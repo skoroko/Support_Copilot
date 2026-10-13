@@ -100,6 +100,7 @@ class _SettingsFields(BaseModel):
         gt=0,
         validation_alias=AliasChoices("CHAT_MODEL_CONTEXT_TOKENS"),
     )
+    chat_expanded_response_tokens: int = Field(default=1500, gt=0, validation_alias=AliasChoices("CHAT_EXPANDED_RESPONSE_TOKENS"))
     chat_response_tokens: int = Field(default=500, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
     chat_safety_margin_tokens: int = Field(
         default=500,
@@ -412,6 +413,7 @@ def get_settings() -> Settings:
         chat_context_window=int(os.getenv("CHAT_CONTEXT_WINDOW") or 10),
         chat_model_context_tokens=int(os.getenv("CHAT_MODEL_CONTEXT_TOKENS") or 128_000),
         chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 500),
+        chat_expanded_response_tokens=int(os.getenv("CHAT_EXPANDED_RESPONSE_TOKENS") or 1500),
         chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
         transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
         bot_url=os.getenv("BOT_URL") or "http://bot:9000",

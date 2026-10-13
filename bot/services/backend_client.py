@@ -48,6 +48,7 @@ class BackendClient:
         self._last_sources: dict[str, list[dict]] = {}
         self._last_notices: dict[str, str] = {}
         self._last_approvals: dict[str, dict | None] = {}
+        self._last_answer_info: dict[str, dict] = {}
         self._chat_owners: dict[str, str] = {}
         self._internal_token = internal_token
         self._admin_headers = {"X-Admin-Token": admin_token} if admin_token else {}
@@ -85,6 +86,7 @@ class BackendClient:
         self._last_sources[chat_key] = []
         self._last_notices[chat_key] = ""
         self._last_approvals[chat_key] = None
+        self._last_answer_info[chat_key] = {}
         for attempt in range(1, self._max_connect_attempts + 1):
             try:
                 async with self._client.stream(
@@ -126,6 +128,7 @@ class BackendClient:
                             yielded_data = True
                             yield StreamReplace(str(payload.get("text", "")))
                         elif event_type == "message":
+                            self._last_answer_info[chat_key] = payload.get("answer_info") or {}
                             message_id = payload.get("message_id")
                             if message_id:
                                 self._last_message_ids[str(chat_id)] = UUID(str(message_id))
@@ -218,6 +221,27 @@ class BackendClient:
         )
         response.raise_for_status()
         return self._sources_from_payload(response.json())
+
+    def last_answer_info(self, chat_id: UUID | str) -> dict:
+        return dict(self._last_answer_info.get(str(chat_id), {}))
+
+    async def preview_expansion(self, chat_id: UUID | str, message_id: UUID | str,
+                                *, owner_external_id: str) -> dict:
+        response = await self._request_with_connect_retry("GET",
+            f"/chats/{chat_id}/messages/{message_id}/expansion",
+            headers=self._principal_headers_for_chat(chat_id, owner_external_id))
+        response.raise_for_status()
+        return response.json()
+
+    async def expand_response(self, chat_id: UUID | str, message_id: UUID | str,
+                              *, owner_external_id: str) -> dict:
+        # No HTTP mutation retry: checkpoint claims are durable, and a timeout
+        # must never silently initiate another billed generation.
+        response = await self._client.post(f"/chats/{chat_id}/messages/{message_id}/expand",
+            json={"confirmed": True}, headers=self._principal_headers_for_chat(chat_id, owner_external_id),
+            timeout=STREAM_TIMEOUT)
+        response.raise_for_status()
+        return response.json()
 
     async def save_feedback(
         self,
