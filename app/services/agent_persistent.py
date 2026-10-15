@@ -18,6 +18,7 @@ import inspect
 import json
 import os
 import re
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 from contextvars import ContextVar
@@ -517,10 +518,14 @@ def build_agent(
             kwargs["tool_choice"] = "none"
         if isinstance(resolved_model, AgentModel):
             kwargs["expanded"] = expanded
+        model_started_at = time.perf_counter()
         response = await resolved_model.ainvoke(messages, **kwargs)
+        model_ms = round((time.perf_counter() - model_started_at) * 1000, 2)
         response = normalize_response(response)
         usage = response.usage_metadata or {}
         logger.info("agent_model_usage", mode="expanded" if expanded else "brief",
+                    model_ms=model_ms, iteration=state.get("iteration_count", 0) + 1,
+                    tool_call_count=len(response.tool_calls),
                     output_cap=kwargs["max_tokens"],
                     finish_reason=response.response_metadata.get("finish_reason"),
                     prompt_tokens=usage.get("input_tokens"), completion_tokens=usage.get("output_tokens"),

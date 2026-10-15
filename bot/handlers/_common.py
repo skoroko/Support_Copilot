@@ -343,9 +343,17 @@ async def stream_to_chat(
         notice = (notice_factory() or "").strip()
         if notice:
             final_text += f"\n\n{notice}"
-    if sources_factory is not None:
-        final_text += _format_cited_sources(final_text, sources_factory())
     reply_markup = reply_markup_factory() if reply_markup_factory is not None else None
+    # The message-bound Documents panel is the single bibliography. Keep the
+    # inline [N] markers in the answer; repeat the list only as a fallback for
+    # transports that cannot offer the Documents button.
+    has_documents = any(
+        str(getattr(button, "callback_data", "") or "").startswith("src:")
+        for row in getattr(reply_markup, "inline_keyboard", ())
+        for button in row
+    )
+    if sources_factory is not None and not has_documents:
+        final_text += _format_cited_sources(final_text, sources_factory())
     final_html = escape(final_text) if _has_approval_buttons(reply_markup) else _render_telegram_html(final_text)
     if len(final_text) > 1800:
         await send_rendered_answer(message, final_text, reply_markup=reply_markup, editable=editable_response)

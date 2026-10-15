@@ -1028,10 +1028,19 @@ class RAGService:
         self._require_external_transfer_allowed("embed a retrieval question")
         started_at = time.perf_counter()
         plan = self._retrieval_plan(question, history, standalone_question)
+        dense_seconds = 0.0
+        dense_query_count = 0
+
         def retrieve(query: str) -> list[Any]:
+            nonlocal dense_seconds, dense_query_count
             if deadline is not None and time.perf_counter() >= deadline:
                 raise TimeoutError("Retrieval budget exhausted")
-            items = list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            dense_started_at = time.perf_counter()
+            try:
+                items = list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            finally:
+                dense_seconds += time.perf_counter() - dense_started_at
+                dense_query_count += 1
             if deadline is not None and time.perf_counter() >= deadline:
                 raise TimeoutError("Retrieval budget exhausted")
             return items
@@ -1057,11 +1066,16 @@ class RAGService:
         # question the configured product cannot answer at all.
         lexical_fallback_query: str | None = None
         lexical_fallback_candidates: list[Any] = []
+        lexical_seconds = 0.0
+        lexical_attempt_count = 0
         if self._lexical_available:
             for candidate_query in lexical_queries:
                 if deadline is not None and time.perf_counter() >= deadline:
                     raise TimeoutError("Retrieval budget exhausted")
+                lexical_started_at = time.perf_counter()
                 unscoped_candidates = self._retrieve_lexical_candidates(candidate_query)
+                lexical_seconds += time.perf_counter() - lexical_started_at
+                lexical_attempt_count += 1
                 candidates = self._product_scoped(unscoped_candidates)
                 if unscoped_candidates and not lexical_fallback_candidates:
                     lexical_fallback_query = candidate_query
@@ -1093,6 +1107,7 @@ class RAGService:
                 if len(dense_fallback_queries) >= MAX_DENSE_FALLBACK_QUERIES:
                     break
         overview_question = self._is_overview_question(question)
+        selection_started_at = time.perf_counter()
         selection = self._select_context(
             question=question,
             plan=plan,
@@ -1104,6 +1119,7 @@ class RAGService:
             translated_candidates=self._product_scoped(translated_ranking),
             preserve_full_context=preserve_full_context,
         )
+        selection_seconds = time.perf_counter() - selection_started_at
         product_scope = "all" if self._scope_all_products() else "primary"
         if (
             self.config.product_scope == "fallback"
@@ -1119,6 +1135,7 @@ class RAGService:
             # instead of a structural NO_ANSWER.  The scoped selection always
             # wins while it has evidence, so cross-product material never
             # dilutes a good primary answer.
+            selection_started_at = time.perf_counter()
             selection = self._select_context(
                 question=question,
                 plan=plan,
@@ -1130,8 +1147,14 @@ class RAGService:
                 translated_candidates=translated_ranking,
                 preserve_full_context=preserve_full_context,
             )
+            selection_seconds += time.perf_counter() - selection_started_at
             product_scope = "fallback_all"
         telemetry = {
+            "dense_retrieval_ms": round(dense_seconds * 1000, 2),
+            "dense_query_count": dense_query_count,
+            "lexical_retrieval_ms": round(lexical_seconds * 1000, 2),
+            "lexical_attempt_count": lexical_attempt_count,
+            "selection_ms": round(selection_seconds * 1000, 2),
             "question_hash": prompt_hash(question.strip()),
             "plan_mode": plan.mode,
             "query_variant_count": len(plan.queries),
@@ -1221,6 +1244,12 @@ class RAGService:
                 strict=True,
             )
         )
+        if selection.has_evidence:
+            logger.info(
+                "rag_retrieval_completed", **telemetry,
+                outcome="evidence_ready" if sources else "no_evidence",
+                cited_source_count=len(sources),
+            )
         return {
             "status": "ok" if sources else "no_evidence",
             "question": prepared.question,
