@@ -34,7 +34,8 @@ python scripts/download_data.py --from-chm "data/rag-block-03/GTS_NX 2021.chm" -
 ## Покрытие и пробелы корпуса
 
 Продуктовая разметка (`product` в payload чанков) выводится по маркерам в
-имени и пути файла; нейтральные имена наследуют `RAG_PRODUCT`:
+имени файла и пути внутри каталога корпуса; родительские каталоги окружения
+не учитываются. Нейтральные имена наследуют `RAG_PRODUCT`:
 
 - `gts_nx` — основной массив: 8 PDF глав User Manual / Пособия по расчётам,
   `GTS_NX 2021.chm` и 60 извлечённых из него HTML-разделов. Английские главы
@@ -63,4 +64,4 @@ python scripts/download_data.py --from-chm "data/rag-block-03/GTS_NX 2021.chm" -
 или наследует `RAG_PRODUCT`; форматы — pdf, docx, html, md, txt, chm.
 Переиндексация инкрементальная (UPSERT по docstore). При
 `RAG_PRODUCT_SCOPE=fallback` новые продукты становятся достижимыми сразу;
-`RAG_PRODUCT=all` отвечает по всему корпусу без приоритета GTS NX.
+`RAG_PRODUCT_SCOPE=all` отвечает по всему корпусу без приоритета GTS NX.

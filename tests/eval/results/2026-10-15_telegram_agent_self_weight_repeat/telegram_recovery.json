@@ -1,0 +1,472 @@
+{
+  "probe_id": "028cf000bac3443d957b01a16ffaff9f",
+  "purpose": "Reported Hardening Soil request via real Telegram backend facade; no Telegram sends",
+  "results": [
+    {
+      "attempt": 1,
+      "after_clear": false,
+      "question": "расскажи про модель харденинг соил",
+      "response": "В руководстве MIDAS найдено описание **Hardening Soil with small strain stiffness** — варианта модели с учётом малых деформаций; не буду переносить его свойства на базовую Hardening Soil без такого уточнения. [1]\n\n- Этот вариант реализован на основе Modified Mohr-Coulomb с наложением модели малых деформаций. В диапазоне деформаций, где грунт можно считать упругим, жёсткость особенно высока; при росте деформаций она снижается нелинейно. [2][3]\n- **G0ref** — начальный модуль сдвига, или модуль сдвига при очень малых деформациях. [3]\n- **γ0.7** — сдвиговая деформация, при которой модуль сдвига составляет около 70% от начального. [2]\n- **E50ref** — секущая жёсткость в стандартном дренированном трёхосном испытании. [4]\n- **m** — показатель зависимости жёсткости от уровня напряжений; в таблице указано значение от 0,5 до 1. [4]",
+      "ttft_ms": 28143.728299997747,
+      "sources": [
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.7013897,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+          "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 66,
+          "printed_page": 65,
+          "score": 0.65661377,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the",
+          "confident": true
+        },
+        {
+          "id": "c2166696-0bf8-480a-9ce5-dacd12bbf3c7",
+          "chunk_id": "c2166696-0bf8-480a-9ce5-dacd12bbf3c7",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_138",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.65155613,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        },
+        {
+          "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 77,
+          "printed_page": 206,
+          "score": 0.6140527,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно у",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "3f452481-adc3-4c14-9289-52590e7297eb",
+      "approval": null,
+      "persisted": {
+        "id": "3f452481-adc3-4c14-9289-52590e7297eb",
+        "chat_id": "9378e396-5a49-5038-8e42-c403310b2689",
+        "role": "assistant",
+        "content": "В руководстве MIDAS найдено описание **Hardening Soil with small strain stiffness** — варианта модели с учётом малых деформаций; не буду переносить его свойства на базовую Hardening Soil без такого уточнения. [1]\n\n- Этот вариант реализован на основе Modified Mohr-Coulomb с наложением модели малых деформаций. В диапазоне деформаций, где грунт можно считать упругим, жёсткость особенно высока; при росте деформаций она снижается нелинейно. [2][3]\n- **G0ref** — начальный модуль сдвига, или модуль сдвига при очень малых деформациях. [3]\n- **γ0.7** — сдвиговая деформация, при которой модуль сдвига составляет около 70% от начального. [2]\n- **E50ref** — секущая жёсткость в стандартном дренированном трёхосном испытании. [4]\n- **m** — показатель зависимости жёсткости от уровня напряжений; в таблице указано значение от 0,5 до 1. [4]",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.7013897,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          },
+          {
+            "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+            "page": 66,
+            "score": 0.65661377,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the",
+            "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+            "confident": true,
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+            "printed_page": 65
+          },
+          {
+            "id": "c2166696-0bf8-480a-9ce5-dacd12bbf3c7",
+            "page": null,
+            "score": 0.65155613,
+            "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+            "chunk_id": "c2166696-0bf8-480a-9ce5-dacd12bbf3c7",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_138",
+            "printed_page": null
+          },
+          {
+            "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "page": 77,
+            "score": 0.6140527,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно у",
+            "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+            "printed_page": 206
+          }
+        ],
+        "tokens": 257,
+        "latency_ms": 28103.85,
+        "created_at": "2026-10-15T10:54:12.950842Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "status": "completed",
+      "wall_latency_ms": 28193.37419999647
+    },
+    {
+      "attempt": 2,
+      "after_clear": false,
+      "question": "расскажи про модель харденинг соил",
+      "response": "В найденных руководствах MIDAS подробно описан вариант **Hardening Soil with small strain stiffness**, но не отдельное описание базовой модели **Hardening Soil**. Поэтому не буду приписывать базовой модели свойства, подтверждённые только для её варианта.\n\n- **Hardening Soil with small strain stiffness** — модификация модели Мора—Кулона, учитывающая повышенную жёсткость грунта при малых деформациях. [1]\n- В этом варианте при увеличении деформаций жёсткость грунта нелинейно снижается. [2]\n- **G₀ref** — начальный модуль сдвига, а **γ₀.₇** — сдвиговая деформация, при которой модуль сдвига составляет около 70% от начального. [2]\n\nДля точного обзора именно базовой **Hardening Soil** нужно проверить руководство или версию MIDAS, где она описана отдельно.",
+      "ttft_ms": 31500.65679999534,
+      "sources": [
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.6678432,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.605617,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "66dd79bd-ccc1-429c-b149-7dccd29441d9",
+      "approval": null,
+      "persisted": {
+        "id": "66dd79bd-ccc1-429c-b149-7dccd29441d9",
+        "chat_id": "9378e396-5a49-5038-8e42-c403310b2689",
+        "role": "assistant",
+        "content": "В найденных руководствах MIDAS подробно описан вариант **Hardening Soil with small strain stiffness**, но не отдельное описание базовой модели **Hardening Soil**. Поэтому не буду приписывать базовой модели свойства, подтверждённые только для её варианта.\n\n- **Hardening Soil with small strain stiffness** — модификация модели Мора—Кулона, учитывающая повышенную жёсткость грунта при малых деформациях. [1]\n- В этом варианте при увеличении деформаций жёсткость грунта нелинейно снижается. [2]\n- **G₀ref** — начальный модуль сдвига, а **γ₀.₇** — сдвиговая деформация, при которой модуль сдвига составляет около 70% от начального. [2]\n\nДля точного обзора именно базовой **Hardening Soil** нужно проверить руководство или версию MIDAS, где она описана отдельно.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.6678432,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          },
+          {
+            "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "page": null,
+            "score": 0.605617,
+            "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+            "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "printed_page": null
+          }
+        ],
+        "tokens": 214,
+        "latency_ms": 31460.89,
+        "created_at": "2026-10-15T10:54:44.510248Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "status": "completed",
+      "wall_latency_ms": 31518.02589998988
+    },
+    {
+      "attempt": 3,
+      "after_clear": true,
+      "question": "расскажи про модель харденинг соил",
+      "response": "- **Hardening Soil** описывается как модель с зависящей от уровня напряжений жёсткостью: из-за этого её упругая часть поведения нелинейна. В руководстве также указана гиперболическая зависимость между девиаторным напряжением и деформацией. [1]\n- Среди основных параметров жёсткости — **E50ref** (секущая жёсткость при стандартном дренированном трёхосном испытании), **Eoedref** (жёсткость при основном нагружении в одометре) и **Eurref** (жёсткость при разгрузке и повторном нагружении). [3]\n- **m** задаёт зависимость жёсткости от уровня напряжений; **C** и **φ** описывают эффективное сцепление и угол трения, а **ψ** — предельный угол дилатансии. [3]\n- Уточнение: найденные в мануалах таблица параметров и описание дополнительных параметров относятся к варианту **Hardening Soil (small strain stiffness)**. В нём учитывается повышенная жёсткость при малых деформациях; для этого используются, в частности, **G0ref** и **γ0.7**. [2]",
+      "ttft_ms": 28028.952099994058,
+      "sources": [
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.66101336,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.5938738,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        },
+        {
+          "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+          "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 68,
+          "printed_page": 67,
+          "score": 0.76599133,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "c2b5ab8c-fe62-44a0-b0cd-01b4d62c0a6c",
+      "approval": null,
+      "persisted": {
+        "id": "c2b5ab8c-fe62-44a0-b0cd-01b4d62c0a6c",
+        "chat_id": "9378e396-5a49-5038-8e42-c403310b2689",
+        "role": "assistant",
+        "content": "- **Hardening Soil** описывается как модель с зависящей от уровня напряжений жёсткостью: из-за этого её упругая часть поведения нелинейна. В руководстве также указана гиперболическая зависимость между девиаторным напряжением и деформацией. [1]\n- Среди основных параметров жёсткости — **E50ref** (секущая жёсткость при стандартном дренированном трёхосном испытании), **Eoedref** (жёсткость при основном нагружении в одометре) и **Eurref** (жёсткость при разгрузке и повторном нагружении). [3]\n- **m** задаёт зависимость жёсткости от уровня напряжений; **C** и **φ** описывают эффективное сцепление и угол трения, а **ψ** — предельный угол дилатансии. [3]\n- Уточнение: найденные в мануалах таблица параметров и описание дополнительных параметров относятся к варианту **Hardening Soil (small strain stiffness)**. В нём учитывается повышенная жёсткость при малых деформациях; для этого используются, в частности, **G0ref** и **γ0.7**. [2]",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.66101336,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          },
+          {
+            "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "page": null,
+            "score": 0.5938738,
+            "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+            "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "printed_page": null
+          },
+          {
+            "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+            "page": 68,
+            "score": 0.76599133,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ",
+            "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+            "confident": true,
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+            "printed_page": 67
+          }
+        ],
+        "tokens": 288,
+        "latency_ms": 28001.51,
+        "created_at": "2026-10-15T10:55:12.588417Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "status": "completed",
+      "wall_latency_ms": 28054.25749999995,
+      "expansion": {
+        "status": "completed",
+        "preview": {
+          "available": true,
+          "max_output_tokens": 1500
+        },
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "result": {
+          "answer": "В приведённых выдержках подробно описан вариант **Hardening Soil with small strain stiffness** — модель упрочняющегося грунта с учётом жёсткости при малых деформациях. Он реализован на основе модифицированной модели Мора—Кулона и модели наложения малых деформаций. Поэтому параметры и значения ниже относятся именно к этому варианту модели. [1] [5]\n\n**Поведение модели.** В описании Hardening Soil зависимость между девиаторным напряжением и деформацией названа гиперболической. Кроме того, поскольку жёсткость зависит от уровня напряжений, поведение характеризуется как нелинейно-упругое. [2] Для варианта с учётом малых деформаций руководство отдельно отмечает, что диапазон, в котором грунт можно считать действительно упругим, очень мал, а при увеличении деформаций жёсткость снижается нелинейно. [1] [3]\n\n**Параметры жёсткости и прочности:**\n\n- **E50ref** — секущая жёсткость по результатам стандартного дренированного трёхосного испытания; рекомендуемое значение в таблице приведено как `Ei x (2 – Rf) /2`, где `Ei` — начальная жёсткость. [5]\n- **Eoedref** — касательная жёсткость при основном нагружении в одометре; в таблице указано рекомендуемое значение `E50ref`. [5]\n- **Eurref** — жёсткость при разгрузке и повторном нагружении; рекомендуемое значение указано как `3 x E50ref`. [5]\n- **m** — показатель степени, задающий зависимость жёсткости от уровня напряжений; в таблице приведён диапазон `0.5 ≤ m ≤ 1`, с ориентиром `0.5` для жёстких грунтов и `1` для мягких. [5]\n- **C** — эффективное сцепление; в таблице оно обозначено как параметр прочности, используемый также в модели Мора—Кулона. [5]\n- **φ** — эффективный угол трения; он также указан как параметр прочности модели Мора—Кулона. [5]\n- **ψ** — предельный угол дилатансии; в таблице указан диапазон `0 ≤ ψ ≤ φ`. [5]\n\n**Дополнение для малых деформаций.** В этом варианте модели используются два дополнительных параметра. [1] [3]\n\n- **G0ref** — начальный модуль сдвига, то есть модуль сдвига при очень малых деформациях. [1] [3]\n- **γ0.7** — деформация сдвига, при которой модуль сдвига составляет около 70% от начального значения. [1] [3]\n\nРуководство указывает, что для описания снижения модуля сдвига с ростом деформации вариант с учётом малых деформаций использует модифицированное соотношение Хардина—Дрневича. [3] [4] **Пояснение:** практически это означает, что модель отдельно задаёт начальную высокую жёсткость при очень малых деформациях и порог, после которого она заметно уменьшается; точный отклик зависит от введённых параметров. [1] [3]\n\nВ таблице также приведены дополнительные параметры и рекомендуемые значения. Они перечислены как ориентиры, а не как гарантированные значения для любого грунта. [5]\n\n- **Rf** — отношение при разрушении `qf / qa`; рекомендованное значение — `0.9 (< 1)`. [5]\n- **Pref** — начальное давление; в таблице указано значение `100`. [5]\n- **K0NC** — коэффициент бокового давления при нормальной консолидации; указана зависимость `1-sinφ (< 1)`. [5]\n- **Tensile strength** — ограничивающая величина растягивающего гидростатического давления; числовое рекомендуемое значение в таблице не приведено. [5]",
+          "sources": [
+            {
+              "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+              "page": 66,
+              "score": 0.58703315,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the",
+              "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+              "printed_page": 65
+            },
+            {
+              "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+              "page": 74,
+              "score": 0.66101336,
+              "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+              "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+              "confident": true,
+              "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+              "printed_page": 203
+            },
+            {
+              "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+              "page": null,
+              "score": 0.5938738,
+              "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+              "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+              "printed_page": null
+            },
+            {
+              "id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+              "page": 67,
+              "score": 0.74751925,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 66 To reflect the above characteristics, the Hardening Soil with small strain stiffness model uses the modified Hardin & Drnevich relationship as the following equation. 0 0.7 1 , 0.385 1 s G a G a   = = + s G : Shear modulus 0 G : Initial shear modulus  : Shear strain 0.7  : Shear strain at which the shear modulus is about 70% of the small-strain shear modulus Nonlinear Parameters",
+              "chunk_id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_66",
+              "printed_page": 66
+            },
+            {
+              "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+              "page": 68,
+              "score": 0.76599133,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ",
+              "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+              "printed_page": 67
+            }
+          ],
+          "message_id": "1740a032-b538-42ef-a011-d08bb03bd039",
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          }
+        },
+        "confirmed_latency_ms": 14259.5610999997,
+        "persisted": {
+          "id": "1740a032-b538-42ef-a011-d08bb03bd039",
+          "chat_id": "9378e396-5a49-5038-8e42-c403310b2689",
+          "role": "assistant",
+          "content": "В приведённых выдержках подробно описан вариант **Hardening Soil with small strain stiffness** — модель упрочняющегося грунта с учётом жёсткости при малых деформациях. Он реализован на основе модифицированной модели Мора—Кулона и модели наложения малых деформаций. Поэтому параметры и значения ниже относятся именно к этому варианту модели. [1] [5]\n\n**Поведение модели.** В описании Hardening Soil зависимость между девиаторным напряжением и деформацией названа гиперболической. Кроме того, поскольку жёсткость зависит от уровня напряжений, поведение характеризуется как нелинейно-упругое. [2] Для варианта с учётом малых деформаций руководство отдельно отмечает, что диапазон, в котором грунт можно считать действительно упругим, очень мал, а при увеличении деформаций жёсткость снижается нелинейно. [1] [3]\n\n**Параметры жёсткости и прочности:**\n\n- **E50ref** — секущая жёсткость по результатам стандартного дренированного трёхосного испытания; рекомендуемое значение в таблице приведено как `Ei x (2 – Rf) /2`, где `Ei` — начальная жёсткость. [5]\n- **Eoedref** — касательная жёсткость при основном нагружении в одометре; в таблице указано рекомендуемое значение `E50ref`. [5]\n- **Eurref** — жёсткость при разгрузке и повторном нагружении; рекомендуемое значение указано как `3 x E50ref`. [5]\n- **m** — показатель степени, задающий зависимость жёсткости от уровня напряжений; в таблице приведён диапазон `0.5 ≤ m ≤ 1`, с ориентиром `0.5` для жёстких грунтов и `1` для мягких. [5]\n- **C** — эффективное сцепление; в таблице оно обозначено как параметр прочности, используемый также в модели Мора—Кулона. [5]\n- **φ** — эффективный угол трения; он также указан как параметр прочности модели Мора—Кулона. [5]\n- **ψ** — предельный угол дилатансии; в таблице указан диапазон `0 ≤ ψ ≤ φ`. [5]\n\n**Дополнение для малых деформаций.** В этом варианте модели используются два дополнительных параметра. [1] [3]\n\n- **G0ref** — начальный модуль сдвига, то есть модуль сдвига при очень малых деформациях. [1] [3]\n- **γ0.7** — деформация сдвига, при которой модуль сдвига составляет около 70% от начального значения. [1] [3]\n\nРуководство указывает, что для описания снижения модуля сдвига с ростом деформации вариант с учётом малых деформаций использует модифицированное соотношение Хардина—Дрневича. [3] [4] **Пояснение:** практически это означает, что модель отдельно задаёт начальную высокую жёсткость при очень малых деформациях и порог, после которого она заметно уменьшается; точный отклик зависит от введённых параметров. [1] [3]\n\nВ таблице также приведены дополнительные параметры и рекомендуемые значения. Они перечислены как ориентиры, а не как гарантированные значения для любого грунта. [5]\n\n- **Rf** — отношение при разрушении `qf / qa`; рекомендованное значение — `0.9 (< 1)`. [5]\n- **Pref** — начальное давление; в таблице указано значение `100`. [5]\n- **K0NC** — коэффициент бокового давления при нормальной консолидации; указана зависимость `1-sinφ (< 1)`. [5]\n- **Tensile strength** — ограничивающая величина растягивающего гидростатического давления; числовое рекомендуемое значение в таблице не приведено. [5]",
+          "media_refs": {
+            "answer": {
+              "mode": "expanded",
+              "expandable": false,
+              "incomplete": false
+            }
+          },
+          "rag_sources": [
+            {
+              "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+              "page": 66,
+              "score": 0.58703315,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the",
+              "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+              "printed_page": 65
+            },
+            {
+              "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+              "page": 74,
+              "score": 0.66101336,
+              "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+              "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+              "confident": true,
+              "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+              "printed_page": 203
+            },
+            {
+              "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+              "page": null,
+              "score": 0.5938738,
+              "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+              "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+              "printed_page": null
+            },
+            {
+              "id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+              "page": 67,
+              "score": 0.74751925,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 66 To reflect the above characteristics, the Hardening Soil with small strain stiffness model uses the modified Hardin & Drnevich relationship as the following equation. 0 0.7 1 , 0.385 1 s G a G a   = = + s G : Shear modulus 0 G : Initial shear modulus  : Shear strain 0.7  : Shear strain at which the shear modulus is about 70% of the small-strain shear modulus Nonlinear Parameters",
+              "chunk_id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_66",
+              "printed_page": 66
+            },
+            {
+              "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+              "page": 68,
+              "score": 0.76599133,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ",
+              "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+              "confident": true,
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+              "printed_page": 67
+            }
+          ],
+          "tokens": 926,
+          "latency_ms": 14170.82,
+          "created_at": "2026-10-15T10:55:26.932051Z"
+        },
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "replay_message_id": "1740a032-b538-42ef-a011-d08bb03bd039",
+        "wall_latency_ms": 14518.11929998803
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "probe": "minimal_generation_availability",
+  "model": "gpt-5.4-mini",
+  "status": "accepted"
+}

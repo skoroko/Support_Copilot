@@ -32,6 +32,7 @@ from app.chat.service import (
 from app.core.auth import PrincipalDep
 from app.core.upload_boundary import CHAT_MEDIA_MAX_FILES
 from app.deps.providers import SettingsDep
+from app.observability.logging import get_logger
 from app.services.notifier import notify_user
 from app.services.security.input_validator import (
     MAX_MESSAGE_CHARS,
@@ -40,6 +41,7 @@ from app.services.security.input_validator import (
 )
 
 router = APIRouter(tags=["chats"])
+logger = get_logger(__name__)
 
 
 class _ClosingStreamingResponse(StreamingResponse):
@@ -266,7 +268,10 @@ async def send_message(
                 yield f"data: {preview}\n\n"
         except asyncio.CancelledError:
             raise
-        except Exception:  # noqa: BLE001 - response headers have already been sent
+        except Exception as exc:  # noqa: BLE001 - response headers have already been sent
+            # Provider exception messages may contain credentials or request
+            # bodies. Record only the class so SSE failures are diagnosable.
+            logger.warning("chat_stream_failed", error_type=type(exc).__name__)
             payload = json.dumps(
                 {
                     "type": "error",

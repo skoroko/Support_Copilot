@@ -121,6 +121,27 @@ def test_chat_routes_create_get_stream_list_and_clear(fake_chat_service: FakeCha
         assert client.get(f"/chats/{chat_id}/messages").json() == []
 
 
+def test_stream_failure_logs_only_exception_type(fake_chat_service, monkeypatch):
+    from unittest.mock import Mock
+
+    from app.chat import routes
+
+    logger = Mock()
+    monkeypatch.setattr(routes, "logger", logger)
+
+    async def failing_stream(*_args, **_kwargs):
+        raise RuntimeError("private-key-and-provider-request-body")
+        yield  # pragma: no cover - keep the async iterator contract
+
+    fake_chat_service.send_message = failing_stream
+    with TestClient(app, headers=auth_headers()) as client:
+        chat_id = client.post("/chats").json()["chat_id"]
+        response = client.post(f"/chats/{chat_id}/messages", data={"content": "Вопрос"})
+    assert "chat_stream_failed" in response.text
+    assert "private-key-and-provider-request-body" not in response.text
+    logger.warning.assert_called_once_with("chat_stream_failed", error_type="RuntimeError")
+
+
 def test_chat_stream_emits_replace_event_for_canonical_answer(fake_chat_service: FakeChatService) -> None:
     chat = Chat(owner_external_id="test-1", interface="cli")
     fake_chat_service.chats[chat.id] = chat

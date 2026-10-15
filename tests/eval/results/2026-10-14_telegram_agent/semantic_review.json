@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "run_id": "87dad8a9d1b245e382ce5c1dbd98655c",
+  "reviewed_on": "2026-10-14",
+  "method": "Qualitative review by Codex, with two delegated GPT-6.1 Sol High review packages. References and exact checkpoint contexts were compared; final public source N maps to sources[N-1], then by chunk_id to the original tool context. No separate network judge, repeated generation or retrieval.",
+  "rubric": {
+    "correctness": {
+      "0": "Core answer incorrect or request produced no answer",
+      "1": "Essential reference points correct and sufficiently complete",
+      "0.5": "Material omission relative to reference or a minor factual error"
+    },
+    "grounding": {
+      "0": "Material claim unsupported by or mismatched to its final cited fragment",
+      "1": "All material claims supported by the specific final cited fragments",
+      "0.5": "Minor unsupported detail or citation imprecision",
+      "null": "No technical answer to assess (refusal, clarification or transport failure)"
+    }
+  },
+  "limitations": [
+    "One live run; no blinded human or independent domain-expert review; scores are qualitative rubric estimates, not RAGAS or statistically calibrated accuracy.",
+    "Correctness combines reference completeness with factual accuracy; a 0.5 does not necessarily mean a false claim.",
+    "Golden13 reference strengthens the causal claim that Modified MC eliminates mean-principal-stress limitation via nonlinear elasticity/double stiffening; retrieved fragments do not establish that causal connection. It was not required for a full score.",
+    "Expanded32 repeats the source's x/y lower-boundary constraints; potential manual issue was not scored as a generation error."
+  ],
+  "results": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Все DOF переданы верно; [1] — Algorithms PDF52/331 (34283333), о волнах свободного поля; r/θ/z [2] — Node PDF1/8, вместо подтверждающей PDF3/10."
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Скалярное поровое давление и независимость от узловой системы подтверждены Node1/8; совместные DOF — Elements104/117."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Не раскрыто геометрическое отличие систем; r/θ/z приписаны Node4/11 вместо Node3/10, ориентация тремя точками также ссылается на другие фрагменты."
+    },
+    {
+      "id": "golden-04",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Угол, ось конечного поворота и композиция кватернионов подтверждены Node5/12."
+    },
+    {
+      "id": "golden-05",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Формы solid-элементов и варианты пентаэдра подтверждены Elements1 и24/37."
+    },
+    {
+      "id": "golden-06",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Основной перечень верен, но [1] — CHM Soil Test (9dcdf92c), а не перечень одномерных элементов; Beam и Pile имеют подходящие отдельные ссылки."
+    },
+    {
+      "id": "golden-07",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Не раскрыты режимы контакта из reference; общие назначение/разделение узлов/Wizard приписаны Shell Interface (291c8be0), вместо Interface (25910908)."
+    },
+    {
+      "id": "golden-08",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Функция отображения, ограничение области и дополнительные детали подтверждены отдельными правильными фрагментами."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Не упомянуто изменение сцепления по глубине из reference; ψ приписан классической модели по таблице Modified Mohr-Coulomb (0dfdde68)."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Обычная MC и её ограничения цитируют CHM Modified Mohr-Coulomb (d9180948); верный CHM Mohr-Coulmb найден, но не включён в эти ссылки."
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Пропущены упругопластичность и ограничения; plastic potential классической MC объяснён по разделу Modified MC, Materials76/205."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Правильные подтверждённые характеристики и ограничения; не раскрыто изменение свойств по глубине из reference."
+    },
+    {
+      "id": "golden-13",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Модифицированная модель, nonlinear elasticity и double stiffening подтверждены; неподтверждённое причинное усиление reference не требовалось."
+    },
+    {
+      "id": "golden-14",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Назначение PM4Sand верно, но [1] — HTML Nonlinear time history + SRM (a9e95282), без PM4Sand; верная Materials87/216 не цитируется."
+    },
+    {
+      "id": "golden-15",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Пропущены кривая грунт–вода, Ван Генухтен и водосодержание; kx/ky/kz цитируют Materials114/243, где эти обозначения не перечислены."
+    },
+    {
+      "id": "golden-16",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Алгоритмы перечислены; пересчёт жёсткости модифицированного Ньютона приписан CHM [1], хотя это описано в Algorithms27/306 [2]."
+    },
+    {
+      "id": "golden-17",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "Ответ отсутствует: BackendStreamError, 61.48 с. Ошибка сохранена без повторного запроса."
+    },
+    {
+      "id": "golden-18",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Условия бисекции, уменьшение шага и максимальный уровень подтверждены Algorithms26/305."
+    },
+    {
+      "id": "golden-19",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Методы верны, но единственная [1] — CHM обзор глав, без Ланцоша, плотного решателя и ряда Штурма."
+    },
+    {
+      "id": "golden-20",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Основное сокращение верно; переход координат приписан Algorithms8/287 [1], а явно описан на9/288 [3]."
+    },
+    {
+      "id": "golden-21",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Типы AUTO-SOLID и пирамидальные переходы подтверждены CHM Auto-Solid."
+    },
+    {
+      "id": "golden-22",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Loop, GridMesher, Delaunay подтверждены соответствующим CHM Auto-Face."
+    },
+    {
+      "id": "golden-23",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Ошибки при несостыкованных узлах и исключение для намеренного разделения подтверждены Match Adjacent Faces."
+    },
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Начальное состояние и собственный вес подтверждены; накопление, I.S. и обнуление деформаций не подтверждены фактическим HTML [1]."
+    },
+    {
+      "id": "golden-25",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Типы верны; Stress/Seepage/Consolidation приписаны CHM списку кодов ошибок [1]; правильный Construction Stage fragment указан только для части ответа."
+    },
+    {
+      "id": "golden-26",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Не раскрыто отношение горизонтальных напряжений к вертикальным, применение описано неточно; [1] — CHM проницаемость/ёмкость/тепловые параметры, без K0."
+    },
+    {
+      "id": "golden-27",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Перечислены Fuse/Cut/Common, пропущен Embed; [1] — CHM Remove Manual (5c762fbe), не подтверждающий описанные булевы операции."
+    },
+    {
+      "id": "golden-28",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Geometry Set и задаваемое имя прямо подтверждены CHM2816548a."
+    },
+    {
+      "id": "golden-29",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Выбор единиц и масштаб переданы верно; [1] b2c2889a — импорт/перенумерация материалов, [2] b8e0fdb1 — Analysis Setting, а не CAD/DXF import."
+    },
+    {
+      "id": "golden-30",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Two-point Isometric View указан верно; [1]21bda79f описывает ориентацию осей элементов, нужная команда находится в [2]10c8b3e9; определение GCS [3] также не по адресу."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Упругое поведение и список моделей подтверждены Materials1/130, включая таблицу4.1.1."
+    },
+    {
+      "id": "golden-32",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Закрепления, режимы и Boundary Set подтверждены HTML Constraint/Define Set; Draining/Nodal Flux — соответствующими CHM."
+    },
+    {
+      "id": "golden-33",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректный отказ по цене лицензии: NO_ANSWER, источников нет."
+    },
+    {
+      "id": "golden-34",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "x/y элементной системы подтверждены Elements32/45,3175aeae."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Правильная таблица DOF повторяет ссылки Algorithms52/331 и Node1/8; источник соответствий Node3/10 не цитируется.",
+      "brief_chars": 634,
+      "expanded_chars": 897,
+      "detail_gain": "mostly_repetition"
+    },
+    {
+      "id": "golden-10",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Классическая MC и её область применения приписаны Materials55/184 о Modified MC; последующие ограничения теперь имеют правильный CHM Mohr-Coulmb.",
+      "brief_chars": 1150,
+      "expanded_chars": 2070,
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Правильные шесть DOF; те же ошибочные ссылки Algorithms52/331 и Node1/8, что в golden01.",
+      "new_search_count": 1
+    },
+    {
+      "id": "followup-01-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Контекст распознан, свежий поиск выполнен; x/y правильны, но [1] — solid-elements Elements25/38 (8bccc1a3), вместо plane-strain Elements32/45.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "followup-10-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Нет явной упругопластичности; ψ перенесён из Modified MC95d633db, дополнительная ссылка49d8374d — Soft Soil Creep.",
+      "new_search_count": 1
+    },
+    {
+      "id": "followup-10-question",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Основные ограничения верны; tension/Rankine цитируют Modified MC [1][4], вместо Materials42/171 [3]; рекомендация Modified MC для растяжения не подтверждена.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "followup-16-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Пропущен метод начальной жёсткости; BFGS цитирует Algorithms47/326 об arc-length/SRM вместо27/306; Crisfield/Riks не подтверждены указанными фрагментами.",
+      "new_search_count": 2
+    },
+    {
+      "id": "followup-16-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Тема сходимости распознана; свежий поиск, force/displacement/energy и все выбранные критерии подтверждены Algorithms25/304,29/308 и HTML Analysis Control.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Просит продукт/объект, контекст и цель; конкретные параметры не угадывает, вымышленных источников нет.",
+      "new_search_count": 0,
+      "asks_missing_product_or_task_before_guessing": true
+    },
+    {
+      "id": "refusal-discount",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Свежий поиск вернул no_evidence; корректный NO_ANSWER, без цены, гарантированной скидки и источников.",
+      "new_search_count": 1
+    },
+    {
+      "id": "refusal-sla",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Свежий поиск вернул no_evidence; корректный NO_ANSWER, без сроков/SLA/источников.",
+      "new_search_count": 1
+    },
+    {
+      "id": "golden-16",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Содержательно полнее; перечень и настройки подтверждены. Рекомендация полного Ньютона для «более точного» обновления не следует из частоты пересчёта в источнике.",
+      "brief_chars": 941,
+      "expanded_chars": 2515,
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Первоначальные напряжения/собственный вес/I.S. подтверждены; перенос напряжений и перемещений между стадиями отсутствует в фактических HTML3c6ffb6c и CHM3bb4697b.",
+      "brief_chars": 899,
+      "expanded_chars": 2191,
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-32",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Добавляет подтверждённые Define Set/Add/Worktree, Tx–Rz, объекты закрепления, draining targets и знаки Nodal Flux. Не добавляет неподтверждённых типов условий.",
+      "brief_chars": 1021,
+      "expanded_chars": 2743,
+      "detail_gain": "substantive_details"
+    }
+  ]
+}

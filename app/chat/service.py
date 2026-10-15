@@ -617,7 +617,9 @@ class ChatService:
                 return None
         return user_content
 
-    def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
+    def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, Any]:
+        if model.startswith("gpt-6"):
+            return {"max_completion_tokens": max_tokens, "reasoning_effort": "none", "store": False}
         if model.startswith("gpt-5"):
             return {"max_completion_tokens": max_tokens}
         return {"max_tokens": max_tokens}

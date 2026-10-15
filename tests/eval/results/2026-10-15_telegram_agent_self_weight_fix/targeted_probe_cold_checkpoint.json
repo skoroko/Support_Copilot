@@ -1,0 +1,799 @@
+{
+  "schema_version": 1,
+  "run_id": "c83b5f1a35a64682ab1d69143f3786e2",
+  "exported_at": "2026-10-15T10:14:45.557101+00:00",
+  "run_sha256": "643e150c878ea9f816a177df23306060c5f8141905494ae234052838e822abc5",
+  "note": "Exact saved graph messages and tool contexts; no retrieval or model call repeated.",
+  "threads": {
+    "chat-agent-671d7ec30a9a78f55c1ff3e09a07d5505d08539b676b084214e1441971695252": {
+      "owner": "eval-target-c83b5f1a35a64682ab1d69143f3786e2-golden-24",
+      "chat_id": "01aa1f4c-9a09-5757-8167-568dd6d418f8",
+      "scenario_ids": [
+        "golden-24"
+      ],
+      "status": "exported",
+      "checkpoint_id": "1f1c880f-af1a-630f-8007-9dc8e70d892f",
+      "checkpoint_ts": "2026-10-15T10:12:51.670466+00:00",
+      "messages": [
+        {
+          "type": "human",
+          "id": "0a6cbd25-7fae-449c-9087-77f895c36163",
+          "content": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?"
+        },
+        {
+          "type": "ai",
+          "id": "msg_01dd108ea098315f016ad0a6deea8087d2a85a798107fff2e9",
+          "content": "Проверю в руководствах MIDAS, как накапливаются результаты стадийного расчёта и какое начальное состояние грунта используется.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается? Как формируется начальное состояние грунта и какие начальные напряжения учитываются?",
+                "english_query": "Why is construction stage analysis cumulative, and from what ground state does it start? How is the initial ground state established, and what initial stresses are considered?"
+              },
+              "id": "call_wTl5Ngpl5VPd4DCgYFocmJHF",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 1299,
+            "output_tokens": 163,
+            "total_tokens": 1462,
+            "input_token_details": {
+              "cache_creation": 1296,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 34
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "49f94af4-ffd5-4f39-bb95-af0f3bbfce01",
+          "content": "{\"status\": \"unavailable\", \"message\": \"База знаний временно недоступна. Нужна проверка документации или эскалация инженеру поддержки.\", \"evidence\": [], \"citation_numbers\": []}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_wTl5Ngpl5VPd4DCgYFocmJHF"
+        },
+        {
+          "type": "ai",
+          "id": "msg_0a6b1cd7648c5d30016ad0a70178e887d299db00805470bba4",
+          "content": "Повторно проверю документацию по накоплению стадий и способу вычисления начальных напряжений грунта.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "В MIDAS почему результаты расчёта стадий строительства накапливаются между стадиями и как получают начальные естественные напряжения грунта перед началом строительства?",
+                "english_query": "In MIDAS, why do construction stage analysis results accumulate between stages, and how are the initial natural ground stresses obtained before construction begins?"
+              },
+              "id": "call_p27ooEQhmhNKz7yEAhGlKGKM",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 1486,
+            "output_tokens": 197,
+            "total_tokens": 1683,
+            "input_token_details": {
+              "cache_creation": 187,
+              "cache_read": 1296
+            },
+            "output_token_details": {
+              "reasoning": 80
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "bafb301e-a1ac-4db7-b6aa-6faff2a56b26",
+          "content": "{\"status\": \"unavailable\", \"message\": \"База знаний временно недоступна. Нужна проверка документации или эскалация инженеру поддержки.\", \"evidence\": [], \"citation_numbers\": []}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_p27ooEQhmhNKz7yEAhGlKGKM"
+        },
+        {
+          "type": "ai",
+          "id": "msg_0da0ab44f0a96007016ad0a72305d487d2823fdebc440bb671",
+          "content": "База знаний временно недоступна. Нужна проверка документации или эскалация инженеру поддержки.",
+          "tool_calls": [],
+          "finish_reason": "stop",
+          "usage": {
+            "input_tokens": 1661,
+            "output_tokens": 72,
+            "total_tokens": 1733,
+            "input_token_details": {
+              "cache_creation": 175,
+              "cache_read": 1483
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          }
+        }
+      ],
+      "knowledge_status": "unavailable",
+      "answer_mode": "brief",
+      "answer_evidence": [],
+      "citation_evidence": [],
+      "sources": []
+    },
+    "chat-agent-79882f888da2a3b9cee10ca28826d3ae52fca06aeace9819ceddd21ec1e1014b": {
+      "owner": "eval-target-c83b5f1a35a64682ab1d69143f3786e2-golden-31",
+      "chat_id": "106e4713-8096-5a33-9727-691c638fa897",
+      "scenario_ids": [
+        "golden-31"
+      ],
+      "status": "exported",
+      "checkpoint_id": "1f1c8810-67a9-649f-8005-e63ad4d70aeb",
+      "checkpoint_ts": "2026-10-15T10:13:11.022887+00:00",
+      "messages": [
+        {
+          "type": "human",
+          "id": "6a87a7c6-2d9b-4b54-b0bd-ae1fcd3d5538",
+          "content": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?"
+        },
+        {
+          "type": "ai",
+          "id": "msg_081a2884df50bdf1016ad0a72695d487d285578acfea6fa8f9",
+          "content": "Проверю в руководствах GTS NX, как определяется упругое поведение и какие упругие модели перечислены.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "Что означает упругое поведение материала и какие модели упругости доступны в GTS NX?",
+                "english_query": "What does elastic material behavior mean, and which elastic models are available in GTS NX?"
+              },
+              "id": "call_IOuIt8CAtopE9UOqWw25gt2w",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 1301,
+            "output_tokens": 134,
+            "total_tokens": 1435,
+            "input_token_details": {
+              "cache_creation": 24,
+              "cache_read": 1274
+            },
+            "output_token_details": {
+              "reasoning": 37
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "a3eeab52-1ba1-48b6-a33e-c6fc2669751d",
+          "content": "{\"status\": \"ok\", \"question\": \"Что означает упругое поведение материала и какие модели упругости доступны в GTS NX?\", \"telemetry\": {\"question_hash\": \"sha256:b580aae23f00e703\", \"plan_mode\": \"caller_standalone\", \"query_variant_count\": 1, \"translated_query_count\": 1, \"raw_candidate_counts\": [30, 30], \"product_candidate_counts\": [30, 30, 1], \"fused_candidate_count\": 44, \"lexical_candidate_count\": 1, \"lexical_query_variant_count\": 8, \"dense_fallback_query_count\": 0, \"lexical_selected_count\": 1, \"ranked_candidate_count\": 30, \"selected_candidate_ids\": [\"cf0dc869-ee69-42cb-9e76-4e48d5b25ee0\", \"7175e11c-1b0d-413f-8baa-d6da32675492\", \"f9324257-77dc-47bc-b1a0-4048a71c1397\", \"85184469-132d-41a9-9396-2d18a0ccfcc4\", \"1a01bd69-5a77-4629-a7d5-c4411d07adcc\"], \"selected_candidate_count\": 5, \"answer_mode\": \"focused\", \"product_scope\": \"primary\", \"cross_product_selected_count\": 0, \"top_score\": 0.750417, \"selected_top_score\": 0.750417, \"retrieval_ms\": 5918.17, \"context_budget_chars\": 24000, \"returned_context_chars\": 12017, \"context_truncated\": false}, \"evidence\": [{\"citation_number\": 1, \"marker\": \"[1]\", \"source\": {\"id\": \"cf0dc869-ee69-42cb-9e76-4e48d5b25ee0\", \"chunk_id\": \"cf0dc869-ee69-42cb-9e76-4e48d5b25ee0\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_116\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 117, \"printed_page\": 246, \"score\": 0.6717018, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 246 Раздел 5. Моделирование вязких материалов (Viscous Material Properties) Типичное поведение вязкоупругих и вязкопластичных материалов связно с проявлениями ползучести (увеличение деформаций при постоянных напряжениях) и релаксации напряжений (уменьшение напряжений при постоянных деформациях). Также свойство вязкости может меняться в зависимости от температуры материала и скорости деформаций. Вязкоупругие свойства означают сочетание упругих и вязких свойств. Подобным образом, вязкопластичные свойства означают одновременное наличие у материала свойств пластичности и вязкости. В GTS NX реализованы модели вязкоупругих материалов с учетом и без учета фактора времени, а также модель ползучести мягких грунтов, модель Секигучи-Ота (для вязких материалов) для моделирования вязкопластичных материалов. Таблица 4.5.1 Применимость моделей вязких материалов для различных типов элементов Тип материала Тип элемента Стержневой Балочный Контактный Георешетки Плоского напряженного состояния Оболочечный Плоской деформации Осесимметричный твердотельный Твердотельный Без учета фактора времени √ √ √ √ √ √ С учетом фактора времени √ √ √ √ √ √ √ Ползучесть мягких грунтов √ √ √ Секигучи-Ота (вязкий) √ √ √ 5.1 Вязкоупругий материал без учета фактора времени (старения) (Age Independent Visco- elastic Material) На макроскопическом уровне явление ползучести лучше всего проявляется при одноосном испытании на ползучесть при постоянной нагрузке, и при одноосном испытании на релаксацию при постоянной деформации и постоянной температуре. Испытуемый образец, которому сообщено постоянное одноосное растяжение, демонстрирует три временных фазы ползучести: главная фаза ползучести, вторичная фаза ползучести, и третичная фаза ползучести до разрушения, как показано на рисунке 4.5.1. На первом этапе, соответствующем так называемой главной ползучести, наблюдается снижение скорости\"}, {\"citation_number\": 2, \"marker\": \"[2]\", \"source\": {\"id\": \"7175e11c-1b0d-413f-8baa-d6da32675492\", \"chunk_id\": \"7175e11c-1b0d-413f-8baa-d6da32675492\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_6\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 7, \"printed_page\": 6, \"score\": 0.6332586, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher strength than the ground. TRESCA The Tresca criterion was originally developed to be used on yield conditions of metallic materials. In geotechnics, it is often used to simulate the ground material behavior during undrained conditions. This model has some flaws when applied to soil materials, such as no consideration of the effects of hydrostatic pressure acting on the yield surface. Firstly, the assumption that shear stress is unrelated to hydrostatic pressure (or confining pressure) is wrong for general soil behavior. Secondly, the yield stress is the same for compression and tension in this criterion, but soils generally have a much larger compressive strength than tensile strength, sometimes even negligible tensile strength. However, performing the total stress analysis for saturated soils under undrained conditions (called 0 = analysis) using the Tresca yield criterion still gives appropriate results. The Tresca yield criterion can be used because according to the results, the shear strength of the saturated soil is unrelated to the stress comp1nt of the hydrostatic pressure during undrained loading. In this case, because the maximum shear stress limit represents the undrained shear strength, the decision must be made from the results of the undrained triaxial compression test.\"}, {\"citation_number\": 3, \"marker\": \"[3]\", \"source\": {\"id\": \"f9324257-77dc-47bc-b1a0-4048a71c1397\", \"chunk_id\": \"f9324257-77dc-47bc-b1a0-4048a71c1397\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_257\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.6757168, \"confident\": true}, \"text\": \"Material Properties Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Properties Material Properties (Свойства материала) - Методология Параметры по умолчанию (Общие) Исходные параметры и единицы измерения для определения жесткости по умолчанию и начальных условий для каждой модели перечислены в приведенной ниже таблице\\nColumn 1=Исходный параметр | Column 2=Определение | Column 3=Единицы измерения\\nColumn 1=Elasticity modulus ( ) (Модуль упругости) | Column 2=Модуль упругости | Column 3=кН/м2\\nColumn 1=Elasticity modulus increment (Приращение модуля упругости) | Column 2=Приращение модуля упругости в зависимости от отметки (уклон) | Column 3=кН/м3\\nColumn 1=Reference height (Отметка привязки) | Column 2=Отметка привязки при вычислении приращения модуля упругости | Column 3=м\\nColumn 1=Poisson’s ratio ( ) (Коэффициент Пуассона) | Column 2=Коэффициент Пуассона | Column 3=-\\nColumn 1=Unit weight ( ? ) (Удельный вес) | Column 2=Удельный вес полностью неводонасыщенного грунта (?t) | Column 3=кН/м3\\nColumn 1=Initial stress (Ko) (Параметр начальных напряжений) | Column 2=Коэффициент бокового давления грунта (параметр начальных напряжений) | Column 3=-\\nColumn 1=Temperature coefficient (Коэффициент температурного расширения) | Column 2=Коэффициент, используемый при вычислении температурной нагрузки | Column 3=1/[T]\\nColumn 1=Damping ratio (Коэффициент демпфирования) | Column 2=Коэффициент демпфирования для материала (используется только в динамических расчетах) | Column 3=-\\nColumn 1=Safety Result (Mohr-Coulomb) (Результат расчета надежности (с использованием модели Мора-Кулона) | Column 2=Вычисление коэффициента безопасности для каждого элемента с использованием критерия разрушения Мора-Кулона | Column 3=-\\n[Elastic modulus (E)] (Модуль упругости) Данный параметр определяет начальную жесткость материала. Пользователь может указать модуль упругости, либо использовать модуль сдвига (G) или одометрический модуль упругости (Eoed) на основе данных одометрических испытаний. Начальная жесткость очень важна, так как геоматериалы демонстрируют нелинейное поведение даже на начальных стадиях нагружения. Начальная жесткость может быть определена по кривой взаимосвязи напряжений и деформаций полученной по результатам трехосных испытаний. Реалистичным подходом является использование величины E0 для материалов, которые демонстрируют линейного (упругое) поведение до достижения значительных деформаций, но для большинства геоматериалов подходящей величиной начальной жесткости является величина E50, представляющая собой уклон секущей для точки 50% от максимальных напряжений. При моделировании разгрузки и повторного нагружения вследствие устройства выемки при выполнении расчета с учетом поэтапности строительства лучше использовать величину Eur вместо E50 для более реалистичного моделирования грунтового основания.\"}, {\"citation_number\": 4, \"marker\": \"[4]\", \"source\": {\"id\": \"85184469-132d-41a9-9396-2d18a0ccfcc4\", \"chunk_id\": \"85184469-132d-41a9-9396-2d18a0ccfcc4\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_256\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.64233315, \"confident\": true}, \"text\": \"Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа модели. В данном случае элементы, используемые для моделирования грунтов, такие как элементы плоской деформации или твердотельные элементы могут быть использованы для материалов сооружения, не учитывающих Ко-эффекты водопроницаемости.\\nColumn 1=Material type (Тип материала) | Column 2=Model type ( Тип модели) | Column 3=Ground material ( Материал грунта) | Column 4=Structure material ( Материал сооружения) | Column 5=Material behavior properties ( Поведение материала)\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Elastic (Упругая) | Column 3=O | Column 4=O | Column 5=Linear elastic ( Линейно-упругое)\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Tresca (Треска | Column 3=O | Column 4=O | Column 5=Elasto-plastic (Упругопластическое)\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=von Mises (Nonlinear) (Мизеса (нелинейный) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Mohr-Coulomb (Мора-Кулона) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Drucker Prager (Друкера-Прагера) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Hoek Brown (Хоука-Брауна) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Generalized Hoek Brown (Обобщенная Хоука-Брауна) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Hyperbolic(Duncan-Chang) (Гиперболическая (Дункана-Чена)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Strain Softening (Деформационного разуплотнения) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Cam Clay (Модифицированная Cam Clay) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Jardine | Column 3=O | Column 4=X | Column 5=Nonlinear elastic ( Нелинейно-упругое)\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=D-min | Column 3=O | Column 4=X | Column 5=Нелинейно-упругое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Mohr-Coulomb (Модифицированная Мора-Кулона) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Soft Soil (Мягкого грунта) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Soft Soil Creep (Мягкого грунта с учетом ползучести) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=User defined model (Пользовательская модель) | Column 3=O | Column 4=O | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified UBCSAND (Модифицированная UBCSAND) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Sekiguchi-Ohta(Inviscid) (Секигучи-Ота (Невязкая)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Sekiguchi-Ohta(Viscid) (Секигучи-Ота (Вязкая)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Ramberg-Osgood (Модифицированная Рамберга-Осгуда) | Column 3=O | Column 4=O | Column 5=Упругопластическое\"}, {\"citation_number\": 5, \"marker\": \"[5]\", \"source\": {\"id\": \"1a01bd69-5a77-4629-a7d5-c4411d07adcc\", \"chunk_id\": \"1a01bd69-5a77-4629-a7d5-c4411d07adcc\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_136\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.7504175, \"confident\": true}, \"text\": \"Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или другую нелинейную модель материала. Тем не менее, данная модель материала подходит для моделирования бетонных и стальных конструкций, прочность которых гораздо выше прочности основания.\"}], \"citation_numbers\": [1, 2, 3, 4, 5]}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_IOuIt8CAtopE9UOqWw25gt2w"
+        },
+        {
+          "type": "ai",
+          "id": "msg_0d0a4145e0493b5c016ad0a734629087d2b01d13a711abfe22",
+          "content": "- **Упругое поведение** означает, что материал описывается упругой моделью; в GTS NX указаны линейно-упругий и нелинейно-упругий классы. [1]\n- **Линейная модель Elastic** задаёт прямую пропорциональность между напряжениями и деформациями; её константы — модуль упругости и коэффициент Пуассона. [2]\n- **Нелинейные упругие модели Jardine и D-min** доступны для грунта; в таблице применимости GTS NX они не отмечены для материалов сооружений. Модель Elastic отмечена для грунта и сооружений. [1]\n- **Ограничение модели Elastic:** у неё не задан предел текучести, поэтому расчётные напряжения и деформации могут быть нереалистичными; руководство рекомендует для общих задач рассматривать модель Мора—Кулона или другую нелинейную модель. [2]",
+          "tool_calls": [],
+          "finish_reason": "stop",
+          "usage": {
+            "input_tokens": 6034,
+            "output_tokens": 579,
+            "total_tokens": 6613,
+            "input_token_details": {
+              "cache_creation": 4733,
+              "cache_read": 1298
+            },
+            "output_token_details": {
+              "reasoning": 360
+            }
+          }
+        }
+      ],
+      "knowledge_status": "ok",
+      "answer_mode": "brief",
+      "answer_evidence": [
+        {
+          "id": "cf0dc869-ee69-42cb-9e76-4e48d5b25ee0",
+          "chunk_id": "cf0dc869-ee69-42cb-9e76-4e48d5b25ee0",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_116",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 117,
+          "printed_page": 246,
+          "score": 0.6717018,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 246 Раздел 5. Моделирование вязких материалов (Viscous Material Properties) Типичное поведение вязкоупругих и вязкопластичных материалов связно с проявлениями ползучести (увеличение деформаций при постоянных напряжениях) и релаксации напряжений (уменьшение напряжений при постоянных деформациях). Также свойство вязкости может меняться в зависимости от температуры материала и скорости деформаций. Вязкоупругие свойства означают сочетание упругих и вязких свойств. Подобным образом, вязкопластичные свойства означают одновременное наличие у материала свойств пластичности и вязкости. В GTS NX реализованы модели вязкоупругих материалов с учетом и ",
+          "confident": true
+        },
+        {
+          "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 7,
+          "printed_page": 6,
+          "score": 0.6332586,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher st",
+          "confident": true
+        },
+        {
+          "id": "f9324257-77dc-47bc-b1a0-4048a71c1397",
+          "chunk_id": "f9324257-77dc-47bc-b1a0-4048a71c1397",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_257",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6757168,
+          "snippet": "Material Properties Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Properties Material Properties (Свойства материала) - Методология Параметры по умолчанию (Общие) Исходные параметры и единицы измерения для определения жесткости по умолчанию и начальных условий для каждой модели перечислены в приведенной ниже таблице\nColumn 1=Исходный параметр | Column 2=Определение | Column 3=Единицы измерения\nColumn 1=Elasticity modulus ( ) (Модуль упругости) | Column 2=Модуль упругости | Column 3=кН/м2\nColumn 1=Elasticity modulus increment (Приращение модуля упругости) | Column 2=Приращение модуля упругости в зависимости от отметки (уклон) | Column 3=кН/м3\nColumn 1=Reference hei",
+          "confident": true
+        },
+        {
+          "id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "chunk_id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_256",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.64233315,
+          "snippet": "Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа мо",
+          "confident": true
+        },
+        {
+          "id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+          "chunk_id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_136",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.7504175,
+          "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+          "confident": true
+        }
+      ],
+      "citation_evidence": [
+        {
+          "citation_number": 1,
+          "marker": "[1]",
+          "source": {
+            "id": "cf0dc869-ee69-42cb-9e76-4e48d5b25ee0",
+            "chunk_id": "cf0dc869-ee69-42cb-9e76-4e48d5b25ee0",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_116",
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "page": 117,
+            "printed_page": 246,
+            "score": 0.6717018,
+            "confident": true
+          },
+          "text": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 246 Раздел 5. Моделирование вязких материалов (Viscous Material Properties) Типичное поведение вязкоупругих и вязкопластичных материалов связно с проявлениями ползучести (увеличение деформаций при постоянных напряжениях) и релаксации напряжений (уменьшение напряжений при постоянных деформациях). Также свойство вязкости может меняться в зависимости от температуры материала и скорости деформаций. Вязкоупругие свойства означают сочетание упругих и вязких свойств. Подобным образом, вязкопластичные свойства означают одновременное наличие у материала свойств пластичности и вязкости. В GTS NX реализованы модели вязкоупругих материалов с учетом и без учета фактора времени, а также модель ползучести мягких грунтов, модель Секигучи-Ота (для вязких материалов) для моделирования вязкопластичных материалов. Таблица 4.5.1 Применимость моделей вязких материалов для различных типов элементов Тип материала Тип элемента Стержневой Балочный Контактный Георешетки Плоского напряженного состояния Оболочечный Плоской деформации Осесимметричный твердотельный Твердотельный Без учета фактора времени √ √ √ √ √ √ С учетом фактора времени √ √ √ √ √ √ √ Ползучесть мягких грунтов √ √ √ Секигучи-Ота (вязкий) √ √ √ 5.1 Вязкоупругий материал без учета фактора времени (старения) (Age Independent Visco- elastic Material) На макроскопическом уровне явление ползучести лучше всего проявляется при одноосном испытании на ползучесть при постоянной нагрузке, и при одноосном испытании на релаксацию при постоянной деформации и постоянной температуре. Испытуемый образец, которому сообщено постоянное одноосное растяжение, демонстрирует три временных фазы ползучести: главная фаза ползучести, вторичная фаза ползучести, и третичная фаза ползучести до разрушения, как показано на рисунке 4.5.1. На первом этапе, соответствующем так называемой главной ползучести, наблюдается снижение скорости"
+        },
+        {
+          "citation_number": 2,
+          "marker": "[2]",
+          "source": {
+            "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "page": 7,
+            "printed_page": 6,
+            "score": 0.6332586,
+            "confident": true
+          },
+          "text": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher strength than the ground. TRESCA The Tresca criterion was originally developed to be used on yield conditions of metallic materials. In geotechnics, it is often used to simulate the ground material behavior during undrained conditions. This model has some flaws when applied to soil materials, such as no consideration of the effects of hydrostatic pressure acting on the yield surface. Firstly, the assumption that shear stress is unrelated to hydrostatic pressure (or confining pressure) is wrong for general soil behavior. Secondly, the yield stress is the same for compression and tension in this criterion, but soils generally have a much larger compressive strength than tensile strength, sometimes even negligible tensile strength. However, performing the total stress analysis for saturated soils under undrained conditions (called 0 = analysis) using the Tresca yield criterion still gives appropriate results. The Tresca yield criterion can be used because according to the results, the shear strength of the saturated soil is unrelated to the stress comp1nt of the hydrostatic pressure during undrained loading. In this case, because the maximum shear stress limit represents the undrained shear strength, the decision must be made from the results of the undrained triaxial compression test."
+        },
+        {
+          "citation_number": 3,
+          "marker": "[3]",
+          "source": {
+            "id": "f9324257-77dc-47bc-b1a0-4048a71c1397",
+            "chunk_id": "f9324257-77dc-47bc-b1a0-4048a71c1397",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_257",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.6757168,
+            "confident": true
+          },
+          "text": "Material Properties Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Properties Material Properties (Свойства материала) - Методология Параметры по умолчанию (Общие) Исходные параметры и единицы измерения для определения жесткости по умолчанию и начальных условий для каждой модели перечислены в приведенной ниже таблице\nColumn 1=Исходный параметр | Column 2=Определение | Column 3=Единицы измерения\nColumn 1=Elasticity modulus ( ) (Модуль упругости) | Column 2=Модуль упругости | Column 3=кН/м2\nColumn 1=Elasticity modulus increment (Приращение модуля упругости) | Column 2=Приращение модуля упругости в зависимости от отметки (уклон) | Column 3=кН/м3\nColumn 1=Reference height (Отметка привязки) | Column 2=Отметка привязки при вычислении приращения модуля упругости | Column 3=м\nColumn 1=Poisson’s ratio ( ) (Коэффициент Пуассона) | Column 2=Коэффициент Пуассона | Column 3=-\nColumn 1=Unit weight ( ? ) (Удельный вес) | Column 2=Удельный вес полностью неводонасыщенного грунта (?t) | Column 3=кН/м3\nColumn 1=Initial stress (Ko) (Параметр начальных напряжений) | Column 2=Коэффициент бокового давления грунта (параметр начальных напряжений) | Column 3=-\nColumn 1=Temperature coefficient (Коэффициент температурного расширения) | Column 2=Коэффициент, используемый при вычислении температурной нагрузки | Column 3=1/[T]\nColumn 1=Damping ratio (Коэффициент демпфирования) | Column 2=Коэффициент демпфирования для материала (используется только в динамических расчетах) | Column 3=-\nColumn 1=Safety Result (Mohr-Coulomb) (Результат расчета надежности (с использованием модели Мора-Кулона) | Column 2=Вычисление коэффициента безопасности для каждого элемента с использованием критерия разрушения Мора-Кулона | Column 3=-\n[Elastic modulus (E)] (Модуль упругости) Данный параметр определяет начальную жесткость материала. Пользователь может указать модуль упругости, либо использовать модуль сдвига (G) или одометрический модуль упругости (Eoed) на основе данных одометрических испытаний. Начальная жесткость очень важна, так как геоматериалы демонстрируют нелинейное поведение даже на начальных стадиях нагружения. Начальная жесткость может быть определена по кривой взаимосвязи напряжений и деформаций полученной по результатам трехосных испытаний. Реалистичным подходом является использование величины E0 для материалов, которые демонстрируют линейного (упругое) поведение до достижения значительных деформаций, но для большинства геоматериалов подходящей величиной начальной жесткости является величина E50, представляющая собой уклон секущей для точки 50% от максимальных напряжений. При моделировании разгрузки и повторного нагружения вследствие устройства выемки при выполнении расчета с учетом поэтапности строительства лучше использовать величину Eur вместо E50 для более реалистичного моделирования грунтового основания."
+        },
+        {
+          "citation_number": 4,
+          "marker": "[4]",
+          "source": {
+            "id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+            "chunk_id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_256",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.64233315,
+            "confident": true
+          },
+          "text": "Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа модели. В данном случае элементы, используемые для моделирования грунтов, такие как элементы плоской деформации или твердотельные элементы могут быть использованы для материалов сооружения, не учитывающих Ко-эффекты водопроницаемости.\nColumn 1=Material type (Тип материала) | Column 2=Model type ( Тип модели) | Column 3=Ground material ( Материал грунта) | Column 4=Structure material ( Материал сооружения) | Column 5=Material behavior properties ( Поведение материала)\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Elastic (Упругая) | Column 3=O | Column 4=O | Column 5=Linear elastic ( Линейно-упругое)\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Tresca (Треска | Column 3=O | Column 4=O | Column 5=Elasto-plastic (Упругопластическое)\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=von Mises (Nonlinear) (Мизеса (нелинейный) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Mohr-Coulomb (Мора-Кулона) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Drucker Prager (Друкера-Прагера) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Hoek Brown (Хоука-Брауна) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Generalized Hoek Brown (Обобщенная Хоука-Брауна) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Hyperbolic(Duncan-Chang) (Гиперболическая (Дункана-Чена)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Strain Softening (Деформационного разуплотнения) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Cam Clay (Модифицированная Cam Clay) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Jardine | Column 3=O | Column 4=X | Column 5=Nonlinear elastic ( Нелинейно-упругое)\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=D-min | Column 3=O | Column 4=X | Column 5=Нелинейно-упругое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Mohr-Coulomb (Модифицированная Мора-Кулона) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Soft Soil (Мягкого грунта) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Soft Soil Creep (Мягкого грунта с учетом ползучести) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=User defined model (Пользовательская модель) | Column 3=O | Column 4=O | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified UBCSAND (Модифицированная UBCSAND) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Sekiguchi-Ohta(Inviscid) (Секигучи-Ота (Невязкая)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Sekiguchi-Ohta(Viscid) (Секигучи-Ота (Вязкая)) | Column 3=O | Column 4=X | Column 5=Упругопластическое\nColumn 1=Isotropic (General Parameter) (Изотропный) | Column 2=Modified Ramberg-Osgood (Модифицированная Рамберга-Осгуда) | Column 3=O | Column 4=O | Column 5=Упругопластическое"
+        },
+        {
+          "citation_number": 5,
+          "marker": "[5]",
+          "source": {
+            "id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+            "chunk_id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_136",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.7504175,
+            "confident": true
+          },
+          "text": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или другую нелинейную модель материала. Тем не менее, данная модель материала подходит для моделирования бетонных и стальных конструкций, прочность которых гораздо выше прочности основания."
+        }
+      ],
+      "sources": [
+        {
+          "id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "chunk_id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_256",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.64233315,
+          "snippet": "Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа мо",
+          "confident": true
+        },
+        {
+          "id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+          "chunk_id": "1a01bd69-5a77-4629-a7d5-c4411d07adcc",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_136",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.7504175,
+          "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+          "confident": true
+        }
+      ]
+    },
+    "chat-agent-d26a4e5696cc1d7d2383d5bec695ace91295992d3ac104e3d05dcebb8ed910b0": {
+      "owner": "eval-target-c83b5f1a35a64682ab1d69143f3786e2-smoke-hardening",
+      "chat_id": "cc3e9e97-8b8c-5270-b8e4-7dc794e27966",
+      "scenario_ids": [
+        "smoke-hardening"
+      ],
+      "status": "exported",
+      "checkpoint_id": "1f1c8811-b835-6c4e-8009-f8a858c2cd0a",
+      "checkpoint_ts": "2026-10-15T10:13:46.312557+00:00",
+      "messages": [
+        {
+          "type": "human",
+          "id": "56639495-7b76-4c94-ba45-a3930c368343",
+          "content": "расскажи про модель харденинг соил"
+        },
+        {
+          "type": "ai",
+          "id": "msg_0e551b0267b47bbb016ad0a738b6f887d2a19ee311b2cfee33",
+          "content": "Проверю в руководствах MIDAS описание модели Hardening Soil, включая её поведение и основные параметры.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "Расскажите о модели Hardening Soil в MIDAS: какое у неё поведение и каковы её основные параметры?",
+                "english_query": "Describe the Hardening Soil model in MIDAS: what is its behavior and what are its main parameters?"
+              },
+              "id": "call_cE7in0Xn7zucVn5UcDVrZY2Z",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 1291,
+            "output_tokens": 117,
+            "total_tokens": 1408,
+            "input_token_details": {
+              "cache_creation": 14,
+              "cache_read": 1274
+            },
+            "output_token_details": {
+              "reasoning": 17
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "55b12191-6eb2-4c0d-9cb5-262c38d58db8",
+          "content": "{\"status\": \"ok\", \"question\": \"Расскажите о модели Hardening Soil в MIDAS: какое у неё поведение и каковы её основные параметры?\", \"telemetry\": {\"question_hash\": \"sha256:699b98dc0b227beb\", \"plan_mode\": \"caller_standalone\", \"query_variant_count\": 1, \"translated_query_count\": 1, \"raw_candidate_counts\": [30, 30], \"product_candidate_counts\": [30, 30, 8], \"fused_candidate_count\": 47, \"lexical_candidate_count\": 8, \"lexical_query_variant_count\": 8, \"dense_fallback_query_count\": 0, \"lexical_selected_count\": 2, \"ranked_candidate_count\": 30, \"selected_candidate_ids\": [\"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"7d249eff-e478-4847-b00f-fc83b134544e\", \"93c3b5c2-abe6-4b0e-8397-166ddcd89f7f\"], \"selected_candidate_count\": 5, \"answer_mode\": \"focused\", \"product_scope\": \"primary\", \"cross_product_selected_count\": 0, \"top_score\": 0.671354, \"selected_top_score\": 0.671354, \"retrieval_ms\": 3510.73, \"context_budget_chars\": 24000, \"returned_context_chars\": 7609, \"context_truncated\": false}, \"evidence\": [{\"citation_number\": 1, \"marker\": \"[1]\", \"source\": {\"id\": \"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"chunk_id\": \"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 77, \"printed_page\": 206, \"score\": 0.59246147, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно упругими, очень мал. С увеличением диапазона деформации жесткость грунта нелинейно уменьшается, как показано на следующем графике. Рис. 4.2.33 Характерное поведение грунта с диапазонами для типичных геотехнических конструкций и различных испытаний 19 Benz, T. \\\"Small strain stiffness of soil and its numerical consequences\\\", PhD thesis, University Stuttgart, 2007.\"}, {\"citation_number\": 2, \"marker\": \"[2]\", \"source\": {\"id\": \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"chunk_id\": \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_65\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 66, \"printed_page\": 65, \"score\": 0.6144442, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the ranges for typical geotechnical structures and different tests\"}, {\"citation_number\": 3, \"marker\": \"[3]\", \"source\": {\"id\": \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"chunk_id\": \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 74, \"printed_page\": 203, \"score\": 0.67135406, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотношение устанавливается при трехосных испытаниях. Нелинейно-упругое поведение (Nonlinear elastic) В Модифицированной модели Мора-Кулона следующие характеристики используются для определения значения, зависящего от напряжения. : удельное сцепление : начальное давление : угол внутреннего трения : рациональное число , для песков принимается равным 0,5 : секущая модель деформации в стандартном трехосном испытании в дренированных условиях : одометрический модуль деформации : модель деформации при разгрузке/повторном нагружении Поскольку модуль модель деформации зависит от напряжения, эта модель показывает нелинейно-упругое поведение, которая зависит от модулей деформации. Функция текучести, функция пластического потенциала и правило потока (Yield function, plastic potential function and flow rule) T. Schanz, P.A. Vermeer and P.G. Bonnier18 разработали модель упрочняющегося грунта, основанную на гиперболической зависимости между девиаторным напряжением и 18 Schanz T., Vermeer P.A., Bonnier P.G. (1999). The hardening-soil model: Formulation and verification. Beyond 2000 in Computational Geotechnics, Balkema, Rotterdam. pp. 281-290.\"}, {\"citation_number\": 4, \"marker\": \"[4]\", \"source\": {\"id\": \"7d249eff-e478-4847-b00f-fc83b134544e\", \"chunk_id\": \"7d249eff-e478-4847-b00f-fc83b134544e\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_234\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.6125767, \"confident\": true}, \"text\": \"Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\\nColumn 1=Threshold strain ( γ 0.7 ) | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от начального (или при малых деформациях)\\nДиапазон деформаций, в пределах которого грунты могут считаться действительно упругими, очень мал. При расширении диапазона деформаций жесткость грунта снижается нелинейно, как показано на следующем графике. Для учета описанных выше особенностей, модель упрочнения грунта при малых деформациях использует модифицированное соотношение Хардина-Дрневича.\\nColumn 1=G s | Column 2=: модуль сдвига\\nColumn 1=G 0 | Column 2=: начальный модуль сдвига\\nColumn 1=γ | Column 2=: деформации сдвига\\nColumn 1=γ 0.7 | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от модуля сдвига при малых деформациях\\n[Nonlinear Parameters] (Нелинейные параметры) Ниже приведена сводная таблица параметров модели грунта с упрочнением при малых деформациях .\"}, {\"citation_number\": 5, \"marker\": \"[5]\", \"source\": {\"id\": \"93c3b5c2-abe6-4b0e-8397-166ddcd89f7f\", \"chunk_id\": \"93c3b5c2-abe6-4b0e-8397-166ddcd89f7f\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_78\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 79, \"printed_page\": 208, \"score\": 0.57080185, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 208 2.20 Обобщенная модель SCLAY1S Мягкая глина в своем естественном состоянии обладает значительной степенью анизотропии во внутренних частицах грунта через отложения и консолидацию. По мере того, как непрерывно нарастает деформация, степень анизотропии меняется таким образом, что внутренние частицы грунта перестраиваются, а сцепление между частицами меняется. Обобщенная модель SCLAY1S программы GTS NX основана на модели SCLAY1, которая учитывает изменение, вызванное начальным напряжением, являющимся следствием анизотропии мягкой глины и анизотропии вращательного упрочнения. С другой стороны, структура грунтовых частиц предполагает два компонента: связующий материал и ткань. Ткань состоит из объемной компоновки частиц и сцеплением между частицами, и связующий материал постепенно ослабляется, так как пластическая деформация вызвана усилиями, действующими между частицами. Явление, благодаря которому связующий материал постепенно ослабляется в результате пластической деформации, называется деструктурированием, а модель SCLAY1S дополнительно учитывает феномен деструктурирования модели SCLAY1. Начальная модель SCLAY1(S) является моделью, предполагающей трехосное напряженное состояние, которая постепенно улучшается с учетом общего напряженного состояния. Обобщенная модель SCLAY1S заключается в том, что форма функции текучести усложнена и требует большего количества переменных для представления поведения упрочнения. Тем не менее, у нее есть преимущество, которое заключается в том, что с помощью нее можно строго моделировать поведение общего напряженного состояния, а также трехосного напряженного состояния. В модели SCLAY1S, игнорирующей начальную анизотропию и связующий материал, можно обнаружить, что модифицированная модель Cam Clay и функция текучести точно совпадают в том случае, если исходить из константы связанного материала, равной 0. 21 S.J. Wheeler, M. Cudny, H.P. Neher, C. Wlitafsky, \\\"Some developments in constitutive modelling of soft clays\\\", Proceedings of the International Workshop on Geotechnics of Soft Soils-Theory and Practice, Noordwijkerhoud, the Netherlands, 2003, pp. 17-19. 22 S.J. Wheller, A. Naatanen, M. Karstunen, M. Lojander \\\"An anisotropic elastoplastic model for soft clays\\\", Canadian Geotechnical Journal, 40.2., 2003., pp. 403-418.\"}], \"citation_numbers\": [1, 2, 3, 4, 5]}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_cE7in0Xn7zucVn5UcDVrZY2Z"
+        },
+        {
+          "type": "ai",
+          "id": "msg_05ab3692dd6ce094016ad0a740623487d2839a9ee95c96923b",
+          "content": "Уточню описание именно базовой модели Hardening Soil, чтобы не приписывать ей дополнения версии для малых деформаций.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "В модели Hardening Soil (не Hardening Soil with small strain stiffness) в MIDAS как описаны нелинейно-упругое поведение, пластическое упрочнение и параметры модели?",
+                "english_query": "In the Hardening Soil model (not Hardening Soil with small strain stiffness) in MIDAS, how are nonlinear elastic behavior, plastic hardening, and model parameters described?"
+              },
+              "id": "call_y57Bk9t2C8mYABang5j8i6R1",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 4720,
+            "output_tokens": 179,
+            "total_tokens": 4899,
+            "input_token_details": {
+              "cache_creation": 3429,
+              "cache_read": 1288
+            },
+            "output_token_details": {
+              "reasoning": 43
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "270930b8-6ef2-477a-b684-f5ac6234aec0",
+          "content": "{\"status\": \"ok\", \"question\": \"В модели Hardening Soil (не Hardening Soil with small strain stiffness) в MIDAS как описаны нелинейно-упругое поведение, пластическое упрочнение и параметры модели?\", \"telemetry\": {\"question_hash\": \"sha256:9816304a0ef0e02c\", \"plan_mode\": \"caller_standalone\", \"query_variant_count\": 2, \"translated_query_count\": 1, \"raw_candidate_counts\": [30, 30, 30], \"product_candidate_counts\": [30, 30, 30, 9], \"fused_candidate_count\": 55, \"lexical_candidate_count\": 9, \"lexical_query_variant_count\": 8, \"dense_fallback_query_count\": 0, \"lexical_selected_count\": 2, \"ranked_candidate_count\": 30, \"selected_candidate_ids\": [\"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"534e8d4c-c029-4bee-a1a9-3a4b8a903075\", \"127e7b63-2cb8-41ea-a942-33550e4b1b77\"], \"selected_candidate_count\": 5, \"answer_mode\": \"focused\", \"product_scope\": \"primary\", \"cross_product_selected_count\": 0, \"top_score\": 0.755587, \"selected_top_score\": 0.741177, \"retrieval_ms\": 5232.43, \"context_budget_chars\": 24000, \"returned_context_chars\": 5342, \"context_truncated\": false}, \"evidence\": [{\"citation_number\": 1, \"marker\": \"[1]\", \"source\": {\"id\": \"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"chunk_id\": \"cfbbfb24-91b8-4e3b-948c-85353baec250\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 77, \"printed_page\": 206, \"score\": 0.59246147, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно упругими, очень мал. С увеличением диапазона деформации жесткость грунта нелинейно уменьшается, как показано на следующем графике. Рис. 4.2.33 Характерное поведение грунта с диапазонами для типичных геотехнических конструкций и различных испытаний 19 Benz, T. \\\"Small strain stiffness of soil and its numerical consequences\\\", PhD thesis, University Stuttgart, 2007.\"}, {\"citation_number\": 3, \"marker\": \"[3]\", \"source\": {\"id\": \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"chunk_id\": \"5ec63f36-291b-4a4f-9b01-7937898658d9\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73\", \"file_name\": \"04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf\", \"page\": 74, \"printed_page\": 203, \"score\": 0.67135406, \"confident\": true}, \"text\": \"ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотношение устанавливается при трехосных испытаниях. Нелинейно-упругое поведение (Nonlinear elastic) В Модифицированной модели Мора-Кулона следующие характеристики используются для определения значения, зависящего от напряжения. : удельное сцепление : начальное давление : угол внутреннего трения : рациональное число , для песков принимается равным 0,5 : секущая модель деформации в стандартном трехосном испытании в дренированных условиях : одометрический модуль деформации : модель деформации при разгрузке/повторном нагружении Поскольку модуль модель деформации зависит от напряжения, эта модель показывает нелинейно-упругое поведение, которая зависит от модулей деформации. Функция текучести, функция пластического потенциала и правило потока (Yield function, plastic potential function and flow rule) T. Schanz, P.A. Vermeer and P.G. Bonnier18 разработали модель упрочняющегося грунта, основанную на гиперболической зависимости между девиаторным напряжением и 18 Schanz T., Vermeer P.A., Bonnier P.G. (1999). The hardening-soil model: Formulation and verification. Beyond 2000 in Computational Geotechnics, Balkema, Rotterdam. pp. 281-290.\"}, {\"citation_number\": 2, \"marker\": \"[2]\", \"source\": {\"id\": \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"chunk_id\": \"d2dde6b1-c9ce-4a0c-87c2-942defaa5904\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_65\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 66, \"printed_page\": 65, \"score\": 0.6144442, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the ranges for typical geotechnical structures and different tests\"}, {\"citation_number\": 6, \"marker\": \"[6]\", \"source\": {\"id\": \"534e8d4c-c029-4bee-a1a9-3a4b8a903075\", \"chunk_id\": \"534e8d4c-c029-4bee-a1a9-3a4b8a903075\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_66\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 67, \"printed_page\": 66, \"score\": 0.6669891, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 66 To reflect the above characteristics, the Hardening Soil with small strain stiffness model uses the modified Hardin & Drnevich relationship as the following equation. 0 0.7 1 , 0.385 1 s G a G a   = = + s G : Shear modulus 0 G : Initial shear modulus  : Shear strain 0.7  : Shear strain at which the shear modulus is about 70% of the small-strain shear modulus Nonlinear Parameters\"}, {\"citation_number\": 7, \"marker\": \"[7]\", \"source\": {\"id\": \"127e7b63-2cb8-41ea-a942-33550e4b1b77\", \"chunk_id\": \"127e7b63-2cb8-41ea-a942-33550e4b1b77\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_67\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 68, \"printed_page\": 67, \"score\": 0.6744153, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ≤ ψ ≤ φ Advanced parameters (Recommend to use Reference value) Rf Failure Ratio (qf / qa) 0.9 (< 1) Pref Reference pressure 100 KNC Ko for normal consolidation 1-sinφ (< 1) Tensile strength Cut off value for tensile hydrostatic pressure - Small strain stiffness Threshold Shear strain Shear strain at which shear modulus has decayed to 70% of initial shear stiffness (G0ref) β Shear modulus at small strain ( )2 0 2.97 33 1 ref e G e − = + ( ) ( ) 0.7 1 0 0 1 2 1 cos2 ' 1 sin 2 9 C K G        + − +  \"}], \"citation_numbers\": [1, 3, 2, 6, 7]}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_y57Bk9t2C8mYABang5j8i6R1"
+        },
+        {
+          "type": "ai",
+          "id": "msg_0e5bb46045344be3016ad0a74aa5c887d28ca92227d5214975",
+          "content": "Поищу отдельную таблицу параметров базовой модели и её описание пластического упрочнения, поскольку найденные параметры относятся к варианту для малых деформаций.",
+          "tool_calls": [
+            {
+              "name": "search_knowledge_base",
+              "args": {
+                "query": "Таблица параметров базовой модели Hardening Soil в MIDAS GTS NX (без small strain stiffness): E50ref, Eoedref, Eurref, m, c, φ, ψ, Rf и описание сдвигового и объемного упрочнения.",
+                "english_query": "Parameter table for the basic Hardening Soil model in MIDAS GTS NX (without small strain stiffness): E50ref, Eoedref, Eurref, m, c, φ, ψ, Rf, and description of shear and volumetric hardening."
+              },
+              "id": "call_etTjheAxJDgN26yORR5A7OFC",
+              "type": "tool_call"
+            }
+          ],
+          "finish_reason": "tool_calls",
+          "usage": {
+            "input_tokens": 7586,
+            "output_tokens": 203,
+            "total_tokens": 7789,
+            "input_token_details": {
+              "cache_creation": 2866,
+              "cache_read": 4717
+            },
+            "output_token_details": {
+              "reasoning": 24
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "id": "92eadeda-437c-4146-82a6-3e1e0864f1fc",
+          "content": "{\"status\": \"ok\", \"question\": \"Таблица параметров базовой модели Hardening Soil в MIDAS GTS NX (без small strain stiffness): E50ref, Eoedref, Eurref, m, c, φ, ψ, Rf и описание сдвигового и объемного упрочнения.\", \"telemetry\": {\"question_hash\": \"sha256:16f46f9c53794358\", \"plan_mode\": \"caller_standalone\", \"query_variant_count\": 2, \"translated_query_count\": 1, \"raw_candidate_counts\": [30, 30, 30], \"product_candidate_counts\": [30, 30, 30, 1], \"fused_candidate_count\": 54, \"lexical_candidate_count\": 1, \"lexical_query_variant_count\": 8, \"dense_fallback_query_count\": 0, \"lexical_selected_count\": 1, \"ranked_candidate_count\": 30, \"selected_candidate_ids\": [\"4183ece0-94ec-4c59-a9cf-2c48043979b4\", \"127e7b63-2cb8-41ea-a942-33550e4b1b77\", \"a5c48284-b15f-4aac-9e12-238341d3df6e\", \"7d249eff-e478-4847-b00f-fc83b134544e\", \"eacc05de-25ba-4069-a7c3-eae7fbe09c80\"], \"selected_candidate_count\": 5, \"answer_mode\": \"focused\", \"product_scope\": \"primary\", \"cross_product_selected_count\": 0, \"top_score\": 0.808143, \"selected_top_score\": 0.808143, \"retrieval_ms\": 4527.82, \"context_budget_chars\": 24000, \"returned_context_chars\": 8790, \"context_truncated\": false}, \"evidence\": [{\"citation_number\": 8, \"marker\": \"[8]\", \"source\": {\"id\": \"4183ece0-94ec-4c59-a9cf-2c48043979b4\", \"chunk_id\": \"4183ece0-94ec-4c59-a9cf-2c48043979b4\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_227\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.0, \"confident\": true}, \"text\": \"Generalized space function (Обобщенная пространственная функция) Назначение и свойства данной функции такие же, как и базовой пространственной функции. Однако обобщенная пространственная функция способна учитывать одновременно все три координаты, в то время как базовая пространственная функция является одномерной функцией с единственной независимой переменной (координатой). Способ определения данной функции такой же, как и для базовой пространственной функции. Задайте значения независимых переменных (X, Y, Z или R, TH, Z) и соответствующие им значения величины в табличном виде для формирования функции. Также функциональная зависимость в табличном виде может быть подготовлена в Excel, скопирована и вставлена в GTS NX. Surface function (Функция поверхности) Используется для описания конфигурации поверхности воды в трехмерном пространстве. Поверхность, описывающая положение уровня воды, может быть задана путем ввода значений уровней воды и соответствующих им глобальным или цилиндрическим координатам, как показано в приведенной ниже таблице. Но данная поверхность также может быть задана с помощью команды меню Boundary Condition (граничное условие) > Water Level (уровень воды) с последующим выбором существующей поверхности, координаты точек которой будут автоматически считаны. При этом шаг по оси Х определит точность описания водной поверхности, поэтому следует внимательно выбирать значение данного параметра для областей резкого изменения уровня воды. Non-Hydrostatic Water Pressure (Негидростатическое давление воды) Определите давление воды в верхней и нижней частях в зависимости от положения модели. Применительно к условиях целостности и условиям, заданных пользователем, при определении заданного уровня сетки - Условия, определяемые пользователем: пользователь может напрямую задать давление воды в верхней и нижней частях привязанной сетки с помощью определенной функции давления воды - Гидростатическое условие: эта функция используется для определения давления воды в верхней части выделенной сетки в качестве гидростатического. Name – имя ввода для функции. Ref. CSys – система координат привязки для определения функции. Тип давления воды – выберите тип функции для выбора в разделе Расчетный случай > Настройки расчета > Задать уровень воды для комплекта сеток КЭ (определяемый пользователем или по гидростатическому условию) Масштабный коэффициент для умножения всех введенных данных. Creep / Shrinkage Strain Function (Функция деформаций ползучести и усадки) Определение свойств ползучести и деформаций усадки бетона с учетом фактора времени.\"}, {\"citation_number\": 7, \"marker\": \"[7]\", \"source\": {\"id\": \"127e7b63-2cb8-41ea-a942-33550e4b1b77\", \"chunk_id\": \"127e7b63-2cb8-41ea-a942-33550e4b1b77\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_67\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 68, \"printed_page\": 67, \"score\": 0.6744153, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ≤ ψ ≤ φ Advanced parameters (Recommend to use Reference value) Rf Failure Ratio (qf / qa) 0.9 (< 1) Pref Reference pressure 100 KNC Ko for normal consolidation 1-sinφ (< 1) Tensile strength Cut off value for tensile hydrostatic pressure - Small strain stiffness Threshold Shear strain Shear strain at which shear modulus has decayed to 70% of initial shear stiffness (G0ref) β Shear modulus at small strain ( )2 0 2.97 33 1 ref e G e − = + ( ) ( ) 0.7 1 0 0 1 2 1 cos2 ' 1 sin 2 9 C K G        + − +  \"}, {\"citation_number\": 9, \"marker\": \"[9]\", \"source\": {\"id\": \"a5c48284-b15f-4aac-9e12-238341d3df6e\", \"chunk_id\": \"a5c48284-b15f-4aac-9e12-238341d3df6e\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_234\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.8025645, \"confident\": true}, \"text\": \"Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для жестких грунтов, 1 для мягких грунтов)\\nColumn 1=C | Column 2=Эффективное сцепление | Column 3=Параметр прочности, как в модели Мора-Кулона\\nColumn 1=φ | Column 2=Эффективный угол трения | Column 3=Параметр прочности, как в модели Мора-Кулона\\nColumn 1=ψ | Column 2=Предельный угол дилатансии | Column 3=0 ≤ ψ ≤ φ\\nColumn 1=Дополнительные параметры (используйте с рекомендованными значениями) | Column 2=Дополнительные параметры (используйте с рекомендованными значениями) | Column 3=Дополнительные параметры (используйте с рекомендованными значениями)\\nColumn 1=Rf | Column 2=Отношение при разрушении (qf / qa) | Column 3=0.9 (< 1)\\nColumn 1=Pref | Column 2=Начальное давление | Column 3=100\\nColumn 1=K0NC | Column 2=K0 при нормальной консолидации | Column 3=1-sin φ (< 1)\\nColumn 1=Tensile strength (Прочность при растяжении) | Column 2=Ограничивающая величина растягивающего гидростатического давления | Column 3=-\\nColumn 1=Small strain stiffness (Жесткость при малых деформациях) | Column 2=Small strain stiffness (Жесткость при малых деформациях) | Column 3=Small strain stiffness (Жесткость при малых деформациях)\\nColumn 1=Threshold Shear strain (Пороговые деформации сдвига) | Column 2=Деформации сдвига, при которых модуль сдвига снижается до 70% от начальной сдвиговой жесткости (G0ref) | Column 3=(empty)\\nColumn 1=β | Column 2=Модуль сдвига при малых деформациях | Column 3=(empty)\"}, {\"citation_number\": 4, \"marker\": \"[4]\", \"source\": {\"id\": \"7d249eff-e478-4847-b00f-fc83b134544e\", \"chunk_id\": \"7d249eff-e478-4847-b00f-fc83b134544e\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\GTS_NX 2021.chm_part_234\", \"file_name\": \"GTS_NX 2021.chm\", \"page\": null, \"printed_page\": null, \"score\": 0.6125767, \"confident\": true}, \"text\": \"Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\\nColumn 1=Threshold strain ( γ 0.7 ) | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от начального (или при малых деформациях)\\nДиапазон деформаций, в пределах которого грунты могут считаться действительно упругими, очень мал. При расширении диапазона деформаций жесткость грунта снижается нелинейно, как показано на следующем графике. Для учета описанных выше особенностей, модель упрочнения грунта при малых деформациях использует модифицированное соотношение Хардина-Дрневича.\\nColumn 1=G s | Column 2=: модуль сдвига\\nColumn 1=G 0 | Column 2=: начальный модуль сдвига\\nColumn 1=γ | Column 2=: деформации сдвига\\nColumn 1=γ 0.7 | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от модуля сдвига при малых деформациях\\n[Nonlinear Parameters] (Нелинейные параметры) Ниже приведена сводная таблица параметров модели грунта с упрочнением при малых деформациях .\"}, {\"citation_number\": 10, \"marker\": \"[10]\", \"source\": {\"id\": \"eacc05de-25ba-4069-a7c3-eae7fbe09c80\", \"chunk_id\": \"eacc05de-25ba-4069-a7c3-eae7fbe09c80\", \"document_id\": \"C:\\\\00.MIDAS\\\\PROJECTS\\\\19. HelpDesk_Assistant\\\\HelpDesk_Assistant\\\\data\\\\rag-block-03\\\\04_User Manual_Chapter4_Mesh.pdf_part_39\", \"file_name\": \"04_User Manual_Chapter4_Mesh.pdf\", \"page\": 40, \"printed_page\": 39, \"score\": 0.6926863, \"confident\": true}, \"text\": \"GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 39 Following is the summary of parameters for the Modified Mohr-Coulomb model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) / 2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C (Cinc) Effective cohesion (Increment of cohesion) Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ≤ ψ ≤ φ Advanced parameters (Recommend to use Reference value) Rf Failure Ratio (qf / qa) 0.9 (< 1) Pref Reference pressure 100 KNC Ko for normal consolidation 1-sinφ (< 1) Tensile strength Cut off value for tensile hydrostatic pressure - Dilatancy cut-off Porosity Initial void ratio - Porosity(Max) Maximum void ratio Porosity < Porosity(Max) Cap yield surface OCR / Pc Over Consolidation Ratio / Pre-overburden pressure When entering both parameters, Pc has the priority of usage α Cap Shape Factor (scale factor of preconsolidation stress) from KNC (Auto) β Cap Hardening Parameter from Eoedref (Auto)\"}], \"citation_numbers\": [8, 7, 9, 4, 10]}",
+          "name": "search_knowledge_base",
+          "tool_call_id": "call_etTjheAxJDgN26yORR5A7OFC"
+        },
+        {
+          "type": "ai",
+          "id": "msg_07b01543d6ad40ff016ad0a757e2b087d29ec5587ec82cf031",
+          "content": "В найденном руководстве MIDAS подробно описан вариант **Hardening Soil with small strain stiffness** — модель с учётом повышенной жёсткости грунта при малых деформациях. Поэтому его дополнительные параметры не следует автоматически переносить на базовую модель Hardening Soil. [1]\n\n- Модель учитывает зависимость деформационных модулей от напряжений, поэтому её упругое поведение нелинейное. [1]\n- **E50ref** — секущая жёсткость по результатам стандартного дренированного трёхосного испытания. [3]\n- **Eoedref** — касательная жёсткость при первичном нагружении в одометре; **Eurref** — жёсткость при разгрузке и повторном нагружении. [3]\n- **G₀ref** — начальный модуль сдвига при малых деформациях; **γ₀.₇** — пороговая деформация сдвига, при которой модуль составляет около 70% от начального. [2]\n\nЕсли вы имеете в виду именно базовую модель без учёта малых деформаций, уточните версию MIDAS — в найденных фрагментах её отдельное описание не подтверждено.",
+          "tool_calls": [],
+          "finish_reason": "stop",
+          "usage": {
+            "input_tokens": 11447,
+            "output_tokens": 767,
+            "total_tokens": 12214,
+            "input_token_details": {
+              "cache_creation": 3861,
+              "cache_read": 7583
+            },
+            "output_token_details": {
+              "reasoning": 484
+            }
+          }
+        }
+      ],
+      "knowledge_status": "ok",
+      "answer_mode": "brief",
+      "answer_evidence": [
+        {
+          "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 77,
+          "printed_page": 206,
+          "score": 0.59246147,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно у",
+          "confident": true
+        },
+        {
+          "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+          "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 66,
+          "printed_page": 65,
+          "score": 0.6144442,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the",
+          "confident": true
+        },
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.67135406,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6125767,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        },
+        {
+          "id": "93c3b5c2-abe6-4b0e-8397-166ddcd89f7f",
+          "chunk_id": "93c3b5c2-abe6-4b0e-8397-166ddcd89f7f",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_78",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 79,
+          "printed_page": 208,
+          "score": 0.57080185,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 208 2.20 Обобщенная модель SCLAY1S Мягкая глина в своем естественном состоянии обладает значительной степенью анизотропии во внутренних частицах грунта через отложения и консолидацию. По мере того, как непрерывно нарастает деформация, степень анизотропии меняется таким образом, что внутренние частицы грунта перестраиваются, а сцепление между частицами меняется. Обобщенная модель SCLAY1S программы GTS NX основана на модели SCLAY1, которая учитывает изменение, вызванное начальным напряжением, являющимся следствием анизотропии мягкой глины и анизотропии вращательного упрочнения. С другой стороны, структура грунтовых частиц предполагает два ко",
+          "confident": true
+        },
+        {
+          "id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+          "chunk_id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_66",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 67,
+          "printed_page": 66,
+          "score": 0.6669891,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 66 To reflect the above characteristics, the Hardening Soil with small strain stiffness model uses the modified Hardin & Drnevich relationship as the following equation. 0 0.7 1 , 0.385 1 s G a G a   = = + s G : Shear modulus 0 G : Initial shear modulus  : Shear strain 0.7  : Shear strain at which the shear modulus is about 70% of the small-strain shear modulus Nonlinear Parameters",
+          "confident": true
+        },
+        {
+          "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+          "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 68,
+          "printed_page": 67,
+          "score": 0.6744153,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ",
+          "confident": true
+        },
+        {
+          "id": "4183ece0-94ec-4c59-a9cf-2c48043979b4",
+          "chunk_id": "4183ece0-94ec-4c59-a9cf-2c48043979b4",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_227",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.0,
+          "snippet": "Generalized space function (Обобщенная пространственная функция) Назначение и свойства данной функции такие же, как и базовой пространственной функции. Однако обобщенная пространственная функция способна учитывать одновременно все три координаты, в то время как базовая пространственная функция является одномерной функцией с единственной независимой переменной (координатой). Способ определения данной функции такой же, как и для базовой пространственной функции. Задайте значения независимых переменных (X, Y, Z или R, TH, Z) и соответствующие им значения величины в табличном виде для формирования функции. Также функциональная зависимость в табличном виде может быть подготовлена в Excel, скопиро",
+          "confident": true
+        },
+        {
+          "id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+          "chunk_id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.8025645,
+          "snippet": "Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для ",
+          "confident": true
+        },
+        {
+          "id": "eacc05de-25ba-4069-a7c3-eae7fbe09c80",
+          "chunk_id": "eacc05de-25ba-4069-a7c3-eae7fbe09c80",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_39",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 40,
+          "printed_page": 39,
+          "score": 0.6926863,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 39 Following is the summary of parameters for the Modified Mohr-Coulomb model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) / 2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C (Cinc) Effective cohesion (Increment of cohesion) Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dila",
+          "confident": true
+        }
+      ],
+      "citation_evidence": [
+        {
+          "citation_number": 1,
+          "marker": "[1]",
+          "source": {
+            "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "page": 77,
+            "printed_page": 206,
+            "score": 0.59246147,
+            "confident": true
+          },
+          "text": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно упругими, очень мал. С увеличением диапазона деформации жесткость грунта нелинейно уменьшается, как показано на следующем графике. Рис. 4.2.33 Характерное поведение грунта с диапазонами для типичных геотехнических конструкций и различных испытаний 19 Benz, T. \"Small strain stiffness of soil and its numerical consequences\", PhD thesis, University Stuttgart, 2007."
+        },
+        {
+          "citation_number": 2,
+          "marker": "[2]",
+          "source": {
+            "id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+            "chunk_id": "d2dde6b1-c9ce-4a0c-87c2-942defaa5904",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_65",
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "page": 66,
+            "printed_page": 65,
+            "score": 0.6144442,
+            "confident": true
+          },
+          "text": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 65 HARDENING SOIL (SMALL STRAIN STIFFNESS) The Hardening Soil with small strain stiffness model is implemented by using the Modified Mohr-Coulomb model and Small strain overlay model, and needed two additional parameters as below: 0 ref G : Initial or very small-strain shear modulus 0.7  : Shear strain at which the shear modulus is about 70% of the initial small-strain shear modulus The strain range in which soils can be considered truly elastic is very small. With increasing strain range, soil stiffness decrease nonlinearly as the following graph. Figure. Characteristic stiffness-strain behavior of soil with the ranges for typical geotechnical structures and different tests"
+        },
+        {
+          "citation_number": 3,
+          "marker": "[3]",
+          "source": {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "page": 74,
+            "printed_page": 203,
+            "score": 0.67135406,
+            "confident": true
+          },
+          "text": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотношение устанавливается при трехосных испытаниях. Нелинейно-упругое поведение (Nonlinear elastic) В Модифицированной модели Мора-Кулона следующие характеристики используются для определения значения, зависящего от напряжения. : удельное сцепление : начальное давление : угол внутреннего трения : рациональное число , для песков принимается равным 0,5 : секущая модель деформации в стандартном трехосном испытании в дренированных условиях : одометрический модуль деформации : модель деформации при разгрузке/повторном нагружении Поскольку модуль модель деформации зависит от напряжения, эта модель показывает нелинейно-упругое поведение, которая зависит от модулей деформации. Функция текучести, функция пластического потенциала и правило потока (Yield function, plastic potential function and flow rule) T. Schanz, P.A. Vermeer and P.G. Bonnier18 разработали модель упрочняющегося грунта, основанную на гиперболической зависимости между девиаторным напряжением и 18 Schanz T., Vermeer P.A., Bonnier P.G. (1999). The hardening-soil model: Formulation and verification. Beyond 2000 in Computational Geotechnics, Balkema, Rotterdam. pp. 281-290."
+        },
+        {
+          "citation_number": 4,
+          "marker": "[4]",
+          "source": {
+            "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.6125767,
+            "confident": true
+          },
+          "text": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\nColumn 1=Threshold strain ( γ 0.7 ) | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от начального (или при малых деформациях)\nДиапазон деформаций, в пределах которого грунты могут считаться действительно упругими, очень мал. При расширении диапазона деформаций жесткость грунта снижается нелинейно, как показано на следующем графике. Для учета описанных выше особенностей, модель упрочнения грунта при малых деформациях использует модифицированное соотношение Хардина-Дрневича.\nColumn 1=G s | Column 2=: модуль сдвига\nColumn 1=G 0 | Column 2=: начальный модуль сдвига\nColumn 1=γ | Column 2=: деформации сдвига\nColumn 1=γ 0.7 | Column 2=: деформации сдвига, при которых модуль сдвига составляет 70% от модуля сдвига при малых деформациях\n[Nonlinear Parameters] (Нелинейные параметры) Ниже приведена сводная таблица параметров модели грунта с упрочнением при малых деформациях ."
+        },
+        {
+          "citation_number": 5,
+          "marker": "[5]",
+          "source": {
+            "id": "93c3b5c2-abe6-4b0e-8397-166ddcd89f7f",
+            "chunk_id": "93c3b5c2-abe6-4b0e-8397-166ddcd89f7f",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_78",
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "page": 79,
+            "printed_page": 208,
+            "score": 0.57080185,
+            "confident": true
+          },
+          "text": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 208 2.20 Обобщенная модель SCLAY1S Мягкая глина в своем естественном состоянии обладает значительной степенью анизотропии во внутренних частицах грунта через отложения и консолидацию. По мере того, как непрерывно нарастает деформация, степень анизотропии меняется таким образом, что внутренние частицы грунта перестраиваются, а сцепление между частицами меняется. Обобщенная модель SCLAY1S программы GTS NX основана на модели SCLAY1, которая учитывает изменение, вызванное начальным напряжением, являющимся следствием анизотропии мягкой глины и анизотропии вращательного упрочнения. С другой стороны, структура грунтовых частиц предполагает два компонента: связующий материал и ткань. Ткань состоит из объемной компоновки частиц и сцеплением между частицами, и связующий материал постепенно ослабляется, так как пластическая деформация вызвана усилиями, действующими между частицами. Явление, благодаря которому связующий материал постепенно ослабляется в результате пластической деформации, называется деструктурированием, а модель SCLAY1S дополнительно учитывает феномен деструктурирования модели SCLAY1. Начальная модель SCLAY1(S) является моделью, предполагающей трехосное напряженное состояние, которая постепенно улучшается с учетом общего напряженного состояния. Обобщенная модель SCLAY1S заключается в том, что форма функции текучести усложнена и требует большего количества переменных для представления поведения упрочнения. Тем не менее, у нее есть преимущество, которое заключается в том, что с помощью нее можно строго моделировать поведение общего напряженного состояния, а также трехосного напряженного состояния. В модели SCLAY1S, игнорирующей начальную анизотропию и связующий материал, можно обнаружить, что модифицированная модель Cam Clay и функция текучести точно совпадают в том случае, если исходить из константы связанного материала, равной 0. 21 S.J. Wheeler, M. Cudny, H.P. Neher, C. Wlitafsky, \"Some developments in constitutive modelling of soft clays\", Proceedings of the International Workshop on Geotechnics of Soft Soils-Theory and Practice, Noordwijkerhoud, the Netherlands, 2003, pp. 17-19. 22 S.J. Wheller, A. Naatanen, M. Karstunen, M. Lojander \"An anisotropic elastoplastic model for soft clays\", Canadian Geotechnical Journal, 40.2., 2003., pp. 403-418."
+        },
+        {
+          "citation_number": 6,
+          "marker": "[6]",
+          "source": {
+            "id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+            "chunk_id": "534e8d4c-c029-4bee-a1a9-3a4b8a903075",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_66",
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "page": 67,
+            "printed_page": 66,
+            "score": 0.6669891,
+            "confident": true
+          },
+          "text": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 66 To reflect the above characteristics, the Hardening Soil with small strain stiffness model uses the modified Hardin & Drnevich relationship as the following equation. 0 0.7 1 , 0.385 1 s G a G a   = = + s G : Shear modulus 0 G : Initial shear modulus  : Shear strain 0.7  : Shear strain at which the shear modulus is about 70% of the small-strain shear modulus Nonlinear Parameters"
+        },
+        {
+          "citation_number": 7,
+          "marker": "[7]",
+          "source": {
+            "id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+            "chunk_id": "127e7b63-2cb8-41ea-a942-33550e4b1b77",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_67",
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "page": 68,
+            "printed_page": 67,
+            "score": 0.6744153,
+            "confident": true
+          },
+          "text": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 67 Following is the summary of parameters for the Hardening Soil (small strain stiffness) model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) /2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C Effective cohesion Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ≤ ψ ≤ φ Advanced parameters (Recommend to use Reference value) Rf Failure Ratio (qf / qa) 0.9 (< 1) Pref Reference pressure 100 KNC Ko for normal consolidation 1-sinφ (< 1) Tensile strength Cut off value for tensile hydrostatic pressure - Small strain stiffness Threshold Shear strain Shear strain at which shear modulus has decayed to 70% of initial shear stiffness (G0ref) β Shear modulus at small strain ( )2 0 2.97 33 1 ref e G e − = + ( ) ( ) 0.7 1 0 0 1 2 1 cos2 ' 1 sin 2 9 C K G        + − +  "
+        },
+        {
+          "citation_number": 8,
+          "marker": "[8]",
+          "source": {
+            "id": "4183ece0-94ec-4c59-a9cf-2c48043979b4",
+            "chunk_id": "4183ece0-94ec-4c59-a9cf-2c48043979b4",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_227",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.0,
+            "confident": true
+          },
+          "text": "Generalized space function (Обобщенная пространственная функция) Назначение и свойства данной функции такие же, как и базовой пространственной функции. Однако обобщенная пространственная функция способна учитывать одновременно все три координаты, в то время как базовая пространственная функция является одномерной функцией с единственной независимой переменной (координатой). Способ определения данной функции такой же, как и для базовой пространственной функции. Задайте значения независимых переменных (X, Y, Z или R, TH, Z) и соответствующие им значения величины в табличном виде для формирования функции. Также функциональная зависимость в табличном виде может быть подготовлена в Excel, скопирована и вставлена в GTS NX. Surface function (Функция поверхности) Используется для описания конфигурации поверхности воды в трехмерном пространстве. Поверхность, описывающая положение уровня воды, может быть задана путем ввода значений уровней воды и соответствующих им глобальным или цилиндрическим координатам, как показано в приведенной ниже таблице. Но данная поверхность также может быть задана с помощью команды меню Boundary Condition (граничное условие) > Water Level (уровень воды) с последующим выбором существующей поверхности, координаты точек которой будут автоматически считаны. При этом шаг по оси Х определит точность описания водной поверхности, поэтому следует внимательно выбирать значение данного параметра для областей резкого изменения уровня воды. Non-Hydrostatic Water Pressure (Негидростатическое давление воды) Определите давление воды в верхней и нижней частях в зависимости от положения модели. Применительно к условиях целостности и условиям, заданных пользователем, при определении заданного уровня сетки - Условия, определяемые пользователем: пользователь может напрямую задать давление воды в верхней и нижней частях привязанной сетки с помощью определенной функции давления воды - Гидростатическое условие: эта функция используется для определения давления воды в верхней части выделенной сетки в качестве гидростатического. Name – имя ввода для функции. Ref. CSys – система координат привязки для определения функции. Тип давления воды – выберите тип функции для выбора в разделе Расчетный случай > Настройки расчета > Задать уровень воды для комплекта сеток КЭ (определяемый пользователем или по гидростатическому условию) Масштабный коэффициент для умножения всех введенных данных. Creep / Shrinkage Strain Function (Функция деформаций ползучести и усадки) Определение свойств ползучести и деформаций усадки бетона с учетом фактора времени."
+        },
+        {
+          "citation_number": 9,
+          "marker": "[9]",
+          "source": {
+            "id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+            "chunk_id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "file_name": "GTS_NX 2021.chm",
+            "page": null,
+            "printed_page": null,
+            "score": 0.8025645,
+            "confident": true
+          },
+          "text": "Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для жестких грунтов, 1 для мягких грунтов)\nColumn 1=C | Column 2=Эффективное сцепление | Column 3=Параметр прочности, как в модели Мора-Кулона\nColumn 1=φ | Column 2=Эффективный угол трения | Column 3=Параметр прочности, как в модели Мора-Кулона\nColumn 1=ψ | Column 2=Предельный угол дилатансии | Column 3=0 ≤ ψ ≤ φ\nColumn 1=Дополнительные параметры (используйте с рекомендованными значениями) | Column 2=Дополнительные параметры (используйте с рекомендованными значениями) | Column 3=Дополнительные параметры (используйте с рекомендованными значениями)\nColumn 1=Rf | Column 2=Отношение при разрушении (qf / qa) | Column 3=0.9 (< 1)\nColumn 1=Pref | Column 2=Начальное давление | Column 3=100\nColumn 1=K0NC | Column 2=K0 при нормальной консолидации | Column 3=1-sin φ (< 1)\nColumn 1=Tensile strength (Прочность при растяжении) | Column 2=Ограничивающая величина растягивающего гидростатического давления | Column 3=-\nColumn 1=Small strain stiffness (Жесткость при малых деформациях) | Column 2=Small strain stiffness (Жесткость при малых деформациях) | Column 3=Small strain stiffness (Жесткость при малых деформациях)\nColumn 1=Threshold Shear strain (Пороговые деформации сдвига) | Column 2=Деформации сдвига, при которых модуль сдвига снижается до 70% от начальной сдвиговой жесткости (G0ref) | Column 3=(empty)\nColumn 1=β | Column 2=Модуль сдвига при малых деформациях | Column 3=(empty)"
+        },
+        {
+          "citation_number": 10,
+          "marker": "[10]",
+          "source": {
+            "id": "eacc05de-25ba-4069-a7c3-eae7fbe09c80",
+            "chunk_id": "eacc05de-25ba-4069-a7c3-eae7fbe09c80",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_39",
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "page": 40,
+            "printed_page": 39,
+            "score": 0.6926863,
+            "confident": true
+          },
+          "text": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 39 Following is the summary of parameters for the Modified Mohr-Coulomb model. Parameter Description Reference value (kN, m) Soil stiffness and failure E50ref Secant stiffness in standard drained triaxial test Ei x (2 – Rf) / 2 (Ei = Initial stiffness) Eoedref Tangent stiffness for primary oedometer loading E50ref Eurref Unload / reloading stiffness 3 x E50ref m Power for stress-level dependency of stiffness 0.5 ≤ m ≤ 1 (0.5 for hard soil, 1 for soft soil) C (Cinc) Effective cohesion (Increment of cohesion) Failure parameter as in MC model φ Effective friction angle Failure parameter as in MC model ψ Ultimate dilatancy angle 0 ≤ ψ ≤ φ Advanced parameters (Recommend to use Reference value) Rf Failure Ratio (qf / qa) 0.9 (< 1) Pref Reference pressure 100 KNC Ko for normal consolidation 1-sinφ (< 1) Tensile strength Cut off value for tensile hydrostatic pressure - Dilatancy cut-off Porosity Initial void ratio - Porosity(Max) Maximum void ratio Porosity < Porosity(Max) Cap yield surface OCR / Pc Over Consolidation Ratio / Pre-overburden pressure When entering both parameters, Pc has the priority of usage α Cap Shape Factor (scale factor of preconsolidation stress) from KNC (Auto) β Cap Hardening Parameter from Eoedref (Auto)"
+        }
+      ],
+      "sources": [
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.67135406,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6125767,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        },
+        {
+          "id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+          "chunk_id": "a5c48284-b15f-4aac-9e12-238341d3df6e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.8025645,
+          "snippet": "Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для ",
+          "confident": true
+        }
+      ]
+    }
+  }
+}

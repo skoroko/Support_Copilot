@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "run_id": "56b4dcb869774f92b3d85dbc99d54916",
+  "reviewed_on": "2026-10-14",
+  "method": "Fresh Codex qualitative review with two read-only Sol High packages. Same baseline rubric. Final [N] -> final sources[N-1] -> chunk_id -> exact saved tool text for current turn; expansion uses saved citation evidence. Failed/dependent requests score 0/null and are retained. No judge API or repeated retrieval.",
+  "rubric": {
+    "correctness": "1=essential reference complete/correct;0.5=significant omission/minor factual error;0=core wrong or no requested answer",
+    "grounding": "1=all material claims supported by actual cited fragments;0.5=minor unsupported detail/imprecision;0=material unsupported/generalized claim;null=no factual claim or failed request"
+  },
+  "results": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Полностью приведены 3 поступательные и 3 вращательные DOF и соответствие 1–6 направлениям r, θ, z. [1] 86236476 (печатная с. 8, PDF с. 1) подтверждает число DOF; [2] c1acdb6d (с. 10/3) — точное соответствие в цилиндрической системе. Chunk_id сопоставлены с точными текстами текущих tool-вызовов."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Расширение сохраняет полное соответствие всех шести DOF и условие цилиндрической системы. [1] 86236476 (с. 8/1) и [2] c1acdb6d (с. 10/3) сопоставлены по chunk_id с сохранённым evidence; дополнительные пояснения радиального, окружного и осевого направлений согласуются с ним. По сравнению с brief это преимущественно повтор той же таблицы и условия, с небольшими терминологическими пояснениями.",
+      "detail_gain": "mostly_repetition"
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Основной ответ верен: поровое давление — ненаправленная DOF, независимая от узловой системы координат, что прямо подтверждено [2] 86236476 (с. 8/1). Дополнение о совместном решении при консолидации подтверждено [3] a9838d5f (с. 121/108), а правило GCS/NCS для направленных DOF — [1] 194972d8 (с. 31/32) и [4] c1acdb6d (с. 10/3). Все приведённые факты поддержаны текущими cited fragments."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Оба поддерживаемых типа названы верно. Однако объяснение отличия сводится к повторению названий систем: не раскрыто, что прямоугольная использует взаимно перпендикулярные оси, и не пояснены цилиндрические направления. [2] 7b4076f8 и [3] e5301211 (с. 11/4) поддерживают типы и назначение; [1] 8f896efd (с. 296/297) и [2] подтверждают ориентацию по трём точкам и изменение системы узла. Неподтверждённых материальных утверждений нет."
+    },
+    {
+      "id": "golden-04",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Полностью раскрыты норма вектора, единичная ось e = θ / ||θ|| и угол ||θ|| в радианах. [1] 8f864d1a (печатная с. 12, PDF с. 5) также непосредственно подтверждает дополнительные сведения о DOF 4–6, неаддитивности конечных поворотов и зависимости от порядка."
+    },
+    {
+      "id": "golden-05",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все три solid-формы перечислены верно; уточнение о пирамиде и призме у пентаэдра сохранено. [1] 3bdccdb4 (с. 37/24) и [2] afd45428 (PDF с. 1) прямо подтверждают эти формы."
+    },
+    {
+      "id": "golden-06",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Стержень, встроенный стержень, Beam/Embedded Beam и SRC-Pipe упомянуты, но требуемый явный перечень типов заменён примерами применения и функциями. Завершающее утверждение об отсутствии единого перечня вводит в заблуждение: непосредственно в cited [4] b71abbcf перечислены ферменный, балочный, встроенный ферменный и встроенный балочный элементы, затем SRC-Pipe. Остальные дополнения поддержаны: [3] 753a4c89 — два узла и примеры 1D; [2] 2f5a880a — балочные функции; [1] 9f8bffe8 (с. 98/99) — PILE/PILE TIP и нелинейное поведение. Это локальный дефект полноты и описания найденного evidence, а не неверное ядро."
+    },
+    {
+      "id": "golden-07",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Назначение контакта, нормальная/касательная жёсткости и задание свойств вручную либо Мастером переданы верно. Существенно пропущены разделение связанных узлов и нелинейные режимы из эталона. Разделение узлов прямо есть в cited [2] 25910908. Все фактически добавленные сведения о tv, R, коэффициенте Пуассона 0.45 и учёте размеров соседних элементов поддержаны [1] 65624226 (с. 95/96), [2] и [3] 9b010744; неподтверждённой подмены нет."
+    },
+    {
+      "id": "golden-08",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Полностью описаны сокращение расчётной области, назначение infinite element на границе с малым влиянием и отображение геометрически бесконечной области. [1] e0e5fa73 (с. 347/348) подтверждает границу и исключение динамики; [3] 0a0450eb (с. 24/11) прямо описывает функцию отображения. Дополнение о Free Field и поглощении отражённых волн, а также невозможности буквально смоделировать всё основание подтверждено cited [2] fa1f443a."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Верно названы упругопластическое поведение, сцепление и угол внутреннего трения; формула сдвиговой прочности поддержана [1] 3a9395e9. [1] и [2] 7aa735cb (с. 9/10) подтверждают область общих нелинейных расчётов грунта. Из эталона пропущена возможность задавать изменение сцепления по глубине; в этих cited fragments соответствующего описания нет."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Сохранены все существенные пункты эталона: упругопластическое поведение, общие нелинейные расчёты грунтов, практическая распространённость, отсутствие влияния промежуточного главного напряжения и линейная граница разрушения с ограничением диапазона обжатия. [1] 3a9395e9 и [2] 7aa735cb (с. 9/10) прямо подтверждают их. Дополнительные C, φ и связь со сдвиговой прочностью поддержаны [1]; сведений о применимости из посторонней строки таблицы не добавлено."
+    },
+    {
+      "id": "golden-10",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Полный эталон сохранён. Содержательно добавлены физический смысл сдвигового разрушения, независимость угла трения от давления обжатия и более явная связь точности с расширением диапазона. [1] 3a9395e9 подтверждает сдвиг и параметры; [1] и [2] 7aa735cb (с. 9/10) подтверждают все ограничения и область применения. Citation numbers проверены через sources расширения и сохранённые точные evidence-тексты. Неподтверждённых заявлений о модифицированной MC или применимости к типам элементов нет.",
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Верно разъяснено, что MC упругопластическая, а линейность относится к форме критерия и уравнению прочности. Но эталон существенно неполон: отсутствуют надёжность и широкое применение для оснований, ограничения по промежуточному главному напряжению/углу трения, изменения c и E по глубине и постоянное c при нулевом приращении. Изложенные утверждения поддержаны [1] 3a9395e9; рекомендация MC либо других нелинейных моделей вместо линейной упругости для общего анализа — [2] 7175e11c (с. 6/7) и [3] 1a01bd69."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Верно изложены упругопластическое поведение, область обычных нелинейных расчётов грунта, сцепление/угол трения, линейная форма критерия и отсутствие влияния промежуточного главного напряжения. Пропущены изменения сцепления и модуля упругости по глубине и явное указание независимости угла трения от обжатия. Все фактически изложенные свойства и ухудшение точности при расширении диапазона обжатия поддержаны cited [1] 7aa735cb (с. 9/10) и [2] b80e6240."
+    },
+    {
+      "id": "golden-13",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "[1] CHM d9180948 and [2] Mesh PDF p34/printed33 28a4ba87 support the nonlinear-elastic/plastic combination, sand/silt specialization, double hardening and dilatancy/cap differences; [3] Materials p55/printed184 241d298e supports nonlinear elastic behavior; [4] CHM 3a9395e9 supports classical linear meridian/failure envelope. Significant reference omission: absence of principal-stress influence on classical yield is unstated. All substantive asserted contrasts are supported."
+    },
+    {
+      "id": "golden-14",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[1] Materials PDF p87/printed216 015a0af6 explicitly names PM4Sand and supports dynamic sand loading, pore-pressure generation, liquefaction and effective-stress plasticity. [2] p92/printed221 05cc0589 supports post-shaking reconsolidation. Essential reference complete; no model substitution."
+    },
+    {
+      "id": "golden-15",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "[1] Materials PDF p113/printed242 f2b47585 supports Darcy, diagonal permeability matrix in material coordinates, dependence on water content/void ratio/pore pressure, q divided by porosity and maximum saturated permeability. Significant reference omissions: explicit kx/ky/kz, soil-water characteristic curve, Van Genuchten and minimum/maximum volumetric water content. No unsupported drainage-model eligibility restriction appears."
+    },
+    {
+      "id": "golden-16",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "[3] Algorithms PDF p27/printed306 b1797c10 supports Quasi-Newton/BFGS; [1] p29/printed308 a45c6221 supports arc-length constraints; [2] p1/printed280 21bb15ba supports the iterative equation solver and its memory advantage for large problems. Missing reference inventory: Newton-Raphson, initial stiffness, modified Newton-Raphson and secant. Also mixes the linear-equation solver level with nonlinear solution methods, although the individual solver claims are directly supported."
+    },
+    {
+      "id": "golden-16",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Final [1]=time-history HTML 88a5ad69, [2]=Algorithms p29/printed308 a45c6221, [3]=p1/printed280 21bb15ba, [4]=p27/printed306 b1797c10. Supported additions include Quasi-Newton as generalized secant, Crisfield as the default arc-length constraint, force/displacement/energy convergence and arc-length's unstable-equilibrium limitation. Still omits Newton-Raphson, initial stiffness, modified Newton-Raphson and secant as the requested available algorithms; merely describing Quasi-Newton's secant relationship does not complete that inventory."
+    },
+    {
+      "id": "golden-17",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[2] Algorithms PDF p23/printed302 2430055d and [3] p25/printed304 c4484b43 support force/displacement/energy criteria, residual force, displacement increment and simultaneous decrease for ordinary nonlinear systems. [1] p29/printed308 a45c6221 supports the same criteria for arc-length. Essential reference complete."
+    },
+    {
+      "id": "golden-18",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[1] Algorithms PDF p26/printed305 c17ec9d2 explicitly supports divergence/excess-iteration triggers, restarting with a smaller bisected load increment and corrective stiffness recalculation or bisection. The chance-of-convergence explanation is a reasonable inference. Essential reference complete."
+    },
+    {
+      "id": "golden-19",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "[1] Algorithms PDF p5/printed284 ece3bda7 supports Lanczos and dense direct extraction, size suitability, missed forms and Sturm checking. [2] CHM f9fb48e5 supports eigenfrequency count/search range and missing-mode checks. Significant reference omission: response does not map Lanczos to the default multifrontal solver or dense direct extraction to the dense-matrix solver, despite that mapping being present in [1]."
+    },
+    {
+      "id": "golden-20",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[1] Algorithms PDF p9/printed288 c4aeb610 supports modal coordinates, lower-mode truncation, reduced variable count, separate modal equations under the stated zero-damping condition and insufficient-mode accuracy loss; [2] p8/printed287 75411c3b supports eigenform-based reduced equilibrium. Essential reference complete."
+    },
+    {
+      "id": "golden-21",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[1] Mesh PDF p236/printed235 03a52632 and [2] AUTO-SOLID CHM d2ad11a1 support tetrahedral and hexahedron-centered hybrid meshes with tetrahedra, hexahedra and pyramidal transitions. Essential reference complete."
+    },
+    {
+      "id": "golden-22",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[1] AUTO-FACE CHM 21b452ed explicitly lists Loop Mesher, GridMesher and Delaunay Mesher and supports the cyclic, regular-grid and Delaunay-triangulation descriptions. Essential reference complete."
+    },
+    {
+      "id": "golden-23",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "[2] Mesh PDF p237/printed236 9a97f10c and [3] AUTO-SOLID CHM d2ad11a1 explicitly support analysis errors, disconnected nodes across solid interfaces and keeping Fit adjacent mesh enabled. [1] MAP-FACE CHM ddd604a6 and [4] MAP-SOLID CHM 8d61803b support generation failures from mismatched neighboring divisions. Continuity explanation is a supported paraphrase. Essential reference complete."
+    },
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Накопительный принцип прямо подтверждён Analysis Method PDF8/printed7 a4c208f5, естественные начальные напряжения — CHM1831be10/3bb4697b. Перенос результатов больше не выводится только из сохранения отдельной нагрузки. Однако существенный пункт эталона о расчёте собственного веса пропущен, хотя имеется в 1831be10."
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Прямое описание накопительной модели a4c208f5 поддерживает перенос результатов и историю изменений. Начальные естественные напряжения поддержаны CHM1831be10, I.S. — 3bb4697b, Initial stage/Ko и линейный Initial Stress даже при нелинейном материале — 670ea225; изменение условий — 7d225084. Добавленные детали подтверждены, но собственный вес из эталона всё ещё не назван."
+    },
+    {
+      "id": "golden-25",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Stress/Seepage/Consolidation/Heat Transfer и сопряжённые типы подтверждены Analysis Method PDF16/15 263bb556 и HTMLda30a765. Старый CHM309e9e86 цитируется только для поддерживаемых там пяти типов, не для отсутствующего Heat Transfer."
+    },
+    {
+      "id": "golden-26",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "K0=σh/σv, первый этап, горизонтальное/наклонное основание и направление осей подтверждены Mesh PDF112/111 b910b6ee и CHMd249caf7. Не раскрыта требуемая эталоном связь начального состояния с собственным весом, хотя оба фрагмента её содержат."
+    },
+    {
+      "id": "golden-27",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Fuse/Cut/Common и их назначение подтверждены CHM601251e6. Пропущены требуемые эталоном Embed и условие Merge faces; четвёртой операции в финальном ответе нет."
+    },
+    {
+      "id": "golden-28",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Регистрация/именование Geometry Set и примеры sweep, bedding planes/columnar sections как face/line подтверждены Geometry PDF83/82 a6f33f93 и63/62 911a2fe0. Пояснение ограничено этими примерами."
+    },
+    {
+      "id": "golden-29",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Размер CAD зависит от выбранных единиц, собственные единицы отсутствуют: General Information PDF6/5 1c87c4f9 и CHM3a79418a. Метры/футы и логическое пояснение масштаба подтверждены."
+    },
+    {
+      "id": "golden-30",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Isometric2/Two-point Isometric View и Y-up подтверждены General Information PDF19/18 8257a361 и CHM10c8b3e9. Фиксированная GCS и её значок справа внизу прямо подтверждены CHMacb2fb09; смена перспективы отделена от переориентации GCS."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Возврат без остаточных деформаций и оба класса упругости прямо поддержаны Materials PDF1/130 d8a74860. Пропорциональность линейной модели и E/ν — Mesh PDF7/6 7175e11c. Jardine/D-min подтверждены своими явными CHM-строками85184469 с отдельным столбцом поведения. Упругопластические Modified MC/Ramberg-Osgood и неоднозначный Duncan-Chang не включены в перечень упругих."
+    },
+    {
+      "id": "golden-32",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Три категории boundary condition, связь DOF/NCS/GCS и примеры соединения разных элементов подтверждены Analysis Method PDF32/31 194972d8. Ограничение Advanced явно отнесено к Excel import/export PDF63/62 cf0bf6d7. Существенные пункты эталона о Boundary Set, рабочем дереве и Basic/Advanced/Auto отсутствуют."
+    },
+    {
+      "id": "golden-32",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Добавленные GCS/NCS, шесть DOF и подробный пример плоской рамы X-Z с закреплениями подтверждены точным PDF32/31 194972d8. Excel-ограничение Advanced поддержано PDF63/62 cf0bf6d7 и не распространено на все закрепления. Требуемые Boundary Set/Worktree/Basic-Advanced-Auto остаются нераскрыты."
+    },
+    {
+      "id": "golden-33",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Корректный свободный отказ назвать цену без прайс-листа. Дополнительный факт о включённой лицензии LEM прямо подтверждён Analysis Method PDF140/139 486122b8. Фактическое дополнение требует grounding, поэтому это не canonical refusal с null."
+    },
+    {
+      "id": "golden-34",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "DOF x/y именно ECS прямо подтверждены Elements PDF32/45 3175aeae. Система отображения результатов не подменяет степени свободы элемента."
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Шесть DOF и r/θ/z подтверждены точными Node PDF1/8 86236476 и3/10 c1acdb6d текущего хода."
+    },
+    {
+      "id": "followup-01-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Самостоятельный поиск уточнения вернул Elements PDF32/45 3175aeae с DOF x/y ECS. Цитата относится к текущему фрагменту, а не к прошлому ответу r/θ/z."
+    },
+    {
+      "id": "followup-10-seed",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError; прямой диагностический запрос подтвердил OpenAIRateLimitError HTTP429 с признаком квоты/биллинга. Ответ не получен, ошибка сохранена."
+    },
+    {
+      "id": "followup-10-question",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "DependencyNotCompleted: начальный вопрос пары завершился ошибкой, уточнение не отправлялось. Не оценивалось как успешное уточнение."
+    },
+    {
+      "id": "followup-16-seed",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError в период подтверждённого OpenAI HTTP429; содержательный ответ не получен."
+    },
+    {
+      "id": "followup-16-question",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "DependencyNotCompleted после ошибки начального вопроса пары; уточнение не отправлялось."
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError в период OpenAI HTTP429. Способность уточнить недостаточные условия на окончательной версии этим запросом не проверена."
+    },
+    {
+      "id": "refusal-discount",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError в период OpenAI HTTP429. Технический сбой не считается корректным отказом."
+    },
+    {
+      "id": "refusal-sla",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError в период OpenAI HTTP429. Технический сбой не считается корректным отказом."
+    }
+  ]
+}

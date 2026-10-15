@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1170" viewBox="0 0 1600 1170" role="img" aria-labelledby="title description">
+  <title id="title">Support Copilot — финальный persistent LangGraph</title>
+  <desc id="description">START → begin_turn → call_model. Условные переходы call_model: execute_safe_tool → call_model; prepare_telegram_message → confirm_and_execute_telegram_message → finish; finish → END. Подтверждение приостанавливает тот же узел через interrupt. Подробнее использует тот же граф без tools.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#52647c"/></marker>
+    <style>
+      text { font-family: 'Segoe UI', Arial, sans-serif; fill: #17263d; }
+      .heading { font-size: 32px; font-weight: 700; }
+      .subtitle { font-size: 19px; fill: #53657d; }
+      .node { fill: #fff; stroke: #b4c1d3; stroke-width: 2; }
+      .name { font-family: Consolas, monospace; font-size: 20px; font-weight: 700; text-anchor: middle; }
+      .body { font-size: 19px; text-anchor: middle; fill: #41556e; }
+      .label { font-size: 17px; fill: #41556e; text-anchor: middle; }
+      .edge { fill: none; stroke: #52647c; stroke-width: 2.5; marker-end: url(#arrow); }
+      .conditional { stroke-dasharray: 7 5; }
+      .terminal { fill: #e7edf6; stroke: #b4c1d3; stroke-width: 2; }
+    </style>
+  </defs>
+  <rect width="1600" height="1170" rx="24" fill="#f6f8fc"/>
+  <text class="heading" x="70" y="65">Support Copilot · финальный агентный граф</text>
+  <text class="subtitle" x="70" y="101">Telegram → ChatAgent → build_agent() · 13.10.2026 · шесть исполняемых узлов</text>
+
+  <path class="edge" data-source="__start__" data-target="begin_turn" d="M770 180V220"/>
+  <path class="edge" data-source="begin_turn" data-target="call_model" d="M770 315V380"/>
+  <path class="edge conditional" data-source="call_model" data-target="execute_safe_tool" d="M550 440H440"/>
+  <path class="edge conditional" data-source="call_model" data-target="prepare_telegram_message" d="M990 440H1100"/>
+  <path class="edge conditional" data-source="call_model" data-target="finish" d="M770 500V870"/>
+  <path class="edge" data-source="execute_safe_tool" data-target="call_model" d="M260 530V660H505V545H650V500"/>
+  <path class="edge" data-source="prepare_telegram_message" data-target="confirm_and_execute_telegram_message" d="M1310 530V620"/>
+  <path class="edge" data-source="confirm_and_execute_telegram_message" data-target="finish" d="M1310 790V920H990"/>
+  <path class="edge" data-source="finish" data-target="__end__" d="M770 970V1020"/>
+
+  <rect class="terminal" data-node="__start__" x="690" y="130" width="160" height="50" rx="25"/>
+  <text class="name" x="770" y="163">START</text>
+
+  <rect class="node" data-node="begin_turn" x="550" y="220" width="440" height="95" rx="16"/>
+  <text class="name" x="770" y="257">begin_turn</text>
+  <text class="body" x="770" y="289">Инициализация состояния turn</text>
+
+  <rect class="node" data-node="call_model" x="550" y="380" width="440" height="120" rx="16" style="fill:#eaf0ff;stroke:#7396da"/>
+  <text class="name" x="770" y="418">call_model</text>
+  <text class="body" x="770" y="451">Контекст + модель + tool calls</text>
+  <text class="body" x="770" y="480">Ceiling 500 · до 6 model turns</text>
+
+  <rect class="node" data-node="execute_safe_tool" x="80" y="390" width="360" height="140" rx="16"/>
+  <text class="name" x="260" y="429">execute_safe_tool</text>
+  <text class="body" x="260" y="464">Поиск evidence по мануалам</text>
+  <text class="body" x="260" y="494">или локальное время</text>
+
+  <rect class="node" data-node="prepare_telegram_message" x="1100" y="390" width="420" height="140" rx="16"/>
+  <text class="name" x="1310" y="429">prepare_telegram_message</text>
+  <text class="body" x="1310" y="464">Exact адресат + полный текст</text>
+  <text class="body" x="1310" y="494">Draft UUID + idempotency key</text>
+
+  <rect class="node" data-node="confirm_and_execute_telegram_message" x="1100" y="620" width="420" height="170" rx="16" style="fill:#fff5df;stroke:#d6aa45"/>
+  <text class="name" x="1310" y="654" style="font-size:17px">confirm_and_execute_telegram_message</text>
+  <text class="body" x="1310" y="690">interrupt() · ожидание решения</text>
+  <text class="body" x="1310" y="724">Confirm → отправка / Cancel → отказ</text>
+  <text class="body" x="1310" y="758">Command(resume) в том же узле</text>
+
+  <rect class="node" data-node="finish" x="550" y="870" width="440" height="100" rx="16"/>
+  <text class="name" x="770" y="910">finish</text>
+  <text class="body" x="770" y="944">Citations / отказ / observed статус</text>
+
+  <rect class="terminal" data-node="__end__" x="690" y="1020" width="160" height="50" rx="25"/>
+  <text class="name" x="770" y="1053">END</text>
+
+  <text class="label" x="495" y="365">Safe calls</text>
+  <text class="label" x="1230" y="365">Есть send_telegram_message</text>
+  <text class="label" x="895" y="680"><tspan x="895">Нет tools</tspan><tspan x="895" dy="26">или лимит итераций</tspan></text>
+  <text class="label" x="305" y="697">Результат инструмента → модель</text>
+  <text class="label" x="1180" y="565"><tspan x="1180">Checkpoint</tspan><tspan x="1180" dy="24">до внешнего эффекта</tspan></text>
+  <text class="label" x="1255" y="960">Статус без нового model call</text>
+
+  <text class="subtitle" x="70" y="1116">Пунктир — условная маршрутизация. Storage, Qdrant и chat facade находятся вне узлов графа.</text>
+  <text class="subtitle" x="70" y="1146">«Подробнее»: тот же START → begin_turn → call_model → finish → END; ceiling 1500, прежние evidence, tools отключены.</text>
+</svg>

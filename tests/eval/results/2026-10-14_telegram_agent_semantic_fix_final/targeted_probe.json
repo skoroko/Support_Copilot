@@ -1,0 +1,864 @@
+{
+  "run_id": "516fcef63a024d8987666c94a2dd4368",
+  "purpose": "Targeted real Telegram backend probe before full evaluation, no Telegram sends",
+  "scenarios": [
+    {
+      "id": "golden-09",
+      "group": "golden",
+      "conversation": "golden-09",
+      "golden_index": 9,
+      "question": "Какие параметры прочности задаются в модели Мора–Кулона и какое поведение она описывает?",
+      "reference": "Модель Мора–Кулона описывает упругопластическое поведение грунта. Её основные параметры прочности — сцепление и угол внутреннего трения; GTS NX также позволяет задавать изменение сцепления по глубине.",
+      "reference_contexts": [
+        "Mohr-Coulmb Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Mohr-Coulmb General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) - Mohr-Coulmb (Модель Мора-Кулона) Модель Мора-Кулона описывает упругопластическое поведение материала, как показано на рисунке ниже. Данная модель позволяет получать достоверные результаты в общих случаях нелинейных расчетов грунтового основания, и потому широко используется при моделировании большинства типов оснований. <Поведение материала в соответствии с моделью Мора-Кулона> Критерий текучести Мора-Кулона проявляет 2 недостатка при моделировании геоматериалов. Во-первых",
+        "В условии разрушения Мора–Кулона предельное касательное напряжение на площадке связано с нормальным напряжением, сцеплением и внутренним трением. GTS NX позволяет моделировать изменение сцепления по глубине; при нулевом изменении используется постоянное значение."
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Какие параметры прочности задаются в модели Мора–Кулона и какое поведение она описывает?",
+        "relevant_doc_ids": [
+          "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "04_User Manual_Chapter4_Mesh.pdf",
+          "GTS_NX 2021.chm"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-17",
+      "group": "golden",
+      "conversation": "golden-17",
+      "golden_index": 17,
+      "question": "Какие критерии сходимости можно задавать по усилию, перемещению и энергии?",
+      "reference": "Сходимость в нелинейном расчёте оценивается по изменению усилия, перемещения или энергии.",
+      "reference_contexts": [
+        "При этом критерии сходимости совпадают с теми, что используются для общего нелинейного решения. Другими словами, сходимость оценивается на основании изменения усилия, перемещения или энергии. При использовании метода длины дуги точный расчет состояния нагружения может быть затруднителен, так как приращение нагрузки определяется условием ограничения метода длины дуги и не может регулироваться пользователем. Поэтому область применения метода длины дуги ограничена кругом задач, в которых необходимо отслеживание состояния неустойчивого равновесия. При этом данный метод не имеет преимуществ при решении общих нелинейных задач. 7 Crisfield, M.A., “An arc-length",
+        "как нелинейного конечно-элементного решения. Пересчет тангенциальной жесткости выполняется при удовлетворении следующих условий: ➢ Когда ожидаемое число итеративных вычислений больше чем определенное пользователем число ➢ Когда диагностировано расхождение решения Условие сходимости (Convergence condition) Сходимость итеративного решения диагностируется с использованием силового критерия, критерия по перемещениям и энергетического критерия. Для обычных нелинейных систем все критерии сходимости снижаются одновременно при сходимости системы. В частности, силовой критерий представляет собой значение несбалансированной силы и находится в тесной взаимосвязи со степенью удовлетворения нелинейного у",
+        "Заданная сумма нагрузок может быть приложена мгновенно или пошагово, с определенными приращениями. Если приращение нагрузки слишком велико, то может быть трудно получить сходящееся решение, а если приращение нагрузки слишком мало, то выполняются лишние расчеты. При использовании зависящих от времени свойств материалов пользователь может задать шаги по времени для проверки результатов с течением времени. Convergence Criteria (Критерий сходимости) Так как нелинейный расчет использует итерационные методы, то условие сходимости может быть использовано для определения того, сходится ли решение. Сходимость определяется сравнением изменения перемещений, усилий в элементах или энергии относительно р",
+        "В зависимости от деформированной схемы также может быть автоматически пересчитано поровое давление. Load steps (or Time Steps) (Шаги нагрузки (Или шаги по времени)) Статические нагрузки могут быть использованы в нелинейном статическом расчете. Заданная сумма нагрузок может быть приложена мгновенно или пошагово, с определенными приращениями. Если приращение нагрузки слишком велико, то может быть трудно получить сходящееся решение, а если приращение нагрузки слишком мало, то выполняются лишние расчеты. При использовании зависящих от времени свойств материалов пользователь может задать шаги по времени для проверки результатов с течением времени. Convergence Criteria (Критерий сходимости) Так ка"
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Какие критерии сходимости можно задавать по усилию, перемещению и энергии?",
+        "relevant_doc_ids": [
+          "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "05_User Manual_Chapter5_Analysis Method.pdf"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-22",
+      "group": "golden",
+      "conversation": "golden-22",
+      "golden_index": 22,
+      "question": "Какие алгоритмы генерации двумерной сетки доступны в AUTO-FACE?",
+      "reference": "В AUTO-FACE доступны три алгоритма генерации двумерной сетки: Loop Mesher, GridMesher и Delaunay Mesher.",
+      "reference_contexts": [
+        "Refinement Factor (Коэффициент детализации) Укажите размер (плотность) сетки, которая будет создана в пределах выбранной формы. При приближения данного коэффициента в границе [Fine] (высокая детализация) создается более компактная (детальная) сетка. Более густая сетка позволяет получить более детальные результаты расчета, но следует помнить, что при этом также возрастает время счета. 2D Mesher (Двумерный генератор сеток) Выберите алгоритм генерации сетки. При этом доступно три опции: циклический генератор сеток (Loop Mesher), генератор регулярных сеток (GridMesher), и генератор сеток Делоне (Delaunay Mesher). Процесс генерации сетки и ее итоговый вид зависит от выбранного алгоритма. Loop (Ци"
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Какие алгоритмы генерации двумерной сетки доступны в AUTO-FACE?",
+        "relevant_doc_ids": [
+          "04_User Manual_Chapter4_Mesh.pdf",
+          "GTS_NX 2021.chm"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "conversation": "golden-24",
+      "golden_index": 24,
+      "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+      "reference": "Расчёт стадий строительства является накопительным, потому что на каждом этапе учитываются результаты нелинейного расчёта напряжений, полученные на предыдущем этапе, а изменения нагрузок и граничных условий вводятся в начале каждого этапа.\n\nОн начинается с естественного напряжённого состояния грунта: первый этап используется для вычисления естественных напряжений в слоях грунта, и в GTS NX для этого выполняется расчёт на действие собственного веса.",
+      "reference_contexts": [
+        "1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го этапа 4 Этап: Армирование обделки 2-го этапа + выемка 3-го этапа 5 Этап: Армирование обделки 3-го этапа + выемка 4-го этапа …… (Повтор) …… Первый этап используется для вычисления естественных напряжений в слоях грунта. Так как расчет напряженного состояния основания предполагает, что естественное напряженное состояние является начальным состоянием, то необходимо выполнить расчет естественного напряженного состояния. В GTS NX используется расчет на действие собственного веса для вычисления естественного напряженного состояния. Activate / Deactivate element (Активация/деактив",
+        "Часть STG #3 STG #4 STG #5 STG #6 Верхняя 0.3 0.4 0.3 - Нижняя - - 0.5 0.5 STG #3 STG #4 STG #5 STG #6 Необходимо следить, чтобы не случалось наложения значений LDF по этапам строительства, как показано ниже. Часть STG #3 STG #4 STG #5 STG #6 STG #7 Верхняя 0.3 0.4 0.3 - - Нижняя - - - 0.5 0.5 Clear Displacement (Чистое перемещение) Задайте перемещения в результатах расчета для текущего этапа равными 0. Данная функция используется для задания начальных условий естественного напряженного состояния основания. Напряжения при этом не обнуляются. Slope Stability (SRM/SAM) (Устойчивость откоса (Метод конечных элементов/ Метод редукции)) Укажите, следует ли выполнять расчет устойчивости откоса (мет",
+        "Construction Stage Analysis Home > GTS NX > Analysis > Analysis Case > General > Construction Stage Analysis Solution Type (Тип решения) - Construction Stage Analysis (Расчет поэтапности строительства) Расчет поэтапности строительства может быть использован для моделирования процесса возведения основания с использованием численного расчета. Расчет поэтапности строительства состоит из набора этапов, при этом условия нагружения и граничных условия, также как и отдельные элементы могут быть убраны или добавлены на любом из этапов. Такие изменения граничных условий или условий нагружения учитываются в начале каждого этапа. В GTS NX могут быть использованы следующие расчетные функции при выполнен"
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+        "relevant_doc_ids": [
+          "05_User Manual_Chapter5_Analysis Method.pdf",
+          "GTS_NX 2021.chm"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "conversation": "golden-31",
+      "golden_index": 31,
+      "question": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?",
+      "reference": "Упругий материал возвращается к исходной форме после снятия внешней нагрузки и не приобретает остаточных деформаций. В GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов.",
+      "reference_contexts": [
+        "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX. Глава 4. Материалы. Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе."
+      ],
+      "retrieval_binding": "unmatched",
+      "retrieval_contract": null,
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-34",
+      "group": "golden",
+      "conversation": "golden-34",
+      "golden_index": 34,
+      "question": "Какие степени свободы используются для элемента плоской деформации в GTS NX?",
+      "reference": "Для элемента плоской деформации используются степени свободы по направлениям осей x и y элементной системы координат.",
+      "reference_contexts": [
+        "результатов расчета. Рис. 3.6.5 – Определение направления осей модели материала для элемента плоской деформации с использованием проекции системы координат Степени свободы (DOF) Элемент плоской деформации характеризуется степенями свободы по направлениям осей x и y элементной системы координат. (3.6.3)"
+      ],
+      "retrieval_binding": "intentional_index_34_same_plane_strain_target_no_history_injection",
+      "retrieval_contract": {
+        "question": "А какие из них используются для плоской деформации?",
+        "relevant_doc_ids": [
+          "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf"
+        ],
+        "history": [
+          {
+            "role": "user",
+            "content": "Какие степени свободы используются в конструкционном расчёте GTS NX?"
+          },
+          {
+            "role": "assistant",
+            "content": "В общем конструкционном расчёте используются поступательные и вращательные степени свободы."
+          }
+        ],
+        "relevant_evidence": [
+          {
+            "doc_id": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+            "contains_all": [
+              "Элемент плоской деформации",
+              "по направлениям",
+              "осей x и y",
+              "элементной системы координат"
+            ],
+            "page": 32,
+            "printed_page": 45
+          }
+        ],
+        "expected_answer_contains_all": [
+          "x",
+          "y",
+          "элементн",
+          "систем",
+          "координат"
+        ],
+        "expected_answer_excludes_all": [
+          "угол поворота",
+          "проекция",
+          "ориентация материала",
+          "геометрическая жесткость"
+        ],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "question": "расскажи про модель харденинг соил"
+    }
+  ],
+  "results": [
+    {
+      "id": "golden-09",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-09",
+      "chat_id": "8a987a40-db6f-58f2-b43d-3ff799d11ece",
+      "status": "completed",
+      "response": "Модель Мора–Кулона описывает упругопластическое поведение материала, то есть сочетание упругой и пластической работы грунта [1][2].\n\nОсновные параметры прочности в этой модели — **сцепление** и **угол внутреннего трения** [1][2].\n\nВ мануале также указано, что эти величины используются в уравнении сдвиговой прочности грунта [1].\n\n**Пояснение:** модель широко применяют для общего нелинейного расчёта грунтового основания, но её точность ограничена диапазоном давления обжатия, для которого она калибрована [1][2].\n\nЕсли хотите, я могу следующим сообщением показать формулу сдвиговой прочности из мануала.",
+      "ttft_ms": 14983.961700000691,
+      "sources": [
+        {
+          "id": "3a9395e9-9e25-44de-bf36-a4ed6e186209",
+          "chunk_id": "3a9395e9-9e25-44de-bf36-a4ed6e186209",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_148",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.67043877,
+          "snippet": "Mohr-Coulmb Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Mohr-Coulmb General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) - Mohr-Coulmb (Модель Мора-Кулона) Модель Мора-Кулона описывает упругопластическое поведение материала, как показано на рисунке ниже. Данная модель позволяет получать достоверные результаты в общих случаях нелинейных расчетов грунтового основания, и потому широко используется при моделировании большинства типов оснований. <Поведение материала в соответствии с моделью Мора-Кулона> Критерий текучести Мора-Кулона проявляет 2 недостатка при моделировании геоматериалов. Во-первых",
+          "confident": true
+        },
+        {
+          "id": "7aa735cb-6a59-46c1-9c50-ca801bc703e2",
+          "chunk_id": "7aa735cb-6a59-46c1-9c50-ca801bc703e2",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_9",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 10,
+          "printed_page": 9,
+          "score": 0.6810689,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 9 MOHR-COULOMB The Mohr-Coulomb model is defined by an elasto-plastic behavior as shown in the figure below. This behavioral assumption shows reliable results for general nonlinear analysis of the ground and is widely used in simulating most terrain. Figure. Material behavior of Mohr-Coulomb model The Mohr-Coulomb yield criterion has 2 flaws when using geo-materials. First, the intermediate principal stress does not affect yield, which is a contradictory assumption to real soil test results. Second, the Meridian and Failure envelope of the Mohr-Circle is linear; so the Strength parameter (angle of friction) does n",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "93a5217f-cae7-4b6b-b9a4-2c151383b91b",
+      "approval": null,
+      "persisted": {
+        "id": "93a5217f-cae7-4b6b-b9a4-2c151383b91b",
+        "chat_id": "8a987a40-db6f-58f2-b43d-3ff799d11ece",
+        "role": "assistant",
+        "content": "Модель Мора–Кулона описывает упругопластическое поведение материала, то есть сочетание упругой и пластической работы грунта [1][2].\n\nОсновные параметры прочности в этой модели — **сцепление** и **угол внутреннего трения** [1][2].\n\nВ мануале также указано, что эти величины используются в уравнении сдвиговой прочности грунта [1].\n\n**Пояснение:** модель широко применяют для общего нелинейного расчёта грунтового основания, но её точность ограничена диапазоном давления обжатия, для которого она калибрована [1][2].\n\nЕсли хотите, я могу следующим сообщением показать формулу сдвиговой прочности из мануала.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "3a9395e9-9e25-44de-bf36-a4ed6e186209",
+            "page": null,
+            "score": 0.67043877,
+            "snippet": "Mohr-Coulmb Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Mohr-Coulmb General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) - Mohr-Coulmb (Модель Мора-Кулона) Модель Мора-Кулона описывает упругопластическое поведение материала, как показано на рисунке ниже. Данная модель позволяет получать достоверные результаты в общих случаях нелинейных расчетов грунтового основания, и потому широко используется при моделировании большинства типов оснований. <Поведение материала в соответствии с моделью Мора-Кулона> Критерий текучести Мора-Кулона проявляет 2 недостатка при моделировании геоматериалов. Во-первых",
+            "chunk_id": "3a9395e9-9e25-44de-bf36-a4ed6e186209",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_148",
+            "printed_page": null
+          },
+          {
+            "id": "7aa735cb-6a59-46c1-9c50-ca801bc703e2",
+            "page": 10,
+            "score": 0.6810689,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 9 MOHR-COULOMB The Mohr-Coulomb model is defined by an elasto-plastic behavior as shown in the figure below. This behavioral assumption shows reliable results for general nonlinear analysis of the ground and is widely used in simulating most terrain. Figure. Material behavior of Mohr-Coulomb model The Mohr-Coulomb yield criterion has 2 flaws when using geo-materials. First, the intermediate principal stress does not affect yield, which is a contradictory assumption to real soil test results. Second, the Meridian and Failure envelope of the Mohr-Circle is linear; so the Strength parameter (angle of friction) does n",
+            "chunk_id": "7aa735cb-6a59-46c1-9c50-ca801bc703e2",
+            "confident": true,
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_9",
+            "printed_page": 9
+          }
+        ],
+        "tokens": 172,
+        "latency_ms": 9069.35,
+        "created_at": "2026-10-14T16:39:18.778551Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 15002.204299999903
+    },
+    {
+      "id": "golden-17",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-17",
+      "chat_id": "73157a1a-ae3c-5a8d-93b0-8d2ab62dd3fe",
+      "status": "completed",
+      "response": "Можно задавать критерии сходимости по трём признакам: по усилию, по перемещениям и по энергии [1].\n\n- **Силовой критерий** — это критерий по несбалансированной силе; он связан со степенью удовлетворения нелинейного уравнения [1].\n- **Критерий по перемещениям** — это критерий по размеру пошагового решения; в мануале отмечено, что он не подходит как единственный критерий для задач с очень большой локальной жёсткостью, например с методом штрафов `penalty` [1].\n- **Энергетический критерий** — в перечне критериев сходимости он указан вместе с силовым критерием и критерием по перемещениям [1].\n\n**Пояснение:** для обычных нелинейных систем в мануале сказано, что все критерии сходимости снижаются одновременно при сходимости системы [1].",
+      "ttft_ms": 5801.706700000068,
+      "sources": [
+        {
+          "id": "c4484b43-3cc2-4908-8fba-66fdd44d2a25",
+          "chunk_id": "c4484b43-3cc2-4908-8fba-66fdd44d2a25",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_24",
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 25,
+          "printed_page": 304,
+          "score": 0.5453912,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 5. Алгоритмы 304 значительного времени, то метод постоянной жесткости и модифицированный метод Ньютона-Рафсона при отсутствии проблем сходимости решения позволяют решать задачи быстрее, чем с использованием метода Ньютона-Рафсона. В GTS NX методы постоянной жесткости и модифицированный метод Ньютона-Рафсона не представлены явно. Задание точки пересчета тангенциальной жесткости может иметь эффект использования всех итерационных методов. Автоматический пересчет матрицы жесткости (Automatic stiffness matrix recalculation) Достаточно важным является выбор подходящей точки вычисления тангенциальной жесткости в зависимости от характеристик целевой расчетной ",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "cb93aa17-d5fe-4de7-b2d9-89556ebdcac5",
+      "approval": null,
+      "persisted": {
+        "id": "cb93aa17-d5fe-4de7-b2d9-89556ebdcac5",
+        "chat_id": "73157a1a-ae3c-5a8d-93b0-8d2ab62dd3fe",
+        "role": "assistant",
+        "content": "Можно задавать критерии сходимости по трём признакам: по усилию, по перемещениям и по энергии [1].\n\n- **Силовой критерий** — это критерий по несбалансированной силе; он связан со степенью удовлетворения нелинейного уравнения [1].\n- **Критерий по перемещениям** — это критерий по размеру пошагового решения; в мануале отмечено, что он не подходит как единственный критерий для задач с очень большой локальной жёсткостью, например с методом штрафов `penalty` [1].\n- **Энергетический критерий** — в перечне критериев сходимости он указан вместе с силовым критерием и критерием по перемещениям [1].\n\n**Пояснение:** для обычных нелинейных систем в мануале сказано, что все критерии сходимости снижаются одновременно при сходимости системы [1].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "c4484b43-3cc2-4908-8fba-66fdd44d2a25",
+            "page": 25,
+            "score": 0.5453912,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 5. Алгоритмы 304 значительного времени, то метод постоянной жесткости и модифицированный метод Ньютона-Рафсона при отсутствии проблем сходимости решения позволяют решать задачи быстрее, чем с использованием метода Ньютона-Рафсона. В GTS NX методы постоянной жесткости и модифицированный метод Ньютона-Рафсона не представлены явно. Задание точки пересчета тангенциальной жесткости может иметь эффект использования всех итерационных методов. Автоматический пересчет матрицы жесткости (Automatic stiffness matrix recalculation) Достаточно важным является выбор подходящей точки вычисления тангенциальной жесткости в зависимости от характеристик целевой расчетной ",
+            "chunk_id": "c4484b43-3cc2-4908-8fba-66fdd44d2a25",
+            "confident": true,
+            "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_24",
+            "printed_page": 304
+          }
+        ],
+        "tokens": 213,
+        "latency_ms": 5778.37,
+        "created_at": "2026-10-14T16:39:24.619265Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5816.929499999787
+    },
+    {
+      "id": "golden-22",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-22",
+      "chat_id": "a5d0897b-b51b-5383-8b30-1e80f7a07cc1",
+      "status": "completed",
+      "response": "В AUTO-FACE доступны три алгоритма генерации двумерной сетки.\n\n- **Loop Mesher** — циклический генератор сеток. [1]\n- **GridMesher** — генератор регулярных сеток на основе модифицированного регулярного алгоритма. [1]\n- **Delaunay Mesher** — генератор сеток Делоне, основанный на триангуляции Делоне. [1]\n\nПояснение: в мануале это прямо указано как три доступные опции для **2D Mesher** в разделе **2D(Auto-Face)**. [1]",
+      "ttft_ms": 4546.7084000001705,
+      "sources": [
+        {
+          "id": "21b452ed-0954-4548-8674-b12c39a3fdea",
+          "chunk_id": "21b452ed-0954-4548-8674-b12c39a3fdea",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_208",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6483911,
+          "snippet": "2D(Auto-Face) Home > GTS NX > Mesh > Generate > 2D(Auto-Face) 2D: Auto-Face (Автоматическая разбивка грани) ▒ Обзор Создание двумерной сетки на выбранной поверхности. Данная опция в основном используется для создания сетки на гранях основания или других гранях двумерной модели. ▒ Методология Задайте размеры сетки напрямую или укажите число делений для формирующих грань ребер, чтобы определить размеры сетки. Заданные свойства элементов могу быть указаны при создании сетки, а также может быть предопределено имя сетки. Option ( ) (Опции) Различные дополнительные опции доступны в зависимости от метода создания сетки. Могут быть выбраны форма сетки, ее плотность и алгоритм создания. Начальные нас",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "564f6db0-ffc7-47f4-92fa-0b46ea8b9c86",
+      "approval": null,
+      "persisted": {
+        "id": "564f6db0-ffc7-47f4-92fa-0b46ea8b9c86",
+        "chat_id": "a5d0897b-b51b-5383-8b30-1e80f7a07cc1",
+        "role": "assistant",
+        "content": "В AUTO-FACE доступны три алгоритма генерации двумерной сетки.\n\n- **Loop Mesher** — циклический генератор сеток. [1]\n- **GridMesher** — генератор регулярных сеток на основе модифицированного регулярного алгоритма. [1]\n- **Delaunay Mesher** — генератор сеток Делоне, основанный на триангуляции Делоне. [1]\n\nПояснение: в мануале это прямо указано как три доступные опции для **2D Mesher** в разделе **2D(Auto-Face)**. [1]",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "21b452ed-0954-4548-8674-b12c39a3fdea",
+            "page": null,
+            "score": 0.6483911,
+            "snippet": "2D(Auto-Face) Home > GTS NX > Mesh > Generate > 2D(Auto-Face) 2D: Auto-Face (Автоматическая разбивка грани) ▒ Обзор Создание двумерной сетки на выбранной поверхности. Данная опция в основном используется для создания сетки на гранях основания или других гранях двумерной модели. ▒ Методология Задайте размеры сетки напрямую или укажите число делений для формирующих грань ребер, чтобы определить размеры сетки. Заданные свойства элементов могу быть указаны при создании сетки, а также может быть предопределено имя сетки. Option ( ) (Опции) Различные дополнительные опции доступны в зависимости от метода создания сетки. Могут быть выбраны форма сетки, ее плотность и алгоритм создания. Начальные нас",
+            "chunk_id": "21b452ed-0954-4548-8674-b12c39a3fdea",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_208",
+            "printed_page": null
+          }
+        ],
+        "tokens": 139,
+        "latency_ms": 4518.79,
+        "created_at": "2026-10-14T16:39:29.200983Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4562.590600000476
+    },
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-24",
+      "chat_id": "857c7010-5b40-5f7b-b556-0ca1b533498d",
+      "status": "completed",
+      "response": "Расчёт стадий строительства является накопительным, потому что в нём **изменения конструкции и история нагрузок предыдущего этапа влияют на следующий этап**, а результаты **накапливаются из предыдущего этапа**, а не пересчитываются как независимые модели [1].\n\nОн начинается **с исходного состояния грунта на площадке до строительства**; в мануале это прямо названо **in-situ conditions of the site before construction** [1].\n\nДля начального этапа также указано, что он соответствует **естественному состоянию основания** и может быть задан как **нулевой этап** [3].\n\n**Пояснение:** в описании GTS NX говорится, что на первом этапе вычисляют естественные напряжения грунта, то есть начальное состояние для последующих стадий формируют именно исходные напряжения основания [2].",
+      "ttft_ms": 6646.483100000296,
+      "sources": [
+        {
+          "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 8,
+          "printed_page": 7,
+          "score": 0.66137826,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+          "confident": true
+        },
+        {
+          "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+          "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.5554975,
+          "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+          "confident": true
+        },
+        {
+          "id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+          "chunk_id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_309",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.5388603,
+          "snippet": "Этап строительства остается активным при его смещении вправо. Названия столбцов I.S. и S1 представляют собой аббревиатуры для начального этапа (initial stage) и Этапа1 (Stage1) соответственно. Добавленные данные выделяются зеленым цветом, а удаленные – оранжевым. Данные, определенные с использованием добавочных номеров, представлены на каждом этапе строительства с помощью номеров. Названия данных, не использующие в наименовании приставку (например, Основание), представлены строками. Если сетки, граничные условия и данные загружений перемещены в меню (Статус активации сеток, граничных условий и загружений) (Mesh, Boundary, Load Activation Status), то опция удаления не может быть использована,",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "6c18d5d2-13a1-4825-a4b7-52a4ea305caa",
+      "approval": null,
+      "persisted": {
+        "id": "6c18d5d2-13a1-4825-a4b7-52a4ea305caa",
+        "chat_id": "857c7010-5b40-5f7b-b556-0ca1b533498d",
+        "role": "assistant",
+        "content": "Расчёт стадий строительства является накопительным, потому что в нём **изменения конструкции и история нагрузок предыдущего этапа влияют на следующий этап**, а результаты **накапливаются из предыдущего этапа**, а не пересчитываются как независимые модели [1].\n\nОн начинается **с исходного состояния грунта на площадке до строительства**; в мануале это прямо названо **in-situ conditions of the site before construction** [1].\n\nДля начального этапа также указано, что он соответствует **естественному состоянию основания** и может быть задан как **нулевой этап** [3].\n\n**Пояснение:** в описании GTS NX говорится, что на первом этапе вычисляют естественные напряжения грунта, то есть начальное состояние для последующих стадий формируют именно исходные напряжения основания [2].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "page": 8,
+            "score": 0.66137826,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+            "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "confident": true,
+            "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+            "printed_page": 7
+          },
+          {
+            "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+            "page": null,
+            "score": 0.5554975,
+            "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+            "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+            "printed_page": null
+          },
+          {
+            "id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+            "page": null,
+            "score": 0.5388603,
+            "snippet": "Этап строительства остается активным при его смещении вправо. Названия столбцов I.S. и S1 представляют собой аббревиатуры для начального этапа (initial stage) и Этапа1 (Stage1) соответственно. Добавленные данные выделяются зеленым цветом, а удаленные – оранжевым. Данные, определенные с использованием добавочных номеров, представлены на каждом этапе строительства с помощью номеров. Названия данных, не использующие в наименовании приставку (например, Основание), представлены строками. Если сетки, граничные условия и данные загружений перемещены в меню (Статус активации сеток, граничных условий и загружений) (Mesh, Boundary, Load Activation Status), то опция удаления не может быть использована,",
+            "chunk_id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_309",
+            "printed_page": null
+          }
+        ],
+        "tokens": 187,
+        "latency_ms": 6623.32,
+        "created_at": "2026-10-14T16:39:35.883219Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 6660.3007000003345,
+      "expansion": {
+        "status": "completed",
+        "preview": {
+          "available": true,
+          "max_output_tokens": 1500
+        },
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "result": {
+          "answer": "Расчёт стадий строительства в GTS NX является накопительным, потому что программа не строит отдельную независимую модель для каждой стадии, а переносит в следующую стадию результаты предыдущей стадии, а также учитывает историю изменений нагрузки и конструкции [1].\n\n**Обозначения:**\n- **cumulative model concept** — модель, в которой на каждой стадии используются уже накопленные результаты предыдущих стадий, а не выполняется полный пересчёт «с нуля» [1].\n- **structural changes and loading history** — изменения конструкции и история нагружения предыдущей стадии, которые влияют на расчёт следующей стадии [1].\n- **loading will continue to exist in future construction stages until it is removed** — нагрузка, заданная на одной стадии, сохраняется на последующих стадиях, пока её явно не уберут [1].\n\nС какого состояния он начинается:\n- **in-situ conditions of the site before construction** — это исходные условия площадки до начала строительства; именно они названы начальным состоянием грунта [1].\n- **initial ground stress** — первый этап расчёта по стадиям соответствует начальному напряжённому состоянию грунта [1].\n- **natural stress state of the ground** — естественное напряжённое состояние грунта считается начальным состоянием для расчёта основания [2].\n- **initial stage / stage 0** — начальный этап может быть задан как нулевой этап, при котором все элементы активируются в рамках одного этапа [3].\n\n**Пояснение:** смысл такой схемы в том, что сначала вычисляют исходное напряжённое состояние грунта, а уже потом моделируют последующие работы, например выемку или армирование, причём эффекты предыдущих шагов не исчезают, а переходят дальше [1][2].\n\nЕсли хочешь, я могу ещё кратко объяснить это на примере тоннеля или котлована.",
+          "sources": [
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.66137826,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "page": null,
+              "score": 0.5554975,
+              "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+              "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+              "printed_page": null
+            },
+            {
+              "id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+              "page": null,
+              "score": 0.5388603,
+              "snippet": "Этап строительства остается активным при его смещении вправо. Названия столбцов I.S. и S1 представляют собой аббревиатуры для начального этапа (initial stage) и Этапа1 (Stage1) соответственно. Добавленные данные выделяются зеленым цветом, а удаленные – оранжевым. Данные, определенные с использованием добавочных номеров, представлены на каждом этапе строительства с помощью номеров. Названия данных, не использующие в наименовании приставку (например, Основание), представлены строками. Если сетки, граничные условия и данные загружений перемещены в меню (Статус активации сеток, граничных условий и загружений) (Mesh, Boundary, Load Activation Status), то опция удаления не может быть использована,",
+              "chunk_id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_309",
+              "printed_page": null
+            }
+          ],
+          "message_id": "4c042001-6ddb-486c-ab4c-10b779ee1123",
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          }
+        },
+        "confirmed_latency_ms": 3144.899300000361,
+        "persisted": {
+          "id": "4c042001-6ddb-486c-ab4c-10b779ee1123",
+          "chat_id": "857c7010-5b40-5f7b-b556-0ca1b533498d",
+          "role": "assistant",
+          "content": "Расчёт стадий строительства в GTS NX является накопительным, потому что программа не строит отдельную независимую модель для каждой стадии, а переносит в следующую стадию результаты предыдущей стадии, а также учитывает историю изменений нагрузки и конструкции [1].\n\n**Обозначения:**\n- **cumulative model concept** — модель, в которой на каждой стадии используются уже накопленные результаты предыдущих стадий, а не выполняется полный пересчёт «с нуля» [1].\n- **structural changes and loading history** — изменения конструкции и история нагружения предыдущей стадии, которые влияют на расчёт следующей стадии [1].\n- **loading will continue to exist in future construction stages until it is removed** — нагрузка, заданная на одной стадии, сохраняется на последующих стадиях, пока её явно не уберут [1].\n\nС какого состояния он начинается:\n- **in-situ conditions of the site before construction** — это исходные условия площадки до начала строительства; именно они названы начальным состоянием грунта [1].\n- **initial ground stress** — первый этап расчёта по стадиям соответствует начальному напряжённому состоянию грунта [1].\n- **natural stress state of the ground** — естественное напряжённое состояние грунта считается начальным состоянием для расчёта основания [2].\n- **initial stage / stage 0** — начальный этап может быть задан как нулевой этап, при котором все элементы активируются в рамках одного этапа [3].\n\n**Пояснение:** смысл такой схемы в том, что сначала вычисляют исходное напряжённое состояние грунта, а уже потом моделируют последующие работы, например выемку или армирование, причём эффекты предыдущих шагов не исчезают, а переходят дальше [1][2].\n\nЕсли хочешь, я могу ещё кратко объяснить это на примере тоннеля или котлована.",
+          "media_refs": {
+            "answer": {
+              "mode": "expanded",
+              "expandable": false,
+              "incomplete": false
+            }
+          },
+          "rag_sources": [
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.66137826,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "page": null,
+              "score": 0.5554975,
+              "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+              "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+              "printed_page": null
+            },
+            {
+              "id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+              "page": null,
+              "score": 0.5388603,
+              "snippet": "Этап строительства остается активным при его смещении вправо. Названия столбцов I.S. и S1 представляют собой аббревиатуры для начального этапа (initial stage) и Этапа1 (Stage1) соответственно. Добавленные данные выделяются зеленым цветом, а удаленные – оранжевым. Данные, определенные с использованием добавочных номеров, представлены на каждом этапе строительства с помощью номеров. Названия данных, не использующие в наименовании приставку (например, Основание), представлены строками. Если сетки, граничные условия и данные загружений перемещены в меню (Статус активации сеток, граничных условий и загружений) (Mesh, Boundary, Load Activation Status), то опция удаления не может быть использована,",
+              "chunk_id": "3bb4697b-2de9-44f4-a628-63dfd1f048f9",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_309",
+              "printed_page": null
+            }
+          ],
+          "tokens": 412,
+          "latency_ms": 3097.68,
+          "created_at": "2026-10-14T16:39:39.098417Z"
+        },
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "replay_message_id": "4c042001-6ddb-486c-ab4c-10b779ee1123",
+        "wall_latency_ms": 3252.303100000063
+      }
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-31",
+      "chat_id": "5b022631-eca9-541b-a5f1-3569ab59fec6",
+      "status": "completed",
+      "response": "Упругое поведение материала означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не остаётся с остаточными деформациями [2].  \nВ GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов [2].  \nДля модели **Elastic** в GTS NX напряжения прямо пропорциональны деформациям; константами этой линейной зависимости являются модуль упругости и коэффициент Пуассона [1].  \nВ таблице по материалам также перечислены доступные упругие модели: линейно-упругая изотропная, линейно-упругая двумерная ортотропная, линейно-упругая поперечно-изотропная, упругая контактная, нелинейно-упругая одномерная, Jardine, D-Min и гиперболическая модель Duncan-Chang [2].  \n**Пояснение:** в источнике [1] для модели Elastic отдельно сказано, что она линейно-упругая; это не означает, что так описываются все остальные упругие модели из списка [2].",
+      "ttft_ms": 5207.238299999517,
+      "sources": [
+        {
+          "id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+          "chunk_id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_232",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.7623606,
+          "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+          "confident": true
+        },
+        {
+          "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": 130,
+          "score": 0.7628881,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента. Таблица 4.1.1 Применение моделей материалов в зависимости от типа конечного элемента Модель матер",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "4e77fb66-a229-49e4-9938-cf5e1c8bfe84",
+      "approval": null,
+      "persisted": {
+        "id": "4e77fb66-a229-49e4-9938-cf5e1c8bfe84",
+        "chat_id": "5b022631-eca9-541b-a5f1-3569ab59fec6",
+        "role": "assistant",
+        "content": "Упругое поведение материала означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не остаётся с остаточными деформациями [2].  \nВ GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов [2].  \nДля модели **Elastic** в GTS NX напряжения прямо пропорциональны деформациям; константами этой линейной зависимости являются модуль упругости и коэффициент Пуассона [1].  \nВ таблице по материалам также перечислены доступные упругие модели: линейно-упругая изотропная, линейно-упругая двумерная ортотропная, линейно-упругая поперечно-изотропная, упругая контактная, нелинейно-упругая одномерная, Jardine, D-Min и гиперболическая модель Duncan-Chang [2].  \n**Пояснение:** в источнике [1] для модели Elastic отдельно сказано, что она линейно-упругая; это не означает, что так описываются все остальные упругие модели из списка [2].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+            "page": null,
+            "score": 0.7623606,
+            "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+            "chunk_id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_232",
+            "printed_page": null
+          },
+          {
+            "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "page": 1,
+            "score": 0.7628881,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента. Таблица 4.1.1 Применение моделей материалов в зависимости от типа конечного элемента Модель матер",
+            "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+            "printed_page": 130
+          }
+        ],
+        "tokens": 262,
+        "latency_ms": 5184.22,
+        "created_at": "2026-10-14T16:39:44.375940Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5229.740999999194
+    },
+    {
+      "id": "golden-34",
+      "group": "golden",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-golden-34",
+      "chat_id": "5945bb71-176b-5969-87a7-72cb5b809b5b",
+      "status": "completed",
+      "response": "Для элемента плоской деформации в GTS NX используются **только поступательные степени свободы в плоскости элемента**, а не все шесть степеней свободы узла [2].\n\n- **DX и DY** — это перемещения в плоскости расчёта; для элемента плоской деформации модель формулируется в элементной системе координат, а двумерное моделирование в GTS NX выполняется в плоскости x-y [2].\n- **DZ** — перемещение по нормали к плоскости для элемента плоской деформации в приведённом фрагменте не указано как активная степень свободы; в мануале отдельно сказано, что для элементов с «plane stress» нужно ограничивать внеплоскостное перемещение и вращения, что подчёркивает различие с 2D-постановками [1].\n- **Пояснение:** в найденном фрагменте прямо описана геометрия и система координат элемента плоской деформации, но не приведён отдельный список всех узловых степеней свободы именно в формате «DX, DY, …» для этого элемента [2].\n\nЕсли хотите, я могу ещё поискать в мануале именно строку со списком узловых степеней свободы для plane strain, чтобы ответ был совсем буквальным.",
+      "ttft_ms": 4480.077399999573,
+      "sources": [
+        {
+          "id": "f5dd30a4-02a0-49d3-898e-c227df4fe841",
+          "chunk_id": "f5dd30a4-02a0-49d3-898e-c227df4fe841",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_33",
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 34,
+          "printed_page": 33,
+          "score": 0.6488476,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 33 The figure below shows examples of 3D degrees of freedom constraint conditions. For a truss connection, only the axial direction of the truss element has a DOF for displacement and so, the X direction displacement and all rotation direction displacement components at the connection node are constrained. A beam element with replaced top, bottom flanges has 6 degrees of freedom for each node and so, nodes that are connected to the beam element do not need separate constraint conditions. For the nodes where the plane stress elements meet, the plane stress element only has a DOF for in-plane behavior and",
+          "confident": true
+        },
+        {
+          "id": "88cb481f-8bd7-4339-a2cd-b78132fda654",
+          "chunk_id": "88cb481f-8bd7-4339-a2cd-b78132fda654",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf_part_30",
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 31,
+          "printed_page": 44,
+          "score": 0.69905746,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 3. Элементы 44 6.2 Элементы плоской деформации (Plane strain Element) Элементы плоской деформации представляют собой плоские треугольные или четырехугольные элементы с 3/4/6/8 узлами. Они в основном используются для расчетов сооружений и их оснований, в частности плотин и туннелей, когда типовое сечение сооружения не меняется на большом протяжении в направлении нормали к плоскости данного сечения. Так как напряжения в направлении толщины элемента существуют, напряженное состояние в таких элементах технически не является двумерным. Элемент плоской деформации может быть расположен в трех измерениях, но для удобства моделирование обычно выполняется в опре",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "390200e6-093f-414d-83a7-d3c9bb9f6381",
+      "approval": null,
+      "persisted": {
+        "id": "390200e6-093f-414d-83a7-d3c9bb9f6381",
+        "chat_id": "5945bb71-176b-5969-87a7-72cb5b809b5b",
+        "role": "assistant",
+        "content": "Для элемента плоской деформации в GTS NX используются **только поступательные степени свободы в плоскости элемента**, а не все шесть степеней свободы узла [2].\n\n- **DX и DY** — это перемещения в плоскости расчёта; для элемента плоской деформации модель формулируется в элементной системе координат, а двумерное моделирование в GTS NX выполняется в плоскости x-y [2].\n- **DZ** — перемещение по нормали к плоскости для элемента плоской деформации в приведённом фрагменте не указано как активная степень свободы; в мануале отдельно сказано, что для элементов с «plane stress» нужно ограничивать внеплоскостное перемещение и вращения, что подчёркивает различие с 2D-постановками [1].\n- **Пояснение:** в найденном фрагменте прямо описана геометрия и система координат элемента плоской деформации, но не приведён отдельный список всех узловых степеней свободы именно в формате «DX, DY, …» для этого элемента [2].\n\nЕсли хотите, я могу ещё поискать в мануале именно строку со списком узловых степеней свободы для plane strain, чтобы ответ был совсем буквальным.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "f5dd30a4-02a0-49d3-898e-c227df4fe841",
+            "page": 34,
+            "score": 0.6488476,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 33 The figure below shows examples of 3D degrees of freedom constraint conditions. For a truss connection, only the axial direction of the truss element has a DOF for displacement and so, the X direction displacement and all rotation direction displacement components at the connection node are constrained. A beam element with replaced top, bottom flanges has 6 degrees of freedom for each node and so, nodes that are connected to the beam element do not need separate constraint conditions. For the nodes where the plane stress elements meet, the plane stress element only has a DOF for in-plane behavior and",
+            "chunk_id": "f5dd30a4-02a0-49d3-898e-c227df4fe841",
+            "confident": true,
+            "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_33",
+            "printed_page": 33
+          },
+          {
+            "id": "88cb481f-8bd7-4339-a2cd-b78132fda654",
+            "page": 31,
+            "score": 0.69905746,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 3. Элементы 44 6.2 Элементы плоской деформации (Plane strain Element) Элементы плоской деформации представляют собой плоские треугольные или четырехугольные элементы с 3/4/6/8 узлами. Они в основном используются для расчетов сооружений и их оснований, в частности плотин и туннелей, когда типовое сечение сооружения не меняется на большом протяжении в направлении нормали к плоскости данного сечения. Так как напряжения в направлении толщины элемента существуют, напряженное состояние в таких элементах технически не является двумерным. Элемент плоской деформации может быть расположен в трех измерениях, но для удобства моделирование обычно выполняется в опре",
+            "chunk_id": "88cb481f-8bd7-4339-a2cd-b78132fda654",
+            "confident": true,
+            "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf_part_30",
+            "printed_page": 44
+          }
+        ],
+        "tokens": 298,
+        "latency_ms": 4455.7,
+        "created_at": "2026-10-14T16:39:48.901588Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4492.5367999994705
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "owner": "eval-target-516fcef63a024d8987666c94a2dd4368-smoke-hardening",
+      "chat_id": "7a38fdf9-b269-5f25-a473-6939a06a93a4",
+      "status": "completed",
+      "response": "Модель Hardening Soil в MIDAS GTS NX — это упрочняющаяся модель грунта, основанная на модифицированной модели Мора-Кулона, которая описывает нелинейно-упругое поведение грунта через зависимость жесткости от напряжения [1][2].\n\n- **Назначение** — модель учитывает упрочнение грунта и нелинейное изменение жесткости при нагружении [1][2].\n- **Вариант small strain stiffness** — в версии для малых деформаций добавлены два параметра: **G 0 ref** как начальный модуль сдвига и **Threshold strain (γ 0.7 )** как деформация, при которой модуль сдвига составляет 70% от начального [2].\n- **Пояснение** — в источнике сказано, что при малых деформациях грунт обладает повышенной жесткостью, а при увеличении деформаций жесткость снижается нелинейно [1][2].\n- **Связь с другими моделями** — в мануале прямо указано, что вариант Hardening Soil with small strain stiffness реализован на основе модифицированной модели Мора-Кулона и Small strain overlay model [2].\n\nЕсли хотите, я могу дальше коротко перечислить основные параметры самой Hardening Soil-модели и что обычно означает каждый из них.",
+      "ttft_ms": 5250.284599999759,
+      "sources": [
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.6469301,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6634809,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "caab01ab-d59d-473a-b664-f1677627adc8",
+      "approval": null,
+      "persisted": {
+        "id": "caab01ab-d59d-473a-b664-f1677627adc8",
+        "chat_id": "7a38fdf9-b269-5f25-a473-6939a06a93a4",
+        "role": "assistant",
+        "content": "Модель Hardening Soil в MIDAS GTS NX — это упрочняющаяся модель грунта, основанная на модифицированной модели Мора-Кулона, которая описывает нелинейно-упругое поведение грунта через зависимость жесткости от напряжения [1][2].\n\n- **Назначение** — модель учитывает упрочнение грунта и нелинейное изменение жесткости при нагружении [1][2].\n- **Вариант small strain stiffness** — в версии для малых деформаций добавлены два параметра: **G 0 ref** как начальный модуль сдвига и **Threshold strain (γ 0.7 )** как деформация, при которой модуль сдвига составляет 70% от начального [2].\n- **Пояснение** — в источнике сказано, что при малых деформациях грунт обладает повышенной жесткостью, а при увеличении деформаций жесткость снижается нелинейно [1][2].\n- **Связь с другими моделями** — в мануале прямо указано, что вариант Hardening Soil with small strain stiffness реализован на основе модифицированной модели Мора-Кулона и Small strain overlay model [2].\n\nЕсли хотите, я могу дальше коротко перечислить основные параметры самой Hardening Soil-модели и что обычно означает каждый из них.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.6469301,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          },
+          {
+            "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "page": null,
+            "score": 0.6634809,
+            "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+            "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "printed_page": null
+          }
+        ],
+        "tokens": 301,
+        "latency_ms": 5225.66,
+        "created_at": "2026-10-14T16:39:54.179488Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5265.366100000392
+    }
+  ]
+}

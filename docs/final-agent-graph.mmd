@@ -1,0 +1,26 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	begin_turn(begin_turn)
+	call_model(call_model)
+	execute_safe_tool(execute_safe_tool)
+	prepare_telegram_message(prepare_telegram_message)
+	confirm_and_execute_telegram_message(confirm_and_execute_telegram_message)
+	finish(finish)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> begin_turn;
+	begin_turn --> call_model;
+	call_model -.-> execute_safe_tool;
+	call_model -.-> finish;
+	call_model -.-> prepare_telegram_message;
+	confirm_and_execute_telegram_message --> finish;
+	execute_safe_tool --> call_model;
+	prepare_telegram_message --> confirm_and_execute_telegram_message;
+	finish --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

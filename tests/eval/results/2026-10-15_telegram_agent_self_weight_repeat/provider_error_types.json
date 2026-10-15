@@ -1,0 +1,7 @@
+{
+  "safe_stream_error_types": {
+    "OpenAIConnectionError": 1
+  },
+  "run_id": "73997106733b4860805e1c80f4ec91ba",
+  "scope": "Current app container events during preflight, full collection and smoke; only exception class names, no exception bodies."
+}

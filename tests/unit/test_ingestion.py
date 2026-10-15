@@ -316,6 +316,58 @@ def test_product_metadata_uses_explicit_product_markers_and_corpus_default(tmp_p
     assert infer_product(["generic User Manual Chapter 5.pdf"], default_product="gts_nx") == "gts_nx"
 
 
+@pytest.mark.parametrize("values", [
+    ["C:\\00.MIDAS\\PROJECTS\\corpus\\document-0.txt"],
+    ["/00.MIDAS/PROJECTS/corpus/document-0.txt"],
+    ["MIDAS", "PROJECTS", "document-0.txt"],
+])
+def test_product_inference_does_not_join_independent_components(values: list[str]) -> None:
+    assert infer_product(values, default_product="gts_nx") == "gts_nx"
+
+
+@pytest.mark.parametrize("relative_path, expected", [
+    ("document-0.txt", "gts_nx"),
+    ("Civil/guide.txt", "civil"),
+    ("manuals/midas NFX guide.txt", "nfx"),
+])
+def test_ingestion_product_ignores_directories_above_corpus(
+    tmp_path: Path, relative_path: str, expected: str
+) -> None:
+    data_root = tmp_path / "midas Gen" / "MIDAS" / "PROJECTS" / "corpus"
+    source = data_root / relative_path
+    source.parent.mkdir(parents=True)
+    source.write_text("Mesh and degrees of freedom.", encoding="utf-8")
+
+    documents = _load_one_file(source, data_root=data_root)
+
+    assert documents
+    assert all(document.metadata["product"] == expected for document in documents)
+
+
+@pytest.mark.parametrize("file_name, expected", [
+    ("document-0.txt", "gts_nx"),
+    ("midas Civil guide.txt", "civil"),
+])
+def test_ingestion_accepts_explicit_file_outside_configured_corpus(
+    tmp_path: Path, file_name: str, expected: str
+) -> None:
+    source = tmp_path / "midas Gen" / "uploads" / file_name
+    source.parent.mkdir(parents=True)
+    source.write_text("Mesh and degrees of freedom.", encoding="utf-8")
+    service = make_service(tmp_path)
+    try:
+        result = service.ingest(source)
+
+        assert result.failed_files == ()
+        assert result.changed_documents == 1
+        assert source.exists()
+        points = indexed_points(service)
+        assert points
+        assert all(point.payload["product"] == expected for point in points)
+    finally:
+        service.close()
+
+
 @pytest.mark.parametrize("scope", ["all", "any", "none"])
 def test_ingestion_config_rejects_scope_tokens_as_default_product(tmp_path: Path, scope: str) -> None:
     with pytest.raises(ValueError, match="default_product"):

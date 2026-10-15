@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import argparse
-from difflib import SequenceMatcher
 import json
-from dataclasses import dataclass
-from pathlib import Path
+import math
 import re
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from dataclasses import dataclass
+from difflib import SequenceMatcher
+from itertools import pairwise
+from pathlib import Path
 from typing import Any
 
 from llama_index.core import VectorStoreIndex
@@ -30,18 +32,18 @@ from qdrant_client.models import (
     TokenizerType,
 )
 
-from app.services.ingestion import (
-    IngestionConfig,
-    IngestionService,
-    RESERVED_PRODUCT_TOKENS,
-    canonical_product,
-    infer_product,
-)
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash
 from app.observability.tracing import trace_rag_query
+from app.services.evidence_text import behavior_context, chm_context
+from app.services.ingestion import (
+    RESERVED_PRODUCT_TOKENS,
+    IngestionConfig,
+    IngestionService,
+    canonical_product,
+    infer_product,
+)
 from app.services.reranker import BGEReranker, RerankCandidate
-
 
 RAG_SYSTEM_PROMPT = """Ты — помощник технической поддержки продуктов MIDAS (основной — GTS NX).
 Отвечай только на русском языке и только по предоставленному контексту.
@@ -114,6 +116,7 @@ _SOURCE_WORD_CITATION_RE = re.compile(
 _PAREN_CITATION_RE = re.compile(r"([^\s\n(][ \t]*)\((\d+(?:\s*,\s*\d+)*)\)")
 _LEGACY_PAGE_REF_RE = re.compile(r"_part_(\d+)$")
 _PRINTED_PAGE_RE = re.compile(r"(?m)^[ \t]*(\d{1,4})[ \t]*$")
+_CHAPTER_PAGE_RE = re.compile(r"(?im)^\s*Chapter\s+\d+\.[^\n|]*\|\s*(\d{1,4})\s*$")
 # Labels a condense model may prepend to the rewritten question despite the
 # one-line output contract ("Самостоятельный вопрос: …", "Вопрос: …").
 _CONDENSED_PREFIX_RE = re.compile(
@@ -653,6 +656,8 @@ class RAGConfig:
     # prompt starts streaming, and the grounded completion itself is the
     # slowest single call of the pipeline.
     generation_timeout: float = 120.0
+    reasoning_effort: str = "low"
+    condense_reasoning_effort: str = "none"
 
     def __post_init__(self) -> None:
         if self.chunk_overlap >= self.chunk_size:
@@ -705,6 +710,8 @@ class RAGConfig:
             collection_name=getattr(settings, "rag_collection", "rag_eval_chunk_1024"),
             baremetal_collection_name=getattr(settings, "rag_baremetal_collection", "rag_block_03_baremetal"),
             llm_model=getattr(settings, "rag_llm_model", "gpt-5.4-mini"),
+            reasoning_effort=getattr(settings, "rag_reasoning_effort", "low"),
+            condense_reasoning_effort=getattr(settings, "rag_condense_reasoning_effort", "none"),
             embedding_model=getattr(settings, "rag_embedding_model", "text-embedding-3-small"),
             embedding_dimensions=getattr(settings, "rag_embedding_dimensions", 1536),
             chunk_size=getattr(settings, "rag_chunk_size", 1024),
@@ -1009,6 +1016,8 @@ class RAGService:
         history: Sequence[HistoryItem] | None,
         standalone_question: str | None,
         deadline: float | None = None,
+        translated_question: str | None = None,
+        preserve_full_context: bool = False,
     ) -> _PreparedAnswer:
         """Run the guarded retrieval pipeline shared by all answer paths."""
         if not question.strip():
@@ -1030,6 +1039,12 @@ class RAGService:
             retrieve(query)
             for query in plan.queries
         ]
+        translated_ranking: list[Any] = []
+        if translated_question and translated_question.strip() not in plan.queries:
+            english_terms = {term for term in self._lexical_terms(translated_question) if re.fullmatch(r"[a-z]+", term)}
+            if len(english_terms) >= 5:
+                translated_ranking = retrieve(translated_question.strip())
+                retrieved_by_query.append(translated_ranking)
         product_rankings = [
             self._product_scoped(ranking)
             for ranking in retrieved_by_query
@@ -1085,6 +1100,9 @@ class RAGService:
             lexical_candidates=lexical_candidates,
             lexical_query=lexical_query,
             overview_question=overview_question,
+            translated_question=translated_question,
+            translated_candidates=self._product_scoped(translated_ranking),
+            preserve_full_context=preserve_full_context,
         )
         product_scope = "all" if self._scope_all_products() else "primary"
         if (
@@ -1108,12 +1126,16 @@ class RAGService:
                 lexical_candidates=lexical_fallback_candidates,
                 lexical_query=lexical_fallback_query,
                 overview_question=overview_question,
+                translated_question=translated_question,
+                translated_candidates=translated_ranking,
+                preserve_full_context=preserve_full_context,
             )
             product_scope = "fallback_all"
         telemetry = {
             "question_hash": prompt_hash(question.strip()),
             "plan_mode": plan.mode,
             "query_variant_count": len(plan.queries),
+            "translated_query_count": int(bool(translated_ranking)),
             "raw_candidate_counts": [len(items) for items in retrieved_by_query],
             "product_candidate_counts": [
                 *(len(items) for items in product_rankings),
@@ -1151,6 +1173,7 @@ class RAGService:
         *,
         history: Sequence[HistoryItem] | None = None,
         standalone_question: str | None = None,
+        translated_question: str | None = None,
         timeout_seconds: float | None = None,
         max_context_chars: int = 24_000,
     ) -> dict[str, Any]:
@@ -1169,28 +1192,76 @@ class RAGService:
         prepared = self._prepare_answer(
             question, history=history, standalone_question=standalone_question,
             deadline=deadline,
+            translated_question=translated_question,
+            preserve_full_context=True,
         )
         if time.perf_counter() >= deadline:
             raise TimeoutError("Retrieval budget exhausted")
         selection = prepared.selection
         sources: list[dict[str, Any]] = []
         contexts: list[str] = []
-        remaining = max_context_chars
+        allocations = self._context_allocations(selection.retrieved_contexts, max_context_chars)
         if selection.has_evidence:
-            for source, context in zip(selection.sources, selection.retrieved_contexts):
-                if remaining <= 0:
-                    break
-                bounded = context[:remaining]
+            for source, context, allocation in zip(
+                selection.sources, selection.retrieved_contexts, allocations, strict=True
+            ):
+                bounded = self._bounded_context(context, allocation)
+                if not bounded:
+                    continue
                 sources.append({**source, "snippet": bounded[:MAX_SOURCE_SNIPPET_CHARS]})
                 contexts.append(bounded)
-                remaining -= len(bounded)
+        telemetry = dict(prepared.telemetry)
+        telemetry["context_budget_chars"] = max_context_chars
+        telemetry["returned_context_chars"] = sum(map(len, contexts))
+        telemetry["context_truncated"] = any(
+            len(context) > allocation
+            for context, allocation in zip(
+                selection.retrieved_contexts,
+                allocations,
+                strict=True,
+            )
+        )
         return {
             "status": "ok" if sources else "no_evidence",
             "question": prepared.question,
             "sources": sources,
             "contexts": contexts,
-            "telemetry": dict(prepared.telemetry),
+            "telemetry": telemetry,
         }
+
+    @staticmethod
+    def _context_allocations(contexts: Sequence[str], budget: int) -> list[int]:
+        """Give every selected source a share before redistributing spare space."""
+
+        allocations = [0] * len(contexts)
+        pending = list(range(len(contexts)))
+        remaining = budget
+        while pending and remaining:
+            share = max(1, remaining // len(pending))
+            for index in pending:
+                grant = min(share, len(contexts[index]) - allocations[index], remaining)
+                allocations[index] += grant
+                remaining -= grant
+            pending = [index for index in pending if allocations[index] < len(contexts[index])]
+        return allocations
+
+    @staticmethod
+    def _bounded_context(text: str, limit: int) -> str:
+        if len(text) <= limit:
+            return text
+        if limit <= 0:
+            return ""
+        prefix = text[:limit]
+        # Structured rows are indivisible: never expose a model name without
+        # its own behavior/value cells at the boundary of the context budget.
+        if "\n" in text:
+            return prefix.rsplit("\n", 1)[0].rstrip() if "\n" in prefix else ""
+        ends = list(re.finditer(r'[.!?。！？][\]"»”)]*(?=\s|$)', prefix))
+        if ends:
+            return prefix[:ends[-1].end()].rstrip()
+        # Legacy extracts can be a single punctuation-free heading/paragraph.
+        # Keep whole words, rather than fabricate a partial term at the cap.
+        return prefix.rsplit(" ", 1)[0].rstrip() if " " in prefix else ""
 
     @classmethod
     def ground_answer(cls, answer: str, sources: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
@@ -1217,6 +1288,10 @@ class RAGService:
     def close(self) -> None:
         if self.client is not None:
             self.client.close()
+        from app.services.runtime_model import ResponsesTextLLM
+
+        if isinstance(self._llm, ResponsesTextLLM):
+            self._llm.close()
 
     def _validate_corpus(self) -> None:
         if not self.config.data_dir.is_dir():
@@ -1320,6 +1395,14 @@ class RAGService:
 
     def _language_model(self) -> Any:
         if self._llm is None:
+            if self.config.llm_model.startswith("gpt-6"):
+                from app.services.runtime_model import ResponsesTextLLM
+
+                self._llm = ResponsesTextLLM(model=self.config.llm_model,
+                    api_key=self.config.openai_api_key, base_url=self.config.openai_base_url,
+                    timeout=self.config.generation_timeout, effort=self.config.reasoning_effort,
+                    max_output_tokens=10240, system_prompt=RAG_SYSTEM_PROMPT)
+                return self._llm
             self._llm = LlamaOpenAI(
                 model=self.config.llm_model, api_key=self.config.openai_api_key,
                 api_base=self.config.openai_base_url, timeout=self.config.generation_timeout,
@@ -1340,7 +1423,7 @@ class RAGService:
             RerankCandidate(
                 text=self._node_text(source_node),
                 doc_id=str(index),
-                source=str(self._source_from_node(source_node)["file_name"]),
+                source=str(self._source_from_node(source_node, include_snippet=False)["file_name"]),
                 score=float(source_node.score or 0.0),
             )
             for index, source_node in enumerate(source_nodes)
@@ -1358,21 +1441,36 @@ class RAGService:
     def _matches_target_product(self, source_node: Any) -> bool:
         """Filter both new product metadata and legacy payloads consistently."""
 
+        return self._candidate_product(source_node) == canonical_product(self.config.target_product)
+
+    def _candidate_product(self, source_node: Any) -> str:
+        """Recover invalid legacy tags only from positive document evidence.
+
+        Older absolute Windows paths accidentally tagged manuals as
+        ``projects``. Resolving a candidate here leaves the frozen docstore and
+        vectors intact, and applies equally to dense and lexical retrieval.
+        """
+
         metadata = source_node.node.metadata or {}
         explicit = canonical_product(str(metadata.get("product") or ""))
-        if explicit:
-            product = explicit
-        else:
-            product = infer_product(
-                (
-                    metadata.get("file_name"),
-                    metadata.get("source"),
-                    metadata.get("file_path"),
-                    metadata.get("category"),
-                ),
-                default_product=self.config.target_product,
-            )
-        return product == canonical_product(self.config.target_product)
+        known = {"gts_nx", "fea_nx", "civil", "gen", "soilworks", canonical_product(self.config.target_product)}
+        if explicit in known:
+            return explicit
+        labels = (
+            metadata.get("file_name"), metadata.get("source"),
+            metadata.get("file_path"), metadata.get("category"),
+        )
+        if not explicit:
+            return infer_product(labels, default_product=self.config.target_product)
+        labelled = infer_product(labels, default_product="unknown")
+        if labelled in known:
+            return labelled
+        # Only the running manual header is trusted for title inference. A
+        # product mentioned later in prose cannot reclassify another manual.
+        header = " ".join(self._node_text(source_node)[:512].split())
+        if re.match(r"GeoTechnical analysis System\s+with New eXperience\s+User Manual\b", header, re.I):
+            return "gts_nx"
+        return explicit
 
     def _scope_all_products(self) -> bool:
         return self.config.product_scope == "all"
@@ -1408,6 +1506,9 @@ class RAGService:
         lexical_candidates: Sequence[Any],
         lexical_query: str | None,
         overview_question: bool,
+        translated_question: str | None = None,
+        translated_candidates: Sequence[Any] = (),
+        preserve_full_context: bool = False,
     ) -> _ContextSelection:
         """Fuse, rank and gate one candidate pool into an answer context.
 
@@ -1452,7 +1553,12 @@ class RAGService:
         )[: min(LEXICAL_CONTEXT_RESERVE, self._context_limit())] if reserve_lexical else []
         for candidate in reserved:
             candidate.node.metadata["_lexical_focus_query"] = lexical_query
-        ranked = self._prepend_reserved(reserved, ranked)
+        # Translation supplements primary evidence with at most one source.
+        # It must not replace the primary language's entire context ranking.
+        translated_reserved = self._rank_by_lexical_evidence(
+            translated_question or "", translated_candidates
+        )[:1] if translated_candidates else []
+        ranked = self._prepend_reserved([*reserved, *translated_reserved], ranked)
         if plan.mode == "follow_up" and reserved:
             # The reserved lexical fragment still leads, but a single-fragment
             # context made the answer hostage to one all-token match: a wrong
@@ -1463,7 +1569,12 @@ class RAGService:
             # comes from the per-file diversity preference in ``_deduplicate``
             # and the survey instruction, never from a smaller budget.
             context_limit = self._context_limit()
-        # Confidence is measured over the ranked candidate pool before
+        # Unreadable/ambiguous CHM grids are not evidence. Remove them before
+        # both the confidence gate and the final limit so they cannot promote
+        # a weak survivor or consume a usable source's context slot.
+        presented_text = {self._node_identity(item): self._context_text(item, focus_lexical=not preserve_full_context, question=plan.ranking_question) for item in ranked}
+        ranked = [item for item in ranked if presented_text[self._node_identity(item)].strip()]
+        # Confidence is measured over the usable ranked candidate pool before
         # deduplication and the context limit discard candidates: a dropped
         # near-duplicate still means the retriever found confident evidence,
         # which survives in the kept twin.  Cosine similarity remains the
@@ -1483,13 +1594,13 @@ class RAGService:
         return _ContextSelection(
             ranked=ranked,
             sources=sources,
-            retrieved_contexts=[self._context_text(item) for item in ranked],
+            retrieved_contexts=[presented_text[self._node_identity(item)] for item in ranked],
             top_score=top_score,
             selected_top_score=max((source["score"] for source in sources), default=0.0),
             fused_candidate_count=len(candidates),
             ranked_candidate_count=ranked_candidate_count,
             lexical_selected_count=lexical_selected_count,
-            has_evidence=top_score >= self.config.min_score or lexical_selected_count > 0,
+            has_evidence=bool(ranked) and (top_score >= self.config.min_score or lexical_selected_count > 0),
         )
 
     def _raw_candidate_limit(self) -> int:
@@ -1523,7 +1634,18 @@ class RAGService:
         )
         current = question.strip()
         if standalone_question and standalone_question.strip():
-            return RetrievalPlan(focused, (focused,), "caller_standalone")
+            queries = (focused,)
+            groups = self._mixed_query_groups(self._lexical_terms(focused))
+            if groups:
+                # One bounded English variant gives a monolingual manual
+                # recall independent of the multilingual embedding.
+                latin_query = " ".join(
+                    token for token in _LEXICAL_TOKEN_RE.findall(focused)
+                    if token.isascii()
+                )
+                if latin_query and latin_query != focused:
+                    queries = (focused, latin_query)
+            return RetrievalPlan(focused, queries, "caller_standalone")
         if rewrite_source == "hook":
             # The LLM hook already resolved references against the dialogue, so
             # its single rewrite is the only dense query.  An echoed question
@@ -1856,16 +1978,38 @@ class RAGService:
             return list(source_nodes)
         query_unique = set(query_terms)
         query_pairs = set(zip(query_terms, query_terms[1:]))
+        # Compare substantial translations independently so bilingual
+        # boilerplate cannot displace a direct monolingual passage.
+        script_groups = self._mixed_query_groups(query_terms)
+        group_pairs = []
+        for group in script_groups:
+            terms = [term for term in query_terms if term in group]
+            group_pairs.append(set(pairwise(terms)))
+        node_terms = [self._lexical_terms(self._node_text(item)) for item in source_nodes]
+        weights = {
+            term: 1 + math.log((1 + len(node_terms)) / (1 + sum(term in terms for terms in node_terms)))
+            for term in query_unique
+        } if script_groups else {}
 
         def rank_key(indexed_node: tuple[int, Any]) -> tuple[float, float, int]:
             index, source_node = indexed_node
-            text_terms = self._lexical_terms(self._node_text(source_node))
+            text_terms = node_terms[index]
             text_unique = set(text_terms)
             term_coverage = len(query_unique & text_unique) / len(query_unique)
             pair_coverage = 0.0
             if query_pairs:
                 text_pairs = set(zip(text_terms, text_terms[1:]))
                 pair_coverage = len(query_pairs & text_pairs) / len(query_pairs)
+            if script_groups:
+                term_coverage = max(
+                    sum(weights[term] for term in group & text_unique) / sum(weights[term] for term in group)
+                    for group in script_groups
+                )
+                # Pairs never cross the translation boundary.
+                pair_coverage = max(
+                    len(pairs & text_pairs) / len(pairs) if pairs else 0.0
+                    for pairs in group_pairs
+                )
             lexical_relevance = (
                 self.config.lexical_term_weight * term_coverage
                 + self.config.lexical_pair_weight * pair_coverage
@@ -1883,6 +2027,15 @@ class RAGService:
                 reverse=True,
             )
         ]
+
+    @staticmethod
+    def _mixed_query_groups(terms: Sequence[str]) -> list[set[str]]:
+        latin = {term for term in terms if re.fullmatch(r"[a-z]+", term)}
+        cyrillic = {term for term in terms if re.fullmatch(r"[а-я]+", term)}
+        if len(latin) < 5 or len(cyrillic) < 3:
+            return []
+        identifiers = set(terms) - latin - cyrillic
+        return [latin | identifiers, cyrillic | identifiers]
 
     @classmethod
     def _lexical_terms(cls, text: str) -> list[str]:
@@ -2547,16 +2700,21 @@ class RAGService:
             )
         )
 
-    @classmethod
-    def _context_text(cls, source_node: Any) -> str:
+    def _context_text(self, source_node: Any, *, focus_lexical: bool = True, question: str = "") -> str:
         """Normalize a node, focusing strict lexical evidence on its tightest passage."""
 
-        text = cls._node_text(source_node)
+        text = self._node_text(source_node)
         metadata = source_node.node.metadata or {}
+        member = str(metadata.get("chm_member") or "")
+        if member:
+            file_name = str(metadata.get("file_name") or "")
+            text = chm_context(self.config.data_dir, file_name, member, text)
+        elif str(metadata.get("file_name") or "").lower().endswith(".pdf"):
+            text = behavior_context(text, question)
         focus_query = str(metadata.get("_lexical_focus_query") or "").strip()
-        if focus_query:
-            required = set(cls._lexical_terms(focus_query))
-            if span := cls._minimum_cover_char_span(text, required):
+        if focus_lexical and focus_query and "\n" not in text:
+            required = set(self._lexical_terms(focus_query))
+            if span := self._minimum_cover_char_span(text, required):
                 start, end = span
                 window_start = max(0, start - 160)
                 window_end = min(len(text), end + 480)
@@ -2565,7 +2723,7 @@ class RAGService:
                 while window_end < len(text) and not text[window_end].isspace():
                     window_end += 1
                 text = text[window_start:window_end]
-        return " ".join(text.split())
+        return text if member else " ".join(text.split())
 
     @classmethod
     def _minimum_cover_char_span(cls, text: str, required: set[str]) -> tuple[int, int] | None:
@@ -2597,7 +2755,7 @@ class RAGService:
                     missing += 1
         return best
 
-    def _source_from_node(self, source_node: Any) -> dict[str, Any]:
+    def _source_from_node(self, source_node: Any, *, include_snippet: bool = True) -> dict[str, Any]:
         node = source_node.node
         metadata = node.metadata or {}
         source = str(metadata.get("file_name") or metadata.get("source") or metadata.get("file_path") or "unknown")
@@ -2628,7 +2786,7 @@ class RAGService:
                 page = None
         printed_page = self._printed_page(metadata, self._node_text(source_node))
         score = float(source_node.score or 0.0)
-        snippet = self._context_text(source_node)[:MAX_SOURCE_SNIPPET_CHARS]
+        snippet = self._context_text(source_node)[:MAX_SOURCE_SNIPPET_CHARS] if include_snippet else ""
         return {
             "id": str(metadata.get("doc_id") or node.node_id),
             "chunk_id": str(node.node_id),
@@ -2654,6 +2812,9 @@ class RAGService:
         # PDF extractors place the running page number in the header.  Limit
         # the scan to that region so an isolated value in a later table is not
         # misreported as the printed page.
+        headers = {int(value) for value in _CHAPTER_PAGE_RE.findall(text[:400])}
+        if headers:
+            return headers.pop() if len(headers) == 1 else None
         matches = {int(value) for value in _PRINTED_PAGE_RE.findall(text[:400])}
         if len(matches) == 1:
             return matches.pop()
@@ -2710,13 +2871,22 @@ def build_llm_condense_hook(config: RAGConfig, *, llm: Any | None = None) -> Con
             if not config.allow_external_data_transfer:
                 logger.warning("rag_condense_failed", error_type="ExternalDataTransferNotAllowed")
                 return None
-            condense_llm = state["llm"] = LlamaOpenAI(
-                model=config.llm_model,
-                api_key=config.openai_api_key,
-                api_base=config.openai_base_url,
-                timeout=min(float(config.generation_timeout), LLM_CONDENSE_TIMEOUT_SECONDS),
-                temperature=0,
-            )
+            if config.llm_model.startswith("gpt-6"):
+                from app.services.runtime_model import ResponsesTextLLM
+
+                condense_llm = state["llm"] = ResponsesTextLLM(model=config.llm_model,
+                    api_key=config.openai_api_key, base_url=config.openai_base_url,
+                    timeout=min(float(config.generation_timeout), LLM_CONDENSE_TIMEOUT_SECONDS),
+                    effort=config.condense_reasoning_effort,
+                    max_output_tokens=512 if config.condense_reasoning_effort == "none" else 8704)
+            else:
+                condense_llm = state["llm"] = LlamaOpenAI(
+                    model=config.llm_model,
+                    api_key=config.openai_api_key,
+                    api_base=config.openai_base_url,
+                    timeout=min(float(config.generation_timeout), LLM_CONDENSE_TIMEOUT_SECONDS),
+                    temperature=0,
+                )
         prompt = (
             f"{LLM_CONDENSE_PROMPT}\n\n"
             f"{dialog_section}"

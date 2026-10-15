@@ -1,0 +1,23 @@
+{
+  "baseline_directory": "tests/eval/results/2026-10-14_telegram_agent_citation_fix_verified",
+  "note": "Immutable previous verified run, preserved before semantic fixes and Docker authentication recovery.",
+  "baseline_run_id": "6a21791010ee447e8218a6a6e3657861",
+  "files": {
+    "answers.csv": "abd546899b72ed5e404b40223e253977ccc058322572740ed13e29e2a3356e5b",
+    "baseline_manifest.json": "5230b79878f73395bf391a68b856cb168bddeb46295779c25fc6782542c0456c",
+    "checkpoints.json": "df72bb692181010599f074f93d95c01af647853774b8eca0e00071e3e0414665",
+    "comparison.json": "9360e66f032a2fc3dafd726d6b8e18384a4fcb9111e5c375f1041d3ee17fe08c",
+    "diagnostics.json": "a3e806407f5cdab85835fbf0f32c16b638f4932fb816b9ff63a69f8a5f7a56a4",
+    "pdf_pages.json": "76ac622349c774cbd885a9e7418735901d92f7d4882e3207df0b46962a59c118",
+    "run.json": "9f3b9600fae9f3dc1707c255004c64110099c4a55873d822c981a3a6f65efa44",
+    "runtime_after.json": "292b9c7d954dddbf1bbf12c781edc1c5fa42bb1d8819bc8d23862360cf2006ec",
+    "runtime_manifest.json": "4b9c89be9c93393f0156fe3e28455039ba8f0b4fc2e24782b79f895ce045e2fc",
+    "semantic_review.json": "7638c1172bf1849dc4fbe2ef458e8983f2f43ae84f89e6834de8e20612016bfe",
+    "summary.json": "dd974f85d4ca14db23b3f34ab6c6541b2096542b0a335b8f4dcf4dee9bfaf768",
+    "verification.json": "33e32f56e21f98d3cfb5f039ea45a5626c58086bf2c2619bea77d39c305814c2"
+  },
+  "dataset_sha256": {
+    "golden_dataset.json": "8d3d6460fb0ad9c287c29889169e0cdba03ed8d055dd77588f4e79922063b345",
+    "retrieval_dataset.json": "c5d80ab99911b1bcdb91048ab992f23a99d69c949e863df72de9e4f9c9249671"
+  }
+}

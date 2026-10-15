@@ -1,0 +1,17 @@
+{
+  "baseline_run_id": "87dad8a9d1b245e382ce5c1dbd98655c",
+  "files": {
+    "answers.csv": "2ce4db96b382a035dd0b02ee12b3f29a4595f381d90c6ccf09c85a39ba633288",
+    "checkpoints.json": "f1ab8fb29bbfe04765ef6a454e18782d1ccdc33753da95ec56a38028946dd608",
+    "pdf_pages.json": "c6cc7d155be89c2ae4491f7a9868f1bd76eddcedc9dc115cd4019fb40057e5d7",
+    "run.json": "c935d433c0c1a2df3c027d47ea5c43b70c52751d563caa180bdc533a5e043abe",
+    "runtime_after.json": "704c98522aa9c6a37b58b287ba8afd3c73fffd3a8f45c585f474a05f42cee070",
+    "runtime_manifest.json": "60ccd3fc2c3ea952475f1b65e36f9842ddb19511c63db299d5f788bd1194438f",
+    "semantic_review.json": "a674245d0d40ae817891b599447a138a96c2e9aad6d0187c7208824ea875201e",
+    "summary.json": "3d9e738f28fa29ecd7b8b63ccd4e0944221036325980461d28f4d61a70833c1b"
+  },
+  "dataset_sha256": {
+    "golden_dataset.json": "8d3d6460fb0ad9c287c29889169e0cdba03ed8d055dd77588f4e79922063b345",
+    "retrieval_dataset.json": "c5d80ab99911b1bcdb91048ab992f23a99d69c949e863df72de9e4f9c9249671"
+  }
+}

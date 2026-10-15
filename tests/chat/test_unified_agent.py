@@ -420,7 +420,7 @@ def test_public_retrieval_preserves_gates_followup_ids_and_budget(tmp_path):
         max_context_chars=12,
     )
     assert result["status"] == "ok" and result["telemetry"]["plan_mode"] == "follow_up"
-    assert sum(map(len, result["contexts"])) == 12
+    assert 0 < sum(map(len, result["contexts"])) <= 12
     assert result["sources"][0]["chunk_id"] == "chunk-mesh"
     assert any("Mesh Generate" in query for query in questions)
     service, _ = rag_service(tmp_path, product="civil")

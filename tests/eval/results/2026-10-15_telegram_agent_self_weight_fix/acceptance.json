@@ -1,0 +1,39 @@
+{
+  "run_id": "66da79495f59428e9fa3c47894480594",
+  "status": "preserved_intermediate_with_collection_failures_and_iteration_limit",
+  "collection": {
+    "completed": 41,
+    "failed": 2,
+    "expanded_completed": 5
+  },
+  "error_types_only": {
+    "OpenAIConnectionError": 2
+  },
+  "target_review": [
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Накопление результатов и история нагрузки PDF8/7 a4c208f5; первый этап и собственный вес CHM1831be10. Обе части вопроса явно раскрыты."
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Собственный вес CHM1831be10, накопление PDF8/7 a4c208f5; добавлены активация/преднапряжение CHM1831be10, K0 и обнуление перемещений CHM670ea225. Нулевые начальные напряжения активированных элементов не распространены на исходный грунт."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "Вместо содержательного ответа возврат MAX_ITERATIONS_MESSAGE. Пять поисков, включая повторные переформулировки перечня классов; шестой вызов отклонён лимитом."
+    }
+  ],
+  "review_scope": "Target acceptance only; optional partial independent review has no aggregate quality score.",
+  "next_change": "Clarify that confirmed linear/nonlinear elastic classes suffice for a general overview; do not keep searching for a complete catalogue of named models.",
+  "runtime_before_after_unchanged": true
+}

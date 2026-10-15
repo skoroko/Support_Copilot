@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "run_id": "875ada15dcac46858172a54ae320e819",
+  "reviewed_on": "2026-10-14",
+  "role": "Intermediate first citation fix, retained; final refinement recorded separately.",
+  "method": "Codex qualitative review, same baseline rubric; two Sol High read-only semantic packages; exact final sources matched by chunk_id to full saved evidence.",
+  "rubric": {
+    "correctness": "1=essential reference complete/correct;0.5=significant omission/minor factual error;0=core wrong or no requested answer",
+    "grounding": "1=all material claims supported by their actual cited fragments;0.5=minor inference/imprecision;0=material unsupported/generalized claim;null=canonical no-answer refusal"
+  },
+  "results": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "DOF и r/θ/z подтверждены Node1/8 и3/10; прежние чужие фрагменты устранены."
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Поровое давление подтверждено Node1/8, инкрементное решение Elements108/121."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Не раскрыта разница координатных направлений; сказанное подтверждено Coordinate system7b4076f8 и Node4/11."
+    },
+    {
+      "id": "golden-04",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Конечный поворот подтверждён Node5/12."
+    },
+    {
+      "id": "golden-05",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Формы и варианты пентаэдров подтверждены Elements1,24/37 и Create3D."
+    },
+    {
+      "id": "golden-06",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет встроенных стержневых/балочных элементов из reference; приведённое подтверждено Elements1/14,47/60."
+    },
+    {
+      "id": "golden-07",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены линейный/нелинейный/пластический режимы; назначение и контактные свойства цитируются правильно."
+    },
+    {
+      "id": "golden-08",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Mapping и Free Field для динамики подтверждены отдельными правильными фрагментами."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет изменения сцепления по глубине; сказанное поддержано CHM Mohr-Coulmb."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Нет явной упругопластичности; небольшая неподтверждённая рекомендация о практичной модели. Modified MC отделена, ссылки правильны."
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет явной упругопластичности/depth variation/независимостиφ; сказанное подтверждено."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет явной упругопластичности/depth variation; описанные параметры и отдельно Modified MC поддержаны."
+    },
+    {
+      "id": "golden-13",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Главные отличия подтверждены; сравнение классической модели с одним критерием прямо не изложено."
+    },
+    {
+      "id": "golden-14",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "PM4Sand поддержана Materials87/216 и92/221, прежняя ссылка наSRM устранена."
+    },
+    {
+      "id": "golden-15",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены kx/ky/kz, грунт–вода, Ван Генухтен и водосодержание; приведённое подтверждено Materials113/242."
+    },
+    {
+      "id": "golden-16",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Нет initial stiffness/modifiedNewton/secant; отношениеBFGS/QuasiNewton перевёрнуто относительно Algorithms27/306."
+    },
+    {
+      "id": "golden-17",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все критерии подтверждены Algorithms23/302,25/304 и Analysis Control."
+    },
+    {
+      "id": "golden-18",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Бисекция подтверждена Algorithms26/305."
+    },
+    {
+      "id": "golden-19",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Методы и ограничения подтверждены Algorithms5–6/284–285."
+    },
+    {
+      "id": "golden-20",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Модальные координаты и сокращение подтверждены правильными Algorithms8–10,14."
+    },
+    {
+      "id": "golden-21",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "AUTO-SOLID подтверждён CHMd2ad11a1."
+    },
+    {
+      "id": "golden-22",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "AUTO-FACE подтверждён CHM21b452ed."
+    },
+    {
+      "id": "golden-23",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Основа верна; дополнительная связь Fit adjacent mesh с устранением разных делений не подтверждена Map-Face ddd604a6."
+    },
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет собственного веса; нагрузка/начальное состояние/активация/обнуление подтверждены разными нужными фрагментами."
+    },
+    {
+      "id": "golden-25",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все типы подтверждены Construction Stage Set/Analysis."
+    },
+    {
+      "id": "golden-26",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет собственного веса/первой стадии;K0 и анизотропия поддержаны CHM16054cdf, OCR?висходнике."
+    },
+    {
+      "id": "golden-27",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущен Embed; операции иSew теперь цитируют правильные CHM601251e6/830ff249."
+    },
+    {
+      "id": "golden-28",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Geometry Set подтверждён CHM2816548a."
+    },
+    {
+      "id": "golden-29",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "ЕдиницыCAD/DXF подтверждены Import3a79418a и AnalysisSettingb8e0fdb1; странная фраза про импорт файла единиц буквальна в корпусе."
+    },
+    {
+      "id": "golden-30",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Two-point/Isometric1/2 и фиксированнаяGCS подтверждены ViewToolbar и ModelingGuide."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0,
+      "notes": "Первое предложение распространяет прямую пропорциональность напряжений/деформаций на упругость вообще; CHM39b552b9 говорит только о линейно-упругой модели. Materials1/130 содержит также нелинейную упругость. Переченьмоделей правильный."
+    },
+    {
+      "id": "golden-32",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет создания/регистрацииBoundarySet изreference; описанные закрепления/дренирование/flux подтверждены правильными фрагментами."
+    },
+    {
+      "id": "golden-33",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректный NO_ANSWER без источников по цене."
+    },
+    {
+      "id": "golden-34",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "x/y элементной системы подтверждены Elements32/45."
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "ПолныеDOF, корректныеNode1/8,3/10."
+    },
+    {
+      "id": "followup-01-question",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": 1,
+      "notes": "Новыйпоиск/контекст распознаны, но plane-strainDOF не найдены и ответне дан. Соседниеplane-stress/solid факты явно отделены и цитируютсяправильно.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "followup-10-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет явной упругопластичности;остальное подтверждено."
+    },
+    {
+      "id": "followup-10-question",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Не раскрыты linearmeridian/pressureaccuracy из ожидаемыхограничений; приведённое подтверждено.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "followup-16-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущен отдельныйsecant; факты stiffnessupdate иBFGS подтверждены."
+    },
+    {
+      "id": "followup-16-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Свежий поиск, force/displacement/energy иусловия подтверждены.",
+      "new_search_count": 1,
+      "antecedent_resolved": true
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Уточняет окно/задачу, но уже перечисляет конкретные примеры/SRM до контекста; примеры подтверждены.",
+      "asks_missing_conditions": true,
+      "clarification_before_specific_parameters": false
+    },
+    {
+      "id": "refusal-discount",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Не выдумываетцену/скидку. РеальнаяAboutGTSссылка подтверждает лишь упомянутый общийконтекст, ане тариф."
+    },
+    {
+      "id": "refusal-sla",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректный NO_ANSWER безисточников/SLA."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "ПравильныеNode1/8 и3/10, таблица/пояснение поддержаны.",
+      "detail_gain": "mostly_repetition"
+    },
+    {
+      "id": "golden-10",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет явной упругопластичности; классическая/ModifiedMC отделены и цитируютсяправильно.",
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-16",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Нет initialstiffness иотдельногоModifiedNewton; приведённыеNewton/BFGS/arclength поддержаны.",
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 0,
+      "notes": "Из сохранениянагрузки CHM1831be10 обобщено сохранениевсехрезультатов/напряжённодеформированногосостояния. Общаягарантия не изложена в citedfragments.",
+      "detail_gain": "substantive_details"
+    },
+    {
+      "id": "golden-32",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "ПодробныеConstraint/DefineSet/ActiveSets/draining/flux/Excel поддержаны соответствующимифинальнымиссылками.",
+      "detail_gain": "substantive_details"
+    }
+  ]
+}
