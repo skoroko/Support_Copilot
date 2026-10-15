@@ -1,5 +1,9 @@
 # Homework 6.3 — LangGraph ReAct agent
 
+Historical homework graphs: these custom/prebuilt variants precede the
+production Telegram/RAG integration and persistent approval. The final graph
+is documented in [final_agent_graph.md](final_agent_graph.md).
+
 ## 1. Configuration
 
 The implementation uses `langgraph>=1.0,<2`, `langchain>=1.0,<2`,

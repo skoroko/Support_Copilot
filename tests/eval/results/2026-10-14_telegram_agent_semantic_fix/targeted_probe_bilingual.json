@@ -1,0 +1,473 @@
+{
+  "run_id": "58765aa38ef24e4eb72a9aee65af42c2",
+  "purpose": "Targeted real Telegram backend probe before full evaluation, no Telegram sends",
+  "scenarios": [
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "conversation": "golden-24",
+      "golden_index": 24,
+      "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+      "reference": "Расчёт стадий строительства является накопительным, потому что на каждом этапе учитываются результаты нелинейного расчёта напряжений, полученные на предыдущем этапе, а изменения нагрузок и граничных условий вводятся в начале каждого этапа.\n\nОн начинается с естественного напряжённого состояния грунта: первый этап используется для вычисления естественных напряжений в слоях грунта, и в GTS NX для этого выполняется расчёт на действие собственного веса.",
+      "reference_contexts": [
+        "1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го этапа 4 Этап: Армирование обделки 2-го этапа + выемка 3-го этапа 5 Этап: Армирование обделки 3-го этапа + выемка 4-го этапа …… (Повтор) …… Первый этап используется для вычисления естественных напряжений в слоях грунта. Так как расчет напряженного состояния основания предполагает, что естественное напряженное состояние является начальным состоянием, то необходимо выполнить расчет естественного напряженного состояния. В GTS NX используется расчет на действие собственного веса для вычисления естественного напряженного состояния. Activate / Deactivate element (Активация/деактив",
+        "Часть STG #3 STG #4 STG #5 STG #6 Верхняя 0.3 0.4 0.3 - Нижняя - - 0.5 0.5 STG #3 STG #4 STG #5 STG #6 Необходимо следить, чтобы не случалось наложения значений LDF по этапам строительства, как показано ниже. Часть STG #3 STG #4 STG #5 STG #6 STG #7 Верхняя 0.3 0.4 0.3 - - Нижняя - - - 0.5 0.5 Clear Displacement (Чистое перемещение) Задайте перемещения в результатах расчета для текущего этапа равными 0. Данная функция используется для задания начальных условий естественного напряженного состояния основания. Напряжения при этом не обнуляются. Slope Stability (SRM/SAM) (Устойчивость откоса (Метод конечных элементов/ Метод редукции)) Укажите, следует ли выполнять расчет устойчивости откоса (мет",
+        "Construction Stage Analysis Home > GTS NX > Analysis > Analysis Case > General > Construction Stage Analysis Solution Type (Тип решения) - Construction Stage Analysis (Расчет поэтапности строительства) Расчет поэтапности строительства может быть использован для моделирования процесса возведения основания с использованием численного расчета. Расчет поэтапности строительства состоит из набора этапов, при этом условия нагружения и граничных условия, также как и отдельные элементы могут быть убраны или добавлены на любом из этапов. Такие изменения граничных условий или условий нагружения учитываются в начале каждого этапа. В GTS NX могут быть использованы следующие расчетные функции при выполнен"
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+        "relevant_doc_ids": [
+          "05_User Manual_Chapter5_Analysis Method.pdf",
+          "GTS_NX 2021.chm"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "conversation": "golden-31",
+      "golden_index": 31,
+      "question": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?",
+      "reference": "Упругий материал возвращается к исходной форме после снятия внешней нагрузки и не приобретает остаточных деформаций. В GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов.",
+      "reference_contexts": [
+        "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX. Глава 4. Материалы. Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе."
+      ],
+      "retrieval_binding": "unmatched",
+      "retrieval_contract": null,
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "question": "расскажи про модель харденинг соил"
+    }
+  ],
+  "results": [
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "owner": "eval-target-58765aa38ef24e4eb72a9aee65af42c2-golden-24",
+      "chat_id": "a1958699-4906-52b4-b7e1-3fe4e51266ba",
+      "status": "completed",
+      "response": "Расчёт стадий строительства является накопительным, потому что программа не создаёт независимую модель для каждой стадии, а использует концепцию накопления: в следующую стадию переходят изменения, внесённые в предыдущей, и результаты предыдущей стадии влияют на следующую [1].  \nНачинается он с начального состояния грунта, то есть с in-situ условий площадки до строительства [1].  \nВ мануале также сказано, что при определении стадий рекомендуется возвращать отображаемую модель к исходному in-situ состоянию и уже от него вести поэтапное создание [2].  \nПояснение: это означает, что в расчёте важно задавать только изменения между стадиями, а не пересобирать всю модель заново на каждом шаге [1][2].",
+      "ttft_ms": 11059.16920000027,
+      "sources": [
+        {
+          "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 8,
+          "printed_page": 7,
+          "score": 0.6600234,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+          "confident": true
+        },
+        {
+          "id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+          "chunk_id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_25",
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 26,
+          "printed_page": 25,
+          "score": 0.6243816,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 25 Because the concept of construction stages is cumulative, the program compares the activated/deactivated model information in the previous stage and only adds/deletes the changed information. Hence, it is recommended that the creation be done in stages, after the displayed model information is returned to its initial in-situ state. The auto set function generates construction stages using the work environment displayed on the screen. Hence, to specify the individual options (LDF setting, clear displacement etc.) for each stage, use the Construction stage set specification menu to check the options fo",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "4859282f-8722-4557-b878-96493024d60c",
+      "approval": null,
+      "persisted": {
+        "id": "4859282f-8722-4557-b878-96493024d60c",
+        "chat_id": "a1958699-4906-52b4-b7e1-3fe4e51266ba",
+        "role": "assistant",
+        "content": "Расчёт стадий строительства является накопительным, потому что программа не создаёт независимую модель для каждой стадии, а использует концепцию накопления: в следующую стадию переходят изменения, внесённые в предыдущей, и результаты предыдущей стадии влияют на следующую [1].  \nНачинается он с начального состояния грунта, то есть с in-situ условий площадки до строительства [1].  \nВ мануале также сказано, что при определении стадий рекомендуется возвращать отображаемую модель к исходному in-situ состоянию и уже от него вести поэтапное создание [2].  \nПояснение: это означает, что в расчёте важно задавать только изменения между стадиями, а не пересобирать всю модель заново на каждом шаге [1][2].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "page": 8,
+            "score": 0.6600234,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+            "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "confident": true,
+            "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+            "printed_page": 7
+          },
+          {
+            "id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+            "page": 26,
+            "score": 0.6243816,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 25 Because the concept of construction stages is cumulative, the program compares the activated/deactivated model information in the previous stage and only adds/deletes the changed information. Hence, it is recommended that the creation be done in stages, after the displayed model information is returned to its initial in-situ state. The auto set function generates construction stages using the work environment displayed on the screen. Hence, to specify the individual options (LDF setting, clear displacement etc.) for each stage, use the Construction stage set specification menu to check the options fo",
+            "chunk_id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+            "confident": true,
+            "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_25",
+            "printed_page": 25
+          }
+        ],
+        "tokens": 179,
+        "latency_ms": 7248.89,
+        "created_at": "2026-10-14T16:23:39.480412Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 11083.782700000029,
+      "expansion": {
+        "status": "completed",
+        "preview": {
+          "available": true,
+          "max_output_tokens": 1500
+        },
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "result": {
+          "answer": "Расчёт стадий строительства называют накопительным, потому что в нём не строится отдельная независимая модель для каждой стадии. Вместо этого программа берёт изменения, которые были внесены на предыдущем шаге, и накапливает их в следующих стадиях, поэтому результаты прошлой стадии влияют на последующую [2][3].\n\nС какого состояния он начинается:\n- **И.С. / initial stage** — это начальная стадия, где задаётся исходное состояние грунта [1][2].\n- **in-situ conditions** — это природное состояние площадки до строительства; именно с него начинается анализ стадий строительства [2].\n- **in-situ state** — при определении стадий рекомендуется сначала вернуть отображаемую модель к этому исходному состоянию, а затем задавать поэтапные изменения [3].\n\nПрактический смысл такой схемы в том, что в каждой стадии вы задаёте только то, что меняется: например, выемку, крепление, нагрузку или деактивацию элементов. То, что уже было активировано или приложено раньше, не исчезает само по себе и продолжает влиять на следующие стадии, пока вы это не уберёте [2].\n\nЕщё важная деталь: в стадии, соответствующей исходному состоянию, все элементы грунта активированы сразу, и в мануале это связывается с **I.S.** как с начальной стадией [1]. Это означает, что расчёт стартует не «с пустоты», а с модели грунта в исходных условиях площадки до строительства [2].\n\n**Пояснение:** если совсем коротко, то логика такая: сначала задают исходный грунт на площадке, а потом последовательно добавляют изменения строительства; именно поэтому расчёт стадий и называется накопительным [2][3].",
+          "sources": [
+            {
+              "id": "de178e8f-7a19-4bef-a966-2e0a224b0d77",
+              "page": 12,
+              "score": 0.5091233,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 11 [Apply Assignment Rule] Press this button to display the specified data according to the assignment rule on the Mesh, Boundary, Load set activated state. Press OK to create the construction stage. The activated Mesh, Boundary, and Load set can be checked for each stage using the Preview construction stage( ) option. This function has the same function as Construction stage simulation ( ). Mesh, Boundary, Load Activation Status Display the currently specified construction stage on a table. The construction stage progresses as it moves to the right. The I.S. and S1 on the top of the columns are abbrevi",
+              "chunk_id": "de178e8f-7a19-4bef-a966-2e0a224b0d77",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_11",
+              "printed_page": 11
+            },
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.6600234,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+              "page": 26,
+              "score": 0.6243816,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 25 Because the concept of construction stages is cumulative, the program compares the activated/deactivated model information in the previous stage and only adds/deletes the changed information. Hence, it is recommended that the creation be done in stages, after the displayed model information is returned to its initial in-situ state. The auto set function generates construction stages using the work environment displayed on the screen. Hence, to specify the individual options (LDF setting, clear displacement etc.) for each stage, use the Construction stage set specification menu to check the options fo",
+              "chunk_id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_25",
+              "printed_page": 25
+            }
+          ],
+          "message_id": "14340eaf-bb80-4e4d-acd4-746b14306434",
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          }
+        },
+        "confirmed_latency_ms": 2925.9720999998535,
+        "persisted": {
+          "id": "14340eaf-bb80-4e4d-acd4-746b14306434",
+          "chat_id": "a1958699-4906-52b4-b7e1-3fe4e51266ba",
+          "role": "assistant",
+          "content": "Расчёт стадий строительства называют накопительным, потому что в нём не строится отдельная независимая модель для каждой стадии. Вместо этого программа берёт изменения, которые были внесены на предыдущем шаге, и накапливает их в следующих стадиях, поэтому результаты прошлой стадии влияют на последующую [2][3].\n\nС какого состояния он начинается:\n- **И.С. / initial stage** — это начальная стадия, где задаётся исходное состояние грунта [1][2].\n- **in-situ conditions** — это природное состояние площадки до строительства; именно с него начинается анализ стадий строительства [2].\n- **in-situ state** — при определении стадий рекомендуется сначала вернуть отображаемую модель к этому исходному состоянию, а затем задавать поэтапные изменения [3].\n\nПрактический смысл такой схемы в том, что в каждой стадии вы задаёте только то, что меняется: например, выемку, крепление, нагрузку или деактивацию элементов. То, что уже было активировано или приложено раньше, не исчезает само по себе и продолжает влиять на следующие стадии, пока вы это не уберёте [2].\n\nЕщё важная деталь: в стадии, соответствующей исходному состоянию, все элементы грунта активированы сразу, и в мануале это связывается с **I.S.** как с начальной стадией [1]. Это означает, что расчёт стартует не «с пустоты», а с модели грунта в исходных условиях площадки до строительства [2].\n\n**Пояснение:** если совсем коротко, то логика такая: сначала задают исходный грунт на площадке, а потом последовательно добавляют изменения строительства; именно поэтому расчёт стадий и называется накопительным [2][3].",
+          "media_refs": {
+            "answer": {
+              "mode": "expanded",
+              "expandable": false,
+              "incomplete": false
+            }
+          },
+          "rag_sources": [
+            {
+              "id": "de178e8f-7a19-4bef-a966-2e0a224b0d77",
+              "page": 12,
+              "score": 0.5091233,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 11 [Apply Assignment Rule] Press this button to display the specified data according to the assignment rule on the Mesh, Boundary, Load set activated state. Press OK to create the construction stage. The activated Mesh, Boundary, and Load set can be checked for each stage using the Preview construction stage( ) option. This function has the same function as Construction stage simulation ( ). Mesh, Boundary, Load Activation Status Display the currently specified construction stage on a table. The construction stage progresses as it moves to the right. The I.S. and S1 on the top of the columns are abbrevi",
+              "chunk_id": "de178e8f-7a19-4bef-a966-2e0a224b0d77",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_11",
+              "printed_page": 11
+            },
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.6600234,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+              "page": 26,
+              "score": 0.6243816,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 25 Because the concept of construction stages is cumulative, the program compares the activated/deactivated model information in the previous stage and only adds/deletes the changed information. Hence, it is recommended that the creation be done in stages, after the displayed model information is returned to its initial in-situ state. The auto set function generates construction stages using the work environment displayed on the screen. Hence, to specify the individual options (LDF setting, clear displacement etc.) for each stage, use the Construction stage set specification menu to check the options fo",
+              "chunk_id": "f2ddd233-b03c-4c5b-95bc-22ddeda2145f",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_25",
+              "printed_page": 25
+            }
+          ],
+          "tokens": 393,
+          "latency_ms": 2858.21,
+          "created_at": "2026-10-14T16:23:42.525374Z"
+        },
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "replay_message_id": "14340eaf-bb80-4e4d-acd4-746b14306434",
+        "wall_latency_ms": 3079.1416999995818
+      }
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "owner": "eval-target-58765aa38ef24e4eb72a9aee65af42c2-golden-31",
+      "chat_id": "687a24eb-e745-5284-bba0-d87039befdf4",
+      "status": "completed",
+      "response": "Упругое поведение материала означает, что после снятия внешней нагрузки он возвращается к исходной форме и не оставляет остаточных деформаций [2].\n\nВ GTS NX доступны как линейно-упругие, так и нелинейно-упругие модели материалов [2].\n\nИз явным образом перечисленных в базе знаний упругих моделей для общего задания материала указаны, например, линейно-упругая изотропная, двумерная ортотропная, поперечно-изотропная, упругая контактная, нелинейно-упругая одномерная, Jardine, D-Min и гиперболическая модель Duncan-Chang [2].\n\nДля стержневых и встраиваемых стержневых элементов отдельно поддерживаются нелинейно-упругие варианты: работа только на сжатие, Gap behavior, работа только на растяжение, Hook behavior и пользовательская нелинейно-упругая модель [3].\n\n**Пояснение:** в интерфейсе материала также есть раздел Elastic, где линейно-упругая модель описана как модель, в которой напряжения прямо пропорциональны деформациям, а константами служат модуль упругости и коэффициент Пуассона [1].",
+      "ttft_ms": 8150.2393999999185,
+      "sources": [
+        {
+          "id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+          "chunk_id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_232",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.7545965,
+          "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+          "confident": true
+        },
+        {
+          "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": 130,
+          "score": 0.77788997,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента. Таблица 4.1.1 Применение моделей материалов в зависимости от типа конечного элемента Модель матер",
+          "confident": true
+        },
+        {
+          "id": "b2c3f7a1-6d3a-481e-a038-7b2840c92f00",
+          "chunk_id": "b2c3f7a1-6d3a-481e-a038-7b2840c92f00",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_10",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 11,
+          "printed_page": 140,
+          "score": 0.7043896,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 140 1.5 Нелинейно-упругое поведение обычных и встраиваемых стержневых элементов (элементов фермы) (Nonlinear Elastic Behavior of Truss/Embedded Truss Elements) В качестве нелинейной модели материала для обычных и оболочечных контактных элементов используется модель трения Кулона, которая подробно рассматривается в Главе 2. Для элементов сваи в качестве исходных данных для нелинейной модели материала используется семейство кривых или фиксированная величина для моделирования идеально-пластического поведения. GTS NX поддерживает следующие модели нелинейно-упругого поведения для стержневых и встраиваемых стержневых элементов: ➢ Работа только н",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "2335dd34-e101-42d5-995a-5ad87e444a4e",
+      "approval": null,
+      "persisted": {
+        "id": "2335dd34-e101-42d5-995a-5ad87e444a4e",
+        "chat_id": "687a24eb-e745-5284-bba0-d87039befdf4",
+        "role": "assistant",
+        "content": "Упругое поведение материала означает, что после снятия внешней нагрузки он возвращается к исходной форме и не оставляет остаточных деформаций [2].\n\nВ GTS NX доступны как линейно-упругие, так и нелинейно-упругие модели материалов [2].\n\nИз явным образом перечисленных в базе знаний упругих моделей для общего задания материала указаны, например, линейно-упругая изотропная, двумерная ортотропная, поперечно-изотропная, упругая контактная, нелинейно-упругая одномерная, Jardine, D-Min и гиперболическая модель Duncan-Chang [2].\n\nДля стержневых и встраиваемых стержневых элементов отдельно поддерживаются нелинейно-упругие варианты: работа только на сжатие, Gap behavior, работа только на растяжение, Hook behavior и пользовательская нелинейно-упругая модель [3].\n\n**Пояснение:** в интерфейсе материала также есть раздел Elastic, где линейно-упругая модель описана как модель, в которой напряжения прямо пропорциональны деформациям, а константами служат модуль упругости и коэффициент Пуассона [1].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+            "page": null,
+            "score": 0.7545965,
+            "snippet": "Elastic Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Elastic General Material(Behavioral properties)(Общие свойства материалов (свойства поведения)) ▒ Elastic (Упругий материал) Линейно-упругой является модель, для которой напряжения прямо пропорциональны деформациям. Константами такой линейной зависимости являются модуль упругости ( ) и коэффициент Пуассона ( ). <Линейная зависимость между напряжениями и деформациями> Так как предел текучести не определен, то расчетные напряжения и деформации линейно-упругой модели могут быть нереалистичными. Поэтому в общих случаях рекомендуется использовать в расчетах модель Мора-Кулона или др",
+            "chunk_id": "39b552b9-1e6b-4bf7-9b5b-5f4474980c9c",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_232",
+            "printed_page": null
+          },
+          {
+            "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "page": 1,
+            "score": 0.77788997,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента. Таблица 4.1.1 Применение моделей материалов в зависимости от типа конечного элемента Модель матер",
+            "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+            "printed_page": 130
+          },
+          {
+            "id": "b2c3f7a1-6d3a-481e-a038-7b2840c92f00",
+            "page": 11,
+            "score": 0.7043896,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 140 1.5 Нелинейно-упругое поведение обычных и встраиваемых стержневых элементов (элементов фермы) (Nonlinear Elastic Behavior of Truss/Embedded Truss Elements) В качестве нелинейной модели материала для обычных и оболочечных контактных элементов используется модель трения Кулона, которая подробно рассматривается в Главе 2. Для элементов сваи в качестве исходных данных для нелинейной модели материала используется семейство кривых или фиксированная величина для моделирования идеально-пластического поведения. GTS NX поддерживает следующие модели нелинейно-упругого поведения для стержневых и встраиваемых стержневых элементов: ➢ Работа только н",
+            "chunk_id": "b2c3f7a1-6d3a-481e-a038-7b2840c92f00",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_10",
+            "printed_page": 140
+          }
+        ],
+        "tokens": 283,
+        "latency_ms": 8117.45,
+        "created_at": "2026-10-14T16:23:50.770187Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 8172.963100000288
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "owner": "eval-target-58765aa38ef24e4eb72a9aee65af42c2-smoke-hardening",
+      "chat_id": "4852c720-fc3e-5568-bd88-138fb2b68c5f",
+      "status": "completed",
+      "response": "Модель Hardening Soil в MIDAS GTS NX — это модификация модели Модифицированного Мора–Кулона, которая учитывает повышенную жесткость грунта при малых деформациях [2].  \nОна реализована через нелинейно-упругое поведение и использует дополнительный параметр истории деформации, а также два дополнительных параметра материала [2].  \nВ мануале отдельно указано, что для версии с малой деформационной жесткостью модель использует начальный модуль сдвига `G0ref` и пороговую деформацию `Threshold strain (γ0.7)`, при которой модуль сдвига составляет 70% от начального [1][3].  \nТакже в источнике сказано, что жесткость грунта с ростом деформации уменьшается нелинейно, то есть модель предназначена для описания этого эффекта [1][3].  \n**Пояснение:** по приведённому тексту видно, что модель подходит для задач, где важно поведение грунта при малых деформациях, но источник не даёт здесь полного списка всех параметров обычной версии Hardening Soil без small strain stiffness [1][2][3].\n\nЕсли хочешь, я могу дальше кратко объяснить:\n- какие параметры обычно нужны в этой модели,\n- чем она отличается от Мора–Кулона,\n- или как её настраивают в MIDAS GTS NX.",
+      "ttft_ms": 5591.444499999852,
+      "sources": [
+        {
+          "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6573964,
+          "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+          "confident": true
+        },
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.7104022,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        },
+        {
+          "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 77,
+          "printed_page": 206,
+          "score": 0.63530755,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно у",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "700cb06d-ecce-4448-9f44-1024d24e152b",
+      "approval": null,
+      "persisted": {
+        "id": "700cb06d-ecce-4448-9f44-1024d24e152b",
+        "chat_id": "4852c720-fc3e-5568-bd88-138fb2b68c5f",
+        "role": "assistant",
+        "content": "Модель Hardening Soil в MIDAS GTS NX — это модификация модели Модифицированного Мора–Кулона, которая учитывает повышенную жесткость грунта при малых деформациях [2].  \nОна реализована через нелинейно-упругое поведение и использует дополнительный параметр истории деформации, а также два дополнительных параметра материала [2].  \nВ мануале отдельно указано, что для версии с малой деформационной жесткостью модель использует начальный модуль сдвига `G0ref` и пороговую деформацию `Threshold strain (γ0.7)`, при которой модуль сдвига составляет 70% от начального [1][3].  \nТакже в источнике сказано, что жесткость грунта с ростом деформации уменьшается нелинейно, то есть модель предназначена для описания этого эффекта [1][3].  \n**Пояснение:** по приведённому тексту видно, что модель подходит для задач, где важно поведение грунта при малых деформациях, но источник не даёт здесь полного списка всех параметров обычной версии Hardening Soil без small strain stiffness [1][2][3].\n\nЕсли хочешь, я могу дальше кратко объяснить:\n- какие параметры обычно нужны в этой модели,\n- чем она отличается от Мора–Кулона,\n- или как её настраивают в MIDAS GTS NX.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "page": null,
+            "score": 0.6573964,
+            "snippet": "Hardening Soil(small strain stiffness) Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Hardening Soil(small strain stiffness) General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Hardening Soil (small strain stiffness) ( Модель грунта с упрочнением (при малых деформациях)) Модель грунта с упрочнением при малых деформациях реализована на основе модифицированной модели Мора-Кулона и модели наложения малых деформаций (Small strain overlay model), при этом она использует два дополнительных параметра:\nColumn 1=G 0 ref | Column 2=: начальный модуль сдвига или модуль сдвига при очень малых деформациях\n",
+            "chunk_id": "7d249eff-e478-4847-b00f-fc83b134544e",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_234",
+            "printed_page": null
+          },
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.7104022,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          },
+          {
+            "id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "page": 77,
+            "score": 0.63530755,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 206 : начальное напряжение предварительного уплотнения : объемная пластическая деформация Упрочнение грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель упрочнения грунта при малых деформациях реализуется с помощью модифицированной модели Мора-Кулона и модели наложения малых деформаций19, и для нее необходимы два дополнительных параметра, как показано ниже: : начальный модуль сдвига или модуль сдвига при очень малых деформациях : деформация сдвига, при которой модуль сдвига составляет около 70% от начального модуля сдвига при малых деформациях. Диапазон деформации, в котором грунты можно считать действительно у",
+            "chunk_id": "cfbbfb24-91b8-4e3b-948c-85353baec250",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_76",
+            "printed_page": 206
+          }
+        ],
+        "tokens": 313,
+        "latency_ms": 5557.48,
+        "created_at": "2026-10-14T16:23:56.409484Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5608.209600000009,
+      "expansion": {
+        "status": "failed",
+        "preview": {
+          "available": true,
+          "max_output_tokens": 1500
+        },
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "error": {
+          "type": "HTTPStatusError",
+          "http_status": 500
+        },
+        "wall_latency_ms": 30163.5725000001
+      }
+    }
+  ]
+}

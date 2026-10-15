@@ -1,0 +1,48 @@
+{
+  "probe_id": "5e6930abd9e44e29b36d256affbf4aaa",
+  "purpose": "Reported Hardening Soil request via real Telegram backend facade; no Telegram sends",
+  "results": [
+    {
+      "attempt": 1,
+      "after_clear": false,
+      "question": "расскажи про модель харденинг соил",
+      "response": "",
+      "ttft_ms": null,
+      "sources": [],
+      "answer_info": {},
+      "status": "failed",
+      "error": {
+        "type": "BackendStreamError"
+      },
+      "wall_latency_ms": 717.2522000000754
+    },
+    {
+      "attempt": 2,
+      "after_clear": false,
+      "question": "расскажи про модель харденинг соил",
+      "response": "",
+      "ttft_ms": null,
+      "sources": [],
+      "answer_info": {},
+      "status": "failed",
+      "error": {
+        "type": "BackendStreamError"
+      },
+      "wall_latency_ms": 540.0680000002467
+    },
+    {
+      "attempt": 3,
+      "after_clear": true,
+      "question": "расскажи про модель харденинг соил",
+      "response": "",
+      "ttft_ms": null,
+      "sources": [],
+      "answer_info": {},
+      "status": "failed",
+      "error": {
+        "type": "BackendStreamError"
+      },
+      "wall_latency_ms": 253.57179999991786
+    }
+  ]
+}

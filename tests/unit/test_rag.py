@@ -603,6 +603,32 @@ def test_rag_limits_context_to_five_and_removes_duplicates_without_file_cap(tmp_
     assert [source["snippet"] for source in result["sources"]].count("identical fragment") == 1
 
 
+@pytest.mark.parametrize("file_path", [
+    "C:\\00.MIDAS\\PROJECTS\\corpus\\document-0.txt",
+    "/00.MIDAS/PROJECTS/corpus/document-0.txt",
+])
+def test_rag_legacy_product_metadata_does_not_invent_product_from_parent_path(
+    tmp_path: Path, file_path: str
+) -> None:
+    node = NodeWithScore(
+        node=TextNode(
+            text="Mesh and degrees of freedom.",
+            metadata={"source": "document-0.txt", "file_path": file_path},
+        ),
+        score=0.9,
+    )
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True, product_scope="strict"),
+        llm=FakeLLM("Ответ [1]."),
+    )
+    service._retriever = SimpleNamespace(retrieve=lambda _question: [node])
+
+    result = service.answer("mesh")
+
+    assert len(result["sources"]) == 1
+    assert result["sources"][0]["file_name"] == "document-0.txt"
+
+
 def test_expanded_raw_pool_recovers_five_contexts_after_product_filter(tmp_path: Path) -> None:
     nodes = [
         *[
@@ -2406,6 +2432,8 @@ def test_rag_requires_explicit_permission_before_embedding_question(tmp_path: Pa
 
 
 def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> None:
+    tmp_path = tmp_path / "MIDAS" / "PROJECTS" / "corpus"
+    tmp_path.mkdir(parents=True)
     for index in range(30):
         (tmp_path / f"document-{index}.txt").write_text(
             f"GTS NX document {index}: mesh and degrees of freedom.",
@@ -2436,6 +2464,8 @@ def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> Non
 
 
 def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(tmp_path: Path) -> None:
+    tmp_path = tmp_path / "MIDAS" / "PROJECTS" / "corpus"
+    tmp_path.mkdir(parents=True)
     for index in range(30):
         (tmp_path / f"document-{index}.txt").write_text(
             f"GTS NX document {index}: mesh and degrees of freedom.",

@@ -107,6 +107,20 @@ async def test_truncated_or_repair_tool_calls_never_prepare_or_execute_delivery(
 
 
 @pytest.mark.asyncio
+async def test_responses_incomplete_tool_call_never_prepares_delivery():
+    truncated = _telegram_request()
+    truncated.response_metadata = {"status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"}}
+    sender = AsyncMock()
+    graph = build_agent(InMemorySaver(), model=_ScriptedModel([truncated]), send_message=sender)
+    config = _config("responses-truncated-delivery")
+    state = await graph.ainvoke({"messages": [HumanMessage(content="Отправь сообщение")]}, config)
+    assert state["answer_incomplete"] is True
+    assert state["messages"][-1].tool_calls == []
+    assert not state.get("telegram_draft")
+    sender.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_repair_respects_six_call_ceiling():
     model = _ScriptedModel([
         AIMessage(content="Проверю.", tool_calls=[{"name": "unknown", "args": {}, "id": f"step-{i}"}])

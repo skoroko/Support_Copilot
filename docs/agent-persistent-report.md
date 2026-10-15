@@ -1,46 +1,51 @@
-# Homework 6.4 - Persistent LangGraph agent
+# ДЗ 6.4 — LangGraph-агент с постоянным хранением состояния
 
-Current integration (2026-10-13): ordinary Telegram messages use this graph
-through the existing `/chats` facade, with production manual retrieval and
-owned exact-draft approval buttons. See [unified_agent.md](unified_agent.md).
-Historical Docker smoke transcripts below describe the homework snapshot;
-the persistent graph no longer imports the synthetic knowledge-base search.
+Текущая интеграция (2026-10-13): обычные сообщения Telegram используют этот
+граф через существующий интерфейс `/chats`, с поиском по рабочему корпусу
+мануалов и кнопками подтверждения точного черновика его владельцем. Подробности:
+[unified_agent.md](unified_agent.md). Исторические журналы проверок Docker ниже
+описывают состояние домашнего задания; граф с постоянным хранением состояния
+больше не импортирует поиск по синтетической базе знаний.
 
-## 1. Backend selection
+## 1. Выбор хранилища состояния
 
-`app/services/agent_persistent.py` keeps the Б6.3 graph untouched and adds a
-new `build_agent(checkpointer)` factory. `AGENT_CHECKPOINTER=sqlite` is the
-default for local development and stores state in `./var/agent_checkpoints.sqlite`
-(overridable with `AGENT_SQLITE_PATH`). `memory` is available for short-lived
-tests; `postgres` is the compose default and uses the existing Support Copilot
-Postgres database. A stable client `thread_id` is required by the HTTP contract
-and is never generated per request. The API hashes it together with the
-authenticated `X-User-ID`, so resume reaches the same lineage without exposing
-another caller's checkpoint namespace.
+`app/services/agent_persistent.py` сохраняет граф Б6.3 без изменений и добавляет
+фабрику `build_agent(checkpointer)`. Для локальной разработки по умолчанию
+используется `AGENT_CHECKPOINTER=sqlite`: состояние сохраняется в
+`./var/agent_checkpoints.sqlite`, путь можно изменить через `AGENT_SQLITE_PATH`.
+`memory` доступен для кратковременных тестов; `postgres` выбран по умолчанию
+в Compose и использует существующую базу Postgres Support Copilot. HTTP-контракт
+требует стабильный клиентский `thread_id`, который не создаётся заново для
+каждого запроса. API хеширует его вместе с аутентифицированным `X-User-ID`,
+поэтому продолжение обращается к той же цепочке выполнения без доступа
+к пространству контрольных точек другого клиента.
 
-For both persistent savers `await saver.setup()` is executed once inside the
-FastAPI lifespan. It is deliberately absent from the endpoint path.
+Для обоих постоянных хранилищ `await saver.setup()` выполняется один раз
+внутри жизненного цикла FastAPI. Обработчики запросов его намеренно не вызывают.
 
-## 2. Postgres in Docker Compose
+## 2. Postgres в Docker Compose
 
-The `app` service now sets `AGENT_CHECKPOINTER=postgres`, a psycopg-v3
-`AGENT_POSTGRES_URI` assembled from the same `POSTGRES_*` values as the
-existing `postgres` service, and `LANGGRAPH_STRICT_MSGPACK=true`. No second
-database or service is created. An explicit `AGENT_POSTGRES_URI` can override
-the assembled URI when credentials require URL encoding.
+Сервис `app` задаёт `AGENT_CHECKPOINTER=postgres`, URI для psycopg v3
+`AGENT_POSTGRES_URI`, собранный из тех же `POSTGRES_*`, что используются
+существующим сервисом `postgres`, и `LANGGRAPH_STRICT_MSGPACK=true`.
+Вторая база данных или отдельный сервис не создаются. Явно заданный
+`AGENT_POSTGRES_URI` может заменить собранный URI, если учётные данные требуют
+URL-кодирования.
 
-Alembic's `include_name` excludes exactly `checkpoints`, `checkpoint_writes`,
-`checkpoint_blobs`, and `checkpoint_migrations`; `AsyncPostgresSaver.setup()`
-owns those tables while Alembic keeps owning domain tables.
+Фильтр Alembic `include_name` исключает только `checkpoints`,
+`checkpoint_writes`, `checkpoint_blobs` и `checkpoint_migrations`.
+Этими таблицами управляет `AsyncPostgresSaver.setup()`, а прикладными таблицами
+по-прежнему управляет Alembic.
 
-The first Docker smoke run exposed a real packaging bug: `app.main` now imports
-the persistent agent, whose shared knowledge-base tool imports the
-`support_copilot` package, but the Dockerfile did not copy that package. The
-image failed before FastAPI startup with `ModuleNotFoundError`. Adding
-`COPY support_copilot ./support_copilot` plus a narrow `.dockerignore`
-allowlist for config/tools/prompts/data fixed the production import boundary
-without copying local result logs. The corrected service became healthy and
-the real shared Postgres database returned:
+Первая проверка Docker выявила ошибку упаковки: `app.main` импортирует агент
+с постоянным хранением состояния, общий инструмент базы знаний которого
+импортировал пакет `support_copilot`, но Dockerfile не копировал этот пакет.
+Образ завершал работу до запуска FastAPI с `ModuleNotFoundError`. Добавление
+`COPY support_copilot ./support_copilot` и узкого списка разрешений
+`.dockerignore` для настроек, инструментов, промптов и данных исправило состав
+импортируемых модулей рабочего образа без копирования локальных журналов
+результатов. Исправленный сервис прошёл проверку работоспособности, а общая
+база Postgres вернула:
 
 ```text
 table_name
@@ -52,54 +57,59 @@ checkpoints
 (4 rows)
 ```
 
-Commands actually used were `docker compose up -d --build app`, `docker
-compose ps app`, and a read-only `information_schema.tables` query through
-`docker compose exec -T postgres psql`.
+Фактически использовались `docker compose up -d --build app`, `docker
+compose ps app` и запрос только для чтения к `information_schema.tables`
+через `docker compose exec -T postgres psql`.
 
-## 3. Dangerous action and idempotency boundary
+## 3. Внешнее действие и граница идемпотентности
 
-The dangerous domain action is `send_telegram_message`: a delivery can notify
-the wrong support chat and is externally observable. The model may request the
-tool, but never calls its handler directly. The graph has two explicit nodes:
+Действие, требующее особого контроля, — `send_telegram_message`: отправка
+может уведомить неверный чат поддержки и имеет наблюдаемый внешний эффект.
+Модель может запросить инструмент, но никогда не вызывает его обработчик
+напрямую. В графе есть два явных узла:
 `prepare_telegram_message -> confirm_and_execute_telegram_message`.
 
-**Before `interrupt`:** argument validation and side-effect-free draft creation
-(`chat_id`, `text`, `tool_call_id`, `approval_id`, `idempotency_key`, `sent=False`)
-only. The random draft UUID is persisted with an immutable preview; its stable
-idempotency key includes the private thread, tool call ID and draft UUID, so
-two intentional deliveries do not collide if a model reuses a call ID. This
-`prepare` node has no API/network side effect. **After
-`interrupt`:** only an approved resume may invoke the injected `send_message`
-adapter and set `sent=True`. The production adapter passes the saved
-key to the authenticated bot `POST /notify` endpoint. The bot claims that key
-with Redis `SET NX` before Telegram delivery; Redis uses AOF with synchronous
-fsync in compose. Repeated HTTP resumes are rejected as stale; execution replay
-with the same saved key is deduplicated by the delivery guard. If Telegram
-fails before delivery completes, the
-claim is retained as `unknown`; an automatic retry is blocked until an
-operator reconciles the outcome. Unit tests inject doubles at both network
-boundaries, so no Telegram call occurs offline.
+**До `interrupt`:** только проверка аргументов и создание черновика без
+побочного эффекта (`chat_id`, `text`, `tool_call_id`, `approval_id`,
+`idempotency_key`, `sent=False`). Случайный UUID черновика сохраняется вместе
+с неизменяемым предпросмотром. Стабильный ключ идемпотентности включает
+приватный поток выполнения, ID вызова инструмента и UUID черновика, поэтому
+две намеренные отправки не конфликтуют, даже если модель повторно использует
+ID вызова. Узел `prepare` не выполняет внешних API- или сетевых действий.
+**После `interrupt`:** только подтверждённое продолжение может вызвать
+внедрённый адаптер `send_message` и установить `sent=True`. Рабочий адаптер
+передаёт сохранённый ключ аутентифицированному методу бота `POST /notify`.
+До отправки в Telegram бот резервирует ключ через Redis `SET NX`; в Compose
+Redis использует AOF с синхронным fsync. Повторные HTTP-запросы продолжения
+отклоняются как устаревшие; повтор исполнения с тем же сохранённым ключом
+подавляется защитой доставки от дубликатов. Если Telegram возвращает ошибку
+до завершения доставки, резервирование сохраняется со статусом `unknown`;
+автоматическая попытка блокируется до проверки исхода оператором. Unit-тесты
+внедряют заглушки на обеих сетевых границах, поэтому автономная проверка
+не вызывает Telegram.
 
-Every tool call in one assistant turn receives a matching `ToolMessage`.
-Mixed safe/dangerous batches execute or reject the safe calls before approval,
-while the selected dangerous call is paired only after approve/reject. At the
-six-turn ceiling, all still-pending calls receive explicit rejection results
-before the escalation message, keeping the persisted provider history valid.
+Каждому вызову инструмента в одном ходе ассистента соответствует
+`ToolMessage`. В смешанной группе безопасных и требующих подтверждения вызовов
+безопасные вызовы выполняются или отклоняются до подтверждения, а выбранный
+внешний вызов получает результат только после подтверждения или отказа.
+При достижении потолка в шесть ходов все ещё ожидающие вызовы получают явный
+отказ до сообщения об эскалации; сохранённая история провайдера остаётся
+корректной.
 
-The ReAct safety ceiling from Б6.3 is preserved: after six model turns the
-graph emits an explicit escalation answer instead of continuing indefinitely.
+Ограничение ReAct из Б6.3 сохранено: после шести ходов модели граф выдаёт
+явное сообщение об эскалации, а не продолжает работу бесконечно.
 
-The local Python 3.10 runtime exposed a real integration issue: LangGraph
-1.2 dispatches a synchronous node through an executor without propagating the
-interrupt contextvar. The module re-installs the supplied node configuration
-only for that compatibility failure, while still using the public
-`interrupt()` and `Command(resume=...)` APIs. Raising the project runtime to
-Python 3.11+ removes this compatibility path.
+Локальное окружение Python 3.10 выявило проблему интеграции: LangGraph 1.2
+передаёт синхронный узел исполнителю, не перенося контекстную переменную
+приостановки. Только при этой ошибке совместимости модуль повторно
+устанавливает переданную конфигурацию узла, продолжая использовать публичные
+API `interrupt()` и `Command(resume=...)`. Переход среды проекта на Python
+3.11+ устраняет необходимость в этом пути совместимости.
 
-## 4. Offline interrupt and approval log
+## 4. Автономный журнал приостановки и подтверждения
 
-Actual output from `PYTHONUTF8=1 .venv-eval\Scripts\python.exe -B
-scripts\time_travel_demo.py` (checkpoint ids are generated per run):
+Фактический вывод `PYTHONUTF8=1 .venv-eval\Scripts\python.exe -B
+scripts\time_travel_demo.py` (ID контрольных точек создаются заново при каждом запуске):
 
 ```text
 INTERRUPT [{"value": {"type": "approve_send_telegram_message", "preview": {"chat_id": "4242", "text": "Инцидент передан инженеру.", "tool_call_id": "demo-telegram-call", "idempotency_key": "<sha256>"}, "user_role": "write-with-approve"}}]
@@ -113,44 +123,49 @@ REJECT {"sent": false, "delivery_count": 0}
 APPROVE {"sent": true, "delivery_count": 1}
 ```
 
-The first state visibly pauses at the approval node. A `False` resume cannot
-call the adapter; a `True` resume calls it once.
+Первое состояние явно приостанавливается на узле подтверждения. Продолжение
+со значением `False` не вызывает адаптер; значение `True` вызывает его один раз.
 
-## 5. Time travel and branching
+## 5. Просмотр прошлых состояний и ветвление
 
-`scripts/time_travel_demo.py` uses `AsyncSqliteSaver.from_conn_string(":memory:")`
-and no provider/network client. It prints 3-5 `aget_state_history` rows, then
-reads the old checkpoint by `thread_id + checkpoint_id`. That snapshot contains
-the prepared draft, `sent=false`, and `next=confirm_and_execute_telegram_message`.
+`scripts/time_travel_demo.py` использует
+`AsyncSqliteSaver.from_conn_string(":memory:")` без провайдера или сетевого
+клиента. Скрипт выводит 3–5 строк `aget_state_history`, затем читает старую
+контрольную точку по `thread_id + checkpoint_id`. Снимок содержит
+подготовленный черновик, `sent=false` и
+`next=confirm_and_execute_telegram_message`.
 
-The rejection and approval alternatives intentionally use different stable
-thread ids (`demo-reject` and `demo-approve`) with identical input. A second
-`Command(resume=...)` for one interrupt lineage is not a different decision:
-the first resume is checkpointed, so replaying it with another value would be
-misleading.
+Варианты отказа и подтверждения намеренно используют разные стабильные ID
+потоков (`demo-reject` и `demo-approve`) с одинаковым входом. Второй
+`Command(resume=...)` для одной цепочки приостановки не является другим
+решением: первое продолжение сохраняется в контрольной точке, поэтому его
+повтор с другим значением создавал бы неверное представление о поведении.
 
-## 6. Streaming
+## 6. Потоковая передача
 
-`POST /agent/stream` accepts exactly one of bounded user-only `input` or
-`resume`, plus stable `thread_id` and a `user_role`. It requires
-`X-Internal-Token` and `X-User-ID`; `full` additionally requires
-`X-Admin-Token`. It invokes `graph.astream(..., stream_mode=["updates",
-"messages"])` and serializes each value as `data: {json}\n\n` with
-`text/event-stream`. `updates` makes node progress and `__interrupt__` visible;
-`messages` leaves room for model token events. `astream_events(v2)` was not
-used because its event tree is broader and more expensive for this minimum SSE
-endpoint. Provider/graph failures finish with a safe `agent_stream_failed` SSE
-event without exception text.
+`POST /agent/stream` принимает ровно один вариант: ограниченный по объёму
+`input` только с пользовательскими сообщениями либо `resume`, а также
+стабильный `thread_id` и `user_role`. Требуются `X-Internal-Token` и
+`X-User-ID`; для `full` дополнительно нужен `X-Admin-Token`. Метод вызывает
+`graph.astream(..., stream_mode=["updates",
+"messages"])` и сериализует каждое значение как `data: {json}\n\n` с типом
+`text/event-stream`. `updates` показывает ход выполнения узлов и
+`__interrupt__`; `messages` позволяет передавать события токенов модели.
+`astream_events(v2)` не используется: его дерево событий шире и требует
+больше ресурсов, чем нужно этому минимальному SSE-методу. Ошибки провайдера
+или графа завершают поток безопасным SSE-событием `agent_stream_failed`
+без текста исключения.
 
-Resume now also requires the exact 32-character `approval_id` returned in
-the preview. Under its private thread lock the endpoint rejects stale IDs,
-repeated resumes and new input while an approval is pending. Telegram uses
-the higher-level `/chats/{id}/approvals/{approval_id}` endpoint, which preserves
-chat ownership, moderation, history and feedback. Legacy raw previews without
-an approval ID belong to the earlier homework contract; start a fresh raw
-thread instead of approving an unidentified action.
+Для продолжения теперь также требуется точный 32-символьный `approval_id`
+из предпросмотра. Под блокировкой приватного потока метод отклоняет устаревшие
+ID, повторные продолжения и новый ввод, пока ожидается подтверждение.
+Telegram использует метод более высокого уровня
+`/chats/{id}/approvals/{approval_id}`, сохраняющий проверку владельца чата,
+модерацию, историю и обратную связь. Старые предпросмотры прямого API без ID
+подтверждения относятся к прежнему контракту домашнего задания; вместо
+подтверждения неопознанного действия нужно начать новый поток прямого API.
 
-The offline endpoint test emitted the following SSE shape using a fake graph:
+Автономный тест метода с графом-заглушкой выдал SSE следующего вида:
 
 ```text
 data: {"type":"updates","payload":{"call_model":{"messages":["model started"]}}}
@@ -162,37 +177,39 @@ data: {"type":"updates","payload":{"__interrupt__":[{"value":{"type":"approve_se
 data: {"type":"done"}
 ```
 
-The authenticated live smoke test used a unique thread, `read-only`, and an
-instruction not to call tools. OpenAI returned the Russian sentence
-`Инженер технической поддержки помогает пользователям решать технические
+Аутентифицированная проверка с реальным провайдером использовала уникальный
+поток, роль `read-only` и инструкцию не вызывать инструменты. OpenAI вернул
+русское предложение `Инженер технической поддержки помогает пользователям решать технические
 проблемы, настраивает и диагностирует сервисы и при необходимости эскалирует
-сложные случаи.` through `messages -> updates -> done`. HTTP status was 200;
-there were no tool calls and no Telegram delivery.
+сложные случаи.` через `messages -> updates -> done`. HTTP-статус — 200;
+вызовов инструментов и отправки в Telegram не было.
 
-For a running local API, equivalent calls must include the authenticated
-service headers (values intentionally omitted here):
+Для работающего локального API аналогичные вызовы должны содержать
+аутентификационные служебные заголовки (значения намеренно не приведены):
 
 ```powershell
 curl.exe -N -X POST http://localhost:8000/agent/stream -H "Content-Type: application/json" -H "X-Internal-Token: <configured>" -H "X-User-ID: alice" -d '{"thread_id":"midas-alice-license","input":{"messages":[{"role":"user","content":"Передай инженеру проверку лицензии"}]}}'
 curl.exe -N -X POST http://localhost:8000/agent/stream -H "Content-Type: application/json" -H "X-Internal-Token: <configured>" -H "X-User-ID: alice" -d '{"thread_id":"midas-alice-license","resume":true,"approval_id":"<exact 32-character ID from preview>"}'
 ```
 
-## 7. Permission policy
+## 7. Политика доступа
 
-`read-only` cannot send, `write-with-approve` always pauses for an explicit
-approval, and `full` is available only when both internal and administrative
-credentials are valid. The endpoint defaults to `write-with-approve`.
-Authenticated caller identity is part of the private checkpoint namespace, so
-one caller cannot resume another caller's pending action by reusing its public
-thread id. System/tool/assistant roles are rejected at the HTTP boundary.
+`read-only` не разрешает отправку; `write-with-approve` всегда приостанавливает
+выполнение для явного подтверждения; `full` доступна только при действительных
+служебных и административных учётных данных. По умолчанию метод использует
+`write-with-approve`. Идентификатор аутентифицированного клиента входит
+в приватное пространство контрольных точек, поэтому клиент не может продолжить
+ожидающее действие другого клиента, повторно использовав его публичный ID
+потока. Сообщения с ролями system/tool/assistant отклоняются на HTTP-границе.
 
-## 8. Remaining fragile points
+## 8. Оставшиеся ограничения
 
-The delivery path now has at-most-once Redis-backed deduplication, but it still
-needs a durable business delivery receipt/outbox if guaranteed delivery is
-required: a crash after claiming a key but before Telegram accepts the message
-prefers a missed delivery over a duplicate. Production should also define
-checkpoint retention/encryption, per-identity rate and concurrency limits,
-redacted audit logging, and a repeatable Postgres integration test. The Python
-3.10 interrupt compatibility shim should be removed after a verified Python
-3.11+ upgrade.
+Доставка защищена дедупликацией на Redis по принципу «не более одного раза».
+Для гарантированной доставки по-прежнему потребуется постоянное прикладное
+подтверждение доставки или очередь исходящих событий: при сбое после
+резервирования ключа, но до приёма сообщения Telegram система предпочитает
+пропуск доставки дубликату. Для промышленной эксплуатации также нужно
+определить сроки хранения и шифрование контрольных точек, ограничения частоты
+и параллелизма по пользователю, журнал аудита с удалением чувствительных данных
+и воспроизводимый интеграционный тест Postgres. Слой совместимости приостановки
+для Python 3.10 следует удалить после проверенного перехода на Python 3.11+.

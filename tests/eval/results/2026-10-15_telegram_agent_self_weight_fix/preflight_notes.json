@@ -1,0 +1,5 @@
+{
+  "cold_probe": "golden-24 returned knowledge unavailable after two retrieval TimeoutErrors. Later queries completed. First golden-31 lacked an explicit definition; preflight not accepted.",
+  "warm_probe": "Both 24 brief+expanded contain self weight; 31 explicit elasticity definition and supported model classes. Both completed. Full evaluation starts after these probes.",
+  "scope": "Preflight only, not part of the 43+5 final score; cold-start reliability not claimed fixed."
+}

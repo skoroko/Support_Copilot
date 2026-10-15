@@ -6,7 +6,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +58,16 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("LLM_REQUEST_TIMEOUT", "ASYNC_LLM_SDK_TIMEOUT_SEC", "LLM__REQUEST_TIMEOUT"),
     )
     openai_base_url: str | None = Field(default=None, validation_alias=AliasChoices("OPENAI_BASE_URL"))
+    agent_llm_api: Literal["auto", "chat_completions", "responses"] = Field(
+        default="auto", validation_alias=AliasChoices("AGENT_LLM_API"))
+    agent_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = Field(
+        default=None, validation_alias=AliasChoices("AGENT_REASONING_EFFORT"))
+    agent_expanded_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = Field(
+        default=None, validation_alias=AliasChoices("AGENT_EXPANDED_REASONING_EFFORT"))
+    agent_reasoning_token_reserve: int = Field(
+        default=8192, ge=0, le=65536, validation_alias=AliasChoices("AGENT_REASONING_TOKEN_RESERVE"))
+    agent_generation_timeout: float = Field(
+        default=120.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         validation_alias=AliasChoices("APP_REDIS_URL", "REDIS_URL"),
@@ -160,6 +178,10 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
+    rag_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
+        default="low", validation_alias=AliasChoices("RAG_REASONING_EFFORT"))
+    rag_condense_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
+        default="none", validation_alias=AliasChoices("RAG_CONDENSE_REASONING_EFFORT"))
     # Answer generation gets a dedicated budget: retrieval (embedding + Qdrant)
     # stays on the shared request_timeout, while a grounded completion over
     # several fragments legitimately needs longer.
@@ -253,7 +275,7 @@ class _SettingsFields(BaseModel):
     rag_rebuild_on_start: bool = Field(default=False, validation_alias=AliasChoices("RAG_REBUILD_ON_START"))
 
     @model_validator(mode="after")
-    def validate_rag_chunking(self) -> "_SettingsFields":
+    def validate_rag_chunking(self) -> _SettingsFields:
         if self.rag_chunk_overlap >= self.rag_chunk_size:
             raise ValueError("RAG_CHUNK_OVERLAP must be smaller than RAG_CHUNK_SIZE")
         if self.rag_collection == self.rag_baremetal_collection:
@@ -261,7 +283,7 @@ class _SettingsFields(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_privileged_tokens(self) -> "_SettingsFields":
+    def validate_privileged_tokens(self) -> _SettingsFields:
         values = {
             "INTERNAL_TOKEN": self.internal_token.get_secret_value().strip(),
             "ADMIN_TOKEN": self.admin_token.get_secret_value().strip(),
@@ -331,6 +353,11 @@ class _SettingsFields(BaseModel):
             raise ValueError("OPENAI_API_KEY is required for app.main:app startup")
         return value
 
+    @field_validator("agent_reasoning_effort", "agent_expanded_reasoning_effort", mode="before")
+    @classmethod
+    def inherit_blank_reasoning(cls, value: Any) -> Any:
+        return None if isinstance(value, str) and not value.strip() else value
+
     @property
     def llm(self) -> LLMSettings:
         return LLMSettings(
@@ -393,6 +420,11 @@ def get_settings() -> Settings:
         default_model=os.getenv("APP_DEFAULT_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-5.4-mini",
         request_timeout=float(os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("ASYNC_LLM_SDK_TIMEOUT_SEC") or 30.0),
         openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
+        agent_llm_api=os.getenv("AGENT_LLM_API") or "auto",
+        agent_reasoning_effort=os.getenv("AGENT_REASONING_EFFORT") or None,
+        agent_expanded_reasoning_effort=os.getenv("AGENT_EXPANDED_REASONING_EFFORT") or None,
+        agent_reasoning_token_reserve=int(os.getenv("AGENT_REASONING_TOKEN_RESERVE") or 8192),
+        agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 120),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
@@ -450,6 +482,8 @@ def get_settings() -> Settings:
             os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json"
         ),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
+        rag_reasoning_effort=os.getenv("RAG_REASONING_EFFORT") or "low",
+        rag_condense_reasoning_effort=os.getenv("RAG_CONDENSE_REASONING_EFFORT") or "none",
         rag_generation_timeout=float(os.getenv("RAG_GENERATION_TIMEOUT") or 120.0),
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),

@@ -1,0 +1,90 @@
+{
+  "run_id": "56b4dcb869774f92b3d85dbc99d54916",
+  "status": "local_checks_passed_provider_generation_unavailable",
+  "pytest": {
+    "command": ".venv/Scripts/python -X utf8 -m pytest tests -q --tb=short --basetemp var/pytest-semantic-release",
+    "passed": 823,
+    "skipped": 11,
+    "warnings": 135,
+    "duration_s": 141.45
+  },
+  "focused_after_projection": {
+    "passed": 217,
+    "duration_s": 10.7
+  },
+  "whitespace": "git diff --check passed",
+  "lint": {
+    "selected_changed_files": "passed",
+    "whole_rag_routes": "advisory existing style findings; project configured quality group is empty"
+  },
+  "runtime_before_after_identical": [
+    "config",
+    "docstore",
+    "source_files_sha256_lf",
+    "corpus_files_sha256",
+    "qdrant"
+  ],
+  "local_code_matches_image": true,
+  "python_files": 104,
+  "current_corpus_files_before_after": 70,
+  "baseline_unchanged_artifacts": 12,
+  "original_baseline_unchanged_artifacts": 8,
+  "baseline_same": [
+    "dataset_sha256",
+    "config",
+    "docstore"
+  ],
+  "baseline_corpus_hash_comparison": "baseline does not record all corpus file hashes; frozen docstore matches. Current 70 files unchanged before/after.",
+  "runtime_files_changed_from_baseline": [
+    "app/chat/routes.py",
+    "app/services/agent_persistent.py",
+    "app/services/chm_reader.py",
+    "app/services/evidence_text.py",
+    "app/services/ingestion.py",
+    "app/services/rag.py"
+  ],
+  "preexisting_change_note": "ingestion.py was already modified by user; full Docker build includes it, but frozen index was not rebuilt.",
+  "docker": {
+    "app": {
+      "image": "sha256:4f443529d0835a950689e76faa29fd99952461c45f5b1ecae10dbc2bf6e0bdcb",
+      "status": "running",
+      "health": "healthy"
+    },
+    "bot": {
+      "image": "sha256:4f443529d0835a950689e76faa29fd99952461c45f5b1ecae10dbc2bf6e0bdcb",
+      "status": "running",
+      "health": "not_configured"
+    }
+  },
+  "telegram_smoke": {
+    "completed": 0,
+    "failed": 3,
+    "after_clear": true,
+    "real_telegram_delivery_tested": false
+  },
+  "collection": {
+    "completed": 36,
+    "failed": 7,
+    "expanded_completed": 5
+  },
+  "provider_status": {
+    "probe": "minimal_generation_availability",
+    "model": "gpt-5.4-mini",
+    "status": "rejected",
+    "error_type": "RateLimitError",
+    "http_status": 429,
+    "quota_or_billing_indicator": true,
+    "short_rate_window_indicator": false,
+    "retry_headers": {}
+  },
+  "checkpoints": {
+    "exported": 40,
+    "missing": 0
+  },
+  "pdf": {
+    "citations": 61,
+    "unique_chunks": 42,
+    "needs_review": 0
+  },
+  "timing_limit": "One network run; initial requests overlapped local offline pytest. Not an isolated performance benchmark."
+}

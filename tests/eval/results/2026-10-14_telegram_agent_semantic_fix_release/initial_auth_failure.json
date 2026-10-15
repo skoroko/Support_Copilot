@@ -1,0 +1,94 @@
+{
+  "probe": "hardening-soil-reported-telegram-failure",
+  "status": "failed",
+  "error_type": "OpenAIAuthenticationError",
+  "frames": [
+    {
+      "file": "/tmp/diagnose_telegram_failure.py",
+      "line": 16,
+      "function": "main"
+    },
+    {
+      "file": "/app/app/chat/agent.py",
+      "line": 103,
+      "function": "turn"
+    },
+    {
+      "file": "/app/app/chat/agent.py",
+      "line": 51,
+      "function": "_invoke"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/pregel/main.py",
+      "line": 4090,
+      "function": "ainvoke"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/pregel/main.py",
+      "line": 3440,
+      "function": "astream"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/pregel/_runner.py",
+      "line": 396,
+      "function": "atick"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/pregel/_retry.py",
+      "line": 744,
+      "function": "arun_with_retry"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/_internal/_runnable.py",
+      "line": 756,
+      "function": "ainvoke"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langgraph/_internal/_runnable.py",
+      "line": 522,
+      "function": "ainvoke"
+    },
+    {
+      "file": "/app/app/services/agent_persistent.py",
+      "line": 501,
+      "function": "call_model"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_core/runnables/base.py",
+      "line": 6027,
+      "function": "ainvoke"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py",
+      "line": 511,
+      "function": "ainvoke"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py",
+      "line": 1888,
+      "function": "agenerate_prompt"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py",
+      "line": 1846,
+      "function": "agenerate"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py",
+      "line": 2179,
+      "function": "_agenerate_with_cache"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_openai/chat_models/base.py",
+      "line": 2210,
+      "function": "_agenerate"
+    },
+    {
+      "file": "/app/.venv/lib/python3.13/site-packages/langchain_openai/chat_models/base.py",
+      "line": 656,
+      "function": "_handle_openai_api_error"
+    }
+  ],
+  "status_code": 401,
+  "cause_type": "AuthenticationError"
+}

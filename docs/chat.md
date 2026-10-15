@@ -1,21 +1,21 @@
-# Stateful Chat Backend
+# Бэкенд чата с сохранением состояния
 
-Homework 4.1 adds server-side chat history for Support Copilot. The stable API
-contract is `/chats/{chat_id}/messages`: clients send only a chat id and a new
-message, while the backend loads history, builds context, streams the LLM answer,
-and persists both user and assistant messages.
+Домашнее задание 4.1 добавляет серверную историю диалогов Support Copilot.
+Стабильный контракт API — `/chats/{chat_id}/messages`: клиент передаёт только
+ID чата и новое сообщение, а бэкенд загружает историю, формирует контекст,
+передаёт ответ LLM потоком и сохраняет сообщения пользователя и ассистента.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart LR
-    Client[Web / CLI / Telegram client]
+    Client[Веб / CLI / Telegram-клиент]
     Routes[app/chat/routes.py]
     Service[ChatService]
     Repo[ChatRepository]
-    Json[(JSONL files)]
+    Json[(JSONL-файлы)]
     Pg[(Postgres)]
-    LLM[AsyncOpenAI-compatible client]
+    LLM[Клиент, совместимый с AsyncOpenAI]
 
     Client --> Routes
     Routes --> Service
@@ -25,31 +25,35 @@ flowchart LR
     Service --> LLM
 ```
 
-`routes.py` contains only HTTP contracts and SSE formatting. `ChatService`
-owns domain flow: append the user message, load history, build context, apply a
-token budget, stream the LLM response, and append the final assistant message.
-`ChatRepository` is a `typing.Protocol`, so tests and future clients can provide
-fake repositories without inheritance.
+`routes.py` содержит только HTTP-контракты и форматирование SSE. `ChatService`
+управляет прикладным сценарием: добавляет сообщение пользователя, загружает
+историю, формирует контекст, применяет бюджет токенов, передаёт ответ LLM
+потоком и добавляет итоговое сообщение ассистента. `ChatRepository` задан как
+`typing.Protocol`, поэтому тесты и будущие клиенты могут предоставлять
+репозитории-заглушки без наследования.
 
-`POST /chats/{chat_id}/messages` reuses the project input security validator
-before calling the LLM, so the new stateful endpoint does not bypass the M3
-prompt-injection and encoded-payload guards. It checks service authentication
-before parsing multipart input. It accepts at most four media files and a total raw request body of
-`2 * CHAT_MEDIA_MAX_BYTES + 1 MiB`; the limit counts multipart framing and
-is enforced on streamed requests without `Content-Length` too. Document
-uploads require admin authentication before parsing, one file at most, and a
-51 MiB total raw request body limit (50 MiB document plus framing).
+Перед вызовом LLM `POST /chats/{chat_id}/messages` использует существующий
+валидатор безопасности входных данных. Поэтому новый метод чата с состоянием
+не обходит защиту модуля 3 от внедрения инструкций и закодированных вредоносных
+данных. Служебная аутентификация проверяется до разбора multipart-запроса.
+Разрешено не более четырёх медиафайлов; общий размер исходного тела запроса
+ограничен `2 * CHAT_MEDIA_MAX_BYTES + 1 MiB`, включая служебные границы
+multipart. Ограничение действует и для потоковых запросов без `Content-Length`.
+Загрузка документов требует административной аутентификации до разбора,
+допускает не более одного файла и ограничивает исходное тело запроса 51 MiB
+(50 MiB на документ и место для служебных границ).
 
-## Context Strategy
+## Стратегия контекста
 
-The project uses `CHAT_CONTEXT_STRATEGY=sliding` for the first stable backend
-increment. Support Copilot is currently an internal support assistant, and the
-near-term workflows are FAQ, issue triage, and escalation drafts where the last
-few turns are usually enough. Sliding window is predictable, cheap, easy to
-test, and keeps the M4 API stable before RAG and long-dialog summarization are
-added in later modules.
+Для первого стабильного инкремента бэкенда выбран
+`CHAT_CONTEXT_STRATEGY=sliding`. Support Copilot — внутренний помощник
+поддержки; ближайшие сценарии включают FAQ, первичную обработку обращений
+и черновики эскалаций, для которых обычно хватает нескольких последних ходов
+диалога. Скользящее окно предсказуемо, экономно и удобно для тестирования.
+Оно сохраняет стабильный API модуля 4 до добавления RAG и суммаризации длинных
+диалогов в следующих модулях.
 
-Configuration:
+Настройки:
 
 ```env
 CHAT_CONTEXT_STRATEGY=sliding
@@ -60,50 +64,51 @@ CHAT_EXPANDED_RESPONSE_TOKENS=1500
 CHAT_SAFETY_MARGIN_TOKENS=500
 ```
 
-Token counting uses `tiktoken.get_encoding("o200k_base")`, with ChatML overhead
-`+4` per message and `+2` total. `fit_to_budget()` trims oldest non-system
-messages first and preserves the system prompt.
+Токены считаются через `tiktoken.get_encoding("o200k_base")` с накладными
+расходами ChatML: `+4` на сообщение и `+2` на весь набор. `fit_to_budget()`
+сначала удаляет самые старые несистемные сообщения, сохраняя системный промпт.
 
-## Storage
+## Хранение данных
 
-Default local storage:
+Локальное хранилище по умолчанию:
 
 ```env
 CHAT_REPOSITORY=json
 CHAT_STORAGE_DIR=./var/chats
 ```
 
-JSON layout:
+Структура JSON-хранилища:
 
 ```text
 var/chats/chats/<chat_id>/chat.json
 var/chats/chats/<chat_id>/messages.jsonl
 ```
 
-Postgres storage:
+Хранение в Postgres:
 
 ```env
 CHAT_REPOSITORY=postgres
 CHAT_DATABASE_URL=postgresql+asyncpg://support:support@localhost:5432/support_copilot
 ```
 
-Run migrations before starting in Postgres mode:
+Перед запуском в режиме Postgres выполните миграции:
 
 ```powershell
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-`DELETE /chats/{chat_id}/messages` is a soft delete. JSONL appends a
-`{"type":"soft_delete"}` marker; Postgres sets `deleted_at` on existing message
-rows.
+`DELETE /chats/{chat_id}/messages` выполняет мягкое удаление. В JSONL
+добавляется маркер `{"type":"soft_delete"}`; в Postgres у существующих строк
+сообщений устанавливается `deleted_at`.
 
-## Endpoints
+## Методы API
 
-Every stateful chat request requires the service token and an authenticated
-principal. Set the app's `INTERNAL_TOKEN` in your local PowerShell session;
-keep its value out of documentation and shell history. Replace the example user
-id and interface with the authenticated caller's values.
+Каждый запрос к чату с состоянием требует служебного токена и
+аутентифицированной учётной записи. Задайте `INTERNAL_TOKEN` приложения
+в локальном сеансе PowerShell; его значение не должно попадать в документацию
+или историю команд. Замените пример ID пользователя и интерфейса значениями
+аутентифицированного вызывающего клиента.
 
 ```powershell
 $chatHeaders = @(
@@ -113,88 +118,97 @@ $chatHeaders = @(
 )
 ```
 
-Create a chat. The owner and interface are taken from the authenticated headers;
-the endpoint does not accept a JSON body:
+Создайте чат. Владелец и интерфейс берутся из аутентифицированных заголовков;
+метод не принимает тело JSON:
 
 ```powershell
 curl.exe @chatHeaders -X POST http://localhost:8000/chats
 ```
 
-Copy the returned `chat_id` into `$chatId`:
+Скопируйте полученный `chat_id` в `$chatId`:
 
 ```powershell
 $chatId = "<chat-id-from-create-response>"
 ```
 
-Get chat metadata:
+Получите метаданные чата:
 
 ```powershell
 curl.exe @chatHeaders "http://localhost:8000/chats/$chatId"
 ```
 
-Send a text message as multipart form data and receive SSE chunks:
+Отправьте текстовое сообщение как multipart-форму и получите поток SSE:
 
 ```powershell
 curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
-  -F "content=Please help diagnose this issue"
+  -F "content=Помоги разобраться с этой проблемой"
 ```
 
-Attach media using the `media` form field. Repeat that field for each file (up
-to four files per request); the message text remains the `content` field:
+Прикрепляйте медиа через поле формы `media`. Повторите его для каждого файла
+(до четырёх файлов на запрос); текст сообщения остаётся в поле `content`:
 
 ```powershell
 curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
-  -F "content=What does this screenshot show?" `
+  -F "content=Что показано на этом скриншоте?" `
   -F "media=@C:\path\to\image.png;type=image/png"
 ```
 
-Ask a follow-up. The backend includes recent history:
+Задайте уточняющий вопрос. Бэкенд добавит недавнюю историю:
 
 ```powershell
 curl.exe -N @chatHeaders -X POST "http://localhost:8000/chats/$chatId/messages" `
-  -F "content=Can you explain the next step?"
+  -F "content=Поясни следующий шаг"
 ```
 
-List messages in chronological order:
+Получите сообщения в хронологическом порядке:
 
 ```powershell
 curl.exe @chatHeaders "http://localhost:8000/chats/$chatId/messages?limit=50"
 ```
 
-Clear chat history:
+Очистите историю чата:
 
 ```powershell
 curl.exe @chatHeaders -X DELETE "http://localhost:8000/chats/$chatId/messages"
 ```
 
 
-## Brief answers and confirmed expansion
+## Краткие ответы и расширение по подтверждению
 
-Telegram answers use a 500 output-token ceiling by default. The graph requests
-3–5 key points with complete sentences. Length stops, empty output and defective
-mixed-script prose are handled by deterministic compaction, without an automatic
-repair generation. Code, technical literals and valid citations remain intact.
-A compacted explanation carries a persisted notice distinguishing the length
-ceiling from defective text. It offers expansion only when eligible; an expanded
-answer instead suggests a separate question about the desired point. It never
-describes an output limit as missing information in the user's question.
+Ответы Telegram по умолчанию ограничены 500 выходными токенами. Граф запрашивает
+3–5 ключевых пунктов с законченными предложениями. Остановка по длине, пустой
+ответ и дефектный текст со смешением алфавитов обрабатываются детерминированным
+сокращением без автоматической генерации для исправления. Код, технические
+литералы и корректные цитаты сохраняются. Вместе с сокращённым пояснением
+сохраняется уведомление, различающее ограничение длины и дефект текста.
+Расширение предлагается только при соблюдении условий доступности; после
+подробного ответа вместо этого предлагается задать отдельный вопрос о нужном
+пункте. Ограничение длины ответа никогда не объясняется нехваткой сведений
+в вопросе пользователя.
 
-Assistant `media_refs.answer` stores `mode`, `incomplete`, `expandable`; SSE
-`type=message` includes the same `answer_info` with the exact persisted UUID.
-`GET /chats/{chat}/messages/{message}/expansion` checks owner, current response,
-evidence, pending approval and one-use claim, returning availability and the
-configured expanded ceiling without a model call. `POST .../expand` requires
-`{"confirmed": true}` (strict boolean; extra fields rejected). It returns the
-canonical answer, sources, result message UUID and answer metadata.
+В `media_refs.answer` сообщения ассистента хранятся `mode`, `incomplete`,
+`expandable`; SSE-событие `type=message` содержит те же данные `answer_info`
+с точным сохранённым UUID. `GET /chats/{chat}/messages/{message}/expansion`
+проверяет владельца, актуальность ответа, доказательства, ожидающее
+подтверждение и одноразовое резервирование операции. Без вызова модели он
+возвращает доступность и настроенный потолок подробного ответа.
+`POST .../expand` требует `{"confirmed": true}` — строгое логическое значение;
+дополнительные поля отклоняются. Метод возвращает итоговый ответ, источники,
+UUID сообщения с результатом и метаданные ответа.
 
-Only an eligible latest brief response can expand. The confirmed call uses a
-1,500 output-token ceiling and existing evidence, with tools disabled. It follows
-the original moderation and append-turn path, recording consent and the detailed
-response. A durable graph claim is written before generation, under the shared
-chat lock; repeated confirmation returns the saved result or 409 without another
-model call. Clear deletes history and checkpoint and invalidates these buttons.
-This relies on the documented single API worker; graph and chat persistence are
-separate transactions. A failed/unknown generation remains claimed, so a user
-must ask a new question rather than silently retrying a potentially billed call.
-Token caps are ceilings, not estimates of total input/output cost. This policy
-is independent of coding-agent model routing and does not change model IDs/prices.
+Расширить можно только последний краткий ответ, соответствующий условиям.
+Подтверждённый вызов использует потолок 1500 выходных токенов и существующие
+доказательства; инструменты отключены. Он проходит прежние этапы модерации
+и добавления хода диалога, сохраняя согласие и подробный ответ. До генерации
+под общей блокировкой чата в граф записывается постоянное резервирование
+операции; повторное подтверждение возвращает сохранённый результат или 409
+без нового вызова модели. Очистка удаляет историю и контрольную точку,
+делая эти кнопки недействительными.
+
+Механизм рассчитан на документированное ограничение в один рабочий процесс
+API; сохранение графа и чата выполняется отдельными транзакциями. Неуспешная
+генерация или генерация с неизвестным исходом остаётся зарезервированной:
+пользователю нужно задать новый вопрос, чтобы не повторять незаметно запрос,
+который мог быть оплачен. Ограничения токенов задают потолки, а не оценку общей
+стоимости входа и выхода. Эта политика не зависит от маршрутизации моделей
+агентов разработки и не меняет ID моделей или цены.

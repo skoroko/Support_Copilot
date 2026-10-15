@@ -82,6 +82,24 @@ def build_settings() -> Settings:
 
 
 class LLMServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_luna_tool_free_complete_and_stream_keep_visible_budget(self) -> None:
+        openai = FakeOpenAI()
+        config = build_settings().model_copy(update={"default_model": "gpt-6-luna"})
+        service = LLMService(openai, FakeCache(), config)
+        req = ChatRequest(messages=[{"role": "user", "content": "Вопрос"}])
+        await service.complete(req)
+        self.assertEqual(openai.completions.last_kwargs["reasoning_effort"], "none")
+        self.assertEqual(openai.completions.last_kwargs["max_completion_tokens"], 500)
+        self.assertIs(openai.completions.last_kwargs["store"], False)
+        _ = [delta async for delta in service.stream(req)]
+        self.assertEqual(openai.completions.last_kwargs["reasoning_effort"], "none")
+
+    def test_cache_cannot_reuse_an_answer_from_previous_default_model(self) -> None:
+        req = ChatRequest(messages=[{"role": "user", "content": "Вопрос"}])
+        mini = LLMService(FakeOpenAI(), FakeCache(), build_settings())
+        luna = LLMService(FakeOpenAI(), FakeCache(), build_settings().model_copy(update={"default_model": "gpt-6-luna"}))
+        self.assertNotEqual(mini._cache_key(req), luna._cache_key(req))
+
     async def test_complete_cache_key_includes_trusted_system_prompt(self) -> None:
         openai = FakeOpenAI()
         cache = FakeCache()

@@ -292,19 +292,34 @@ def infer_product(values: Iterable[object], *, default_product: str = "gts_nx") 
     still separating documents explicitly labelled for Civil, FEA NX, etc.
     """
 
-    evidence = " ".join(str(value) for value in values if value is not None)
-    searchable = re.sub(r"[_\\/\-.]+", " ", evidence)
+    # Metadata fields and directory components are independent evidence.
+    # Joining them invents product names, e.g. MIDAS/PROJECTS -> "midas projects".
+    searchable = [
+        re.sub(r"[_\-.]+", " ", component)
+        for value in values if value is not None
+        for component in re.split(r"[\\/]", str(value))
+    ]
     for product, pattern in _PRODUCT_RULES:
-        if pattern.search(searchable):
+        if any(pattern.search(component) for component in searchable):
             return product
-    if match := _GENERIC_MIDAS_PRODUCT_RE.search(searchable):
-        return canonical_product(match.group(1))
+    for component in searchable:
+        if match := _GENERIC_MIDAS_PRODUCT_RE.search(component):
+            return canonical_product(match.group(1))
     return canonical_product(default_product) or "unknown"
 
 
-def product_for_path(path: Path, *, default_product: str = "gts_nx") -> str:
+def product_for_path(
+    path: Path, *, default_product: str = "gts_nx", data_root: Path | None = None
+) -> str:
     """Classify a source by product without depending on one exact filename."""
 
+    if data_root is not None:
+        try:
+            path = path.resolve().relative_to(data_root.resolve())
+        except ValueError:
+            # Explicit ingestion inputs may live outside the configured corpus.
+            # Their containing directories are not part of its product scope.
+            path = Path(path.name)
     return infer_product(path.parts, default_product=default_product)
 
 
@@ -346,7 +361,9 @@ def enrich_metadata(
             "created_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
             "last_modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
             "category": category_for_path(source_path, data_root=data_root),
-            "product": product_for_path(source_path, default_product=default_product),
+            "product": product_for_path(
+                source_path, default_product=default_product, data_root=data_root
+            ),
             "version": version_from_filename(source_path.name),
         }
     )

@@ -1,0 +1,13 @@
+{
+  "run_id": "875ada15dcac46858172a54ae320e819",
+  "status": "completed_intermediate_fix",
+  "comparison_eligible": true,
+  "role": "Retained development iteration, not the final reported implementation.",
+  "remaining_defects": [
+    "golden-31 generalized a statement about linear elasticity to elasticity overall",
+    "expanded golden-24 generalized preservation of one load to preservation of all results"
+  ],
+  "collection_recovery": "collection_recovery.json and run_collection_original.json preserve the local collector write failure and read-only canonical recovery; no model call was repeated.",
+  "replacement_run_id": "6a21791010ee447e8218a6a6e3657861",
+  "replacement_directory": "../2026-10-14_telegram_agent_citation_fix_verified"
+}

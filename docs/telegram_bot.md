@@ -1,13 +1,18 @@
-# Telegram Bot Thin Client
+# Telegram-бот как тонкий клиент
 
-Homework 4.2 adds a Telegram bot on aiogram 3. The bot is intentionally thin:
-it does not call LLM providers and does not store dialog history. All stateful
-chat behavior remains in the FastAPI backend. All ordinary Telegram messages
-now use the persistent agent through the same chat facade; there is no `/agent`
-mode switch. The agent searches the production manual corpus, drafts replies,
-and pauses before any requested external delivery.
+Домашнее задание 4.2 добавляет Telegram-бота на aiogram 3. Бот выполняет роль
+тонкого клиента: он не обращается к провайдерам LLM и не хранит историю диалога.
+Вся работа с состоянием чата остаётся в FastAPI-бэкенде. Все обычные сообщения
+Telegram теперь обрабатываются агентом с постоянным хранением состояния через
+тот же интерфейс чата; переключателя режима `/agent` нет. Агент ищет сведения
+в рабочем корпусе мануалов, готовит черновики ответов и приостанавливает
+выполнение перед запрошенной внешней отправкой.
 
-## Runtime
+Свежие измерения финального контура: [оценка качества от 14.10.2026](telegram_agent_evaluation.md).
+В ней отдельно проверены ответы, соответствие цитатам и страницам, отказы,
+уточнения, подтверждённые подробные ответы и время; выявлены ошибки атрибуции.
+
+## Запуск
 
 ```powershell
 $env:BOT_TOKEN='123456:telegram-token'
@@ -15,179 +20,204 @@ $env:BACKEND_URL='http://127.0.0.1:8000'
 python -m bot
 ```
 
-`bot.__main__` creates `Bot`, `Dispatcher`, registers
-handlers, puts `BackendClient` into `dp["backend"]`, and starts polling.
+`bot.__main__` создаёт `Bot` и `Dispatcher`, регистрирует обработчики,
+помещает `BackendClient` в `dp["backend"]` и запускает опрос обновлений.
 
-The bot denies all incoming Telegram updates until `BOT_ALLOWED_USER_IDS` is
-configured with verified employee Telegram IDs. Private dialogs require the
-chat ID to equal the allowed user ID. Groups and supergroups also require the
-chat ID in `BOT_ALLOWED_CHAT_IDS`; anonymous senders, channels, bots, and
-updates without both a user and chat are denied. IDs may be comma-separated.
-`BOT_ADMIN_IDS` grants admin commands only and does not bypass admission: add
-an administrator to `BOT_ALLOWED_USER_IDS` as well. The backend service token
-authenticates the bot process, while this gate admits individual users.
+Бот отклоняет все входящие обновления Telegram, пока в `BOT_ALLOWED_USER_IDS`
+не указаны проверенные Telegram ID сотрудников. В личных диалогах ID чата должен
+совпадать с разрешённым ID пользователя. Для групп и супергрупп ID чата также
+должен присутствовать в `BOT_ALLOWED_CHAT_IDS`. Анонимные отправители, каналы,
+боты и обновления без пользователя или чата отклоняются. ID можно перечислять
+через запятую. `BOT_ADMIN_IDS` даёт доступ только к административным командам
+и не отменяет проверку допуска: администратора также нужно добавить в
+`BOT_ALLOWED_USER_IDS`. Служебный токен бэкенда аутентифицирует процесс бота,
+а эта проверка разрешает доступ отдельным пользователям.
 
-If commands appear in Telegram but no command receives a reply, check access
-configuration before treating command registration as proof of working input:
-`.venv/Scripts/python.exe scripts/check_env_safety.py` reports presence of
-`BOT_ADMIN_IDS`, `BOT_ALLOWED_USER_IDS` and `BOT_ALLOWED_CHAT_IDS` without
-displaying IDs or secrets. An absent user allowlist intentionally rejects all
-updates. After changing `.env`, recreate the bot container to reload its
-environment; restarting the existing container does not refresh Compose
-`env_file` values.
+Если команды видны в Telegram, но ни одна не получает ответа, сначала проверьте
+настройки доступа: регистрация команд сама по себе не подтверждает обработку
+входящих сообщений. `.venv/Scripts/python.exe scripts/check_env_safety.py`
+сообщает о наличии `BOT_ADMIN_IDS`, `BOT_ALLOWED_USER_IDS` и
+`BOT_ALLOWED_CHAT_IDS`, не показывая ID и секреты. Отсутствие списка разрешённых
+пользователей намеренно приводит к отклонению всех обновлений. После изменения
+`.env` пересоздайте контейнер бота для загрузки окружения: перезапуск
+существующего контейнера не обновляет значения Compose `env_file`.
 
-## Backend Contract
+## Контракт бэкенда
 
-`bot/services/backend_client.py` wraps the 4.1 chat API:
+`bot/services/backend_client.py` предоставляет обёртку над API чата из ДЗ 4.1:
 
-- `get_or_create_chat(owner_external_id, interface)` calls `POST /chats` and
-  keeps an in-process cache. The server resolves the same durable Telegram
-  owner/interface chat after a bot restart (JSON and PostgreSQL repositories).
-  Existing chats are reused; new chats use a deterministic UUID under a
-  repository lock / primary-key conflict guard.
-  The owner key is `chat.id` for private dialogs and
-  `"<chat_id>:<sender_id>"` per admitted member in group chats, so members do
-  not share history. The leading segment stays parseable as the Telegram
-  delivery chat (`telegram_chat_id_from_owner` in `app/chat/domain.py`),
-  which admin notifications and broadcasts use; broadcasts deduplicate
-  targets per Telegram chat.
-- `send_message(chat_id, content)` calls
-  `POST /chats/{chat_id}/messages`, parses SSE `data:` frames, and yields text
-  chunks.
-- `clear_messages(chat_id)` calls `DELETE /chats/{chat_id}/messages`.
-- `pending_approval(chat_id)` calls `GET /chats/{chat_id}/approval`; `/start`
-  restores the exact pending preview and buttons after a restart.
-- `resume_approval(...)` posts the exact opaque draft ID and boolean decision
-  to `POST /chats/{chat_id}/approvals/{approval_id}`. The server verifies chat
-  ownership and the current draft under the same per-chat turn lock, then
-  resumes the durable interrupt. Other owners receive 404; stale/repeated IDs
-  receive 409. The caller cannot change recipient or text during approval.
+- `get_or_create_chat(owner_external_id, interface)` вызывает `POST /chats`
+  и хранит кеш в памяти процесса. После перезапуска бота сервер находит тот же
+  сохранённый чат по владельцу Telegram и интерфейсу — как в JSON-, так и в
+  PostgreSQL-репозитории. Существующие чаты используются повторно; новым
+  назначается детерминированный UUID с блокировкой репозитория или защитой от
+  конфликта первичного ключа. Ключ владельца — `chat.id` в личном диалоге и
+  `"<chat_id>:<sender_id>"` для каждого допущенного участника группы, поэтому
+  участники не используют общую историю. Из первой части ключа можно извлечь
+  Telegram-чат доставки (`telegram_chat_id_from_owner` в `app/chat/domain.py`),
+  что используется для административных уведомлений и рассылок. При рассылке
+  повторяющиеся получатели объединяются по Telegram-чату.
+- `send_message(chat_id, content)` вызывает
+  `POST /chats/{chat_id}/messages`, разбирает SSE-блоки `data:` и выдаёт
+  фрагменты текста.
+- `clear_messages(chat_id)` вызывает `DELETE /chats/{chat_id}/messages`.
+- `pending_approval(chat_id)` вызывает `GET /chats/{chat_id}/approval`;
+  `/start` восстанавливает точный ожидающий подтверждения текст и кнопки
+  после перезапуска.
+- `resume_approval(...)` передаёт неизменённый непрозрачный ID черновика и
+  логическое решение в `POST /chats/{chat_id}/approvals/{approval_id}`.
+  Под общей блокировкой хода диалога сервер проверяет владельца чата и текущий
+  черновик, затем продолжает сохранённое приостановленное выполнение. Другой
+  владелец получает 404; устаревший или повторный ID — 409. При подтверждении
+  вызывающая сторона не может изменить адресата или текст.
 
-An SSE `approval` event carries only `approval_id`, recipient `chat_id`, and
-the exact outgoing `text`. The bot shows that preview with «Подтвердить» and
-«Отменить». The callback encodes chat UUID + draft UUID in fewer than 64 bytes;
-it derives the authenticated owner from the clicking user, including groups.
-Long replies/previews split before HTML rendering, with buttons on the final
-part and no text truncation. Delivery/cancellation/unknown status is reported
-from the observed tool result, without another model call.
+SSE-событие `approval` содержит только `approval_id`, `chat_id` получателя и
+точный исходящий `text`. Бот показывает их с кнопками «Подтвердить» и
+«Отменить». Данные обратного вызова кодируют UUID чата и черновика менее чем
+в 64 байтах; аутентифицированный владелец определяется по нажавшему пользователю,
+в том числе в группах. Длинные ответы и предпросмотры делятся на части до
+HTML-форматирования, без обрезания текста; кнопки размещаются на последней
+части. Статус доставки, отмены или неизвестного исхода берётся из наблюдаемого
+результата инструмента без дополнительного вызова модели.
 
-Media still uses the multipart extraction and input moderation path. Captions,
-voice transcripts and extracted document text reach the agent; raw image data
-is excluded from checkpoints. Images without a description get the existing
-explicit request for a text description. Output and the exact outgoing draft
-are moderated before display/approval. Sources and feedback remain persisted
-on assistant messages. RAG unavailability produces an explicit refusal to
-invent documentation, rather than a synthetic fallback.
+Медиа по-прежнему проходит извлечение из multipart-запроса и входную модерацию.
+Подписи, расшифровки голосовых сообщений и извлечённый текст документов
+передаются агенту; исходные данные изображений не попадают в контрольные точки.
+Для изображения без описания сохраняется явная просьба добавить текстовое
+описание. Ответ и точный исходящий черновик проходят модерацию перед показом
+или подтверждением. Источники и обратная связь сохраняются в сообщениях
+ассистента. При недоступности RAG система явно отказывается выдумывать
+документацию, не подменяя её синтетическими данными.
 
-HTTP errors are not hidden in the client. Handlers catch `httpx` exceptions and
-show a user-facing message without traceback.
+HTTP-ошибки не скрываются клиентом. Обработчики перехватывают исключения
+`httpx` и показывают понятное пользователю сообщение без трассировки стека.
 
-The bot shows «Готовлю ответ…» and refreshes `sendChatAction` during preparation.
-Before displaying the first nonempty body (including an SSE replacement), it
-stops and drains any in-flight typing request, sends a NEW answer message, then
-deletes the temporary placeholder best effort. Telegram clears typing on a new
-message; edits do not have that documented guarantee. The new message becomes
-editable for later deltas and final formatting. Long answers use safe chunks,
-with buttons on the last part. An unchanged edit counts as success and never
-triggers a duplicate send. A transport without a placeholder buffers until the
-final new message. Failures/cancellation cancel and join the refresher; cancelling
-during drain does not publish the body. No artificial delay or LLM call is added.
+Во время подготовки бот показывает «Готовлю ответ…» и обновляет
+`sendChatAction`. Перед выводом первого непустого текста, включая замену по SSE,
+он останавливает обновление статуса, дожидается завершения уже начатого запроса
+индикатора набора, отправляет НОВОЕ сообщение с ответом и по возможности
+удаляет временное сообщение ожидания. Новое сообщение сбрасывает индикатор
+набора Telegram; для редактирования такой документированной гарантии нет.
+Далее новое сообщение можно редактировать при получении следующих фрагментов
+и окончательном форматировании. Длинные ответы делятся по безопасным границам,
+кнопки остаются на последней части. Редактирование без изменений считается
+успешным и не вызывает повторной отправки. Если транспорт не поддерживает
+временное сообщение ожидания, текст буферизуется до итоговой отправки.
+При ошибке или отмене задача обновления статуса отменяется, и её завершения
+дожидаются. Отмена во время ожидания незавершённого запроса не публикует текст.
+Искусственных задержек и дополнительных вызовов LLM нет.
 
-«Подготовить подробный ответ» uses this same renderer while awaiting the single
-confirmed expansion request: placeholder and typing, drain, new answer and
-placeholder removal. Sources/documents/feedback remain on the final part, with
-no recursive expansion button. Backend errors are rendered through the same
-lifecycle without source/buttons; cancellation cleans up its waiting message.
-Opening the cost notice or cancelling it does not start a waiting status or
-generation. The callback is acknowledged before the backend request.
+«Подготовить подробный ответ» использует тот же механизм отображения во время
+единственного подтверждённого запроса расширения: сообщение ожидания и набор,
+завершение начатого запроса статуса, новое сообщение с ответом и удаление
+временного сообщения. Источники, документы и обратная связь остаются на
+последней части; повторной кнопки расширения нет. Ошибки бэкенда отображаются
+через тот же цикл, без источников и кнопок; отмена удаляет сообщение ожидания.
+Открытие уведомления о расходе или отказ от расширения не запускают ожидание
+и генерацию. Обратный вызов подтверждается до запроса к бэкенду.
 
-In group chats debounce batches (`bot/handlers/_burst.py`) are keyed by the
-owner key, so quick messages from different members never merge into one
-request, and answers are sent via `message.reply` to show which question they
-belong to. Feedback callbacks derive the owner from the clicking user, so only
-the author of a question can rate its answer.
+В групповых чатах накопление быстрых сообщений (`bot/handlers/_burst.py`)
+ведётся по ключу владельца: сообщения разных участников не объединяются
+в один запрос. Ответ отправляется через `message.reply`, чтобы было видно,
+к какому вопросу он относится. При обратной связи владелец определяется по
+нажавшему пользователю, поэтому оценить ответ может только автор вопроса.
 
-## Navigation and commands
+## Навигация и команды
 
-At startup the bot registers Telegram's native command list and commands menu
-button. Registration is best effort: a Telegram API failure is logged without
-preventing polling, and registration is attempted again if polling restarts.
-No admin commands appear in this ordinary user menu.
+При запуске бот регистрирует штатный список команд Telegram и кнопку меню
+команд. Ошибка Telegram API при регистрации записывается в лог и не мешает
+опросу обновлений; при перезапуске опроса регистрация повторяется.
+Административные команды в обычное пользовательское меню не входят.
 
-`/start` and `/menu` show a compact inline home panel with «Примеры вопросов»,
-«Как пользоваться», «История», «Ожидающие отправки» and «Новый диалог».
-Subpanels provide a return button. Navigation reads do not submit an LLM request
-or add messages to backend history. Examples are suggestions to copy into a
-message; pressing a navigation button does not submit an example automatically.
+`/start` и `/menu` показывают компактную главную панель с кнопками «Примеры
+вопросов», «Как пользоваться», «История», «Ожидающие отправки» и «Новый диалог».
+На вложенных панелях есть кнопка возврата. Чтение навигационных данных не
+вызывает LLM и не добавляет сообщения в историю бэкенда. Примеры предназначены
+для копирования в сообщение: нажатие кнопки навигации не отправляет их
+автоматически.
 
-«Ожидающие отправки» reads the durable draft and shows its exact recipient and
-literal text with the existing confirm/cancel buttons. `/start` also restores
-this preview when a draft exists. «Новый диалог» asks for confirmation before
-clearing history and pending approval. Cancellation preserves both; confirming
-also discards only this owner's unsent debounce batch without generating an
-answer. Reset confirmation is single-use, expires after five minutes and must
-be reopened after a bot restart. Old confirmation buttons cannot clear a new
-dialog; `/menu`, `/start` and `/clear` invalidate an earlier reset confirmation.
-In groups each navigation panel belongs to the user who opened it;
-another member must open their own `/menu`.
+«Ожидающие отправки» читает сохранённый черновик и показывает точного адресата
+и буквальный текст с существующими кнопками подтверждения и отмены. `/start`
+также восстанавливает этот предпросмотр при наличии черновика. «Новый диалог»
+запрашивает подтверждение перед очисткой истории и ожидающей отправки. Отмена
+сохраняет оба состояния; подтверждение дополнительно отбрасывает только ещё
+не отправленную группу сообщений этого владельца без генерации ответа.
+Подтверждение очистки одноразовое, действует пять минут и после перезапуска
+бота требует повторного открытия. Старые кнопки не могут очистить новый
+диалог; `/menu`, `/start` и `/clear` отменяют ранее выданное подтверждение
+очистки. В группе каждая панель принадлежит открывшему её пользователю;
+другому участнику нужно открыть собственное `/menu`.
 
-- `/start` - creates or reuses the backend chat and opens the home panel.
-- `/menu` - opens the home panel without a backend request.
-- `/help` - shows usage instructions with a return button.
-- `/clear` - immediately soft-clears this owner's backend history and pending
-  approval; it first flushes only this owner's queued message batch.
-- `/history` - shows the last ten persisted messages for this owner.
+- `/start` — создаёт или повторно использует чат бэкенда и открывает главную панель.
+- `/menu` — открывает главную панель без запроса к бэкенду.
+- `/help` — показывает инструкцию с кнопкой возврата.
+- `/clear` — немедленно выполняет мягкую очистку истории этого владельца
+  в бэкенде и удаляет ожидающее подтверждение; перед этим передаёт на обработку
+  только накопленную группу сообщений этого владельца.
+- `/history` — показывает десять последних сохранённых сообщений этого владельца.
 
-`/clear` also deletes the agent checkpoint under the shared chat turn lock,
-invalidating every previously shown approval button. Durable pause/resume
-requires SQLite (local default) or PostgreSQL; memory saver is for tests/demo.
-See [unified_agent.md](unified_agent.md) for the fully offline integration check.
+`/clear` также удаляет контрольную точку агента под общей блокировкой хода
+диалога, делая недействительными все прежние кнопки подтверждения. Сохранение
+паузы и продолжение после перезапуска требуют SQLite (локальное значение по
+умолчанию) или PostgreSQL; хранилище в памяти предназначено для тестов и демо.
+Полностью автономная проверка интеграции описана в
+[unified_agent.md](unified_agent.md).
 
-The default answer ceiling is 500 output tokens (`CHAT_RESPONSE_TOKENS`).
-Length stops, empty output and mixed-script defects in prose are compacted
-locally into complete text, without an automatic paid repair call. Technical
-literals, complete code blocks and grounded citations are preserved.
-Parameter labels and headings survive compaction together with complete following
-bodies; orphan headings before unfinished tails are removed. Long Telegram
-answers prefer paragraph, line and sentence boundaries, keeping headings with
-their bodies and paired Markdown together when they fit. Chunking preserves
-every original character; indivisible overlong spans use a hard fallback.
-Buttons remain on the last chunk, and approval previews retain literal text.
+По умолчанию ответ ограничен 500 выходными токенами (`CHAT_RESPONSE_TOKENS`).
+Остановка по длине, пустой ответ и смешение алфавитов в обычном тексте
+обрабатываются локальным сокращением до завершённого текста, без
+автоматического платного вызова для исправления. Технические литералы,
+завершённые блоки кода и подтверждённые источниками цитаты сохраняются.
+Обозначения параметров и заголовки сохраняются вместе с завершённым пояснением
+после них; заголовки без пояснения перед оборванным концом удаляются. При
+разбиении длинных ответов Telegram предпочтительны границы абзацев, строк
+и предложений; заголовки остаются с пояснениями, а парные элементы Markdown —
+вместе, если помещаются. Разбиение сохраняет каждый исходный символ;
+слишком длинные неделимые фрагменты разрезаются принудительно. Кнопки остаются
+на последней части, а предпросмотр подтверждения сохраняет буквальный текст.
 
-Eligible brief answers show **Подробнее** alongside documents and feedback.
-It opens a cost notice: a detailed answer is an additional AI request that
-consumes tokens and may increase processing cost. **Подготовить подробный ответ**
-confirms a single generation with a 1,500 output-token ceiling
-(`CHAT_EXPANDED_RESPONSE_TOKENS`), based on existing evidence with tools disabled.
-**Оставить краткий** changes no history and makes no model call. These ceilings
-are not monetary estimates and do not change runtime models or provider prices.
+У кратких ответов, допускающих расширение, рядом с документами и обратной
+связью появляется **Подробнее**. Кнопка открывает уведомление о расходе:
+подробный ответ — дополнительный запрос к ИИ, который расходует токены и может
+увеличить стоимость обработки. **Подготовить подробный ответ** подтверждает
+одну генерацию с потолком 1500 выходных токенов
+(`CHAT_EXPANDED_RESPONSE_TOKENS`) по уже найденным доказательствам и с
+отключёнными инструментами. **Оставить краткий** не меняет историю и не вызывает
+модель. Эти потолки не являются денежной оценкой и не меняют используемые
+модели или тарифы провайдера.
 
-Callbacks carry exact compact chat/message UUIDs (`exp:a`, `exp:y`, `exp:n`),
-fit Telegram's 64-byte limit and use the clicking owner's explicit principal,
-including group member isolation. Callback acknowledgement precedes backend
-work. Feedback preserves documents and the expansion affordance. Expanded
-answers have sources and feedback, with no further expansion loop. Only panel
-controls are removed on confirmation/cancel; panel-edit failure does not prevent
-delivery of an already saved detailed answer. Owner/stale/clear checks fail safe.
-POST is never retried automatically. Durable claims prevent another generation
-on double click, timeout or process restart; missing saved results return 409.
+Обратные вызовы содержат точные компактные UUID чата и сообщения (`exp:a`,
+`exp:y`, `exp:n`), укладываются в лимит Telegram 64 байта и используют явно
+определённого владельца — нажавшего пользователя, с изоляцией участников групп.
+Подтверждение обратного вызова выполняется до работы бэкенда. При оценке ответа
+документы и возможность расширения сохраняются. Подробные ответы имеют
+источники и обратную связь без повторного цикла расширения. При подтверждении
+или отмене удаляются только элементы управления панелью; ошибка её
+редактирования не мешает доставке уже сохранённого подробного ответа.
+Нарушение проверок владельца, актуальности или очистки блокирует операцию.
+POST никогда не повторяется автоматически. Постоянное резервирование операции
+предотвращает новую генерацию при двойном нажатии, таймауте или перезапуске
+процесса; при отсутствии сохранённого результата возвращается 409.
 
-Offline menu runtime coverage uses real aiogram `Dispatcher`, `Update` and
-callback/message routing with a mocked Telegram transport and backend:
-`.venv/Scripts/python.exe -m pytest tests/bot/test_menu.py -q`. No live Telegram visual check or
-outgoing user-message delivery is performed by these tests.
+Автономные проверки меню используют настоящие aiogram `Dispatcher`, `Update`
+и маршрутизацию сообщений и обратных вызовов, а транспорт Telegram и бэкенд
+заменены заглушками:
+`.venv/Scripts/python.exe -m pytest tests/bot/test_menu.py -q`.
+Эти тесты не выполняют визуальную проверку в живом Telegram и не отправляют
+пользовательские сообщения.
 
-Verified 2026-10-13:
+Проверено 2026-10-13:
 
 - `.venv/Scripts/python.exe -X utf8 -m pytest tests/bot tests/chat/test_unified_agent.py -q`
-  — PASS: **150 passed**.
-- Production `bot.handlers.router` runtime smoke with admission middleware,
-  synthetic Telegram updates and mocked transport — PASS: home panel,
-  group owner isolation, denied user, and ordinary-question debounce routing.
-- Ruff on all changed Python files and `git diff --check` — PASS.
+  — успешно: **150 тестов пройдено**.
+- Проверка рабочего `bot.handlers.router` с middleware допуска, синтетическими
+  обновлениями Telegram и транспортом-заглушкой — успешно: главная панель,
+  изоляция владельцев в группах, отказ недопущенному пользователю и маршрутизация
+  обычных вопросов с накоплением быстрых сообщений.
+- Ruff для всех изменённых Python-файлов и `git diff --check` — успешно.
 
-The commands menu uses Telegram's supported
-[`setMyCommands`](https://core.telegram.org/bots/api#setmycommands) and
+Меню команд использует поддерживаемые Telegram методы
+[`setMyCommands`](https://core.telegram.org/bots/api#setmycommands) и
 [`setChatMenuButton`](https://core.telegram.org/bots/api#setchatmenubutton).
-It is registered when the updated bot process starts; existing running
-processes must be restarted or redeployed to load the new handlers.
+Регистрация выполняется при запуске обновлённого процесса бота. Уже работающие
+процессы нужно перезапустить или развернуть заново для загрузки новых обработчиков.

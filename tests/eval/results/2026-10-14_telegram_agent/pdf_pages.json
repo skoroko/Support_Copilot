@@ -1,0 +1,438 @@
+{
+  "run_id": "87dad8a9d1b245e382ce5c1dbd98655c",
+  "pdf_citation_count": 46,
+  "unique_pdf_chunks": 32,
+  "checks": [
+    {
+      "chunk_id": "34283333-0e78-4164-80c1-bd3f12cb0a76",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 52,
+      "printed_page": 331,
+      "used_by": [
+        "golden-01:brief",
+        "golden-01:expanded",
+        "followup-01-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "86236476-7bff-4c11-894e-d10748ca92b3",
+      "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+      "page": 1,
+      "printed_page": 8,
+      "used_by": [
+        "golden-01:brief",
+        "golden-01:expanded",
+        "golden-02:brief",
+        "followup-01-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "c1acdb6d-28f6-434c-8c5e-c547e8c073af",
+      "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+      "page": 3,
+      "printed_page": 10,
+      "used_by": [
+        "golden-02:brief",
+        "golden-03:brief",
+        "golden-30:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "6674e564-c835-44d8-a696-cc043c467e62",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 104,
+      "printed_page": 117,
+      "used_by": [
+        "golden-02:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "e5301211-393e-4b56-bd95-00d62d099475",
+      "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+      "page": 4,
+      "printed_page": 11,
+      "used_by": [
+        "golden-03:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "8f864d1a-0096-4f2d-8bd8-193c54ebc89e",
+      "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+      "page": 5,
+      "printed_page": 12,
+      "used_by": [
+        "golden-04:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "afd45428-e021-4cef-bf5f-330844508fe3",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 1,
+      "printed_page": null,
+      "used_by": [
+        "golden-05:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": null,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "3bdccdb4-938d-41d2-8cff-8cc0e2b9a132",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 24,
+      "printed_page": 37,
+      "used_by": [
+        "golden-05:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "3876fa79-5599-4af8-b9bd-3081d6d841a8",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 47,
+      "printed_page": 60,
+      "used_by": [
+        "golden-06:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "55442906-1145-413b-8474-8cc452b1127e",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 75,
+      "printed_page": 88,
+      "used_by": [
+        "golden-07:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "518630e3-d28c-4428-bbeb-7e28d79e6cdc",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 95,
+      "printed_page": 108,
+      "used_by": [
+        "golden-08:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "0a0450eb-1493-421b-894b-c26657518855",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 11,
+      "printed_page": 24,
+      "used_by": [
+        "golden-08:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "458f346d-3f13-4279-9f68-ed0832d9047b",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 94,
+      "printed_page": 107,
+      "used_by": [
+        "golden-08:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "ee67f656-6636-4636-8903-1504fbfc5352",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 39,
+      "printed_page": 168,
+      "used_by": [
+        "golden-10:brief",
+        "golden-10:expanded",
+        "golden-11:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "4b63d065-a2c3-44f1-958e-384fe51c5c67",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 40,
+      "printed_page": 169,
+      "used_by": [
+        "golden-10:brief",
+        "followup-10-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "241d298e-4bc6-4419-bd53-1804d9ce2eea",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 55,
+      "printed_page": 184,
+      "used_by": [
+        "golden-10:expanded",
+        "golden-13:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "1247b341-51a6-4cbc-a14a-b3973899de24",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 76,
+      "printed_page": 205,
+      "used_by": [
+        "golden-11:brief",
+        "golden-13:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "951c7731-a7f0-4ed7-bd6e-9cf795eb3652",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 114,
+      "printed_page": 243,
+      "used_by": [
+        "golden-15:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "f2b47585-ce0d-49ac-a895-673b0b32176b",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 113,
+      "printed_page": 242,
+      "used_by": [
+        "golden-15:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "b1797c10-9118-4407-82f2-034ffcdb402f",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 27,
+      "printed_page": 306,
+      "used_by": [
+        "golden-16:brief",
+        "golden-16:expanded",
+        "followup-16-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "c17ec9d2-b70d-4cc0-976d-a93d7f79297c",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 26,
+      "printed_page": 305,
+      "used_by": [
+        "golden-18:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "75411c3b-4c08-45d9-9776-1c9d16c6c3a0",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 8,
+      "printed_page": 287,
+      "used_by": [
+        "golden-20:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "cdce116a-9190-4a1a-a010-80526f1bf700",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 10,
+      "printed_page": 289,
+      "used_by": [
+        "golden-20:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "c4aeb610-e8c3-4916-b83a-a33767f487f1",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 9,
+      "printed_page": 288,
+      "used_by": [
+        "golden-20:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 1,
+      "printed_page": 130,
+      "used_by": [
+        "golden-31:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "3175aeae-8296-4108-ab04-4fe4c78d6c6b",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 32,
+      "printed_page": 45,
+      "used_by": [
+        "golden-34:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "8bccc1a3-4bcb-48ef-9bb7-b80b160b7f01",
+      "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+      "page": 25,
+      "printed_page": 38,
+      "used_by": [
+        "followup-01-question:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "dc8d807f-bc07-4ee0-8f7a-beb59903dcee",
+      "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+      "page": 42,
+      "printed_page": 171,
+      "used_by": [
+        "followup-10-question:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "6ce58540-2495-4056-98fe-380b0523cc2c",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 28,
+      "printed_page": 307,
+      "used_by": [
+        "followup-16-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "fc1bde75-2e6a-4df1-b1f0-793a2f8c7361",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 47,
+      "printed_page": 326,
+      "used_by": [
+        "followup-16-seed:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "c4484b43-3cc2-4908-8fba-66fdd44d2a25",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 25,
+      "printed_page": 304,
+      "used_by": [
+        "followup-16-question:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    },
+    {
+      "chunk_id": "a45c6221-1d09-471c-b28e-f5e9c92555e8",
+      "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+      "page": 29,
+      "printed_page": 308,
+      "used_by": [
+        "followup-16-question:brief"
+      ],
+      "excerpt_prefix_matches_page": true,
+      "printed_page_in_header": true,
+      "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+      "status": "verified"
+    }
+  ],
+  "note": "Physical page, printed header and excerpt prefix checks; not semantic faithfulness."
+}

@@ -145,6 +145,7 @@ class LLMService:
             exclude_none=True,
         )
         payload["trusted_system_prompt_sha256"] = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()
+        payload["resolved_model"] = req.model or self.settings.llm.default_model
         raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         return "chat:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
@@ -159,7 +160,11 @@ class LLMService:
     def _prompt_text(self, req: ChatRequest) -> str:
         return "\n".join(message.content for message in req.messages if message.role in {"system", "user"})
 
-    def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, int]:
+    def _token_limit_kwargs(self, model: str, max_tokens: int) -> dict[str, Any]:
+        if model.startswith("gpt-6"):
+            # This tool-free legacy endpoint keeps its visible-output contract.
+            # Agent reasoning is configured separately through Responses API.
+            return {"max_completion_tokens": max_tokens, "reasoning_effort": "none", "store": False}
         if model.startswith("gpt-5"):
             return {"max_completion_tokens": max_tokens}
         return {"max_tokens": max_tokens}

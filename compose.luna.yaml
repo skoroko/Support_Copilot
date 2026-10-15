@@ -1,0 +1,12 @@
+# Existing-stack rollout: docker compose -f compose.yaml -f compose.luna.yaml up -d --no-deps --build app
+# Uses the existing credentials, corpus, embeddings and checkpoint storage.
+services:
+  app:
+    environment:
+      APP_DEFAULT_MODEL: gpt-6-luna
+      APP_ALLOWED_MODELS: '["gpt-6-luna","gpt-5.4-mini"]'
+      AGENT_LLM_API: responses
+      AGENT_REASONING_EFFORT: medium
+      AGENT_EXPANDED_REASONING_EFFORT: medium
+      AGENT_REASONING_TOKEN_RESERVE: "8192"
+      AGENT_GENERATION_TIMEOUT: "120"

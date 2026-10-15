@@ -13,7 +13,6 @@ from llama_index.core.readers.base import BaseReader
 from pylibmspack import ChmArchive
 from pylibmspack.errors import ChmError
 
-
 _HTML_SUFFIXES = {".htm", ".html", ".xhtml"}
 _CHARSET_RE = re.compile(br"charset\s*=\s*['\"]?([A-Za-z0-9._-]+)", re.IGNORECASE)
 
@@ -80,7 +79,7 @@ class CHMReader(BaseReader):
         return source
 
     @staticmethod
-    def _html_to_text(raw: bytes) -> str:
+    def _decode_html(raw: bytes) -> str:
         match = _CHARSET_RE.search(raw[:4096])
         candidates = [match.group(1).decode("ascii", errors="ignore")] if match else []
         candidates.extend(["utf-8", "windows-1251", "latin-1"])
@@ -93,8 +92,11 @@ class CHMReader(BaseReader):
                 continue
         if not decoded:
             decoded = raw.decode("utf-8", errors="replace")
+        return decoded
 
-        soup = BeautifulSoup(decoded, "html.parser")
+    @staticmethod
+    def _html_to_text(raw: bytes) -> str:
+        soup = BeautifulSoup(CHMReader._decode_html(raw), "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
         return " ".join(soup.get_text(" ", strip=True).split())

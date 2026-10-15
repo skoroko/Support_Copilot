@@ -1,0 +1,13 @@
+{
+  "run_id": "d7a65aff7e5745f682bd65ae69f5d146",
+  "role": "Preserved intermediate candidate, not the final release evaluation",
+  "collection": {"brief_completed": 43, "expanded_completed": 5},
+  "rejected_reason": "golden-31 still inferred elastic classification from the PDF element-applicability table and included Duncan-Chang despite the CHM behavior row labeling it elasto-plastic. Prompt-only restriction was insufficient.",
+  "source_mapping": {
+    "pdf_applicability_chunk": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+    "physical_page": 1,
+    "printed_page": 130,
+    "chm_behavior_chunk": "85184469-132d-41a9-9396-2d18a0ccfcc4"
+  },
+  "followup_fix": "Query-time behavior context keeps explicit prose before flattened applicability grid. Compatibility questions retain the grid. Fresh full evaluation is saved in 2026-10-14_telegram_agent_semantic_fix_release."
+}

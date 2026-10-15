@@ -1,0 +1,8 @@
+{
+  "run_id": "a738f88c032a4003a6cb6d0202def1b9",
+  "status": "stopped_after_regression_found",
+  "reason": "The broader clarification instruction caused golden-10, golden-11 and golden-12 to ask for a preferred aspect instead of giving the requested overview of the explicitly named Mohr-Coulomb model. Stopped at 28 completed ordinary requests and golden-29 started; raw collection remains unchanged.",
+  "replacement_run_id": "6a21791010ee447e8218a6a6e3657861",
+  "replacement_directory": "../2026-10-14_telegram_agent_citation_fix_verified",
+  "comparison_eligible": false
+}

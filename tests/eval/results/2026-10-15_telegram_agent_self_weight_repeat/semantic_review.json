@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "run_id": "73997106733b4860805e1c80f4ec91ba",
+  "reviewed_on": "2026-10-15",
+  "method": "Fresh Codex qualitative review with two read-only Sol High packages. Same baseline rubric. Final [N] -> final sources[N-1] -> chunk_id -> exact saved tool text for current turn; expansion uses saved citation evidence. Fresh independent per-case review. Runtime gpt-6-luna / Responses medium; prior scores not inherited. Failed requests retained as 0/null. No judge API or repeated retrieval.",
+  "rubric": {
+    "correctness": "1=essential reference complete/correct;0.5=significant omission/minor factual error;0=core wrong or no requested answer",
+    "grounding": "1=all material claims supported by actual cited fragments;0.5=minor unsupported detail/imprecision;0=material unsupported/generalized claim;null=no factual claim or failed request"
+  },
+  "results": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все шесть DOF и r/θ/z: 86236476 PDF1/8 и c1acdb6d PDF3/10."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "mostly_repetition",
+      "notes": "Все соответствия c1acdb6d PDF3/10; узловая/глобальная СК 86236476 PDF1/8. Основное содержание повторяет brief."
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "DOF порового давления в консолидации 737fdba3 PDF61/60; отсутствие направления/независимость от узловой СК 86236476 PDF1/8."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Обе системы и ориентация по трём точкам CHM7b4076f8; r/θ/z c1acdb6d PDF3/10. Геометрические значения даны как пояснение. Существенное различие раскрыто."
+    },
+    {
+      "id": "golden-04",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Ось e=θ/‖θ‖, угол ‖θ‖ в радианах, DOF4–6, порядок композиции и кватернионы: 8f864d1a PDF5/12."
+    },
+    {
+      "id": "golden-05",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все формы/варианты пентаэдра и число узлов подтверждены afd45428 PDF1."
+    },
+    {
+      "id": "golden-06",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущен SRC-Pipe для СЖБ-свай. Остальные 1D и скалярная пята подтверждены 234a2890 PDF1/14; двухузловой Truss 21b728fa PDF42/55."
+    },
+    {
+      "id": "golden-07",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены линейный, нелинейно-упругий и пластический режимы с условиями поворота/сдвига. Назначение, разъединённые узлы, жёсткости и ручное/Мастер задание поддержаны CHM25910908."
+    },
+    {
+      "id": "golden-08",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Граница, влияние на результат и исключение динамики CHM94a3a880; отображение бесконечной геометрии 0a0450eb PDF11/24."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0,
+      "grounding": null,
+      "notes": "BackendStreamError/OpenAIConnectionError: содержательный ответ отсутствует. Тело ошибки не читалось."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Поведение, C/φ, применение, отсутствие среднего главного напряжения, линейность критерия и ограниченный диапазон: CHM3a9395e9."
+    },
+    {
+      "id": "golden-10",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Существенный эталон полон, CHM3a9395e9. Добавлены развитие сдвигового разрушения под нагрузкой/собственным весом и связь линейного критерия с постоянным φ при изменении обжатия."
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены C/E по глубине, постоянное C при нулевом изменении; независимость φ от гидростатического давления отдельно не объяснена. Написанное поддержано CHM3a9395e9."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущена возможность изменения C/E по глубине. Поведение/ограничения поддержаны 7aa735cb PDF10/9 и CHM3a9395e9, intermediate principal stress прямо назван в PDF."
+    },
+    {
+      "id": "golden-13",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены эталонные ограничения классической модели. Назначение, нелинейная упругость, разные модули/двойное упрочнение d9180948, eacc05de PDF40/39, 241d298e PDF55/184. Оговорка о сохраняющемся критерии Мора–Кулона соответствует d9180948."
+    },
+    {
+      "id": "golden-14",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Динамика песка, поровое давление и разжижение: 015a0af6 PDF87/216, существенный эталон полон."
+    },
+    {
+      "id": "golden-15",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены kx/ky/kz, характеристическая кривая грунт–вода и минимальное/максимальное водосодержание. Дарси/диагональная матрица f2b47585 печ.242; функции/параметры d4b465fd печ.186 и 951c7731 печ.243; нестационарное водосодержание a46a40b4. Написанные функции поддержаны в совокупности [3]/[4]."
+    },
+    {
+      "id": "golden-16",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущен метод секущей. Остальное ef7ac926 печ.303, c4484b43 печ.304, b1797c10 печ.306, CHMed6975ce; отсутствие отдельных явных constant/modified методов объяснено верно."
+    },
+    {
+      "id": "golden-16",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Метод секущей по-прежнему не назван. Методы ef7ac926 печ.303, рекурсивный BFGS b1797c10 печ.306. Добавлены автоматический пересчёт/критерии/условия скорости c4484b43 печ.304, дополнительные опции CHMed6975ce и a45c6221 печ.308."
+    },
+    {
+      "id": "golden-17",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все три критерия/пределы c17ec9d2 печ.305; силовой/перемещений/ограничение штрафов c4484b43 печ.304; невязка 2430055d печ.302. Отсутствие формулы энергии в данных фрагментах указано верно."
+    },
+    {
+      "id": "golden-18",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Оба условия бисекции, перезапуск с меньшим шагом и максимальный уровень c17ec9d2 PDF26/305. Гарантия сходимости не выдумана."
+    },
+    {
+      "id": "golden-19",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Ланцош/мультифронтальный/Штурм и плотный решатель полностью подтверждены ece3bda7 PDF5/284."
+    },
+    {
+      "id": "golden-20",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Модальные координаты, низшие формы, сокращение переменных/приближённость c4aeb610 печ.288,75411c3b печ.287; диагональное демпфирование cdce116a печ.289."
+    },
+    {
+      "id": "golden-21",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Тетраэдральная/гибридная преимущественно гексаэдральная с пирамидами CHMd2ad11a1 и 03a52632 PDF236/235."
+    },
+    {
+      "id": "golden-22",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все алгоритмы Loop/Grid/Delaunay и описания подтверждены CHM21b452ed."
+    },
+    {
+      "id": "golden-23",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Несостыкованные узлы/разъединение на общей границе/намеренное разделение CHMd2ad11a1, Match Adjacent Faces."
+    },
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Обе части раскрыты: накопление результатов/история нагрузки a4c208f5 PDF8/7; естественные напряжения первого этапа и собственный вес HTML3c6ffb6c. Сохранение отдельной нагрузки не подменяет накопление результатов."
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Накопление и последовательность PDF8/7 a4c208f5; собственный вес и напряжения активированных элементов/преднапряжение HTML3c6ffb6c. K0, обнуление перемещений/деформаций, линейный Initial Stress даже при нелинейном материале CHM670ea225. Нулевые напряжения новых элементов не распространены на исходный грунт."
+    },
+    {
+      "id": "golden-25",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все четыре целевые категории и дополнительные связанные типы перечислены в 263bb556 PDF16/15. Тепловые постановки CHM7d225084. Различие с перечнем пяти типов CHM309e9e86 явно отмечено отдельной ссылкой, а не смешано."
+    },
+    {
+      "id": "golden-26",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "K0=σh/σv, собственный вес/первый этап и дополнительный этап для наклонного основания: b910b6ee PDF112/111. Все части эталона раскрыты."
+    },
+    {
+      "id": "golden-27",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все четыре операции и существенные назначения: Fuse/Cut/Common CHM601251e6, Embed/разные материалы CHM830ff249. Опции Merge faces отдельно не раскрыты; ядро вопроса о видах и назначении полное."
+    },
+    {
+      "id": "golden-28",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Регистрация/дерево/имя 911a2fe0 PDF63/62; Sweep a6f33f93 PDF83/82 и Mirror806f7581 PDF89/88. Эталон полон."
+    },
+    {
+      "id": "golden-29",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Отсутствие единиц CAD, ручной выбор/масштаб и метрическая/британская системы CHM3a79418a. Следствие о неверном масштабе явно дано как пояснение."
+    },
+    {
+      "id": "golden-30",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Isometric2/Y вверх/перспектива CAD8257a361 PDF19/18 и CHM35374a9c. Это эквивалент кнопки Two-point Isometric View эталона. Фиксированная GCS CHMacb2fb09 подтверждает отличие ракурса от изменения ГСК."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Возврат формы без остаточных деформаций и доступность обоих классов d8a74860 PDF1/130; прямая пропорциональность именно линейной упругости 7175e11c PDF7/6. Нет переноса частного свойства на все упругие модели или классификации по таблице применимости."
+    },
+    {
+      "id": "golden-32",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущены создание именованного комплекта и автоматическая регистрация Worktree из эталона. Написанные категории194972d8 PDF32/31, закрепления/Auto/симметрия HTML5c84ebfe, дренирование CHMe6295cc9 и напор/поток CHM70d756b2 подтверждены."
+    },
+    {
+      "id": "golden-32",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Добавлены имя/характеристика/Add/регистрация Worktree HTML02f3a812, Basic/Advanced/Auto и шесть DOF HTML5c84ebfe; пример плоской рамы/NCS PDF32/31 194972d8 ограничен своей постановкой. Дренирование/фильтрация/изменение границ CHMe6295cc9/70d756b2/a46a40b4 поддержаны. Эталон полон."
+    },
+    {
+      "id": "golden-33",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Канонический отказ о цене без источников и выдуманных значений."
+    },
+    {
+      "id": "golden-34",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Две DOF x/y элементной СК прямо подтверждены3175aeae PDF32/45."
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все шесть DOF и цилиндрическое соответствие:86236476 PDF1/8,c1acdb6d PDF3/10."
+    },
+    {
+      "id": "followup-01-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Элементные x/y3175aeae PDF32/45, плоскость2Dxy88cb481f PDF31/44. Условная оговорка о r/θ допустимо поясняет совпадение направлений и не утверждает универсального равенства r=x,θ=y. Независимый spot-check Sol High подтвердил."
+    },
+    {
+      "id": "followup-10-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Упругопластичность/C/φ/ограничения/диапазон подтверждены CHM3a9395e9; существенный эталон полон."
+    },
+    {
+      "id": "followup-10-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 0.5,
+      "notes": "Основные ограничения7aa735cb PDF10/9 и высокое обжатие8a143e93 PDF43/172. Оговорка «модель материала может зависеть от этого давления» неоднозначна и [1] непосредственно не поддержана: там подтверждено постоянство φ, а не противопоставленная зависимость модели. Независимый Sol High spot-check согласен."
+    },
+    {
+      "id": "followup-16-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Пропущен метод секущей. Newton/initial/modified ef7ac926 PDF24/303,c4484b43 PDF25/304; BFGSb1797c10 PDF27/306; default/line searchCHMed6975ce,arc lengtha45c6221 PDF29/308. Написанное поддержано своими цитатами."
+    },
+    {
+      "id": "followup-16-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Все выбранные условия/пределы c17ec9d2 PDF26/305,CHMed6975ce; силовой/перемещений и ограничение локальной жёсткости c4484b43 PDF25/304. Энергия/предыдущая итерация прямо в CHM."
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "asks_missing_conditions": true,
+      "notes": "Запрошены задача/модель и модуль; конкретные параметры и факты не выдуманы, источников нет."
+    },
+    {
+      "id": "refusal-discount",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Отказ от неподтверждённых цены/гарантированной скидки без чисел и источников. Предложено проверить коммерческое предложение; технических фактов о продукте нет."
+    },
+    {
+      "id": "refusal-sla",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Договор/приложения отсутствуют; индивидуальный SLA и срок не выдуманы. Предложено дать соответствующий пункт; внешних фактических утверждений нет."
+    }
+  ]
+}

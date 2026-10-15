@@ -1,0 +1,33 @@
+{
+  "run_id": "54e2a6fd5b9d4f44abc13be773c7cc99",
+  "status": "rejected_missing_self_weight_in_brief_24",
+  "collection": {
+    "completed": 43,
+    "expanded_completed": 5
+  },
+  "target_review": [
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Накопление результатов подтверждено Analysis Method PDF8/7 a4c208f5, начальный этап CHM3bb4697b. Собственный вес пропущен, хотя он есть в сохранённом CHM1831be10."
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Прямое накопление результатов a4c208f5; собственный вес CHM1831be10; изменения в начале этапа CHM7d225084; I.S. и обнуление CHM3bb4697b/670ea225."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Возврат без остаточных деформаций Materials PDF1/130 d8a74860; Elastic Mesh PDF7/6 7175e11c; Jardine/D-min explicit behavior CHM85184469. Elastic Link отдельно корректно ограничен типом элементов Materials PDF12/141 1ade2203."
+    }
+  ],
+  "review_scope": "Target acceptance only; this intermediate run has no aggregate quality score.",
+  "runtime_after_note": "Captured after pause and external update to gpt-6-luna; runtime_after.json is not proof that the old evaluated image remained deployed. Runtime_manifest records the actual pre-run image c590f0d7 and gpt-5.4-mini."
+}

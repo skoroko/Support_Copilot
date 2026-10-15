@@ -1,0 +1,16 @@
+{
+  "id": "followup-01-question",
+  "run_id": "875ada15dcac46858172a54ae320e819",
+  "run_original_sha256": "966418b904c206bde8f734016acc4019a468c38421af3c9a3b06e5e9093aeb9d",
+  "http_status": 200,
+  "message_id": "fa2c62ea-7797-4070-86e8-c0ac6fbb9601",
+  "persisted_identical": true,
+  "response_identical": true,
+  "sources_identical": true,
+  "backend_created_at": "2026-10-14T11:27:24.539580Z",
+  "original_status": "failed",
+  "original_error": {
+    "type": "PermissionError"
+  },
+  "reason": "Collector checkpoint write raised PermissionError after canonical completed response had already been observed; subsequent GET confirms exactly the same persisted message. Original raw collection artifact is retained. No request or model generation was repeated."
+}

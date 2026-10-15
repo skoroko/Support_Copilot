@@ -1,0 +1,50 @@
+{
+  "run_id": "6a21791010ee447e8218a6a6e3657861",
+  "baseline_run_id": "87dad8a9d1b245e382ce5c1dbd98655c",
+  "matched_golden_cited_fragment_grounding": {
+    "n": 32,
+    "current_sum": 28,
+    "baseline_sum": 16,
+    "current_full": 26,
+    "baseline_full": 14
+  },
+  "provenance_predicates": [
+    {
+      "id": "golden-01",
+      "passed": true,
+      "target": "Node PDF1/printed8"
+    },
+    {
+      "id": "golden-10",
+      "passed": false,
+      "target": "Materials PDF39/printed168"
+    },
+    {
+      "id": "golden-11",
+      "passed": true,
+      "target": "Materials PDF39/printed168"
+    },
+    {
+      "id": "golden-12",
+      "passed": false,
+      "target": "Materials PDF39/printed168"
+    },
+    {
+      "id": "golden-34",
+      "passed": true,
+      "target": "Elements PDF32/printed45"
+    }
+  ],
+  "denominator_note": "Baseline has32 applicable golden grounding scores (one failure and one canonical refusal excluded). Current has34 (no failure; free-form price refusal contains grounded licensing facts). Common golden cohort is32. Current33 technical answers excluding price have score29/33,27 full,4 partial,2 zero.",
+  "baseline_integrity": "All eight original JSON/CSV SHA-256 verified unchanged by aggregation.",
+  "runtime_stable": true,
+  "baseline_app_source_differences": [
+    "app/chat/agent.py",
+    "app/services/agent_persistent.py",
+    "bot/handlers/_common.py",
+    "bot/handlers/expansion.py"
+  ],
+  "app_image_bot_copy_note": "Two app-side bot-renderer files came from the baseline bot image used as the overlay base; they are not invoked by the measured backend. Actual separate bot image and BackendClient are unchanged.",
+  "local_runtime_files_match_evaluated_image": true,
+  "expanded_no_new_tools": true
+}

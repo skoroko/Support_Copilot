@@ -1,0 +1,23 @@
+{
+  "unit_and_integration": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m pytest tests -q --tb=short --basetemp=var/pytest-citation-verified-final",
+    "passed": 791,
+    "skipped": 11,
+    "seconds": 109.08
+  },
+  "latest_focused": {
+    "passed": 70,
+    "ruff": "PASS"
+  },
+  "live": {
+    "ordinary_completed": 43,
+    "ordinary_failed": 0,
+    "expanded_completed": 5
+  },
+  "pdf": {
+    "citations": 56,
+    "unique_chunks": 38,
+    "verified": 38
+  },
+  "review": "All 48 ID/mode pairs manually scored; remaining semantic failures retained."
+}

@@ -1,0 +1,19 @@
+{
+  "directory": "tests/eval/results/2026-10-15_telegram_agent_self_weight_fix",
+  "run_id": "66da79495f59428e9fa3c47894480594",
+  "files_sha256": {
+    "acceptance.json": "bf74eba59a823a298386bdcc199009add74cb615de48e01f6881a798704afe7e",
+    "baseline_manifest.json": "c8244e689ca742ad62b046f7802fc1efb41cde97595ac2912db5af814ba684e1",
+    "checkpoints.json": "96bc1c4f496ede4532d45dc42717edfa98e220f3507fc92bd761321b692472b9",
+    "intermediate_manifest.json": "561a0a31f22f8fdffac9dfea7776cdb4d56e7db6811fb4a9e46012689851b6b5",
+    "pdf_pages.json": "98fdbfceaf050a6375ec11cb4b7a2a8fe61ec2980d344d18fd56f345b511c768",
+    "preflight_notes.json": "a457f7fba1f8d5ad0b6461ba0e7ed4408d7832c837d5a1c22800b2284c0415c0",
+    "previous_run_manifest.json": "2d5808eab502ce420f31dadfe3846308ceb06d765706aa590994c5b4188eca13",
+    "run.json": "fff92c41d409a52eb6a7c6ba7078738ff6deaab629543b7ebea7ec68869e92cb",
+    "runtime_after.json": "ddc8e1d071fe36209dfdeb42c124541606ed5db60c64cfac964624c16a897049",
+    "runtime_manifest.json": "f9c1518d6e2e2be38622f537349d9bac109b4cfa209b0d88c86fff8dc5ca0e5c",
+    "targeted_probe.json": "01353e9c1a324e97a992e253c6f263cdb7c2a35aad436063b7577ed41afb47ca",
+    "targeted_probe_cold.json": "643e150c878ea9f816a177df23306060c5f8141905494ae234052838e822abc5",
+    "targeted_probe_cold_checkpoint.json": "aaaee394f6c15a881f0d444222220cd7715b7307c5470cdfe9560d95b1ed4899"
+  }
+}

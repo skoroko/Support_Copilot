@@ -1,0 +1,230 @@
+{
+  "run_id": "87dad8a9d1b245e382ce5c1dbd98655c",
+  "version": "deployed HEAD fbf5ef4; runtime fingerprints in runtime_manifest.json/runtime_after.json",
+  "collection": {
+    "golden": {
+      "planned": 34,
+      "completed": 33,
+      "failed": 1,
+      "other": 0
+    },
+    "followup_seed": {
+      "planned": 3,
+      "completed": 3,
+      "failed": 0,
+      "other": 0
+    },
+    "followup": {
+      "planned": 3,
+      "completed": 3,
+      "failed": 0,
+      "other": 0
+    },
+    "clarification": {
+      "planned": 1,
+      "completed": 1,
+      "failed": 0,
+      "other": 0
+    },
+    "refusal": {
+      "planned": 2,
+      "completed": 2,
+      "failed": 0,
+      "other": 0
+    }
+  },
+  "golden_correctness_and_completeness": {
+    "denominator": 34,
+    "sum": 29.0,
+    "mean": 0.8529411764705882,
+    "full": 25,
+    "partial": 8,
+    "zero": 1
+  },
+  "golden_cited_fragment_grounding": {
+    "denominator": 32,
+    "sum": 16.0,
+    "mean": 0.5,
+    "full": 14,
+    "partial": 4,
+    "zero": 14
+  },
+  "expanded_correctness_and_completeness": {
+    "denominator": 5,
+    "sum": 5,
+    "mean": 1,
+    "full": 5,
+    "partial": 0,
+    "zero": 0
+  },
+  "expanded_cited_fragment_grounding": {
+    "denominator": 5,
+    "sum": 1.5,
+    "mean": 0.3,
+    "full": 1,
+    "partial": 1,
+    "zero": 3
+  },
+  "followup_correctness_and_completeness": {
+    "denominator": 3,
+    "sum": 2.5,
+    "mean": 0.8333333333333334,
+    "full": 2,
+    "partial": 1,
+    "zero": 0
+  },
+  "followup_cited_fragment_grounding": {
+    "denominator": 3,
+    "sum": 1,
+    "mean": 0.3333333333333333,
+    "full": 1,
+    "partial": 0,
+    "zero": 2
+  },
+  "golden_structural_proxies": {
+    "documents": {
+      "denominator": 31,
+      "values": {
+        "hit_rate@5": 0.8064516129032258,
+        "mrr@10": 0.7741935483870968,
+        "recall@10": 0.618279569892473
+      }
+    },
+    "provenance": {
+      "denominator": 5,
+      "values": {
+        "citation_provenance_rate": 0.8
+      }
+    },
+    "answer_terms": {
+      "denominator": 6,
+      "values": {
+        "answer_evidence_rate": 1.0
+      }
+    },
+    "excluded_terms": {
+      "denominator": 5,
+      "values": {
+        "answer_focus_rate": 1.0
+      }
+    },
+    "abstention": {
+      "denominator": 1,
+      "values": {
+        "answer_abstention_rate": 1.0
+      }
+    },
+    "citation_count": {
+      "denominator": 2,
+      "values": {
+        "citation_focus_rate": 0.5
+      }
+    }
+  },
+  "golden_cited_answers": {
+    "denominator": 32,
+    "with_sources": 32
+  },
+  "refusals": {
+    "denominator": 3,
+    "correct": 3,
+    "ids": [
+      "golden-33",
+      "refusal-discount",
+      "refusal-sla"
+    ]
+  },
+  "clarification": {
+    "denominator": 1,
+    "asks_missing_conditions": 1
+  },
+  "fresh_search_after_followup": {
+    "denominator": 3,
+    "confirmed": 3
+  },
+  "expansion_contract": {
+    "denominator": 5,
+    "passed": 5
+  },
+  "timing": {
+    "golden_all_including_failure": {
+      "n": 34,
+      "mean_s": 9.554128535293891,
+      "median_s": 7.0700383500006865,
+      "p95_nearest_rank_s": 18.708210299999337,
+      "max_s": 61.4848159999965
+    },
+    "golden_successful": {
+      "n": 33,
+      "mean_s": 7.980471339393813,
+      "median_s": 6.959308799996506,
+      "p95_nearest_rank_s": 14.043796300000395,
+      "max_s": 18.708210299999337
+    },
+    "golden_first_content_successful": {
+      "n": 33,
+      "mean_s": 7.958414499998043,
+      "median_s": 6.941717499998049,
+      "p95_nearest_rank_s": 14.022790199989686,
+      "max_s": 18.67483020000509
+    },
+    "followup": {
+      "n": 3,
+      "mean_s": 6.106780066669065,
+      "median_s": 6.717258500008029,
+      "p95_nearest_rank_s": 7.673156299992115,
+      "max_s": 7.673156299992115
+    },
+    "expanded_confirmed_only": {
+      "n": 5,
+      "mean_s": 4.10316843999899,
+      "median_s": 4.27608140000666,
+      "p95_nearest_rank_s": 4.741801999989548,
+      "max_s": 4.741801999989548
+    }
+  },
+  "pdf_page_audit": {
+    "citations": 46,
+    "unique_chunks": 32,
+    "verified": 32
+  },
+  "checkpoints": {
+    "threads": 40,
+    "missing": 0,
+    "observed_tool_names": [
+      "search_knowledge_base"
+    ]
+  },
+  "failed_requests": [
+    {
+      "id": "golden-17",
+      "error": {
+        "type": "BackendStreamError"
+      },
+      "wall_latency_ms": 61484.8159999965
+    }
+  ],
+  "verification": {
+    "agent_regression": "74 passed",
+    "collector_and_export_guards": "11 passed",
+    "pdf_pages": "32/32 verified"
+  },
+  "artifact_sha256": {
+    "answers.csv": "2ce4db96b382a035dd0b02ee12b3f29a4595f381d90c6ccf09c85a39ba633288",
+    "checkpoints.json": "f1ab8fb29bbfe04765ef6a454e18782d1ccdc33753da95ec56a38028946dd608",
+    "pdf_pages.json": "c6cc7d155be89c2ae4491f7a9868f1bd76eddcedc9dc115cd4019fb40057e5d7",
+    "run.json": "c935d433c0c1a2df3c027d47ea5c43b70c52751d563caa180bdc533a5e043abe",
+    "runtime_after.json": "704c98522aa9c6a37b58b287ba8afd3c73fffd3a8f45c585f474a05f42cee070",
+    "runtime_manifest.json": "60ccd3fc2c3ea952475f1b65e36f9842ddb19511c63db299d5f788bd1194438f",
+    "semantic_review.json": "a674245d0d40ae817891b599447a138a96c2e9aad6d0187c7208824ea875201e"
+  },
+  "dataset_sha256": {
+    "golden_dataset.json": "8d3d6460fb0ad9c287c29889169e0cdba03ed8d055dd77588f4e79922063b345",
+    "retrieval_dataset.json": "c5d80ab99911b1bcdb91048ab992f23a99d69c949e863df72de9e4f9c9249671"
+  },
+  "expanded_detail_gain": {
+    "denominator": 5,
+    "substantive": 4,
+    "mostly_repetition": 1
+  }
+}

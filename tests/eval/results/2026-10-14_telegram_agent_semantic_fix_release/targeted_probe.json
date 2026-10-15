@@ -1,0 +1,237 @@
+{
+  "run_id": "2ccabc53dcd94ba8af19fa0e03bd8d74",
+  "purpose": "Targeted real Telegram backend probe before full evaluation, no Telegram sends",
+  "scenarios": [
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "conversation": "golden-31",
+      "golden_index": 31,
+      "question": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?",
+      "reference": "Упругий материал возвращается к исходной форме после снятия внешней нагрузки и не приобретает остаточных деформаций. В GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов.",
+      "reference_contexts": [
+        "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX. Глава 4. Материалы. Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе."
+      ],
+      "retrieval_binding": "unmatched",
+      "retrieval_contract": null,
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "question": "расскажи про модель харденинг соил"
+    }
+  ],
+  "results": [
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "owner": "eval-target-2ccabc53dcd94ba8af19fa0e03bd8d74-golden-31",
+      "chat_id": "e334d9d7-1fce-51f5-9a00-691d9b9a4d2e",
+      "status": "completed",
+      "response": "Упругое поведение материала означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не получает остаточных деформаций [4].\n\nВ GTS NX в главе о материалах прямо указано, что реализованы **линейно-упругие** и **нелинейно-упругие** модели материалов [4].\n\nИз явного описания моделей в мануале можно подтвердить:\n- **Linear elastic** — линейно-упругая модель, где напряжение прямо пропорционально деформации [2], [3].\n- **Nonlinear elastic** — в мануале отдельно показаны нелинейно-упругие модели, например Jardine; для неё прямо сказано, что она описывает нелинейно-упругое поведение [1], [3].\n\nЕсли нужен именно полный список доступных моделей в GTS NX, я могу отдельно собрать его по мануалу, но сейчас в найденных фрагментах явно подтверждены не все модели, а только часть и их классы поведения [3], [4].",
+      "ttft_ms": 11306.641499999387,
+      "sources": [
+        {
+          "id": "7f645ff9-8b4b-4a75-8ca2-0f80ddc2096f",
+          "chunk_id": "7f645ff9-8b4b-4a75-8ca2-0f80ddc2096f",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_12",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 13,
+          "printed_page": 142,
+          "score": 0.0,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 142 1.7 Модель Jardine Модель Jardine1 используется для описания нелинейного поведения глин при малых деформациях. Модель Jardine является нелинейно-упругой моделью, которая описывает поведение материала при малых деформациях, в отличие от модели Треска, которая используется в расчетах с учетом пластического поведения материала, когда напряжения в материале превышают заданную сдвиговую прочность материала. В последнем случае поведение материала полностью пластичное, упрочнение при этом не учитывается. Нелинейно-упругое поведение (Nonlinear elastic behavior) Модель Jardine описывается нелинейным уравнением, основанным на соотношении между с",
+          "confident": true
+        },
+        {
+          "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 7,
+          "printed_page": 6,
+          "score": 0.63104033,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher st",
+          "confident": true
+        },
+        {
+          "id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "chunk_id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_256",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.65218073,
+          "snippet": "Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа мо",
+          "confident": true
+        },
+        {
+          "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": 130,
+          "score": 0.72145116,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента.",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "542043d8-e69e-4306-96f1-f1d3a43aaab3",
+      "approval": null,
+      "persisted": {
+        "id": "542043d8-e69e-4306-96f1-f1d3a43aaab3",
+        "chat_id": "e334d9d7-1fce-51f5-9a00-691d9b9a4d2e",
+        "role": "assistant",
+        "content": "Упругое поведение материала означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не получает остаточных деформаций [4].\n\nВ GTS NX в главе о материалах прямо указано, что реализованы **линейно-упругие** и **нелинейно-упругие** модели материалов [4].\n\nИз явного описания моделей в мануале можно подтвердить:\n- **Linear elastic** — линейно-упругая модель, где напряжение прямо пропорционально деформации [2], [3].\n- **Nonlinear elastic** — в мануале отдельно показаны нелинейно-упругие модели, например Jardine; для неё прямо сказано, что она описывает нелинейно-упругое поведение [1], [3].\n\nЕсли нужен именно полный список доступных моделей в GTS NX, я могу отдельно собрать его по мануалу, но сейчас в найденных фрагментах явно подтверждены не все модели, а только часть и их классы поведения [3], [4].",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "7f645ff9-8b4b-4a75-8ca2-0f80ddc2096f",
+            "page": 13,
+            "score": 0.0,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 142 1.7 Модель Jardine Модель Jardine1 используется для описания нелинейного поведения глин при малых деформациях. Модель Jardine является нелинейно-упругой моделью, которая описывает поведение материала при малых деформациях, в отличие от модели Треска, которая используется в расчетах с учетом пластического поведения материала, когда напряжения в материале превышают заданную сдвиговую прочность материала. В последнем случае поведение материала полностью пластичное, упрочнение при этом не учитывается. Нелинейно-упругое поведение (Nonlinear elastic behavior) Модель Jardine описывается нелинейным уравнением, основанным на соотношении между с",
+            "chunk_id": "7f645ff9-8b4b-4a75-8ca2-0f80ddc2096f",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_12",
+            "printed_page": 142
+          },
+          {
+            "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "page": 7,
+            "score": 0.63104033,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher st",
+            "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "confident": true,
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+            "printed_page": 6
+          },
+          {
+            "id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+            "page": null,
+            "score": 0.65218073,
+            "snippet": "Material Home > GTS NX > Mesh > Property,Coordinate,Function > Material > Material Material (Материал) - Обзор Задание общей жесткости и нелинейных свойств материалов сооружения и основания. Для материалов основания дополнительно могут быть заданы свойства водопроницаемости и условия дренированного/недренированного состояния. - Методология Create (Создать) Добавить материал сооружения или основанияДля выбора доступно 4 типа материала, при этом для каждого типа материала может быть указан тип модели. Типы модели, которые можно указать для каждого типа материала, представлены ниже. Свойства материала сооружения/основания и свойства поведения материала должны быть определены для каждого типа мо",
+            "chunk_id": "85184469-132d-41a9-9396-2d18a0ccfcc4",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_256",
+            "printed_page": null
+          },
+          {
+            "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "page": 1,
+            "score": 0.72145116,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента.",
+            "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+            "printed_page": 130
+          }
+        ],
+        "tokens": 237,
+        "latency_ms": 7948.21,
+        "created_at": "2026-10-14T17:03:46.447375Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 11328.621499999826
+    },
+    {
+      "id": "smoke-hardening",
+      "group": "smoke",
+      "owner": "eval-target-2ccabc53dcd94ba8af19fa0e03bd8d74-smoke-hardening",
+      "chat_id": "89617329-dddc-5c1f-8f35-5adb05117d2d",
+      "status": "completed",
+      "response": "Модель Hardening Soil в MIDAS описана как модификация модели Мора — Кулона с нелинейно-упругим поведением и учетом упрочнения грунта. [2]\n\n- **E50ref** — секущая жесткость по результатам стандартных дренированных трехосных испытаний. [1]\n- **Eoedref** — касательная жесткость при основном нагружении в одометре. [1]\n- **Eurref** — жесткость при нагружении и разгрузке. [1]\n- **m** — показатель степени, задающий зависимость жесткости от уровня напряжений; для жестких грунтов указан 0,5, для мягких — 1. [1]\n\nПояснение: в мануале сказано, что модель использует зависимости модулей деформации от напряжения, поэтому её поведение относится к нелинейно-упругому. [2]\n\nЕсли хотите, я могу отдельно кратко разобрать параметры модели или пояснить, чем Hardening Soil отличается от Hardening Soil with small strain stiffness.",
+      "ttft_ms": 5642.890000000079,
+      "sources": [
+        {
+          "id": "0dfdde68-a0be-4145-ba0e-ea0a643f4de6",
+          "chunk_id": "0dfdde68-a0be-4145-ba0e-ea0a643f4de6",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_138",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.6096285,
+          "snippet": "Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для ",
+          "confident": true
+        },
+        {
+          "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 74,
+          "printed_page": 203,
+          "score": 0.6831897,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "a4da95b6-73f7-4650-bbe2-62d4d254bf6e",
+      "approval": null,
+      "persisted": {
+        "id": "a4da95b6-73f7-4650-bbe2-62d4d254bf6e",
+        "chat_id": "89617329-dddc-5c1f-8f35-5adb05117d2d",
+        "role": "assistant",
+        "content": "Модель Hardening Soil в MIDAS описана как модификация модели Мора — Кулона с нелинейно-упругим поведением и учетом упрочнения грунта. [2]\n\n- **E50ref** — секущая жесткость по результатам стандартных дренированных трехосных испытаний. [1]\n- **Eoedref** — касательная жесткость при основном нагружении в одометре. [1]\n- **Eurref** — жесткость при нагружении и разгрузке. [1]\n- **m** — показатель степени, задающий зависимость жесткости от уровня напряжений; для жестких грунтов указан 0,5, для мягких — 1. [1]\n\nПояснение: в мануале сказано, что модель использует зависимости модулей деформации от напряжения, поэтому её поведение относится к нелинейно-упругому. [2]\n\nЕсли хотите, я могу отдельно кратко разобрать параметры модели или пояснить, чем Hardening Soil отличается от Hardening Soil with small strain stiffness.",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "0dfdde68-a0be-4145-ba0e-ea0a643f4de6",
+            "page": null,
+            "score": 0.6096285,
+            "snippet": "Column 1=Параметр | Column 2=Описание | Column 3=Рекомендуемое значение (кН, м)\nColumn 1=Параметры жесткости и разрушения грунта | Column 2=Параметры жесткости и разрушения грунта | Column 3=Параметры жесткости и разрушения грунта\nColumn 1=E50ref | Column 2=Секущая жесткость по результатам стандартных дренированных трехосных испытаний | Column 3=Ei x (2 – Rf) /2 (Ei = начальная жесткость)\nColumn 1=Eoedref | Column 2=Касательная жесткость при основном нагружении в одометре | Column 3=E50ref\nColumn 1=Eurref | Column 2=Жесткость при нагружении / разгрузке | Column 3=3 x E50ref\nColumn 1=m | Column 2=Показатель степени в зависимости жесткости от уровня напряжений | Column 3=0.5 ≤ m ≤ 1 ( 0.5 для ",
+            "chunk_id": "0dfdde68-a0be-4145-ba0e-ea0a643f4de6",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_138",
+            "printed_page": null
+          },
+          {
+            "id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "page": 74,
+            "score": 0.6831897,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 203 2.19 Модель упрочняющегося грунта при малых деформациях (Hardening Soil with small strain stiffness) Модель Hardening Soil with small strain stiffness представляет собой модификацию модели Модифицированного Мора-Кулона, которая учитывает повышенную жесткость грунта при малых деформациях. Это поведение описывается в этой модели с помощью дополнительного параметра истории деформации и двух дополнительных параметров материала. Поскольку знак для напряжений и деформаций показывает, что сжатие является отрицательным, а растяжение положительным, предполагается, что соответствует главным напряжениям, а - главным деформациям. Например, соотнош",
+            "chunk_id": "5ec63f36-291b-4a4f-9b01-7937898658d9",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_73",
+            "printed_page": 203
+          }
+        ],
+        "tokens": 242,
+        "latency_ms": 5612.17,
+        "created_at": "2026-10-14T17:03:52.138137Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5658.144500000162
+    }
+  ]
+}

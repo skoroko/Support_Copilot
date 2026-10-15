@@ -36,6 +36,16 @@ class ChatAgent:
             config = self.config(chat)
             response_tokens = getattr(self.settings, "chat_expanded_response_tokens", 1500) if expanded else getattr(self.settings, "chat_response_tokens", 500)
             config["configurable"].update(response_tokens=response_tokens, expanded_mode=expanded)
+            reasoning_reserve = 0
+            if self.settings is not None:
+                model = getattr(self.settings, "default_model", "")
+                effort = getattr(self.settings, "agent_reasoning_effort", None)
+                if expanded:
+                    effort = getattr(self.settings, "agent_expanded_reasoning_effort", None) or effort
+                if effort is None:
+                    effort = "low" if model.startswith("gpt-6") else "none"
+                if effort != "none":
+                    reasoning_reserve = getattr(self.settings, "agent_reasoning_token_reserve", 8192)
             if self.settings is not None:
                 config["configurable"].update(
                     {
@@ -43,6 +53,7 @@ class ChatAgent:
                             1,
                             self.settings.chat_model_context_tokens
                             - response_tokens
+                            - reasoning_reserve
                             - self.settings.chat_safety_margin_tokens,
                         ),
                         "history_window": self.settings.chat_context_window,
@@ -133,7 +144,7 @@ class ChatAgent:
         snapshot = await self.graph.aget_state(self.config(chat))
         latest = next((item for item in reversed(snapshot.values.get("messages", []))
                        if isinstance(item, AIMessage)), None)
-        update = {"sources": [], "answer_evidence": [], "knowledge_status": "unused",
+        update = {"sources": [], "answer_evidence": [], "citation_evidence": [], "knowledge_status": "unused",
                   "answer_incomplete": False, "telegram_draft": None}
         if latest is not None:
             update["messages"] = [latest.model_copy(update={"content": replacement,

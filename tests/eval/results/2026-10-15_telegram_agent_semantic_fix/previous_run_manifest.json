@@ -1,0 +1,24 @@
+{
+  "previous_run_id": "56b4dcb869774f92b3d85dbc99d54916",
+  "previous_directory": "tests/eval/results/2026-10-14_telegram_agent_semantic_fix_release",
+  "files_sha256": {
+    "answers.csv": "070a6aa0b8098523bebee1775e6364090fd7a83bbd23e2d7aed795afdcb81d09",
+    "baseline_manifest.json": "c8244e689ca742ad62b046f7802fc1efb41cde97595ac2912db5af814ba684e1",
+    "checkpoints.json": "c524436663dbbae38b357c883ca6dba1d67e8ee02c633c4480c6241c44851f9f",
+    "comparison.json": "95e57c99d5bcd3c43b932133c6fbe828b128ddd7b7d0e551b4b64c5a2d7f7370",
+    "generation_availability.json": "ea7825a7c2407c438ac194977a81d702cfea302072709682898194b7b680ca29",
+    "initial_auth_failure.json": "ce25b701d7502526c23c8b30090e346121cb99e253fc8877bd4d4392e2d021da",
+    "pdf_pages.json": "8906cbf70aa1639809520ca0a0d862f752496cd63f17cdd8824607c1619d7a2e",
+    "provider_failure.json": "795926886b383df8c46ed1e5a8f4f886e4aec21914395a42600ff7099e2e57df",
+    "run.json": "e55d90aed99866f695492563174c2664e17097b2d125d87160d914457a41e95e",
+    "runtime_after.json": "6143e1fb63c1aead0a3b9a5134ff510b1386b1a264c6f7551f4eb23b15e45a98",
+    "runtime_manifest.json": "12dd4f6da58345be2085a0e63a726efd89c72e97620033040da8c0cbf1795954",
+    "semantic_review.json": "a4230019a5ce2c013055c362900ea780e1d4796a91d2ce24e1db5e4219b768dc",
+    "summary.json": "d7fb61962b92336f7cf743b4dfbf120d5a036bf6e1553b11d7b095b621f2022d",
+    "targeted_probe.json": "41492a58211f06df6ae053fa5eac8fc37ab072f5a8abfc6ddf548d642e7a04af",
+    "telegram_prior_auth_recovery.json": "6cd04a45b04b870b7c334fcd1b89af5d5a9587cb0789bdc7dcb7b74417c67003",
+    "telegram_recovery.json": "17d6ead651862629d4b89970240142c52c4f0bbcdcbc03a40a7a4754d0c39a7c",
+    "verification.json": "ccb07094035d7f362722f53d713b75618cfc1bc5a4d8a5d004fe4672603cff89"
+  },
+  "historical_report_sha256": "cd7c42a6412cf3454b69b72ecd1704308a0b93d809157bbdfef17b6882d9bb1a"
+}

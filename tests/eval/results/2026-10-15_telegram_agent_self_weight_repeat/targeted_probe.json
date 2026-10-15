@@ -1,0 +1,304 @@
+{
+  "run_id": "cc8b05f182f2417fa7095370b6e99dc0",
+  "purpose": "Targeted real Telegram backend probe before full evaluation, no Telegram sends",
+  "scenarios": [
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "conversation": "golden-24",
+      "golden_index": 24,
+      "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+      "reference": "Расчёт стадий строительства является накопительным, потому что на каждом этапе учитываются результаты нелинейного расчёта напряжений, полученные на предыдущем этапе, а изменения нагрузок и граничных условий вводятся в начале каждого этапа.\n\nОн начинается с естественного напряжённого состояния грунта: первый этап используется для вычисления естественных напряжений в слоях грунта, и в GTS NX для этого выполняется расчёт на действие собственного веса.",
+      "reference_contexts": [
+        "1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го этапа 4 Этап: Армирование обделки 2-го этапа + выемка 3-го этапа 5 Этап: Армирование обделки 3-го этапа + выемка 4-го этапа …… (Повтор) …… Первый этап используется для вычисления естественных напряжений в слоях грунта. Так как расчет напряженного состояния основания предполагает, что естественное напряженное состояние является начальным состоянием, то необходимо выполнить расчет естественного напряженного состояния. В GTS NX используется расчет на действие собственного веса для вычисления естественного напряженного состояния. Activate / Deactivate element (Активация/деактив",
+        "Часть STG #3 STG #4 STG #5 STG #6 Верхняя 0.3 0.4 0.3 - Нижняя - - 0.5 0.5 STG #3 STG #4 STG #5 STG #6 Необходимо следить, чтобы не случалось наложения значений LDF по этапам строительства, как показано ниже. Часть STG #3 STG #4 STG #5 STG #6 STG #7 Верхняя 0.3 0.4 0.3 - - Нижняя - - - 0.5 0.5 Clear Displacement (Чистое перемещение) Задайте перемещения в результатах расчета для текущего этапа равными 0. Данная функция используется для задания начальных условий естественного напряженного состояния основания. Напряжения при этом не обнуляются. Slope Stability (SRM/SAM) (Устойчивость откоса (Метод конечных элементов/ Метод редукции)) Укажите, следует ли выполнять расчет устойчивости откоса (мет",
+        "Construction Stage Analysis Home > GTS NX > Analysis > Analysis Case > General > Construction Stage Analysis Solution Type (Тип решения) - Construction Stage Analysis (Расчет поэтапности строительства) Расчет поэтапности строительства может быть использован для моделирования процесса возведения основания с использованием численного расчета. Расчет поэтапности строительства состоит из набора этапов, при этом условия нагружения и граничных условия, также как и отдельные элементы могут быть убраны или добавлены на любом из этапов. Такие изменения граничных условий или условий нагружения учитываются в начале каждого этапа. В GTS NX могут быть использованы следующие расчетные функции при выполнен"
+      ],
+      "retrieval_binding": "normalized_question",
+      "retrieval_contract": {
+        "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+        "relevant_doc_ids": [
+          "05_User Manual_Chapter5_Analysis Method.pdf",
+          "GTS_NX 2021.chm"
+        ],
+        "history": [],
+        "relevant_evidence": [],
+        "expected_answer_contains_all": [],
+        "expected_answer_excludes_all": [],
+        "expected_no_answer": false,
+        "max_cited_sources": null
+      },
+      "expected_behavior": "answer_or_documented_abstention"
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "conversation": "golden-31",
+      "golden_index": 31,
+      "question": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?",
+      "reference": "Упругий материал возвращается к исходной форме после снятия внешней нагрузки и не приобретает остаточных деформаций. В GTS NX реализованы линейно-упругие и нелинейно-упругие модели материалов.",
+      "reference_contexts": [
+        "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX. Глава 4. Материалы. Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе."
+      ],
+      "retrieval_binding": "unmatched",
+      "retrieval_contract": null,
+      "expected_behavior": "answer_or_documented_abstention"
+    }
+  ],
+  "results": [
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "owner": "eval-target-cc8b05f182f2417fa7095370b6e99dc0-golden-24",
+      "chat_id": "eb4dba11-cfd5-56f5-b426-bed8cc0536e1",
+      "status": "completed",
+      "response": "- Расчёт накопительный, потому что MIDAS GTS NX не строит отдельную модель для каждого этапа: изменения конструкции и нагрузки вводятся поэтапно, а результаты следующего этапа учитывают результаты предыдущего. [1]\n- Поэтому история строительства влияет на последующие результаты; например, нагрузка сохраняется на следующих этапах, пока её не удалят. [1]\n- Расчёт начинается с начальных условий грунта до строительства: на первом этапе вычисляют естественные напряжения, используя расчёт под действием собственного веса. [1][2]",
+      "ttft_ms": 16899.411999998847,
+      "sources": [
+        {
+          "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 8,
+          "printed_page": 7,
+          "score": 0.6760409,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+          "confident": true
+        },
+        {
+          "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+          "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "score": 0.5878887,
+          "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "0026da9a-7945-41d3-8ff1-2c3536d63d35",
+      "approval": null,
+      "persisted": {
+        "id": "0026da9a-7945-41d3-8ff1-2c3536d63d35",
+        "chat_id": "eb4dba11-cfd5-56f5-b426-bed8cc0536e1",
+        "role": "assistant",
+        "content": "- Расчёт накопительный, потому что MIDAS GTS NX не строит отдельную модель для каждого этапа: изменения конструкции и нагрузки вводятся поэтапно, а результаты следующего этапа учитывают результаты предыдущего. [1]\n- Поэтому история строительства влияет на последующие результаты; например, нагрузка сохраняется на следующих этапах, пока её не удалят. [1]\n- Расчёт начинается с начальных условий грунта до строительства: на первом этапе вычисляют естественные напряжения, используя расчёт под действием собственного веса. [1][2]",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "page": 8,
+            "score": 0.6760409,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+            "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+            "confident": true,
+            "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+            "printed_page": 7
+          },
+          {
+            "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+            "page": null,
+            "score": 0.5878887,
+            "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+            "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+            "confident": true,
+            "file_name": "GTS_NX 2021.chm",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+            "printed_page": null
+          }
+        ],
+        "tokens": 126,
+        "latency_ms": 13266.38,
+        "created_at": "2026-10-15T10:40:00.841034Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 16914.42359999928,
+      "expansion": {
+        "status": "completed",
+        "preview": {
+          "available": true,
+          "max_output_tokens": 1500
+        },
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "result": {
+          "answer": "Расчёт стадий строительства является накопительным, потому что MIDAS GTS NX не создаёт отдельную независимую расчётную модель для каждого этапа. На каждом этапе задаются изменения конструкции и нагрузок, а результаты расчёта предыдущих этапов учитываются в следующих. Поэтому история строительства влияет на последующие результаты. [1]\n\nНапример, если нагрузку приложили на одном этапе, она продолжит действовать на следующих этапах, пока её не удалят. Это относится именно к нагрузке: само по себе сохранение нагрузки не означает, что сохраняются любые результаты или всё состояние модели. [1]\n\n**Исходное состояние грунта** — это состояние площадки до начала строительства, то есть начальные условия грунта на месте. При стадийном расчёте сначала получают начальные напряжения, а затем последовательно рассчитывают строительные операции. [1]\n\n**Способ получения начальных напряжений** — расчёт на действие собственного веса. В GTS NX его используют для вычисления естественного напряжённого состояния грунта на первом этапе. [2]\n\nЕсть важная оговорка по активируемым элементам: их естественные напряжения по умолчанию равны нулю; если для элемента заданы преднапряжения, они принимаются за естественные напряжения. При заданной нагрузке от собственного веса на активированный элемент действует объёмная сила собственного веса. [2]",
+          "sources": [
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.6760409,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "page": null,
+              "score": 0.5878887,
+              "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+              "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+              "printed_page": null
+            }
+          ],
+          "message_id": "cd1e6951-f832-4295-b3fe-776810040f80",
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          }
+        },
+        "confirmed_latency_ms": 6970.087800000329,
+        "persisted": {
+          "id": "cd1e6951-f832-4295-b3fe-776810040f80",
+          "chat_id": "eb4dba11-cfd5-56f5-b426-bed8cc0536e1",
+          "role": "assistant",
+          "content": "Расчёт стадий строительства является накопительным, потому что MIDAS GTS NX не создаёт отдельную независимую расчётную модель для каждого этапа. На каждом этапе задаются изменения конструкции и нагрузок, а результаты расчёта предыдущих этапов учитываются в следующих. Поэтому история строительства влияет на последующие результаты. [1]\n\nНапример, если нагрузку приложили на одном этапе, она продолжит действовать на следующих этапах, пока её не удалят. Это относится именно к нагрузке: само по себе сохранение нагрузки не означает, что сохраняются любые результаты или всё состояние модели. [1]\n\n**Исходное состояние грунта** — это состояние площадки до начала строительства, то есть начальные условия грунта на месте. При стадийном расчёте сначала получают начальные напряжения, а затем последовательно рассчитывают строительные операции. [1]\n\n**Способ получения начальных напряжений** — расчёт на действие собственного веса. В GTS NX его используют для вычисления естественного напряжённого состояния грунта на первом этапе. [2]\n\nЕсть важная оговорка по активируемым элементам: их естественные напряжения по умолчанию равны нулю; если для элемента заданы преднапряжения, они принимаются за естественные напряжения. При заданной нагрузке от собственного веса на активированный элемент действует объёмная сила собственного веса. [2]",
+          "media_refs": {
+            "answer": {
+              "mode": "expanded",
+              "expandable": false,
+              "incomplete": false
+            }
+          },
+          "rag_sources": [
+            {
+              "id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "page": 8,
+              "score": 0.6760409,
+              "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 5. Analysis Method | 7 Section 2. Construction Stage Most numerical analysis for ground over the entire construction process is done through construction stage analysis. Ground analysis is normally material non-linear analysis and the material non-linear properties can be obtained from the initial conditions within the ground. Here, the initial conditions are the in-situ conditions of the site before construction. After the initial stresses have been obtained from the initial conditions, the excavation loading and Shear strength from applying material properties can also be obtained. Hence, construction stage analysis inclu",
+              "chunk_id": "a4c208f5-93ad-457b-a355-ddae5c7a27fd",
+              "confident": true,
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_7",
+              "printed_page": 7
+            },
+            {
+              "id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "page": null,
+              "score": 0.5878887,
+              "snippet": "При выполнении расчета с учетом поэтапности строительства могут быть использованы следующие расчетные функции. Добавление/удаление элемента Добавление/удаление собственного веса Изменение граничных условий Изменение свойств скальных материалов Определение коэффициента распределения нагрузки Пошаговое определение уровня грунтовых вод Расчет для дренированных и недренированных условий Инициализация перемещений Расчет напряженного состояния для начального этапа строительства (Учет условия К0) Рестарт Например, расчет поэтапности строительства туннеля включает следующие этапы. 1 Этап: Начальные напряжения в основании 2 Этап: Выемка 1-го этапа 3 Этап: Армирование обделки 1-го этапа + выемка 2-го ",
+              "chunk_id": "1831be10-2b8d-41a7-80d0-233310517b59",
+              "confident": true,
+              "file_name": "GTS_NX 2021.chm",
+              "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_15",
+              "printed_page": null
+            }
+          ],
+          "tokens": 301,
+          "latency_ms": 6924.2,
+          "created_at": "2026-10-15T10:40:07.890847Z"
+        },
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "replay_message_id": "cd1e6951-f832-4295-b3fe-776810040f80",
+        "wall_latency_ms": 7077.917999995407
+      }
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "owner": "eval-target-cc8b05f182f2417fa7095370b6e99dc0-golden-31",
+      "chat_id": "196b7a53-1cff-5424-92ca-58e16fded3f1",
+      "status": "completed",
+      "response": "- Упругое поведение означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не сохраняет остаточную деформацию. [2]\n- В GTS NX доступны модели **линейной упругости** и **нелинейной упругости**. [2]\n- Для линейно-упругой модели напряжение прямо пропорционально деформации; пропорциональность задают модуль упругости и коэффициент Пуассона. [1]",
+      "ttft_ms": 29369.47259999579,
+      "sources": [
+        {
+          "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 7,
+          "printed_page": 6,
+          "score": 0.63488257,
+          "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher st",
+          "confident": true
+        },
+        {
+          "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+          "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": 130,
+          "score": 0.7261449,
+          "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента.",
+          "confident": true
+        }
+      ],
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "message_id": "471dadf2-2b4c-4817-b00c-853a44da7948",
+      "approval": null,
+      "persisted": {
+        "id": "471dadf2-2b4c-4817-b00c-853a44da7948",
+        "chat_id": "196b7a53-1cff-5424-92ca-58e16fded3f1",
+        "role": "assistant",
+        "content": "- Упругое поведение означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не сохраняет остаточную деформацию. [2]\n- В GTS NX доступны модели **линейной упругости** и **нелинейной упругости**. [2]\n- Для линейно-упругой модели напряжение прямо пропорционально деформации; пропорциональность задают модуль упругости и коэффициент Пуассона. [1]",
+        "media_refs": {
+          "answer": {
+            "mode": "brief",
+            "expandable": true,
+            "incomplete": false
+          }
+        },
+        "rag_sources": [
+          {
+            "id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "page": 7,
+            "score": 0.63488257,
+            "snippet": "GeoTechnical analysis System with New eXperience User Manual Chapter 4. Mesh | 6 1.2 General Material(Behavioral Properties) ELASTIC A linear elastic model where the stress is directly proportional to strain. The proportionality constants are the Elasticity modulus ( E ) and Poisson’s ratio (). Figure. Linear elastic-stress strain behavior   Since the yield value is not defined, the calculated stress and strain of the linear elastic model can be highly unrealistic. Hence, it is recommended that the Mohr-Coulomb or other nonlinear material models be used for general analysis. However, this model is appropriate in modeling concrete or structural steel structures, which have a much higher st",
+            "chunk_id": "7175e11c-1b0d-413f-8baa-d6da32675492",
+            "confident": true,
+            "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_6",
+            "printed_page": 6
+          },
+          {
+            "id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "page": 1,
+            "score": 0.7261449,
+            "snippet": "ПОСОБИЕ ПО РАСЧЕТАМ. Midas GTS NX Глава 4. Материалы 130 Глава 4. Материалы (Materials) Раздел 1. Моделирование (свойства) упругих материалов (Elastic Material Properties) Упругие материалы имеют свойство возвращаться к своей исходной форме после удаления внешней нагрузки, при этом материал не приобретает остаточных деформаций. В GTS NX реализованы различные линейно-упругие и нелинейно-упругие модели материалов. Свойства каждой доступной модели материала рассмотрены в данной главе. В таблице 4.1.1 перечислены модели материалов, которые могут быть использованы для каждого типа конечного элемента.",
+            "chunk_id": "d8a74860-9ce1-4b15-81ca-047ab5b22385",
+            "confident": true,
+            "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+            "document_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_0",
+            "printed_page": 130
+          }
+        ],
+        "tokens": 115,
+        "latency_ms": 29349.07,
+        "created_at": "2026-10-15T10:40:37.321307Z"
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 29383.92730000487
+    }
+  ]
+}

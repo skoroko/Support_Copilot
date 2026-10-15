@@ -1,0 +1,114 @@
+{
+  "run_id": "73997106733b4860805e1c80f4ec91ba",
+  "status": "local_checks_passed_evaluation_has_collection_failures",
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m pytest tests --basetemp=var/pytest-self-weight-repeat -q",
+    "passed": 847,
+    "skipped": 11,
+    "warnings": 135,
+    "duration_s": 235.55
+  },
+  "summary_tests": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m pytest tests/unit/test_telegram_evaluation_summary.py tests/unit/test_telegram_agent_evaluation.py -q --basetemp=var/pytest-self-weight-summary",
+    "passed": 35,
+    "duration_s": 11.77
+  },
+  "whitespace": "git diff --check passed",
+  "lint": "prompt module, aggregator and aggregator tests passed; no configured whole-project quality commands",
+  "evaluation_tools_sha256_at_summary_creation": {
+    "scripts/evaluate_telegram_agent.py": "71665e4d4fd2148256b5ac70f01c5366087759ce9cddc31fc9836144779adc87",
+    "scripts/export_agent_eval_evidence.py": "bcb058ab3e29b53ac1cf78260e8cf17cc8488c0f2e42a47d67a8292b2b8c7924",
+    "scripts/summarize_telegram_evaluation.py": "4c32478e413712c3ef4aa9ed911d021972ecad6c228344021c7555b7c9beb69e",
+    "tests/unit/test_telegram_evaluation_summary.py": "3d0e08684a274eb82b05c1c0cfbde21bfcd6a2d0596a845f3500a9a01dd39410"
+  },
+  "runtime_before_after_identical": [
+    "config",
+    "docstore",
+    "source_files_sha256_lf",
+    "corpus_files_sha256",
+    "qdrant"
+  ],
+  "local_code_matches_image": true,
+  "python_files": 105,
+  "current_corpus_files_before_after": 70,
+  "baseline_unchanged_artifacts": 12,
+  "original_baseline_unchanged_artifacts": 8,
+  "previous_run_unchanged_artifacts": 17,
+  "intermediate_unchanged_artifacts": 11,
+  "self_weight_attempt_unchanged_artifacts": 13,
+  "baseline_same": [
+    "dataset_sha256",
+    "docstore",
+    "retrieval_config_except_runtime_model"
+  ],
+  "comparison_limit": "Runtime model and Responses adapter changed externally during pause. Same benchmark and frozen retrieval; comparison is observational, not a controlled prompt-only experiment.",
+  "baseline_corpus_hash_comparison": "Full baseline corpus hashes absent; frozen docstore matches. Current corpus hashes unchanged before/after.",
+  "runtime_files_changed_from_baseline": [
+    "app/chat/agent.py",
+    "app/chat/routes.py",
+    "app/chat/service.py",
+    "app/core/config.py",
+    "app/services/agent_persistent.py",
+    "app/services/chm_reader.py",
+    "app/services/evidence_text.py",
+    "app/services/ingestion.py",
+    "app/services/llm.py",
+    "app/services/rag.py",
+    "app/services/runtime_model.py"
+  ],
+  "preexisting_changes": "User changes to Responses/model adapter/configuration included; ingestion.py also preexisting. Frozen index not rebuilt.",
+  "docker": {
+    "app": {
+      "image": "sha256:4639e96b24b2d4253219cb379d1e2427054c4f87892b14406dc466808a3081ec",
+      "status": "running",
+      "health": "healthy"
+    },
+    "bot": {
+      "image": "sha256:4639e96b24b2d4253219cb379d1e2427054c4f87892b14406dc466808a3081ec",
+      "status": "running",
+      "health": "not_configured"
+    }
+  },
+  "telegram_smoke": {
+    "completed": 3,
+    "failed": 0,
+    "after_clear": true,
+    "expanded_completed": 1,
+    "real_telegram_delivery_tested": false
+  },
+  "collection": {
+    "completed": 42,
+    "failed": 1,
+    "expanded_completed": 5
+  },
+  "checkpoints": {
+    "exported": 40,
+    "missing": 0
+  },
+  "target_acceptance": [
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1
+    }
+  ],
+  "pdf": {
+    "citations": 60,
+    "unique_chunks": 39,
+    "needs_review": 0
+  },
+  "timing_limit": "One network run, no simultaneous local pytest during evaluation. Not a controlled performance benchmark."
+}
