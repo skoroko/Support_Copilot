@@ -199,7 +199,7 @@ async def test_confirm_shows_status_and_typing_then_drains_before_new_answer(gro
         assert delivered == [{"text": UNAVAILABLE, "markup": None}]
         assert not any(isinstance(method, EditMessageReplyMarkup) for method in h.methods)
     else:
-        assert "".join(item["text"] for item in delivered) == answer + "\n\nИсточники:\n[1] Manual.pdf, PDF стр. 2"
+        assert "".join(item["text"] for item in delivered) == answer
         assert len(delivered) > 1
         assert all(item["markup"] is None for item in delivered[:-1])
         buttons = [b for row in delivered[-1]["markup"].inline_keyboard for b in row]

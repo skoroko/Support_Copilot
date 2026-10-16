@@ -17,7 +17,7 @@ from bot.handlers._common import (
     source_document_count,
     stream_to_chat,
 )
-from bot.keyboards.inline import approval_kb
+from bot.keyboards.inline import answer_kb, approval_kb
 from bot.services.backend_client import StreamReplace
 
 
@@ -88,6 +88,35 @@ async def test_stream_to_chat_shows_only_sources_cited_with_original_numbers() -
     assert "Источники:\n[2] manual-2.pdf, PDF стр. 2\n[7] manual-7.pdf, PDF стр. 7" in final_text
     assert "[1] manual-1.pdf" not in final_text
     assert "[10] manual-10.pdf" not in final_text
+
+
+@pytest.mark.asyncio
+async def test_documents_button_replaces_duplicate_bibliography_in_answer() -> None:
+    from uuid import uuid4
+
+    editable = SimpleNamespace(edit_text=AsyncMock())
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=SimpleNamespace(send_chat_action=AsyncMock()),
+        answer=AsyncMock(return_value=editable),
+    )
+    sources = [{"file_name": "Manual.pdf", "page": 7}]
+    markup = answer_kb(uuid4(), uuid4(), 1, expandable=True)
+
+    async def cited_stream():
+        yield "Подтверждённый факт [1]."
+
+    result = await stream_to_chat(
+        message, cited_stream(), sources_factory=lambda: sources,
+        reply_markup_factory=lambda: markup,
+    )
+
+    final = editable.edit_text.await_args_list[-1]
+    assert result == "Подтверждённый факт [1]."
+    assert final.args[0] == result
+    assert final.kwargs["reply_markup"] == markup
+    assert "Документы (1)" in markup.inline_keyboard[0][0].text
+    assert format_all_sources(sources) == "Документы:\n[1] Manual.pdf, PDF стр. 7"
 
 
 def test_format_all_sources_keeps_full_original_numbering() -> None:

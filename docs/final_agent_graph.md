@@ -1,10 +1,10 @@
 # Финальный агентный граф Support Copilot
 
-Актуален для Telegram-контура 13.10.2026. Источник —
+Актуален для кода 16.10.2026; prefetch пока проходит изолированную проверку, production не обновлялся. Источник —
 `build_agent()` в [app/services/agent_persistent.py](../app/services/agent_persistent.py).
 Граф использует `ChatAgent` через существующий `/chats` facade.
 
-![Финальный persistent agent: шесть узлов и interrupt перед отправкой](final-agent-graph.svg)
+![Финальный persistent agent: семь узлов и interrupt перед отправкой](final-agent-graph.svg)
 
 Отдельные файлы: [SVG для сдачи](final-agent-graph.svg),
 [Mermaid из runtime graph](final-agent-graph.mmd).
@@ -16,7 +16,8 @@ SVG снабжён пояснениями; полный перечень узл�
 
 | Узел | Что происходит | Следующий шаг |
 |---|---|---|
-| `begin_turn` | Сброс счётчика, draft и состояния нового turn; expanded сохраняет evidence | `call_model` |
+| `begin_turn` | Сброс счётчика, draft и состояния нового turn; expanded сохраняет evidence | `prefetch_overview` |
+| `prefetch_overview` | Opt-in, по умолчанию выключен. Для HS/границ сначала один поиск, второй при недостающих разделах; для остальных обзоров два аспекта. Объединение evidence в 24К и единые citations; expanded пропускает поиск | `call_model` |
 | `call_model` | Bounded context, token budget, model call и детерминированная обработка неполного ответа | Safe tools → `execute_safe_tool`; есть отправка → `prepare_telegram_message`; нет tools или достигнуто 6 model turns → `finish` |
 | `execute_safe_tool` | Последовательное выполнение/отклонение safe calls; каждому соответствует `ToolMessage` | `call_model` |
 | `prepare_telegram_message` | Обработка safe calls смешанного batch, отклонение лишних отправок; валидация и сохранение exact draft с UUID/key | `confirm_and_execute_telegram_message` |
@@ -40,7 +41,7 @@ Telegram всегда использует `write-with-approve`.
   подтверждения, используя сохранённый idempotency key.
 
 FastAPI auth, ownership, moderation, shared chat lock, persistence истории и
-Telegram rendering находятся **вне** этих шести узлов. Checkpointer сохраняет
+Telegram rendering находятся **вне** этих семи узлов. Checkpointer сохраняет
 состояние/ожидающий interrupt; Qdrant хранит evidence. Эти сервисы не следует
 рисовать дополнительными LangGraph-узлами.
 
@@ -62,7 +63,8 @@ Telegram rendering находятся **вне** этих шести узлов.
 
 Expansion не добавляет узлов. Chat facade проверяет явное согласие и актуальный
 assistant UUID, сохраняет one-use claim **до** платного вызова и запускает
-тот же `START → begin_turn → call_model → finish → END` с `expanded_mode=true`.
+тот же `START → begin_turn → prefetch_overview → call_model → finish → END` с `expanded_mode=true`.
+Узел `prefetch_overview` в этом режиме ничего не извлекает.
 Используются прежние evidence, ceiling 1500 и `tool_choice=none`.
 Неожиданные tool calls удаляются/отклоняются, новый поиск и отправка недоступны.
 Preview/отмена expansion не запускают граф и модель. Обычный ответ имеет ceiling

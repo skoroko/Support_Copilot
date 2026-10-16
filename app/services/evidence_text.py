@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import re
 import tempfile
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,6 +16,23 @@ from bs4 import BeautifulSoup, CData, NavigableString
 from pylibmspack import ChmArchive
 
 from app.services.chm_reader import CHMReader
+
+_archive_paths: ContextVar[tuple[Path, dict[str, list[Path]]] | None] = ContextVar(
+    "evidence_archive_paths", default=None
+)
+
+
+@contextmanager
+def evidence_session(data_dir: Path):
+    """Discover archives once per selection, never cache a stale corpus globally."""
+    paths: dict[str, list[Path]] = {}
+    for path in data_dir.rglob("*.chm"):
+        paths.setdefault(path.name, []).append(path)
+    token = _archive_paths.set((data_dir, paths))
+    try:
+        yield
+    finally:
+        _archive_paths.reset(token)
 
 
 def _normalized(text: str) -> str:
@@ -53,7 +72,10 @@ def _read_member(path: str, _mtime: int, _size: int, member: str) -> bytes:
 def chm_context(data_dir: Path, file_name: str, member: str, text: str) -> str:
     """Read only the original selected member; unavailable structure fails closed."""
 
-    matches = [path for path in data_dir.rglob("*.chm") if path.name == file_name]
+    session = _archive_paths.get()
+    matches = session[1].get(file_name, []) if session and session[0] == data_dir else [
+        path for path in data_dir.rglob("*.chm") if path.name == file_name
+    ]
     if len(matches) != 1:
         return ""
     path = matches[0]
@@ -66,14 +88,8 @@ def chm_context(data_dir: Path, file_name: str, member: str, text: str) -> str:
 
 
 @lru_cache(maxsize=64)
-def project_table_rows(chunk: str, html: bytes) -> str:
-    """Replace intersecting flattened tables with complete explicit column rows.
-
-    Repeated values from row/column spans retain their originating cell's
-    position. A row is excluded when any originating cell falls outside the
-    chunk, including a row truncated before its final behavior column.
-    """
-
+def _parsed_page(html: bytes):
+    """Share read-only DOM positions across chunks from the same exact page."""
     soup = BeautifulSoup(CHMReader._decode_html(html), "html.parser")
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
@@ -85,9 +101,8 @@ def project_table_rows(chunk: str, html: bytes) -> str:
         and len(table.find_all("tr")) > 1
         and any(len(row.find_all(["td", "th"], recursive=False)) > 1 for row in table.find_all("tr"))
     ]
-    text = _normalized(chunk)
     if not tables:
-        return text
+        return (), {}, ""
     # DOM positions disambiguate a table from identical text quoted earlier in
     # prose. Searching for the flattened table string would rewrite the quote.
     strings = [
@@ -103,6 +118,20 @@ def project_table_rows(chunk: str, html: bytes) -> str:
         parts.append(value)
         position += len(value) + 1
     page = " ".join(parts)
+    return tuple(tables), offsets, page
+
+
+@lru_cache(maxsize=64)
+def project_table_rows(chunk: str, html: bytes) -> str:
+    """Project only complete rows whose original cells lie inside the chunk.
+
+    The cached page is read-only. Span recovery and unique provenance checks
+    remain specific to each chunk; no neighboring rows are added.
+    """
+    tables, offsets, page = _parsed_page(html)
+    text = _normalized(chunk)
+    if not tables:
+        return text
     start = page.find(text)
     if start < 0 or page.find(text, start + 1) >= 0:
         # There is no unique provenance mapping for this legacy chunk.
