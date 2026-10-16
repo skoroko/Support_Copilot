@@ -145,6 +145,11 @@ RAG API, а Telegram-агент использует `APP_DEFAULT_MODEL`.
 резервный chat-путь используют GPT-6 с `reasoning_effort=none`.
 При смене модели обновите также `APP_ALLOWED_MODELS`, если включён allowlist.
 Методика и результаты выбора режима: [Luna eval](docs/luna_runtime_evaluation.md).
+Оптимизация подготовки evidence и дополнительных поисков с той же Luna medium:
+[замеры на реальных вопросах и ограничения сравнения](docs/context_latency_optimization.md).
+По итогам [mini / Luna](docs/optimized_model_ab.md) и [Standard / Fast](docs/luna_fast_ab.md)
+оставлен **Luna medium Standard**. Экспериментальный [overview prefetch](docs/overview_prefetch.md)
+выключен по умолчанию: устойчивого ускорения без потери качества он не показал.
 Профиль `compose.luna.yaml` задаёт агенту `medium` и «Подробнее» `medium`.
 Обновление уже запущенного стека:
 `docker compose -f compose.yaml -f compose.luna.yaml up -d --no-deps --build app`.

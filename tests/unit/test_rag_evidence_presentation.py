@@ -180,6 +180,55 @@ def test_chm_unavailable_archive_cannot_expose_flattened_table(tmp_path):
     assert chm_context(tmp_path, "missing.chm", "/member.htm", "Alpha Nonlinear elastic Beta O") == ""
 
 
+def test_archive_discovery_is_scoped_and_duplicate_names_fail_closed(tmp_path, monkeypatch):
+    from app.services import evidence_text
+
+    (tmp_path / "manual.chm").write_bytes(b"first")
+    reads = []
+    monkeypatch.setattr(evidence_text, "_read_member", lambda *args: reads.append(args) or b"<p>Prose.</p>")
+    scans = []
+    original = type(tmp_path).rglob
+    def scan(path, pattern):
+        scans.append(path)
+        return original(path, pattern)
+    monkeypatch.setattr(type(tmp_path), "rglob", scan)
+    with evidence_text.evidence_session(tmp_path):
+        assert chm_context(tmp_path, "manual.chm", "/a", "Prose.") == "Prose."
+        assert chm_context(tmp_path, "manual.chm", "/b", "Prose.") == "Prose."
+    assert len(scans) == 1
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "nested" / "manual.chm").write_bytes(b"second")
+    with evidence_text.evidence_session(tmp_path):
+        assert chm_context(tmp_path, "manual.chm", "/a", "Prose.") == ""
+    assert len(reads) == 2
+
+
+def test_parsed_page_reuse_does_not_mutate_other_chunk_provenance():
+    from app.services.evidence_text import _parsed_page
+    _parsed_page.cache_clear()
+    project_table_rows.cache_clear()
+    full = "Definition before the table. Family Model Optional Behavior Soil Alpha Nonlinear elastic Beta O Elastoplastic Rock Gamma O Elastoplastic Prose after the table."
+    first = project_table_rows(full, TABLE_HTML)
+    assert project_table_rows("Beta O Elastoplastic", TABLE_HTML) == ""
+    assert _parsed_page.cache_info().misses == 1
+    assert _parsed_page.cache_info().hits == 1
+    project_table_rows.cache_clear()
+    assert project_table_rows(full, TABLE_HTML) == first
+
+
+def test_duplicate_prefilter_preserves_full_sequence_matcher_decisions():
+    import random
+    from difflib import SequenceMatcher
+
+    from app.services.rag import NEAR_DUPLICATE_RATIO
+    randomizer = random.Random(42)
+    for _ in range(80):
+        left = " ".join(randomizer.choices(["soil", "load", "model", "stiffness", "stage"], k=80))
+        right = left[:180] + " ".join(randomizer.choices(["soil", "load", "model", "stress", "boundary"], k=randomizer.randrange(1, 80)))
+        expected = SequenceMatcher(None, left, right, autojunk=False).ratio() >= NEAR_DUPLICATE_RATIO
+        assert RAGService._near_duplicate(left, right) == expected
+
+
 def test_chm_no_table_preserves_prose():
     assert project_table_rows("Useful prose.", b"<p>Useful prose.</p>") == "Useful prose."
 

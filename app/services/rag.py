@@ -35,7 +35,7 @@ from qdrant_client.models import (
 from app.observability.logging import get_logger
 from app.observability.pii import prompt_hash
 from app.observability.tracing import trace_rag_query
-from app.services.evidence_text import behavior_context, chm_context
+from app.services.evidence_text import behavior_context, chm_context, evidence_session
 from app.services.ingestion import (
     RESERVED_PRODUCT_TOKENS,
     IngestionConfig,
@@ -750,6 +750,8 @@ class RAGConfig:
 class RAGService:
     """LlamaIndex implementation of the Support Copilot RAG pipeline."""
 
+    supports_overview_prefetch = True
+
     def __init__(
         self,
         config: RAGConfig,
@@ -1285,6 +1287,8 @@ class RAGService:
         # its own behavior/value cells at the boundary of the context budget.
         if "\n" in text:
             return prefix.rsplit("\n", 1)[0].rstrip() if "\n" in prefix else ""
+        if re.match(r"Column \d+=", text):
+            return ""  # A projected one-row table is indivisible too.
         ends = list(re.finditer(r'[.!?。！？][\]"»”)]*(?=\s|$)', prefix))
         if ends:
             return prefix[:ends[-1].end()].rstrip()
@@ -1601,7 +1605,8 @@ class RAGService:
         # Unreadable/ambiguous CHM grids are not evidence. Remove them before
         # both the confidence gate and the final limit so they cannot promote
         # a weak survivor or consume a usable source's context slot.
-        presented_text = {self._node_identity(item): self._context_text(item, focus_lexical=not preserve_full_context, question=plan.ranking_question) for item in ranked}
+        with evidence_session(self.config.data_dir):
+            presented_text = {self._node_identity(item): self._context_text(item, focus_lexical=not preserve_full_context, question=plan.ranking_question) for item in ranked}
         ranked = [item for item in ranked if presented_text[self._node_identity(item)].strip()]
         # Confidence is measured over the usable ranked candidate pool before
         # deduplication and the context limit discard candidates: a dropped
@@ -1616,7 +1621,11 @@ class RAGService:
             limit=context_limit,
             max_per_file=1 if overview_question else None,
         )
-        sources = [self._source_from_node(item) for item in ranked]
+        sources = [
+            {**self._source_from_node(item, include_snippet=False),
+             "snippet": presented_text[self._node_identity(item)][:MAX_SOURCE_SNIPPET_CHARS]}
+            for item in ranked
+        ]
         lexical_selected_count = sum(
             self._node_identity(item) in lexical_ids for item in ranked
         )
@@ -2128,7 +2137,7 @@ class RAGService:
             normalized_text = self._normalized_chunk_text(self._node_text(source_node))
             if any(self._near_duplicate(normalized_text, previous) for previous in selected_texts):
                 continue
-            file_name = str(self._source_from_node(source_node)["file_name"])
+            file_name = str(self._source_from_node(source_node, include_snippet=False)["file_name"])
             if max_per_file is not None and file_counts.get(file_name, 0) >= max_per_file:
                 deferred.append((source_node, normalized_text))
                 continue
@@ -2160,7 +2169,14 @@ class RAGService:
         # different key/value; exact matching is the safer rule for them.
         if min(len(candidate), len(previous)) < 80:
             return False
-        return SequenceMatcher(None, candidate, previous, autojunk=False).ratio() >= NEAR_DUPLICATE_RATIO
+        matcher = SequenceMatcher(None, candidate, previous, autojunk=False)
+        # These are upper bounds on ratio(), so rejecting below the threshold
+        # preserves exact deduplication semantics without quadratic matching.
+        return (
+            matcher.real_quick_ratio() >= NEAR_DUPLICATE_RATIO
+            and matcher.quick_ratio() >= NEAR_DUPLICATE_RATIO
+            and matcher.ratio() >= NEAR_DUPLICATE_RATIO
+        )
 
     def _standalone_question(
         self,

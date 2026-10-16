@@ -1,0 +1,642 @@
+{
+  "manifest": {
+    "protocol": 1,
+    "concurrency": 1,
+    "fresh_process_per_sample": true,
+    "comparison": "Same code/profile, prefetch OFF, service_tier default vs fast",
+    "attempt_limit": 12,
+    "prefetch_enabled": false,
+    "tokenizer_warmup": true,
+    "external_destination": "OpenAI API",
+    "telegram_allowed": false,
+    "production_mutation_allowed": false,
+    "profiles": {
+      "default": {
+        "default_model": "gpt-6-luna",
+        "agent_llm_api": "responses",
+        "agent_reasoning_effort": "medium",
+        "agent_expanded_reasoning_effort": "medium"
+      },
+      "fast": {
+        "default_model": "gpt-6-luna",
+        "agent_llm_api": "responses",
+        "agent_reasoning_effort": "medium",
+        "agent_expanded_reasoning_effort": "medium"
+      }
+    },
+    "history_metadata_removed_for_both": true,
+    "quality_rubric": {
+      "hs": [
+        "HS versus small-strain scope",
+        "full Modified Mohr-Coulomb name if basis stated",
+        "nonlinear elastic component versus whole model",
+        "G0ref and gamma0.7 definitions",
+        "stress-dependent stiffness and supported parameters",
+        "claim-to-citation support"
+      ],
+      "boundaries": [
+        "mechanical, seepage and dynamic categories",
+        "draining is not seepage",
+        "viscous time-domain versus frequency EL scope",
+        "claim-to-citation support"
+      ]
+    },
+    "input_file_sha256": "ef2bbd3f7eef6aa9886ad7443baaf4c1d22d4395fed0749987756b1ba0bfcadf",
+    "semantic_inputs_sha256": "8b94c707a4402527ce29794b8a4fbfdaff0bb612aa3f9e697774c5fd26e7b789",
+    "code_sha256": {
+      "app/services/agent_persistent.py": "3da1c1343aa35d2b80c0d7549e5556a026c625e59c626e1d3fbba74154cf6890",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "3eaee7bd3d31bfda4cdaa521f4519a1b0426ba08c798ba0ad42ae6613673ac49",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+      "app/services/overview_evidence.py": "1a76b37bf61654836aff1e22d5e1d38bf09f49a153eedfccbe371dd547b86e0b",
+      "scripts/compare_luna_fast.py": "22fe72deb17cbc15b8fc7551c912852074096dc645a24b575d64415cbc876b93"
+    },
+    "schedule": [
+      {
+        "slot": 0,
+        "question": "0801f604b07c",
+        "repeat": 0,
+        "profile": "default"
+      },
+      {
+        "slot": 1,
+        "question": "0801f604b07c",
+        "repeat": 0,
+        "profile": "fast"
+      },
+      {
+        "slot": 2,
+        "question": "a7b5f7c44544",
+        "repeat": 0,
+        "profile": "fast"
+      },
+      {
+        "slot": 3,
+        "question": "a7b5f7c44544",
+        "repeat": 0,
+        "profile": "default"
+      },
+      {
+        "slot": 4,
+        "question": "0801f604b07c",
+        "repeat": 1,
+        "profile": "fast"
+      },
+      {
+        "slot": 5,
+        "question": "0801f604b07c",
+        "repeat": 1,
+        "profile": "default"
+      },
+      {
+        "slot": 6,
+        "question": "a7b5f7c44544",
+        "repeat": 1,
+        "profile": "default"
+      },
+      {
+        "slot": 7,
+        "question": "a7b5f7c44544",
+        "repeat": 1,
+        "profile": "fast"
+      },
+      {
+        "slot": 8,
+        "question": "0801f604b07c",
+        "repeat": 2,
+        "profile": "default"
+      },
+      {
+        "slot": 9,
+        "question": "0801f604b07c",
+        "repeat": 2,
+        "profile": "fast"
+      },
+      {
+        "slot": 10,
+        "question": "a7b5f7c44544",
+        "repeat": 2,
+        "profile": "fast"
+      },
+      {
+        "slot": 11,
+        "question": "a7b5f7c44544",
+        "repeat": 2,
+        "profile": "default"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "slot": 0,
+      "question": "0801f604b07c",
+      "repeat": 0,
+      "tier": "default",
+      "total_seconds": 17.974133507999795,
+      "model_seconds": 14.107167067000319,
+      "retrieval_seconds": 3.818831191999834,
+      "preparation_seconds": 0.40032517600002393,
+      "residual_seconds": 0.0481352489996425,
+      "tokenizer_initialization_seconds": 0.42458317499995246,
+      "rag_initialization_seconds": 0.7254126630000428,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "served_tiers": [
+        "default",
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 15524,
+        "output": 952,
+        "reasoning": 387,
+        "cache_read": 7028,
+        "cache_write": 8487
+      },
+      "estimated_model_cost_usd": 0.001608055,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "HSS basis, stiffness decay, G0ref/gamma0.7, m; E50/Eoed/Eur definitions omitted",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Claims supported by cited excerpts"
+      },
+      "private_sample_sha256": "54b570895304dc4b9a4d7ea935b8fd578873d628f2b837a3314db051e58fe028"
+    },
+    {
+      "slot": 1,
+      "question": "0801f604b07c",
+      "repeat": 0,
+      "tier": "fast",
+      "total_seconds": 12.641577615000188,
+      "model_seconds": 10.31194331100005,
+      "retrieval_seconds": 2.2781744270000672,
+      "preparation_seconds": 0.6173789100002978,
+      "residual_seconds": 0.051459877000070264,
+      "tokenizer_initialization_seconds": 0.4307116580002912,
+      "rag_initialization_seconds": 0.7289929879998454,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "served_tiers": [
+        "fast",
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 17806,
+        "output": 1044,
+        "reasoning": 490,
+        "cache_read": 8107,
+        "cache_write": 9690
+      },
+      "estimated_model_cost_usd": 0.0036304400000000004,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "HSS basis, stress/strain stiffness, E50/Eoed/Eur, m, G0ref/gamma0.7",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Claims supported; overlapping CHM excerpts displayed twice"
+      },
+      "private_sample_sha256": "7ba98d2537ff659f756bd89ce65c49990f5cd84248c259e3a7dcadc8f43d33bc"
+    },
+    {
+      "slot": 2,
+      "question": "a7b5f7c44544",
+      "repeat": 0,
+      "tier": "fast",
+      "total_seconds": 12.966229009000017,
+      "model_seconds": 9.82628355199995,
+      "retrieval_seconds": 3.081436749000204,
+      "preparation_seconds": 0.9088075009999557,
+      "residual_seconds": 0.05850870799986296,
+      "tokenizer_initialization_seconds": 0.40446276800003034,
+      "rag_initialization_seconds": 0.7601132270001472,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "served_tiers": [
+        "fast",
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 20749,
+        "output": 899,
+        "reasoning": 425,
+        "cache_read": 11824,
+        "cache_write": 8916
+      },
+      "estimated_model_cost_usd": 0.00336628,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories; broad dynamic discussion does not distinguish time/frequency domains",
+        "completeness": "DOF, seepage head/flux, dynamic/transmitting",
+        "accuracy": "Dynamic taxonomy follows cited transmitting section; insufficient for choosing a specific solver boundary",
+        "citations": "Claims supported by cited excerpts; no draining/seepage conflation"
+      },
+      "private_sample_sha256": "6b4f9800bab5de661208d3d50ea0b5d59d47365f590e49daa4ae148f0dbb580d"
+    },
+    {
+      "slot": 3,
+      "question": "a7b5f7c44544",
+      "repeat": 0,
+      "tier": "default",
+      "total_seconds": 13.484940538000046,
+      "model_seconds": 11.481185394000022,
+      "retrieval_seconds": 1.9494686710004316,
+      "preparation_seconds": 0.612185751999732,
+      "residual_seconds": 0.05428647299959266,
+      "tokenizer_initialization_seconds": 0.4139046350001081,
+      "rag_initialization_seconds": 0.7240365940001539,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "served_tiers": [
+        "default",
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 20596,
+        "output": 896,
+        "reasoning": 382,
+        "cache_read": 11677,
+        "cache_write": 8910
+      },
+      "estimated_model_cost_usd": 0.00167942,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories and a specific transmitting/viscous auto-generation description",
+        "completeness": "DOF, seepage surface flux, dynamic/transmitting",
+        "accuracy": "No unsupported factual assertion found; no time/frequency distinction",
+        "citations": "Viscous bottom/free boundary statement supported explicitly by cited Transmitting methodology; no draining/seepage conflation"
+      },
+      "private_sample_sha256": "c916926ec86dca61ae82935a4010756ccfaf68e3e78cb528273f5ec21dc1ca54"
+    },
+    {
+      "slot": 4,
+      "question": "0801f604b07c",
+      "repeat": 1,
+      "tier": "fast",
+      "total_seconds": 17.4714531730001,
+      "model_seconds": 13.425081347000287,
+      "retrieval_seconds": 3.957830998999725,
+      "preparation_seconds": 0.5697237970002789,
+      "residual_seconds": 0.08854082700008803,
+      "tokenizer_initialization_seconds": 0.39288863600040713,
+      "rag_initialization_seconds": 0.7315593660000559,
+      "model_calls": 5,
+      "retrieval_calls": 4,
+      "served_tiers": [
+        "fast",
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 42059,
+        "output": 1434,
+        "reasoning": 588,
+        "cache_read": 29135,
+        "cache_write": 12909
+      },
+      "estimated_model_cost_usd": 0.00524695,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "Basis, strain stiffness decay, G0ref/gamma0.7; omits E50/Eoed/Eur, m and stress-dependence",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Claims supported by cited excerpts"
+      },
+      "private_sample_sha256": "b13087732c19424cf1993fe2e17bb14787b611d44ffe79bac3566d08160c707d"
+    },
+    {
+      "slot": 5,
+      "question": "0801f604b07c",
+      "repeat": 1,
+      "tier": "default",
+      "total_seconds": 18.71169100399993,
+      "model_seconds": 14.759372027999234,
+      "retrieval_seconds": 3.858750561999841,
+      "preparation_seconds": 0.5623279439996622,
+      "residual_seconds": 0.09356841400085614,
+      "tokenizer_initialization_seconds": 0.4129510550001214,
+      "rag_initialization_seconds": 0.7852419709997775,
+      "model_calls": 4,
+      "retrieval_calls": 3,
+      "served_tiers": [
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 27445,
+        "output": 1119,
+        "reasoning": 482,
+        "cache_read": 17344,
+        "cache_write": 10089
+      },
+      "estimated_model_cost_usd": 0.001995265,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "Basis, higher small-strain stiffness, G0ref/gamma0.7, m stress-dependence; omits E50/Eoed/Eur and explicit nonlinear stiffness decay",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Claims supported by cited excerpts"
+      },
+      "private_sample_sha256": "95b26f9300102ed73c9be2524c8862b744b3212fa9756a4edd9da11a88212bf1"
+    },
+    {
+      "slot": 6,
+      "question": "a7b5f7c44544",
+      "repeat": 1,
+      "tier": "default",
+      "total_seconds": 11.070340285999919,
+      "model_seconds": 9.645279958000174,
+      "retrieval_seconds": 1.384389358000135,
+      "preparation_seconds": 0.4308898740000586,
+      "residual_seconds": 0.04067096999960995,
+      "tokenizer_initialization_seconds": 0.3881196900001669,
+      "rag_initialization_seconds": 0.6981515370002853,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 10040,
+        "output": 769,
+        "reasoning": 418,
+        "cache_read": 6278,
+        "cache_write": 3756
+      },
+      "estimated_model_cost_usd": 0.0009173800000000001,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories, detailed DOF only",
+        "completeness": "Seepage and dynamic categories named without examples",
+        "accuracy": "DOF auto constraints repeat the cited translated CHM; not independently validated as an engineering setup prescription",
+        "citations": "All overview claims have source support; no draining/seepage conflation"
+      },
+      "private_sample_sha256": "1d2e521fa423e94d7c8bce96d70f72ea1beb70725aa2893685c407b9c9bfa6d0"
+    },
+    {
+      "slot": 7,
+      "question": "a7b5f7c44544",
+      "repeat": 1,
+      "tier": "fast",
+      "total_seconds": 8.2198703869999,
+      "model_seconds": 6.658310523000182,
+      "retrieval_seconds": 1.5154144400003133,
+      "preparation_seconds": 0.42885403299987956,
+      "residual_seconds": 0.046145423999405466,
+      "tokenizer_initialization_seconds": 0.5007128679999369,
+      "rag_initialization_seconds": 1.328779123000004,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "served_tiers": [
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 10037,
+        "output": 701,
+        "reasoning": 325,
+        "cache_read": 6278,
+        "cache_write": 3753
+      },
+      "estimated_model_cost_usd": 0.0017660100000000001,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories with examples",
+        "completeness": "DOF, seepage nodal head/flux, transmitting EL; no time/frequency distinction",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Supports exact examples; head/flux names from import-export document plus category source"
+      },
+      "private_sample_sha256": "321f08beb8a84a31b64b447f103f51343a5b6eceef47691a539c65c013b69081"
+    },
+    {
+      "slot": 8,
+      "question": "0801f604b07c",
+      "repeat": 2,
+      "tier": "default",
+      "total_seconds": 17.47132920199965,
+      "model_seconds": 14.497748329999922,
+      "retrieval_seconds": 2.906851724000262,
+      "preparation_seconds": 0.4977293069996449,
+      "residual_seconds": 0.06672914799946739,
+      "tokenizer_initialization_seconds": 0.3663105820000965,
+      "rag_initialization_seconds": 0.7575686099999075,
+      "model_calls": 4,
+      "retrieval_calls": 3,
+      "served_tiers": [
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 28671,
+        "output": 1154,
+        "reasoning": 471,
+        "cache_read": 18366,
+        "cache_write": 10293
+      },
+      "estimated_model_cost_usd": 0.002048485,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "Basis, strain stiffness decay, G0ref/gamma0.7; omits E50/Eoed/Eur, m and stress-dependence",
+        "accuracy": "No unsupported factual assertion found; does not fill incomplete hyperbolic relation from memory",
+        "citations": "Claims supported by cited excerpts"
+      },
+      "private_sample_sha256": "37e9dc6303e4eab44f035175a3476d44efd696bb3faa37a18982948a41760807"
+    },
+    {
+      "slot": 9,
+      "question": "0801f604b07c",
+      "repeat": 2,
+      "tier": "fast",
+      "total_seconds": 17.15092525299997,
+      "model_seconds": 13.399697965000087,
+      "retrieval_seconds": 3.6869890660000237,
+      "preparation_seconds": 0.6262849150002694,
+      "residual_seconds": 0.06423822199985807,
+      "tokenizer_initialization_seconds": 0.3632665029999771,
+      "rag_initialization_seconds": 0.7301933179996922,
+      "model_calls": 4,
+      "retrieval_calls": 3,
+      "served_tiers": [
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 26697,
+        "output": 1109,
+        "reasoning": 475,
+        "cache_read": 17188,
+        "cache_write": 9497
+      },
+      "estimated_model_cost_usd": 0.00382941,
+      "quality": {
+        "useful": true,
+        "scope": "correct HSS caveat",
+        "completeness": "Basis, strain stiffness decay, G0ref/gamma0.7; omits E50/Eoed/Eur, m and stress-dependence",
+        "accuracy": "No unsupported factual assertion found",
+        "citations": "Claims supported by cited excerpts"
+      },
+      "private_sample_sha256": "d030caee31b711b4b28fb7f584b812ebcc9c49cecb91cc7cb885bdaf37fedc1c"
+    },
+    {
+      "slot": 10,
+      "question": "a7b5f7c44544",
+      "repeat": 2,
+      "tier": "fast",
+      "total_seconds": 11.879827229999592,
+      "model_seconds": 9.610580728000059,
+      "retrieval_seconds": 2.21163909400002,
+      "preparation_seconds": 0.8340373069995621,
+      "residual_seconds": 0.05760740799951236,
+      "tokenizer_initialization_seconds": 0.35781173200030025,
+      "rag_initialization_seconds": 0.7010719200002313,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "served_tiers": [
+        "fast",
+        "fast",
+        "fast"
+      ],
+      "usage": {
+        "input": 22534,
+        "output": 989,
+        "reasoning": 524,
+        "cache_read": 13760,
+        "cache_write": 8765
+      },
+      "estimated_model_cost_usd": 0.0034572500000000003,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories with supported transmitting/viscous auto-generation example",
+        "completeness": "DOF, seepage head/flux/surface, dynamic; no time/frequency distinction",
+        "accuracy": "Specific auto-constraint axes repeat the translated manual; not independently validated as engineering prescription",
+        "citations": "Claims supported by cited excerpts; no draining/seepage conflation"
+      },
+      "private_sample_sha256": "90c185b08c0ee6171fd4946f55e37e576468cbd5bf3b5e56c262fb195e3d15a3"
+    },
+    {
+      "slot": 11,
+      "question": "a7b5f7c44544",
+      "repeat": 2,
+      "tier": "default",
+      "total_seconds": 19.12882000899981,
+      "model_seconds": 15.718694217999655,
+      "retrieval_seconds": 3.3296719260001737,
+      "preparation_seconds": 0.8918420420000075,
+      "residual_seconds": 0.0804538649999813,
+      "tokenizer_initialization_seconds": 0.34966436300010173,
+      "rag_initialization_seconds": 0.6777818969999316,
+      "model_calls": 4,
+      "retrieval_calls": 3,
+      "served_tiers": [
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input": 35265,
+        "output": 1379,
+        "reasoning": 669,
+        "cache_read": 23679,
+        "cache_write": 11574
+      },
+      "estimated_model_cost_usd": 0.00237424,
+      "quality": {
+        "useful": true,
+        "scope": "Three categories, but combines seepage/consolidation examples without explicitly limiting Draining/Non-Consolidation to consolidation",
+        "completeness": "DOF, flux, consolidation, dynamic examples; no time/frequency distinction",
+        "accuracy": "Broad dynamic wording assigns the full taxonomy to 2D EL rather than explicitly limiting the source restriction to Transmitting; scope needs clarification",
+        "citations": "Individual definitions supported; compound category scope less precise than cited sources"
+      },
+      "private_sample_sha256": "93559dd0ba44b462c51e0afd5bc096351fe6f906252531fa0530672f1fa568a6"
+    }
+  ],
+  "groups": [
+    {
+      "question": "0801f604b07c",
+      "tier": "default",
+      "times": [
+        17.974133507999795,
+        18.71169100399993,
+        17.47132920199965
+      ],
+      "median": 17.974133507999795,
+      "range": [
+        17.47132920199965,
+        18.71169100399993
+      ],
+      "model_median": 14.497748329999922,
+      "cost_usd": 0.005651805,
+      "useful": 3
+    },
+    {
+      "question": "0801f604b07c",
+      "tier": "fast",
+      "times": [
+        12.641577615000188,
+        17.4714531730001,
+        17.15092525299997
+      ],
+      "median": 17.15092525299997,
+      "range": [
+        12.641577615000188,
+        17.4714531730001
+      ],
+      "model_median": 13.399697965000087,
+      "cost_usd": 0.0127068,
+      "useful": 3
+    },
+    {
+      "question": "a7b5f7c44544",
+      "tier": "default",
+      "times": [
+        13.484940538000046,
+        11.070340285999919,
+        19.12882000899981
+      ],
+      "median": 13.484940538000046,
+      "range": [
+        11.070340285999919,
+        19.12882000899981
+      ],
+      "model_median": 11.481185394000022,
+      "cost_usd": 0.00497104,
+      "useful": 3
+    },
+    {
+      "question": "a7b5f7c44544",
+      "tier": "fast",
+      "times": [
+        12.966229009000017,
+        8.2198703869999,
+        11.879827229999592
+      ],
+      "median": 11.879827229999592,
+      "range": [
+        8.2198703869999,
+        12.966229009000017
+      ],
+      "model_median": 9.610580728000059,
+      "cost_usd": 0.00858954,
+      "useful": 3
+    }
+  ],
+  "cost_scope": "All agent Responses calls; excludes embedding and infrastructure costs",
+  "pricing_date": "2026-10-16",
+  "pricing_url": "https://developers.openai.com/api/docs/pricing",
+  "failed_attempts": [],
+  "limitations": "Two questions, three repetitions per tier; not an SLA or significance claim"
+}

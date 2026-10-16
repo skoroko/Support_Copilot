@@ -1,0 +1,40 @@
+{
+  "runtime_unchanged": true,
+  "runtime_before": {
+    "model": "gpt-6-luna",
+    "reasoning": "medium",
+    "api": "responses",
+    "ready_status": 200,
+    "code_sha256": {
+      "app/services/agent_persistent.py": "9bfbbf82c1b8cd9e210de549deb4f51aff20e471427d44aeffe3b87cac30c2ef",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "da9801d2351bb28484ffc685fdc68677a28dfaa51774eaed01e1cad5deea258a",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167"
+    },
+    "production_has_prefetch_module": false
+  },
+  "runtime_after": {
+    "model": "gpt-6-luna",
+    "reasoning": "medium",
+    "api": "responses",
+    "ready_status": 200,
+    "code_sha256": {
+      "app/services/agent_persistent.py": "9bfbbf82c1b8cd9e210de549deb4f51aff20e471427d44aeffe3b87cac30c2ef",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "da9801d2351bb28484ffc685fdc68677a28dfaa51774eaed01e1cad5deea258a",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167"
+    },
+    "production_has_prefetch_module": false
+  },
+  "paid_attempts": 12,
+  "completed_answers": 12,
+  "model_calls": 40,
+  "served_tier_mismatches": 0,
+  "tests": "2 passed in 2.13s",
+  "ruff": "PASS",
+  "py_compile": "PASS",
+  "git_diff_check": "PASS",
+  "production_updated": false,
+  "telegram_sent": false,
+  "code_changed_during_experiment": false
+}

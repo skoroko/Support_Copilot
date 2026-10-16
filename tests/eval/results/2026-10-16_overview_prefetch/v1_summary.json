@@ -1,0 +1,923 @@
+{
+  "evaluated_revision": "prefetch-v1",
+  "manifest": {
+    "protocol": 1,
+    "concurrency": 1,
+    "fresh_process_per_sample": true,
+    "comparison": "Same code/profile, overview_prefetch_enabled false vs true",
+    "successful_answer_limit": 8,
+    "service_tier": "default",
+    "external_destination": "OpenAI API",
+    "telegram_allowed": false,
+    "production_mutation_allowed": false,
+    "profiles": {
+      "before": {
+        "default_model": "gpt-6-luna",
+        "agent_llm_api": "responses",
+        "agent_reasoning_effort": "medium",
+        "agent_expanded_reasoning_effort": "medium"
+      },
+      "after": {
+        "default_model": "gpt-6-luna",
+        "agent_llm_api": "responses",
+        "agent_reasoning_effort": "medium",
+        "agent_expanded_reasoning_effort": "medium"
+      }
+    },
+    "history_metadata_removed_for_both": true,
+    "input_file_sha256": "ef2bbd3f7eef6aa9886ad7443baaf4c1d22d4395fed0749987756b1ba0bfcadf",
+    "semantic_inputs_sha256": "8b94c707a4402527ce29794b8a4fbfdaff0bb612aa3f9e697774c5fd26e7b789",
+    "code_sha256": {
+      "app/services/agent_persistent.py": "b1601f35bc34b6a291db5bee57251fe79c3d4360badde8dc0158de5cb8515260",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "3eaee7bd3d31bfda4cdaa521f4519a1b0426ba08c798ba0ad42ae6613673ac49",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+      "app/services/overview_evidence.py": "f75ffba1cae23e31e60887003b5e2a1a6bf7d2071479d30ed4ddbdac13ed54bb",
+      "scripts/compare_overview_prefetch.py": "9c4d9d8c63681d603e4e57adc186187f79525b9af0a55530529048eb87458522"
+    },
+    "schedule": [
+      {
+        "slot": 0,
+        "question": "0801f604b07c",
+        "repeat": 0,
+        "profile": "before"
+      },
+      {
+        "slot": 1,
+        "question": "0801f604b07c",
+        "repeat": 0,
+        "profile": "after"
+      },
+      {
+        "slot": 2,
+        "question": "a7b5f7c44544",
+        "repeat": 0,
+        "profile": "after"
+      },
+      {
+        "slot": 3,
+        "question": "a7b5f7c44544",
+        "repeat": 0,
+        "profile": "before"
+      },
+      {
+        "slot": 4,
+        "question": "0801f604b07c",
+        "repeat": 1,
+        "profile": "after"
+      },
+      {
+        "slot": 5,
+        "question": "0801f604b07c",
+        "repeat": 1,
+        "profile": "before"
+      },
+      {
+        "slot": 6,
+        "question": "a7b5f7c44544",
+        "repeat": 1,
+        "profile": "before"
+      },
+      {
+        "slot": 7,
+        "question": "a7b5f7c44544",
+        "repeat": 1,
+        "profile": "after"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "slot": 0,
+      "question": "0801f604b07c",
+      "repeat": 0,
+      "profile": "before",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 24.515186932000006,
+      "model_seconds": 16.51599623499999,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 4.123315901000012,
+      "retrieval_sum_seconds": 4.123313901000003,
+      "preparation_sum_seconds": 0.3648545110000043,
+      "other_seconds": 3.875874796000005,
+      "usage": {
+        "input": 15848,
+        "output": 1121,
+        "reasoning": 643,
+        "cache_read": 7156,
+        "cache_creation": 8683
+      },
+      "quality": {
+        "facts": {
+          "small_strain_scope": true,
+          "modified_name": true,
+          "nonlinear_stiffness": true,
+          "G0_gamma_defined": true,
+          "other_stiffness_parameters": false
+        },
+        "citation_support": "supported",
+        "notes": []
+      },
+      "source_count": 3,
+      "answer_chars": 894,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 4.6866160649999955,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 1872,
+            "output_tokens": 151,
+            "total_tokens": 2023,
+            "input_token_details": {
+              "cache_creation": 1869,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 46
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 3.7170120010000005,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 5290,
+            "output_tokens": 253,
+            "total_tokens": 5543,
+            "input_token_details": {
+              "cache_creation": 3418,
+              "cache_read": 1869
+            },
+            "output_token_details": {
+              "reasoning": 140
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 8.112368168999993,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 8686,
+            "output_tokens": 717,
+            "total_tokens": 9403,
+            "input_token_details": {
+              "cache_creation": 3396,
+              "cache_read": 5287
+            },
+            "output_token_details": {
+              "reasoning": 457
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "0240458b2b02c44658c6cc2707af96c671dd3136040f7a7d88ad2e2ea09f90f3",
+        "0b5bc7a1b9cadb29ffa61946036fceca0fc87f089d0b86924dcc687b485452f1",
+        "61b8b2e0dfd839a3aa97c7fca7e6e495189f670d3589bd0c97041d4c6ba2f7a0",
+        "af3d567de0cb04ec541edfda2eb06c54db8186f38d18e38feaace59fecfd76aa"
+      ]
+    },
+    {
+      "slot": 1,
+      "question": "0801f604b07c",
+      "repeat": 0,
+      "profile": "after",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 19.213877293999985,
+      "model_seconds": 14.591878650000012,
+      "model_calls": 1,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 1.4898612360000243,
+      "retrieval_sum_seconds": 2.8067697200000055,
+      "preparation_sum_seconds": 0.5170010049999689,
+      "other_seconds": 3.1321374079999487,
+      "usage": {
+        "input": 7143,
+        "output": 1112,
+        "reasoning": 821,
+        "cache_read": 0,
+        "cache_creation": 7140
+      },
+      "quality": {
+        "facts": {
+          "small_strain_scope": true,
+          "modified_name": true,
+          "nonlinear_stiffness": true,
+          "G0_gamma_defined": true,
+          "other_stiffness_parameters": true
+        },
+        "citation_support": "partial_one_compound_claim",
+        "notes": [
+          "strain_stiffness_decrease_clause_cites_page203_instead_of_supporting_CHM_record_available_elsewhere_in_packet"
+        ]
+      },
+      "source_count": 3,
+      "answer_chars": 984,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 14.591878650000012,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 7143,
+            "output_tokens": 1112,
+            "total_tokens": 8255,
+            "input_token_details": {
+              "cache_creation": 7140,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 821
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "c711c80b454c4386b5c2a739ccfa14a147a06db7d0cbc375e2e5cb6f292acd7a",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "ffc71fee831e72bcd41aadfe7b12585377d7d3f0898f857bbd251a6f9da65fcf",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "0b5bc7a1b9cadb29ffa61946036fceca0fc87f089d0b86924dcc687b485452f1",
+        "60eb9d5b7713227b39e8caeb89b739b9292dca4d674204157f9f5d03ac98f8d8"
+      ]
+    },
+    {
+      "slot": 2,
+      "question": "a7b5f7c44544",
+      "repeat": 0,
+      "profile": "after",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 21.054213078000004,
+      "model_seconds": 10.170623035999995,
+      "model_calls": 1,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 2.580715538999982,
+      "retrieval_sum_seconds": 4.631197236999981,
+      "preparation_sum_seconds": 1.6711685610000302,
+      "other_seconds": 8.302874503000027,
+      "usage": {
+        "input": 10198,
+        "output": 712,
+        "reasoning": 383,
+        "cache_read": 1754,
+        "cache_creation": 8441
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": true
+        },
+        "citation_support": "supported",
+        "notes": [
+          "intro_and_answer_joined_without_space"
+        ]
+      },
+      "source_count": 3,
+      "answer_chars": 1192,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 10.170623035999995,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 10198,
+            "output_tokens": 712,
+            "total_tokens": 10910,
+            "input_token_details": {
+              "cache_creation": 8441,
+              "cache_read": 1754
+            },
+            "output_token_details": {
+              "reasoning": 383
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "01819c8d36f09dbbf3a54fdb005baee823926661dd9fd6d957554b55d2ae0e67",
+        "805569bc0aaf2ab01af4714db6a678c2c68c52ddd5488231e910f445830d84b0",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "53274d43aaf8e474b9a171327c335ac5d4161096aa23241b91850e90c5cce981",
+        "91abb85407ca1a593464bfd1f4c6d7479c235c9df1c8b1b63af169d536bf4c9a",
+        "090927a75804349f6956f117cb3b7411182eab18d554977abc7ea1b4fdbdebb2",
+        "ebf8d7c8dce99e11fd2261e5bfe80923fdcb29d951be97f059e674c633802115",
+        "371e72aefdc18b322806f660237c5ab2755f4cc9f738476816df2bbb02f1f926",
+        "3758fd52d9ee06033522f585043b325135a42f4bd1d7632b386f4794d714a173",
+        "4567f27ef406d047d818cf0a68b0f53e49f11c594a53e569c4a600e3c34b518e"
+      ]
+    },
+    {
+      "slot": 3,
+      "question": "a7b5f7c44544",
+      "repeat": 0,
+      "profile": "before",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 13.231088918000012,
+      "model_seconds": 8.828758886000003,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "retrieval_union_seconds": 1.3167723200000125,
+      "retrieval_sum_seconds": 1.3167706199999998,
+      "preparation_sum_seconds": 0.40269161800000575,
+      "other_seconds": 3.0855577119999964,
+      "usage": {
+        "input": 9914,
+        "output": 566,
+        "reasoning": 217,
+        "cache_read": 5008,
+        "cache_creation": 4900
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": true
+        },
+        "citation_support": "supported",
+        "notes": []
+      },
+      "source_count": 2,
+      "answer_chars": 856,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 3.71072659699999,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 3142,
+            "output_tokens": 149,
+            "total_tokens": 3291,
+            "input_token_details": {
+              "cache_creation": 1270,
+              "cache_read": 1869
+            },
+            "output_token_details": {
+              "reasoning": 36
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 5.118032289000013,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 6772,
+            "output_tokens": 417,
+            "total_tokens": 7189,
+            "input_token_details": {
+              "cache_creation": 3630,
+              "cache_read": 3139
+            },
+            "output_token_details": {
+              "reasoning": 181
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "b8f7e5653cc4cd0c8838c6646ea31efcd042a0f46698955140206c78480a746a",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "5518b4c01442f094e8a1daae8b7a671d53cfa70918baef07957da2813effe046",
+        "82123abaee4b2e5dba29d396496f0593c7e142c8aa17d94d5b2a329dda619728",
+        "4c33e2c8599c096b68cafddbbe38ae488df0dbe543ad094ff57c1eb023dcc3f0"
+      ]
+    },
+    {
+      "slot": 4,
+      "question": "0801f604b07c",
+      "repeat": 1,
+      "profile": "after",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 58.39190900400001,
+      "model_seconds": 31.591808297000057,
+      "model_calls": 3,
+      "retrieval_calls": 4,
+      "retrieval_union_seconds": 23.453298605000043,
+      "retrieval_sum_seconds": 25.02691777900003,
+      "preparation_sum_seconds": 0.8364663480000445,
+      "other_seconds": 3.346802101999913,
+      "usage": {
+        "input": 31809,
+        "output": 1704,
+        "reasoning": 953,
+        "cache_read": 24873,
+        "cache_creation": 6927
+      },
+      "quality": {
+        "facts": {
+          "small_strain_scope": true,
+          "modified_name": true,
+          "nonlinear_stiffness": true,
+          "G0_gamma_defined": true,
+          "other_stiffness_parameters": true
+        },
+        "citation_support": "supported",
+        "notes": [
+          "two_followup_searches_for_base_HS",
+          "reference_parameter_values_qualified_as_recommendations"
+        ]
+      },
+      "source_count": 4,
+      "answer_chars": 1551,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 9.963723055999992,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 7143,
+            "output_tokens": 478,
+            "total_tokens": 7621,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 7140
+            },
+            "output_token_details": {
+              "reasoning": 351
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 8.013426491000018,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 10596,
+            "output_tokens": 248,
+            "total_tokens": 10844,
+            "input_token_details": {
+              "cache_creation": 3453,
+              "cache_read": 7140
+            },
+            "output_token_details": {
+              "reasoning": 86
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 13.614658750000046,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 14070,
+            "output_tokens": 978,
+            "total_tokens": 15048,
+            "input_token_details": {
+              "cache_creation": 3474,
+              "cache_read": 10593
+            },
+            "output_token_details": {
+              "reasoning": 516
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "c711c80b454c4386b5c2a739ccfa14a147a06db7d0cbc375e2e5cb6f292acd7a",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "ffc71fee831e72bcd41aadfe7b12585377d7d3f0898f857bbd251a6f9da65fcf",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "0b5bc7a1b9cadb29ffa61946036fceca0fc87f089d0b86924dcc687b485452f1",
+        "60eb9d5b7713227b39e8caeb89b739b9292dca4d674204157f9f5d03ac98f8d8",
+        "a5555a4f57183e1b3b887dec20e09881edf58587d920b1ea4c12e3893506a187",
+        "90c49af7114d30625c586f6d3e48c0aca1e4ee776dae731c9b3a5bca873144b5",
+        "0240458b2b02c44658c6cc2707af96c671dd3136040f7a7d88ad2e2ea09f90f3",
+        "af3d567de0cb04ec541edfda2eb06c54db8186f38d18e38feaace59fecfd76aa",
+        "35afb374942d64a26cb8bd338f1d24f3e16de717b6becd111a03e5c700ba1c2a"
+      ]
+    },
+    {
+      "slot": 5,
+      "question": "0801f604b07c",
+      "repeat": 1,
+      "profile": "before",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 21.752951764000045,
+      "model_seconds": 15.146828707000054,
+      "model_calls": 3,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 2.718039058000045,
+      "retrieval_sum_seconds": 2.7180358580000075,
+      "preparation_sum_seconds": 0.4901693250000676,
+      "other_seconds": 3.888083998999946,
+      "usage": {
+        "input": 16566,
+        "output": 1125,
+        "reasoning": 495,
+        "cache_read": 9397,
+        "cache_creation": 7160
+      },
+      "quality": {
+        "facts": {
+          "small_strain_scope": true,
+          "modified_name": true,
+          "nonlinear_stiffness": true,
+          "G0_gamma_defined": false,
+          "other_stiffness_parameters": true
+        },
+        "citation_support": "partial_one_clause",
+        "notes": [
+          "hyperbolic_clause_cited_excerpt_ends_mid_sentence",
+          "nonlinear_elastic_component_not_explicitly_distinguished_from_whole_model"
+        ]
+      },
+      "source_count": 3,
+      "answer_chars": 1348,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 3.2032486680000147,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 1872,
+            "output_tokens": 106,
+            "total_tokens": 1978,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 1869
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 3.3571959260000312,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 5662,
+            "output_tokens": 209,
+            "total_tokens": 5871,
+            "input_token_details": {
+              "cache_creation": 3790,
+              "cache_read": 1869
+            },
+            "output_token_details": {
+              "reasoning": 62
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 8.586384113000008,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 9032,
+            "output_tokens": 810,
+            "total_tokens": 9842,
+            "input_token_details": {
+              "cache_creation": 3370,
+              "cache_read": 5659
+            },
+            "output_token_details": {
+              "reasoning": 433
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "3407113ccbefd74b6d24ac3fbf9cd2256a76b76cc8054cc927178b0550dd2456",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "0240458b2b02c44658c6cc2707af96c671dd3136040f7a7d88ad2e2ea09f90f3",
+        "8d41393f0b180ef2943c982eb2d2ca15050520e0d7b1f3c432e0f032fa4cdbd1",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "af3d567de0cb04ec541edfda2eb06c54db8186f38d18e38feaace59fecfd76aa"
+      ]
+    },
+    {
+      "slot": 6,
+      "question": "a7b5f7c44544",
+      "repeat": 1,
+      "profile": "before",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 14.602094166000029,
+      "model_seconds": 9.155917336000016,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "retrieval_union_seconds": 1.4681488829999694,
+      "retrieval_sum_seconds": 1.4681473829999732,
+      "preparation_sum_seconds": 0.5367098479999868,
+      "other_seconds": 3.9780279470000437,
+      "usage": {
+        "input": 10040,
+        "output": 615,
+        "reasoning": 281,
+        "cache_read": 6278,
+        "cache_creation": 3756
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": true
+        },
+        "citation_support": "supported",
+        "notes": []
+      },
+      "source_count": 2,
+      "answer_chars": 786,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 3.423690378999993,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 3142,
+            "output_tokens": 131,
+            "total_tokens": 3273,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 3139
+            },
+            "output_token_details": {
+              "reasoning": 23
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 5.732226957000023,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 6898,
+            "output_tokens": 484,
+            "total_tokens": 7382,
+            "input_token_details": {
+              "cache_creation": 3756,
+              "cache_read": 3139
+            },
+            "output_token_details": {
+              "reasoning": 258
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "c2d94c659ad0b6acdde136e473260d1d154183b18ab592f82714c24a0f0d2cef",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "b8f7e5653cc4cd0c8838c6646ea31efcd042a0f46698955140206c78480a746a",
+        "82123abaee4b2e5dba29d396496f0593c7e142c8aa17d94d5b2a329dda619728",
+        "4c33e2c8599c096b68cafddbbe38ae488df0dbe543ad094ff57c1eb023dcc3f0"
+      ]
+    },
+    {
+      "slot": 7,
+      "question": "a7b5f7c44544",
+      "repeat": 1,
+      "profile": "after",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 19.605440465000015,
+      "model_seconds": 13.588178969000069,
+      "model_calls": 1,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 2.2049800849999883,
+      "retrieval_sum_seconds": 4.308668597999997,
+      "preparation_sum_seconds": 1.530250384999988,
+      "other_seconds": 3.812281410999958,
+      "usage": {
+        "input": 10198,
+        "output": 872,
+        "reasoning": 680,
+        "cache_read": 10195,
+        "cache_creation": 0
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": true
+        },
+        "citation_support": "supported",
+        "notes": []
+      },
+      "source_count": 2,
+      "answer_chars": 704,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 13.588178969000069,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 10198,
+            "output_tokens": 872,
+            "total_tokens": 11070,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 10195
+            },
+            "output_token_details": {
+              "reasoning": 680
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "01819c8d36f09dbbf3a54fdb005baee823926661dd9fd6d957554b55d2ae0e67",
+        "805569bc0aaf2ab01af4714db6a678c2c68c52ddd5488231e910f445830d84b0",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "53274d43aaf8e474b9a171327c335ac5d4161096aa23241b91850e90c5cce981",
+        "91abb85407ca1a593464bfd1f4c6d7479c235c9df1c8b1b63af169d536bf4c9a",
+        "090927a75804349f6956f117cb3b7411182eab18d554977abc7ea1b4fdbdebb2",
+        "ebf8d7c8dce99e11fd2261e5bfe80923fdcb29d951be97f059e674c633802115",
+        "371e72aefdc18b322806f660237c5ab2755f4cc9f738476816df2bbb02f1f926",
+        "3758fd52d9ee06033522f585043b325135a42f4bd1d7632b386f4794d714a173",
+        "4567f27ef406d047d818cf0a68b0f53e49f11c594a53e569c4a600e3c34b518e"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "question": "0801f604b07c",
+      "profile": "before",
+      "times": [
+        24.515186932000006,
+        21.752951764000045
+      ],
+      "median_seconds": 23.134069348000025,
+      "median_model_seconds": 15.831412471000021,
+      "model_calls": [
+        3,
+        3
+      ],
+      "retrieval_calls": [
+        2,
+        2
+      ]
+    },
+    {
+      "question": "0801f604b07c",
+      "profile": "after",
+      "times": [
+        19.213877293999985,
+        58.39190900400001
+      ],
+      "median_seconds": 38.802893149,
+      "median_model_seconds": 23.091843473500035,
+      "model_calls": [
+        1,
+        3
+      ],
+      "retrieval_calls": [
+        2,
+        4
+      ]
+    },
+    {
+      "question": "a7b5f7c44544",
+      "profile": "before",
+      "times": [
+        13.231088918000012,
+        14.602094166000029
+      ],
+      "median_seconds": 13.91659154200002,
+      "median_model_seconds": 8.99233811100001,
+      "model_calls": [
+        2,
+        2
+      ],
+      "retrieval_calls": [
+        1,
+        1
+      ]
+    },
+    {
+      "question": "a7b5f7c44544",
+      "profile": "after",
+      "times": [
+        21.054213078000004,
+        19.605440465000015
+      ],
+      "median_seconds": 20.32982677150001,
+      "median_model_seconds": 11.879401002500032,
+      "model_calls": [
+        1,
+        1
+      ],
+      "retrieval_calls": [
+        2,
+        2
+      ]
+    }
+  ],
+  "attempts": 8,
+  "completed_answers": 8,
+  "transport_errors": 0,
+  "retrieval_failures": 0,
+  "cost_calculated": false,
+  "judge": "Manual evidence-based review by sole Astra executor, no judge API",
+  "verdict": "No stable latency gain. Do not enable in production. Fact coverage retained with citation/format caveats."
+}

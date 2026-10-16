@@ -1,0 +1,128 @@
+{
+  "offline": true,
+  "network_calls": 0,
+  "rows": [
+    {
+      "historical_slot": 1,
+      "question": "0801f604b07c",
+      "prefetch": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "sources": 5,
+      "context_chars": 7013,
+      "missing_aspects": null,
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 1,
+      "question": "0801f604b07c",
+      "prefetch": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 2,
+      "sources": 7,
+      "context_chars": 9824,
+      "missing_aspects": [],
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 4,
+      "question": "0801f604b07c",
+      "prefetch": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "sources": 5,
+      "context_chars": 9982,
+      "missing_aspects": null,
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 4,
+      "question": "0801f604b07c",
+      "prefetch": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 2,
+      "sources": 8,
+      "context_chars": 13474,
+      "missing_aspects": [],
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 7,
+      "question": "a7b5f7c44544",
+      "prefetch": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "sources": 5,
+      "context_chars": 8932,
+      "missing_aspects": null,
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 7,
+      "question": "a7b5f7c44544",
+      "prefetch": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 2,
+      "sources": 5,
+      "context_chars": 8932,
+      "missing_aspects": [],
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 9,
+      "question": "0801f604b07c",
+      "prefetch": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "sources": 5,
+      "context_chars": 6767,
+      "missing_aspects": null,
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 9,
+      "question": "0801f604b07c",
+      "prefetch": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 2,
+      "sources": 7,
+      "context_chars": 10553,
+      "missing_aspects": [],
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 10,
+      "question": "a7b5f7c44544",
+      "prefetch": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "sources": 5,
+      "context_chars": 9811,
+      "missing_aspects": null,
+      "history_unchanged": true,
+      "citations_contiguous": true
+    },
+    {
+      "historical_slot": 10,
+      "question": "a7b5f7c44544",
+      "prefetch": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 2,
+      "sources": 5,
+      "context_chars": 9811,
+      "missing_aspects": [],
+      "history_unchanged": true,
+      "citations_contiguous": true
+    }
+  ],
+  "input_sha256": "ef2bbd3f7eef6aa9886ad7443baaf4c1d22d4395fed0749987756b1ba0bfcadf",
+  "limitation": "Stored old-query results; cooperative scripted model. Not a live recall, latency or answer-quality result."
+}

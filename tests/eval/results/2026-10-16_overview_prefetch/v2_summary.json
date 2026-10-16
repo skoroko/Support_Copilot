@@ -1,0 +1,520 @@
+{
+  "evaluated_revision": "prefetch-v2",
+  "manifest": {
+    "protocol": 1,
+    "concurrency": 1,
+    "fresh_process_per_sample": true,
+    "comparison": "V2 opt-in controls against saved same-day before; not interleaved",
+    "successful_answer_limit": 4,
+    "service_tier": "default",
+    "reference_before_sha256": {
+      "0": "0241d188f2b353899b0a572b89773473f958a0e7d9f9aec92f5e3176cca788db",
+      "3": "19a7c44eaabf471f5f790b99ba77ca6a8dc7a2a3c10d37fdcec0fbed9b69cf06",
+      "5": "3e2b8eacab52891705dc3b9ea446e05ec39d70dc2acffa380cd7d262cc4239c7",
+      "6": "83b3160c619b2a89fd6579b739e483c5d61a6ee80b78e3c985a44c9f584936b9"
+    },
+    "external_destination": "OpenAI API",
+    "telegram_allowed": false,
+    "production_mutation_allowed": false,
+    "profiles": {
+      "v2": {
+        "default_model": "gpt-6-luna",
+        "agent_llm_api": "responses",
+        "agent_reasoning_effort": "medium",
+        "agent_expanded_reasoning_effort": "medium"
+      }
+    },
+    "history_metadata_removed_for_both": true,
+    "input_file_sha256": "ef2bbd3f7eef6aa9886ad7443baaf4c1d22d4395fed0749987756b1ba0bfcadf",
+    "semantic_inputs_sha256": "8b94c707a4402527ce29794b8a4fbfdaff0bb612aa3f9e697774c5fd26e7b789",
+    "code_sha256": {
+      "app/services/agent_persistent.py": "3da1c1343aa35d2b80c0d7549e5556a026c625e59c626e1d3fbba74154cf6890",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "3eaee7bd3d31bfda4cdaa521f4519a1b0426ba08c798ba0ad42ae6613673ac49",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+      "app/services/overview_evidence.py": "1a76b37bf61654836aff1e22d5e1d38bf09f49a153eedfccbe371dd547b86e0b",
+      "scripts/compare_overview_prefetch_v2.py": "04c79b07f9945a6e0e6424b1c84d3cd575502524a2367664dc15066203a5b0b4"
+    },
+    "schedule": [
+      {
+        "slot": 0,
+        "question": "0801f604b07c",
+        "repeat": 0,
+        "profile": "v2"
+      },
+      {
+        "slot": 1,
+        "question": "a7b5f7c44544",
+        "repeat": 0,
+        "profile": "v2"
+      },
+      {
+        "slot": 2,
+        "question": "a7b5f7c44544",
+        "repeat": 1,
+        "profile": "v2"
+      },
+      {
+        "slot": 3,
+        "question": "0801f604b07c",
+        "repeat": 1,
+        "profile": "v2"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "slot": 0,
+      "question": "0801f604b07c",
+      "repeat": 0,
+      "profile": "v2",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 16.32946391900009,
+      "model_seconds": 8.200245543999927,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "retrieval_union_seconds": 2.9622230130000844,
+      "retrieval_sum_seconds": 2.9622217129999626,
+      "preparation_sum_seconds": 0.332771042000104,
+      "other_seconds": 5.16699536200008,
+      "usage": {
+        "input": 5353,
+        "output": 707,
+        "reasoning": 423,
+        "cache_read": 0,
+        "cache_creation": 5350
+      },
+      "quality": {
+        "facts": {
+          "scope_correct": false,
+          "modified_basis_named": false,
+          "G0_gamma_defined": false,
+          "stiffness_parameters": true
+        },
+        "citation_support": "unsupported_scope_transfer",
+        "issues": [
+          "base_HS_description_grounded_in_small_strain_section",
+          "whole_model_presented_as_nonlinear_elastic",
+          "Modified_basis_and_G0_gamma_definitions_omitted"
+        ]
+      },
+      "source_count": 3,
+      "answer_chars": 871,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 8.200245543999927,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 5353,
+            "output_tokens": 707,
+            "total_tokens": 6060,
+            "input_token_details": {
+              "cache_creation": 5350,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 423
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "c711c80b454c4386b5c2a739ccfa14a147a06db7d0cbc375e2e5cb6f292acd7a",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "0b5bc7a1b9cadb29ffa61946036fceca0fc87f089d0b86924dcc687b485452f1"
+      ],
+      "concurrent_offline_pytest": true
+    },
+    {
+      "slot": 1,
+      "question": "a7b5f7c44544",
+      "repeat": 0,
+      "profile": "v2",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 30.92038503399999,
+      "model_seconds": 9.08298279099995,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "retrieval_union_seconds": 2.8960021569998844,
+      "retrieval_sum_seconds": 2.8960010569999213,
+      "preparation_sum_seconds": 0.626175855999918,
+      "other_seconds": 18.941400086000158,
+      "usage": {
+        "input": 6872,
+        "output": 732,
+        "reasoning": 470,
+        "cache_read": 1881,
+        "cache_creation": 4988
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": true
+        },
+        "citation_support": "supported",
+        "issues": []
+      },
+      "source_count": 4,
+      "answer_chars": 923,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 9.08298279099995,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 6872,
+            "output_tokens": 732,
+            "total_tokens": 7604,
+            "input_token_details": {
+              "cache_creation": 4988,
+              "cache_read": 1881
+            },
+            "output_token_details": {
+              "reasoning": 470
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "01819c8d36f09dbbf3a54fdb005baee823926661dd9fd6d957554b55d2ae0e67",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "91abb85407ca1a593464bfd1f4c6d7479c235c9df1c8b1b63af169d536bf4c9a",
+        "ebf8d7c8dce99e11fd2261e5bfe80923fdcb29d951be97f059e674c633802115",
+        "3758fd52d9ee06033522f585043b325135a42f4bd1d7632b386f4794d714a173"
+      ],
+      "concurrent_offline_pytest": false
+    },
+    {
+      "slot": 2,
+      "question": "a7b5f7c44544",
+      "repeat": 1,
+      "profile": "v2",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 18.370203831000026,
+      "model_seconds": 11.714807887999996,
+      "model_calls": 2,
+      "retrieval_calls": 2,
+      "retrieval_union_seconds": 3.060088932000099,
+      "retrieval_sum_seconds": 3.0600863320000826,
+      "preparation_sum_seconds": 0.9447204799998872,
+      "other_seconds": 3.5953070109999317,
+      "usage": {
+        "input": 17253,
+        "output": 914,
+        "reasoning": 485,
+        "cache_read": 13738,
+        "cache_creation": 3509
+      },
+      "quality": {
+        "facts": {
+          "mechanical": true,
+          "seepage": true,
+          "dynamic": true,
+          "scope_correct": false
+        },
+        "citation_support": "overbroad_dynamic_example_scope",
+        "issues": [
+          "viscous_boundary_example_under_equivalent_linear_heading_while_table_associates_it_with_time_domain",
+          "useful_followup_added_Nodal_Head_and_Flux"
+        ]
+      },
+      "source_count": 6,
+      "answer_chars": 1164,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 5.769371083000124,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 6872,
+            "output_tokens": 343,
+            "total_tokens": 7215,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 6869
+            },
+            "output_token_details": {
+              "reasoning": 233
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 5.945436804999872,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 10381,
+            "output_tokens": 571,
+            "total_tokens": 10952,
+            "input_token_details": {
+              "cache_creation": 3509,
+              "cache_read": 6869
+            },
+            "output_token_details": {
+              "reasoning": 252
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "01819c8d36f09dbbf3a54fdb005baee823926661dd9fd6d957554b55d2ae0e67",
+        "927a428df2c46d539da1a78299ba30af7bedec5d16688bb7a4dd218bf458f0ff",
+        "91abb85407ca1a593464bfd1f4c6d7479c235c9df1c8b1b63af169d536bf4c9a",
+        "ebf8d7c8dce99e11fd2261e5bfe80923fdcb29d951be97f059e674c633802115",
+        "3758fd52d9ee06033522f585043b325135a42f4bd1d7632b386f4794d714a173",
+        "5b969e50448945cf1007bf75ebea23f504400c0892f25d1f871e00d20c6b9f02",
+        "51d2c6c76bb48de1090e42b7630a4b9eea2ff2cce1cf6e8c558d133248daf61e",
+        "b8f7e5653cc4cd0c8838c6646ea31efcd042a0f46698955140206c78480a746a"
+      ],
+      "concurrent_offline_pytest": false
+    },
+    {
+      "slot": 3,
+      "question": "0801f604b07c",
+      "repeat": 1,
+      "profile": "v2",
+      "settings": {
+        "model": "gpt-6-luna",
+        "api": "responses",
+        "effort": "medium",
+        "answer_tokens": 500,
+        "generation_cap": 8692,
+        "history_window": 10,
+        "context_budget": 118808
+      },
+      "total_seconds": 30.459414754000136,
+      "model_seconds": 23.252505550999786,
+      "model_calls": 4,
+      "retrieval_calls": 4,
+      "retrieval_union_seconds": 4.308704469999839,
+      "retrieval_sum_seconds": 4.30870026999969,
+      "preparation_sum_seconds": 0.7580023320001601,
+      "other_seconds": 2.8982047330005116,
+      "usage": {
+        "input": 42047,
+        "output": 1860,
+        "reasoning": 1105,
+        "cache_read": 31690,
+        "cache_creation": 10345
+      },
+      "quality": {
+        "facts": {
+          "scope_correct": false,
+          "modified_basis_named": false,
+          "G0_gamma_defined": false,
+          "stiffness_parameters": true
+        },
+        "citation_support": "wrong_model_section_for_base_HS",
+        "issues": [
+          "citation4_printed_page34_belongs_to_Modified_Mohr_Coulomb_section_starting_printed_page33",
+          "Modified_basis_and_G0_gamma_definitions_omitted",
+          "three_additional_model_directed_retrievals"
+        ]
+      },
+      "source_count": 4,
+      "answer_chars": 1209,
+      "incomplete": false,
+      "valid_citation_indexes": true,
+      "model_call_metrics": [
+        {
+          "seconds": 5.4391892229998575,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 5353,
+            "output_tokens": 326,
+            "total_tokens": 5679,
+            "input_token_details": {
+              "cache_creation": 0,
+              "cache_read": 5350
+            },
+            "output_token_details": {
+              "reasoning": 208
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 3.273076795999941,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 8676,
+            "output_tokens": 254,
+            "total_tokens": 8930,
+            "input_token_details": {
+              "cache_creation": 3323,
+              "cache_read": 5350
+            },
+            "output_token_details": {
+              "reasoning": 83
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 4.287531469999976,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 12320,
+            "output_tokens": 250,
+            "total_tokens": 12570,
+            "input_token_details": {
+              "cache_creation": 3644,
+              "cache_read": 8673
+            },
+            "output_token_details": {
+              "reasoning": 126
+            }
+          },
+          "tool_calls": 1,
+          "finish_reason": "tool_calls"
+        },
+        {
+          "seconds": 10.25270806200001,
+          "service_tier": "default",
+          "usage": {
+            "input_tokens": 15698,
+            "output_tokens": 1030,
+            "total_tokens": 16728,
+            "input_token_details": {
+              "cache_creation": 3378,
+              "cache_read": 12317
+            },
+            "output_token_details": {
+              "reasoning": 688
+            }
+          },
+          "tool_calls": 0,
+          "finish_reason": "stop"
+        }
+      ],
+      "citation_evidence_hashes": [
+        "c711c80b454c4386b5c2a739ccfa14a147a06db7d0cbc375e2e5cb6f292acd7a",
+        "4363b3d9f0a24db6b52bc4fc26d763fcbe4cdaf26f68a9a69163c4d63691d0f5",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "d335d25bf47457feae85f72f227154ac70ff8e63e14f86ba68f9240a8cea064c",
+        "0b5bc7a1b9cadb29ffa61946036fceca0fc87f089d0b86924dcc687b485452f1",
+        "a5555a4f57183e1b3b887dec20e09881edf58587d920b1ea4c12e3893506a187",
+        "af3d567de0cb04ec541edfda2eb06c54db8186f38d18e38feaace59fecfd76aa",
+        "60eb9d5b7713227b39e8caeb89b739b9292dca4d674204157f9f5d03ac98f8d8",
+        "79979223abc908cc23026a0c94a1f06b9978bbed5d5629b22be2f43773fc2543",
+        "35afb374942d64a26cb8bd338f1d24f3e16de717b6becd111a03e5c700ba1c2a",
+        "d0239acd8e19a5bb507eeba3eba197a38956aad4afe862f6efe65a6b8b5f0b39",
+        "0240458b2b02c44658c6cc2707af96c671dd3136040f7a7d88ad2e2ea09f90f3"
+      ],
+      "concurrent_offline_pytest": false
+    }
+  ],
+  "groups": [
+    {
+      "question": "0801f604b07c",
+      "profile": "v2",
+      "times": [
+        16.32946391900009,
+        30.459414754000136
+      ],
+      "median_seconds": 23.394439336500113,
+      "median_model_seconds": 15.726375547499856,
+      "model_calls": [
+        1,
+        4
+      ],
+      "retrieval_calls": [
+        1,
+        4
+      ]
+    },
+    {
+      "question": "a7b5f7c44544",
+      "profile": "v2",
+      "times": [
+        30.92038503399999,
+        18.370203831000026
+      ],
+      "median_seconds": 24.64529443250001,
+      "median_model_seconds": 10.398895339499973,
+      "model_calls": [
+        1,
+        2
+      ],
+      "retrieval_calls": [
+        1,
+        2
+      ]
+    }
+  ],
+  "attempts": 4,
+  "completed_answers": 4,
+  "transport_errors": 0,
+  "retrieval_failures": 0,
+  "runtime_after": {
+    "model": "gpt-6-luna",
+    "reasoning": "medium",
+    "api": "responses",
+    "ready_status": 200,
+    "code_sha256": {
+      "app/services/agent_persistent.py": "9bfbbf82c1b8cd9e210de549deb4f51aff20e471427d44aeffe3b87cac30c2ef",
+      "app/services/evidence_text.py": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e",
+      "app/services/rag.py": "da9801d2351bb28484ffc685fdc68677a28dfaa51774eaed01e1cad5deea258a",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167"
+    },
+    "production_has_prefetch_module": false
+  },
+  "tests": {
+    "full_passed": 893,
+    "full_skipped": 11,
+    "targeted_passed": 56
+  },
+  "cost_calculated": false,
+  "production_rollout": false,
+  "enabled_by_default": false,
+  "limitations": [
+    "noninterleaved_comparison_with_same_day_before",
+    "two_questions_two_repeats",
+    "fresh_container_per_sample",
+    "slot0_overlapped_offline_pytest",
+    "other_latency_residual_not_profiled"
+  ],
+  "verdict": "Rejected for production: no reliable latency gain and grounding/scope regressions.",
+  "judge": "Manual evidence-based review by sole Astra executor; no external judge API"
+}

@@ -1,0 +1,87 @@
+{
+  "network_calls": 0,
+  "rows": [
+    {
+      "slot": 1,
+      "question": "0801f604b07c",
+      "version": "v1",
+      "stored_retrieval_calls": 2,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 6927,
+      "sources": 8,
+      "context_chars": 13558
+    },
+    {
+      "slot": 1,
+      "question": "0801f604b07c",
+      "version": "v2",
+      "stored_retrieval_calls": 1,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 5137,
+      "sources": 5,
+      "context_chars": 7888
+    },
+    {
+      "slot": 2,
+      "question": "a7b5f7c44544",
+      "version": "v1",
+      "stored_retrieval_calls": 2,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 9982,
+      "sources": 10,
+      "context_chars": 21457
+    },
+    {
+      "slot": 2,
+      "question": "a7b5f7c44544",
+      "version": "v2",
+      "stored_retrieval_calls": 1,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 6656,
+      "sources": 5,
+      "context_chars": 10663
+    },
+    {
+      "slot": 4,
+      "question": "0801f604b07c",
+      "version": "v1",
+      "stored_retrieval_calls": 2,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 6927,
+      "sources": 8,
+      "context_chars": 13558
+    },
+    {
+      "slot": 4,
+      "question": "0801f604b07c",
+      "version": "v2",
+      "stored_retrieval_calls": 1,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 5137,
+      "sources": 5,
+      "context_chars": 7888
+    },
+    {
+      "slot": 7,
+      "question": "a7b5f7c44544",
+      "version": "v1",
+      "stored_retrieval_calls": 2,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 9982,
+      "sources": 10,
+      "context_chars": 21457
+    },
+    {
+      "slot": 7,
+      "question": "a7b5f7c44544",
+      "version": "v2",
+      "stored_retrieval_calls": 1,
+      "scripted_model_calls": 1,
+      "local_prompt_token_estimate": 6656,
+      "sources": 5,
+      "context_chars": 10663
+    }
+  ],
+  "v2_evidence_is_unmodified_subset_of_v1": true,
+  "limitations": "Stored retrievals and cooperative fake model; no live model latency or quality claim."
+}
