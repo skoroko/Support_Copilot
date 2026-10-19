@@ -171,6 +171,10 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_INGEST_ON_START"),
     )
+    rag_ingest_exclude_dirs: str = Field(
+        default="gts_nx_help_html",
+        validation_alias=AliasChoices("RAG_INGEST_EXCLUDE_DIRS"),
+    )
     rag_allow_external_data_transfer: bool = Field(
         default=False,
         validation_alias=AliasChoices("RAG_ALLOW_EXTERNAL_DATA_TRANSFER"),
@@ -241,7 +245,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("RAG_RERANKER_BATCH_SIZE"),
     )
     rag_reranker_top_n: int = Field(
-        default=5,
+        default=7,
         gt=0,
         validation_alias=AliasChoices("RAG_RERANKER_TOP_N"),
     )
@@ -493,6 +497,7 @@ def get_settings() -> Settings:
             os.getenv("RAG_INGEST_ON_START", "true").strip().lower()
             in {"1", "true", "yes", "on"}
         ),
+        rag_ingest_exclude_dirs=os.getenv("RAG_INGEST_EXCLUDE_DIRS") or "gts_nx_help_html",
         rag_allow_external_data_transfer=(
             os.getenv("RAG_ALLOW_EXTERNAL_DATA_TRANSFER", "false").strip().lower()
             in {"1", "true", "yes", "on"}
@@ -522,7 +527,7 @@ def get_settings() -> Settings:
         rag_reranker_model=os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-v2-m3",
         rag_reranker_device=os.getenv("RAG_RERANKER_DEVICE") or "",
         rag_reranker_batch_size=int(os.getenv("RAG_RERANKER_BATCH_SIZE") or 4),
-        rag_reranker_top_n=int(os.getenv("RAG_RERANKER_TOP_N") or 5),
+        rag_reranker_top_n=int(os.getenv("RAG_RERANKER_TOP_N") or 7),
         rag_min_score=float(os.getenv("RAG_SCORE_THRESHOLD") or os.getenv("RAG_MIN_SCORE") or 0.45),
         rag_condense_enabled=(
             os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}

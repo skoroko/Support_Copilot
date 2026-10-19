@@ -46,6 +46,7 @@ from app.services.ingestion import (
     IngestionService,
     canonical_product,
     infer_product,
+    ingest_exclude_dir_names,
 )
 from app.services.parallel_retrieval import independent_searches
 from app.services.related_evidence import RelatedEvidenceIndex
@@ -716,9 +717,9 @@ class RAGConfig:
     top_k: int = 10
     target_product: str = "gts_nx"
     product_scope: str = "fallback"
-    min_score: float = 0.3
+    min_score: float = 0.45
     rerank_enabled: bool = False
-    rerank_top_n: int = 5
+    rerank_top_n: int = 7
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     reranker_device: str | None = None
     reranker_batch_size: int = 4
@@ -733,6 +734,7 @@ class RAGConfig:
     lexical_pair_weight: float = 0.3
     allow_external_data_transfer: bool = False
     ingest_on_start: bool = True
+    ingest_exclude_dir_names: tuple[str, ...] = ()
     docstore_path: Path | None = None
     evidence_catalog_path: Path | None = None
     visual_transcriptions_path: Path | None = None
@@ -740,7 +742,7 @@ class RAGConfig:
     rebuild_on_start: bool = False
     openai_api_key: str | None = None
     openai_base_url: str | None = None
-    request_timeout: float = 60.0
+    request_timeout: float = 30.0
     # Generation runs on a longer budget than retrieval: dense and lexical
     # fallback variants already cost several requests before the answer
     # prompt starts streaming, and the grounded completion itself is the
@@ -846,6 +848,7 @@ class RAGConfig:
             lexical_pair_weight=float(getattr(settings, "rag_lexical_pair_weight", 0.3)),
             allow_external_data_transfer=bool(getattr(settings, "rag_allow_external_data_transfer", False)),
             ingest_on_start=bool(getattr(settings, "rag_ingest_on_start", True)),
+            ingest_exclude_dir_names=ingest_exclude_dir_names(settings),
             docstore_path=docstore_path,
             evidence_catalog_path=catalog_path,
             visual_transcriptions_path=transcriptions_path,
@@ -1648,6 +1651,7 @@ class RAGService:
                     docstore_path=docstore_path,
                     corpus_catalog_path=self.config.evidence_catalog_path,
                     visual_transcriptions_path=self.config.visual_transcriptions_path,
+                    exclude_dir_names=self.config.ingest_exclude_dir_names,
                 ),
                 client=self.client,
                 embed_model=self._embed_model,

@@ -430,6 +430,9 @@ async def test_lifespan_runs_sqlite_setup_once_and_exposes_one_graph(monkeypatch
 
     monkeypatch.setenv("AGENT_CHECKPOINTER", "sqlite")
     monkeypatch.setenv("AGENT_SQLITE_PATH", str(tmp_path / "checkpoints.sqlite"))
+    # Keep the prune pass off: alist() re-enters setup() internally (guarded
+    # by is_setup), which would double-count the wrapped call.
+    monkeypatch.setenv("AGENT_CHECKPOINT_TTL_HOURS", "0")
     monkeypatch.setattr(AsyncSqliteSaver, "setup", counted_setup)
     holder = SimpleNamespace(state=SimpleNamespace())
 

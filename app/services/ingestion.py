@@ -164,6 +164,7 @@ class IngestionConfig:
     docstore_path: Path = PROJECT_ROOT / "var" / "ingestion_docstore.json"
     corpus_catalog_path: Path | None = None
     visual_transcriptions_path: Path | None = None
+    exclude_dir_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.qdrant_url.strip():
@@ -218,6 +219,7 @@ class IngestionConfig:
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             default_product=getattr(settings, "rag_product", "gts_nx"),
             docstore_path=docstore_path,
+            exclude_dir_names=ingest_exclude_dir_names(settings),
         )
 
 
@@ -261,8 +263,38 @@ class IngestionResult:
         }
 
 
-def supported_files(path_or_paths: Path | str | Iterable[Path | str]) -> list[Path]:
-    """Return supported files in deterministic order, skipping prior failures."""
+DEFAULT_INGEST_EXCLUDE_DIRS = ("gts_nx_help_html",)
+
+
+def ingest_exclude_dir_names(settings: Any) -> tuple[str, ...]:
+    """Parse ``RAG_INGEST_EXCLUDE_DIRS`` (comma-separated directory names).
+
+    The default drops the CHM-derived HTML mirror documented in
+    ``docs/data_inventory.md``: its chunks duplicate the canonical CHM
+    members and compete for the same evidence slots.
+    """
+
+    raw = getattr(settings, "rag_ingest_exclude_dirs", None)
+    if raw is None:
+        return DEFAULT_INGEST_EXCLUDE_DIRS
+    if isinstance(raw, str):
+        parts = raw.split(",")
+    else:
+        parts = [str(item) for item in raw]
+    return tuple(part.strip() for part in parts if part.strip())
+
+
+def supported_files(
+    path_or_paths: Path | str | Iterable[Path | str],
+    *,
+    exclude_dir_names: frozenset[str] | set[str] = frozenset(),
+) -> list[Path]:
+    """Return supported files in deterministic order, skipping prior failures.
+
+    ``exclude_dir_names`` drops whole directories by name during the recursive
+    scan (e.g. a derivative mirror like the CHM-exported ``gts_nx_help_html``).
+    Files passed explicitly are still returned — the caller named them.
+    """
 
     if isinstance(path_or_paths, (str, Path)):
         candidates: Sequence[Path | str] = [path_or_paths]
@@ -274,7 +306,12 @@ def supported_files(path_or_paths: Path | str | Iterable[Path | str]) -> list[Pa
         if path.is_file():
             files = [path]
         elif path.is_dir():
-            files = [item for item in path.rglob("*") if item.is_file()]
+            files = [
+                item
+                for item in path.rglob("*")
+                if item.is_file()
+                and not (set(item.relative_to(path).parts[:-1]) & set(exclude_dir_names))
+            ]
         else:
             raise FileNotFoundError(f"Ingestion path does not exist: {path}")
         result.extend(
@@ -549,7 +586,10 @@ class IngestionService:
                 "Qdrant URL is not local. Pass allow_external_data_transfer=True after explicit approval."
             )
 
-        source_files = supported_files(self.config.data_dir if path_or_paths is None else path_or_paths)
+        source_files = supported_files(
+            self.config.data_dir if path_or_paths is None else path_or_paths,
+            exclude_dir_names=set(self.config.exclude_dir_names),
+        )
         extracted: list[Document] = []
         failures: list[str] = []
         errors: dict[str, str] = {}
@@ -767,7 +807,8 @@ class IngestionService:
         if catalog.extraction_version != EXTRACTION_VERSION:
             raise ValueError("Unsupported catalog extraction version; run full ingestion first")
         current = {source_identity(p, self.config.data_dir)[0]: (p, file_hash(p))
-                   for p in supported_files(self.config.data_dir)}
+                   for p in supported_files(self.config.data_dir,
+                                            exclude_dir_names=set(self.config.exclude_dir_names))}
         sources = {s["source_id"]: s for s in catalog.sources}
         if len(sources) != len(catalog.sources) or sources.keys() != current.keys():
             raise ValueError("Catalog must cover every current permitted source exactly once")

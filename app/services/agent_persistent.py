@@ -1102,6 +1102,64 @@ def _sqlite_path() -> Path:
     return Path(raw) if raw else DEFAULT_SQLITE_PATH
 
 
+DEFAULT_CHECKPOINT_TTL_HOURS = 168.0
+
+
+def _checkpoint_ttl_hours() -> float | None:
+    """Stale-thread retention; ``0``/negative/blank-off disables pruning."""
+
+    raw = os.getenv("AGENT_CHECKPOINT_TTL_HOURS", "").strip()
+    if not raw:
+        return DEFAULT_CHECKPOINT_TTL_HOURS
+    value = float(raw)
+    return value if value > 0 else None
+
+
+def _checkpoint_timestamp(checkpoint: Any) -> Any:
+    if not isinstance(checkpoint, dict):
+        return None
+    raw = checkpoint.get("ts")
+    if not raw:
+        return None
+    from datetime import datetime, timezone
+
+    try:
+        parsed = datetime.fromisoformat(str(raw))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+
+
+async def _delete_stale_checkpoint_threads(saver: Any, *, ttl_hours: float) -> int:
+    """Delete threads whose newest checkpoint is older than the retention TTL.
+
+    Threads are judged by their freshest checkpoint so a recently active
+    conversation is never pruned because its first turn is old. A thread with
+    any unparseable timestamp is kept rather than guessed stale.
+    """
+
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=ttl_hours)
+    latest: dict[str, Any] = {}
+    unparseable: set[str] = set()
+    async for record in saver.alist(None):
+        thread_id = str((record.config.get("configurable") or {}).get("thread_id") or "")
+        if not thread_id or thread_id in unparseable:
+            continue
+        ts = _checkpoint_timestamp(record.checkpoint)
+        if ts is None:
+            unparseable.add(thread_id)
+            latest.pop(thread_id, None)
+            continue
+        if thread_id not in latest or ts > latest[thread_id]:
+            latest[thread_id] = ts
+    stale = [thread_id for thread_id, ts in latest.items() if ts < cutoff]
+    for thread_id in stale:
+        await saver.adelete_thread(thread_id)
+    return len(stale)
+
+
 def _postgres_uri() -> str:
     """Build a psycopg-v3 URI for the existing FastAPI Postgres database."""
 
@@ -1141,6 +1199,17 @@ async def agent_lifespan(app: Any) -> AsyncIterator[None]:
                 AsyncPostgresSaver.from_conn_string(_postgres_uri())
             )
             await saver.setup()
+
+        ttl_hours = _checkpoint_ttl_hours()
+        if backend != "memory" and ttl_hours is not None:
+            # Durable checkpoints (and the approvals parked inside them) would
+            # otherwise accumulate forever; pruning failure must not block startup.
+            try:
+                removed = await _delete_stale_checkpoint_threads(saver, ttl_hours=ttl_hours)
+                if removed:
+                    logger.info("agent_checkpoints_pruned", count=removed, backend=backend)
+            except Exception:
+                logger.warning("agent_checkpoint_prune_failed", exc_info=True)
 
         app.state.agent_graph = build_agent(
             saver, rag_provider=lambda: getattr(app.state, "rag_service", None)
