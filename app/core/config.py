@@ -57,6 +57,8 @@ class _SettingsFields(BaseModel):
         default=30.0,
         validation_alias=AliasChoices("LLM_REQUEST_TIMEOUT", "ASYNC_LLM_SDK_TIMEOUT_SEC", "LLM__REQUEST_TIMEOUT"),
     )
+    llm_max_retries: int = Field(
+        default=2, ge=0, le=10, validation_alias=AliasChoices("LLM_MAX_RETRIES", "LLM__MAX_RETRIES"))
     openai_base_url: str | None = Field(default=None, validation_alias=AliasChoices("OPENAI_BASE_URL"))
     agent_llm_api: Literal["auto", "chat_completions", "responses"] = Field(
         default="auto", validation_alias=AliasChoices("AGENT_LLM_API"))
@@ -434,6 +436,7 @@ def get_settings() -> Settings:
         openai_api_key=SecretStr(api_key),
         default_model=os.getenv("APP_DEFAULT_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-5.4-mini",
         request_timeout=float(os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("ASYNC_LLM_SDK_TIMEOUT_SEC") or 30.0),
+        llm_max_retries=int(os.getenv("LLM_MAX_RETRIES") or 2),
         openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
         agent_llm_api=os.getenv("AGENT_LLM_API") or "auto",
         agent_reasoning_effort=os.getenv("AGENT_REASONING_EFFORT") or None,

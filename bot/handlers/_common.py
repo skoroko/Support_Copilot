@@ -23,6 +23,13 @@ BACKEND_EXCEPTIONS = (httpx.HTTPError,)
 EDIT_DEBOUNCE_SECONDS = 0.8
 QUOTE_MAX_CHARS = 1500
 RESPONSE_PLACEHOLDER = "Готовлю ответ…"
+STATUS_ROTATE_SECONDS = 2.5
+STATUS_MESSAGES = (
+    RESPONSE_PLACEHOLDER,
+    "Ищу в мануалах…",
+    "Анализирую источники…",
+    "Формулирую ответ…",
+)
 _INLINE_CODE_RE = re.compile(r"(`[^`\n]+`)")
 _BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
@@ -255,6 +262,27 @@ async def _stop_typing(stop: asyncio.Event, task: asyncio.Task, *, cancel: bool 
         await task
 
 
+async def _rotate_status(placeholder: Message, stop: asyncio.Event) -> None:
+    """Refresh the waiting status while the backend stream stays silent.
+
+    Agent turns buffer before yielding, so the placeholder alone would sit
+    unchanged for tens of seconds. The last status holds until real content
+    arrives; statuses describe phases, never claim delivery.
+    """
+
+    for status in STATUS_MESSAGES[1:]:
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=STATUS_ROTATE_SECONDS)
+        except asyncio.TimeoutError:
+            pass
+        if stop.is_set():
+            return
+        try:
+            await _edit_answer(placeholder, status)
+        except TelegramAPIError:
+            return
+
+
 async def _delete_waiting_response(placeholder: Message | None) -> None:
     delete = getattr(placeholder, "delete", None)
     if callable(delete):
@@ -299,6 +327,12 @@ async def stream_to_chat(
     editable_response = None
     stop_typing = asyncio.Event()
     typing_task = asyncio.create_task(_typing(message, stop_typing))
+    stop_status = asyncio.Event()
+    status_task = (
+        asyncio.create_task(_rotate_status(placeholder, stop_status))
+        if placeholder is not None
+        else None
+    )
     try:
         async for delta in tokens:
             if isinstance(delta, StreamReplace):
@@ -309,8 +343,12 @@ async def stream_to_chat(
                     continue
                 buffer += delta
             if buffer.strip() and placeholder is not None:
-                # Edits/drafts do not guarantee clearing typing. Drain any
-                # in-flight action, then send a NEW answer before editing it.
+                # Edits/drafts do not guarantee clearing typing. Block a queued
+                # typing action first, drain any in-flight work, then send a
+                # NEW answer before editing it.
+                stop_typing.set()
+                if status_task is not None:
+                    await _stop_typing(stop_status, status_task)
                 await _stop_typing(stop_typing, typing_task)
                 editable_response = await send_answer(message, split_text(buffer)[0], parse_mode=None)
                 await _delete_waiting_response(placeholder)
@@ -331,8 +369,13 @@ async def stream_to_chat(
                 except TelegramAPIError:
                     editable_response = None
             # Without an editable response, buffer until the final new message.
+        stop_typing.set()
+        if status_task is not None:
+            await _stop_typing(stop_status, status_task)
         await _stop_typing(stop_typing, typing_task)
     except (Exception, asyncio.CancelledError):
+        if status_task is not None:
+            await _stop_typing(stop_status, status_task, cancel=True)
         await _stop_typing(stop_typing, typing_task, cancel=True)
         if cleanup_waiting_on_error:
             await _delete_waiting_response(placeholder)

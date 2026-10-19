@@ -9,8 +9,25 @@ from uuid import UUID
 import httpx
 
 DEFAULT_TIMEOUT = httpx.Timeout(connect=3.0, read=60.0, write=10.0, pool=5.0)
+# Read deadline bounds silence only: server heartbeats keep an active turn
+# alive, so a 120s gap means the backend itself stopped answering.
 STREAM_TIMEOUT = httpx.Timeout(connect=3.0, read=120.0, write=10.0, pool=5.0)
 NETWORK_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout)
+RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
+RETRY_AFTER_CAP_SECONDS = 10.0
+
+
+def _retry_delay(response: httpx.Response, attempt: int) -> float:
+    """Retry-After honoured but capped; exponential backoff otherwise."""
+
+    delay = 0.0
+    header = response.headers.get("retry-after")
+    if header:
+        try:
+            delay = float(header)
+        except ValueError:
+            delay = 0.0
+    return min(max(delay, 0.2 * (2 ** (attempt - 1))), RETRY_AFTER_CAP_SECONDS)
 
 
 class BackendStreamError(httpx.HTTPError):
@@ -150,6 +167,13 @@ class BackendClient:
                 if yielded_data or attempt >= self._max_connect_attempts:
                     raise
                 await asyncio.sleep(0.2 * (2 ** (attempt - 1)))
+            except httpx.HTTPStatusError as exc:
+                # Transient upstream/status failures before the first byte are
+                # safe to replay: the turn did not reach the stream contract.
+                if (yielded_data or attempt >= self._max_connect_attempts
+                        or exc.response.status_code not in RETRYABLE_STATUSES):
+                    raise
+                await asyncio.sleep(_retry_delay(exc.response, attempt))
 
     async def clear_messages(self, chat_id: UUID | str) -> None:
         response = await self._request_with_connect_retry(
@@ -339,11 +363,19 @@ class BackendClient:
     async def _request_with_connect_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
         for attempt in range(1, self._max_connect_attempts + 1):
             try:
-                return await self._client.request(method, url, **kwargs)
+                response = await self._client.request(method, url, **kwargs)
             except NETWORK_ERRORS:
                 if attempt >= self._max_connect_attempts:
                     raise
                 await asyncio.sleep(0.2 * (2 ** (attempt - 1)))
+                continue
+            # Only idempotent reads may replay a transient 429/5xx; mutations
+            # (approvals, sends, clears) never auto-retry after a response.
+            if (method.upper() == "GET" and response.status_code in RETRYABLE_STATUSES
+                    and attempt < self._max_connect_attempts):
+                await asyncio.sleep(_retry_delay(response, attempt))
+                continue
+            return response
         raise RuntimeError("unreachable")
 
     def _principal_headers(self, owner_external_id: str, *, interface: str = "telegram") -> dict[str, str]:

@@ -74,7 +74,9 @@ class AgentModel:
                 "model": self.model,
                 "api_key": settings.openai_api_key.get_secret_value(),
                 "base_url": settings.openai_base_url,
-                "max_retries": 0,
+                # SDK retries only transient failures (429/5xx/timeouts) with
+                # bounded exponential backoff; the final error still escalates.
+                "max_retries": getattr(settings, "llm_max_retries", 2),
                 "timeout": getattr(
                     settings, "agent_generation_timeout", settings.request_timeout
                 ),
@@ -133,12 +135,13 @@ class ResponsesTextLLM:
         effort: str = "none",
         max_output_tokens: int = 2048,
         system_prompt: str = "",
+        max_retries: int = 2,
         client: Any = None,
     ):
         self.model, self.effort = model, effort
         self.max_output_tokens, self.system_prompt = max_output_tokens, system_prompt
         self.client = client or OpenAI(
-            api_key=api_key, base_url=base_url, timeout=timeout, max_retries=0
+            api_key=api_key, base_url=base_url, timeout=timeout, max_retries=max_retries
         )
 
     def complete(self, prompt: str) -> Any:

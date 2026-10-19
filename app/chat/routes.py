@@ -30,6 +30,7 @@ from app.chat.service import (
     media_parts,
 )
 from app.core.auth import PrincipalDep
+from app.core.sse import with_heartbeats
 from app.core.upload_boundary import CHAT_MEDIA_MAX_FILES
 from app.deps.providers import SettingsDep
 from app.observability.logging import get_logger
@@ -52,8 +53,9 @@ class _ClosingStreamingResponse(StreamingResponse):
         content: AsyncIterator[str],
         *,
         on_close: Callable[[], Awaitable[None]] | None,
+        headers: dict[str, str] | None = None,
     ) -> None:
-        super().__init__(content, media_type="text/event-stream")
+        super().__init__(content, media_type="text/event-stream", headers=headers)
         self._on_close = on_close
 
     async def __call__(self, scope, receive, send) -> None:
@@ -285,7 +287,11 @@ async def send_message(
 
     lease = getattr(request.state, "request_budget_lease", None)
     release_stream = lease.hold() if lease is not None else None
-    return _ClosingStreamingResponse(events(), on_close=release_stream)
+    return _ClosingStreamingResponse(
+        with_heartbeats(events()),
+        on_close=release_stream,
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/chats/{chat_id}/approval")
