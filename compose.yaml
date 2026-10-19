@@ -54,7 +54,8 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      # Readiness waits for the local lexical index and tokenizer warmup.
+      start_period: 300s
     restart: unless-stopped
 
   redis:

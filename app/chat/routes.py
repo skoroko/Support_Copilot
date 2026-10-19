@@ -35,6 +35,7 @@ from app.core.upload_boundary import CHAT_MEDIA_MAX_FILES
 from app.deps.providers import SettingsDep
 from app.observability.logging import get_logger
 from app.services.notifier import notify_user
+from app.services.turn_budget import AgentTurnTimeout
 from app.services.security.input_validator import (
     MAX_MESSAGE_CHARS,
     decoded_fragments,
@@ -270,6 +271,13 @@ async def send_message(
                 yield f"data: {preview}\n\n"
         except asyncio.CancelledError:
             raise
+        except (AgentTurnTimeout, TimeoutError):
+            logger.warning("chat_turn_timeout")
+            payload = json.dumps({"type": "error", "code": "chat_turn_timeout",
+                "message": "Не удалось завершить ответ за отведённое время. Сервис модели или поиска отвечает слишком долго. Повторите запрос позже или передайте обращение специалисту."},
+                ensure_ascii=False)
+            yield f"event: error\ndata: {payload}\n\n"
+            return
         except Exception as exc:  # noqa: BLE001 - response headers have already been sent
             # Provider exception messages may contain credentials or request
             # bodies. Record only the class so SSE failures are diagnosable.

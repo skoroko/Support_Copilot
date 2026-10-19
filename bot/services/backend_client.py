@@ -3,12 +3,14 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator, Sequence
+from contextlib import aclosing
 from dataclasses import dataclass
 from uuid import UUID
 
 import httpx
 
 DEFAULT_TIMEOUT = httpx.Timeout(connect=3.0, read=60.0, write=10.0, pool=5.0)
+TURN_TIMEOUT_SECONDS = 105.0
 # Read deadline bounds silence only: server heartbeats keep an active turn
 # alive, so a 120s gap means the backend itself stopped answering.
 STREAM_TIMEOUT = httpx.Timeout(connect=3.0, read=120.0, write=10.0, pool=5.0)
@@ -91,6 +93,31 @@ class BackendClient:
         content: str,
         media: Sequence[tuple[bytes, str]] | None = None,
     ) -> AsyncIterator[str | StreamReplace]:
+        # SSE heartbeats prove connectivity, not useful progress. They must
+        # never renew the complete request's elapsed-time budget.
+        deadline = asyncio.get_running_loop().time() + TURN_TIMEOUT_SECONDS
+        async with aclosing(self._send_message(chat_id, content, media)) as stream:
+            while True:
+                try:
+                    async with asyncio.timeout_at(deadline):
+                        chunk = await anext(stream)
+                except StopAsyncIteration:
+                    return
+                except TimeoutError as exc:
+                    raise BackendStreamError(
+                        "chat_turn_timeout",
+                        "Сервис отвечает слишком долго. Повторите запрос позже или передайте обращение специалисту.",
+                    ) from exc
+                # Consumer work (including Telegram delivery) must never be
+                # cancelled by a timer belonging to backend generation.
+                yield chunk
+
+    async def _send_message(
+        self,
+        chat_id: UUID | str,
+        content: str,
+        media: Sequence[tuple[bytes, str]] | None = None,
+    ) -> AsyncIterator[str | StreamReplace]:
         files = None
         if media:
             files = [
@@ -99,6 +126,7 @@ class BackendClient:
             ]
 
         yielded_data = False
+        stream_accepted = False
         chat_key = str(chat_id)
         self._last_sources[chat_key] = []
         self._last_notices[chat_key] = ""
@@ -115,6 +143,7 @@ class BackendClient:
                     timeout=STREAM_TIMEOUT,
                 ) as response:
                     response.raise_for_status()
+                    stream_accepted = True
                     event_name = "message"
                     async for line in response.aiter_lines():
                         if not line:
@@ -164,7 +193,7 @@ class BackendClient:
                             continue
                     return
             except NETWORK_ERRORS:
-                if yielded_data or attempt >= self._max_connect_attempts:
+                if stream_accepted or yielded_data or attempt >= self._max_connect_attempts:
                     raise
                 await asyncio.sleep(0.2 * (2 ** (attempt - 1)))
             except httpx.HTTPStatusError as exc:

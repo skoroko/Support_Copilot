@@ -69,7 +69,9 @@ class _SettingsFields(BaseModel):
     agent_reasoning_token_reserve: int = Field(
         default=8192, ge=0, le=65536, validation_alias=AliasChoices("AGENT_REASONING_TOKEN_RESERVE"))
     agent_generation_timeout: float = Field(
-        default=120.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
+        default=60.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
+    agent_turn_timeout: float = Field(
+        default=90.0, gt=0, le=120, validation_alias=AliasChoices("AGENT_TURN_TIMEOUT"))
     agent_prepared_evidence_enabled: bool = Field(
         default=True, validation_alias=AliasChoices("AGENT_PREPARED_EVIDENCE_ENABLED"))
     agent_verified_overview_enabled: bool = Field(
@@ -446,7 +448,8 @@ def get_settings() -> Settings:
         agent_reasoning_effort=os.getenv("AGENT_REASONING_EFFORT") or None,
         agent_expanded_reasoning_effort=os.getenv("AGENT_EXPANDED_REASONING_EFFORT") or None,
         agent_reasoning_token_reserve=int(os.getenv("AGENT_REASONING_TOKEN_RESERVE") or 8192),
-        agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 120),
+        agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 60),
+        agent_turn_timeout=float(os.getenv("AGENT_TURN_TIMEOUT") or 90),
         agent_prepared_evidence_enabled=(os.getenv("AGENT_PREPARED_EVIDENCE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}),
         agent_verified_overview_enabled=(os.getenv("AGENT_VERIFIED_OVERVIEW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",

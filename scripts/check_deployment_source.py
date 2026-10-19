@@ -19,6 +19,11 @@ FILES = (
     "app/services/evidence_text.py", "app/services/evidence_scope.py",
     "app/services/overview_evidence.py", "app/services/verified_overview.py",
     "app/services/runtime_model.py", "app/chat/agent.py", "app/core/config.py",
+    "app/services/turn_budget.py", "app/services/agent_history.py",
+    "app/services/retrieval_embedding.py", "app/services/retrieval_translation.py",
+    "app/services/retrieval_planner.py",
+    "app/services/parallel_retrieval.py", "app/chat/routes.py", "app/main.py",
+    "bot/services/backend_client.py",
     "bot/handlers/text.py", "bot/handlers/expansion.py",
 )
 

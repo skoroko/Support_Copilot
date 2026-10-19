@@ -16,6 +16,7 @@ from openai import AsyncOpenAI
 
 from app.admin import routes as admin_routes
 from app.chat import routes as chat_routes
+from app.chat.service import count_tokens
 from app.core.config import Settings, get_settings
 from app.core.auth import InMemoryRequestBudget
 from app.core.upload_boundary import UploadBoundaryMiddleware
@@ -121,6 +122,8 @@ async def lifespan(app: FastAPI):
     app.state.rag_startup_error = None
     try:
         async with agent_lifespan(app):
+            # Load tokenizer data before readiness, outside the event loop.
+            await run_in_threadpool(count_tokens, [{"role": "user", "content": "warmup"}])
             # The application owns exactly one vector store: the one inside
             # RAGService (RAG_COLLECTION).  The homework-5.2 VectorStore
             # adapter remains script-only so the experiment ``documents``

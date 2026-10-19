@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Sequence
 from typing import Any
 
+import httpx
 from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
+
+from app.services.turn_budget import remaining_seconds
 
 REASONING_EFFORTS = ("none", "low", "medium", "high", "xhigh", "max")
 
@@ -53,6 +57,7 @@ class AgentModel:
 
     def __init__(self, settings: Any, tools: Sequence[Any], *, client: Any = None):
         self.settings = settings
+        self._http_async_client: httpx.AsyncClient | None = None
         self.model = settings.default_model
         self.responses = uses_responses(
             self.model, getattr(settings, "agent_llm_api", "auto")
@@ -70,6 +75,12 @@ class AgentModel:
         ):
             raise ValueError("GPT-6 reasoning with tools requires Responses API")
         if client is None:
+            # Retrieval often takes longer than the SDK's five-second idle
+            # expiry. Reuse the TLS connection across the current tool loop.
+            self._http_async_client = httpx.AsyncClient(limits=httpx.Limits(
+                max_connections=1000, max_keepalive_connections=100,
+                keepalive_expiry=60.0,
+            ))
             options = {
                 "model": self.model,
                 "api_key": settings.openai_api_key.get_secret_value(),
@@ -77,9 +88,14 @@ class AgentModel:
                 # SDK retries only transient failures (429/5xx/timeouts) with
                 # bounded exponential backoff; the final error still escalates.
                 "max_retries": getattr(settings, "llm_max_retries", 2),
-                "timeout": getattr(
-                    settings, "agent_generation_timeout", settings.request_timeout
+                "timeout": httpx.Timeout(
+                    getattr(settings, "agent_generation_timeout", settings.request_timeout),
+                    connect=10.0, pool=5.0,
                 ),
+                # Aggregate the provider stream privately. The existing graph,
+                # grounding and moderation still publish only a finished answer.
+                "streaming": True,
+                "http_async_client": self._http_async_client,
             }
             if self.responses:
                 options.update(
@@ -93,6 +109,10 @@ class AgentModel:
                 options.update(temperature=0, store=False)
             client = ChatOpenAI(**options).bind_tools(tools)
         self.client = client
+
+    async def aclose(self) -> None:
+        if self._http_async_client is not None:
+            await self._http_async_client.aclose()
 
     def output_budget(self, answer_tokens: int, *, expanded: bool = False) -> int:
         effort = self.expanded_effort if expanded else self.effort
@@ -118,7 +138,10 @@ class AgentModel:
         elif self.model.startswith("gpt-6") or effort != "none":
             kwargs["reasoning_effort"] = effort
             kwargs["temperature"] = None
-        response = await self.client.ainvoke(messages, **kwargs)
+        timeout = remaining_seconds(getattr(self.settings, "agent_generation_timeout", 60.0))
+        # Includes every SDK retry and backoff; retries cannot reset this clock.
+        async with asyncio.timeout(timeout):
+            response = await self.client.ainvoke(messages, **kwargs)
         return normalize_response(response)
 
 
@@ -138,7 +161,7 @@ class ResponsesTextLLM:
         max_retries: int = 2,
         client: Any = None,
     ):
-        self.model, self.effort = model, effort
+        self.model, self.effort, self.timeout = model, effort, timeout
         self.max_output_tokens, self.system_prompt = max_output_tokens, system_prompt
         self.client = client or OpenAI(
             api_key=api_key, base_url=base_url, timeout=timeout, max_retries=max_retries
@@ -154,6 +177,7 @@ class ResponsesTextLLM:
             reasoning={"effort": self.effort},
             max_output_tokens=self.max_output_tokens,
             store=False,
+            timeout=remaining_seconds(self.timeout),
         )
         if response.status != "completed":
             raise RuntimeError("RAG generation did not complete")

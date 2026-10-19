@@ -131,6 +131,7 @@ def test_existing_responses_adapter_is_used_with_bounded_output_and_timeout(monk
         "Compare ALPHA and BETA", deadline=time.perf_counter()+1.)
     assert outcome.plan is not None
     assert seen["max_output_tokens"] == 500
+    assert seen["max_retries"] == 0
     assert seen["effort"] == "none" and 0 < seen["timeout"] <= 1.
     assert seen["closed"]
 
