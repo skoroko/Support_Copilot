@@ -36,6 +36,8 @@ class ChatAgent:
             config = self.config(chat)
             response_tokens = getattr(self.settings, "chat_expanded_response_tokens", 1500) if expanded else getattr(self.settings, "chat_response_tokens", 500)
             config["configurable"].update(response_tokens=response_tokens, expanded_mode=expanded)
+            config["configurable"]["prepared_evidence_enabled"] = bool(
+                getattr(self.settings, "agent_prepared_evidence_enabled", True))
             reasoning_reserve = 0
             if self.settings is not None:
                 model = getattr(self.settings, "default_model", "")
@@ -145,7 +147,8 @@ class ChatAgent:
         latest = next((item for item in reversed(snapshot.values.get("messages", []))
                        if isinstance(item, AIMessage)), None)
         update = {"sources": [], "answer_evidence": [], "citation_evidence": [], "knowledge_status": "unused",
-                  "answer_incomplete": False, "telegram_draft": None}
+                  "answer_incomplete": False, "telegram_draft": None,
+                  "prepared_evidence": None, "evidence_route": "agent"}
         if latest is not None:
             update["messages"] = [latest.model_copy(update={"content": replacement,
                                                            "tool_calls": [], "invalid_tool_calls": []})]

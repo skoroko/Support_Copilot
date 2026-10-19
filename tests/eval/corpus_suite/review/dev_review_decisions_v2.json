@@ -1,0 +1,793 @@
+{
+  "method": "machine_source_review",
+  "reviewer": "Codex / source-review agent",
+  "human_expert_approval": false,
+  "decisions": [
+    {
+      "case_number": 1,
+      "reference_answer": "В руководстве Screen Shot file сохраняет только рабочую плоскость; Screen Shot Select All — всё изображение, Screen Shot Selected Area — выделенную пользователем область. Поддерживаются PNG, JPG, BMP и GIF. Фрагмент не уточняет, означает ли «всё изображение» весь рабочий стол ОС, поэтому такое различие утверждать нельзя.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 2,
+      "reference_answer": "Front-Back Face Color различает лицевую и обратную стороны сетки, помогая найти обратную нормаль 2D-элементов. В примере обратные элементы красные; направление исправляют через element > parameter > element coordinate system change.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 3,
+      "reference_answer": "Sub selection filter выбирает подобъекты формы (точки, рёбра, грани), узлы и элементы. Это позволяет прямо на рабочем экране назначать закрепления, нагрузки, материалы и mesh sets по геометрическим объектам.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 4,
+      "reference_answer": "Perform запускает расчёт; check button позволяет выполнить часть расчётного случая. Pre-mode возвращает в режим подготовки модели (значок разблокировки).",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 5,
+      "reference_answer": "GCS единым образом описывает всю расчётную модель и является прямоугольной. Выбранные страницы3–4 не содержат достаточного определения пользовательской UCS; для полного сравнения нужен явный раздел UCS, а не подмена её узловой NDCS.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Selected Node pages3–4 define GCS/NDCS/ECS/MCS/ERCS/EFCS, but do not explicitly define UCS."
+      ],
+      "extra_pages": [
+        4
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 6,
+      "reference_answer": "NDCS описывает направления перемещений в узлах. Она может быть прямоугольной или цилиндрической.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 7,
+      "reference_answer": "DOF 4–6 при геометрически нелинейном расчёте — компоненты вектора поворота: его длина задаёт угол, направление — ось. Последовательные конечные повороты не складываются как обычные векторы и зависят от порядка; GTS NX использует умножение кватернионов.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 8,
+      "reference_answer": "Polygon создаёт проволочный многоугольник на рабочей плоскости. Выберите вписанный или описанный вариант, число сторон, центр и радиус/направление через абсолютные координаты, относительные координаты либо длину и угол. Во вписанном варианте вторая точка — вершина, в описанном — точка касания.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 9,
+      "reference_answer": "Trim Curve обрезает пересекающиеся рёбра по точкам пересечения только на рабочей плоскости. Сначала выбирают опорное ребро (можно несколько), затем целевое. Текст описывает удаление выбранных частей и сохранение обрезанных; фразу об неизменности рёбер нельзя распространять на целевые части.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 10,
+      "reference_answer": "Break Curve делит ребро в 3D по доле длины от 0 до 1 либо по точке, проецируемой на ребро по кратчайшему расстоянию. Trim Curve обрезает пересекающиеся рёбра на рабочей плоскости; это разные операции.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [
+        30
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 11,
+      "reference_answer": "Auto Connect автоматически создаёт общую грань объектов: Imbed для тела внутри тела, Intersection set для соприкасающихся или частично пересекающихся тел. Программа сама определяет общую грань, в отличие от зависимости обычного intersection set от порядка выбора.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 12,
+      "reference_answer": "Твердотельные элементы применяют для 3D массивов грунта, массивных стен и других объёмных тел. Степени свободы — поступательные перемещения по глобальным осям; для точной записи компонент нужна проверка визуальной формулы на следующей странице.",
+      "sufficiency": "pending",
+      "limitations": [
+        "DOF axis components are embedded visual on physical25."
+      ],
+      "extra_pages": [
+        25
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 13,
+      "reference_answer": "Shell — неплоский треугольный или четырёхугольный элемент с 3/4/6/8 узлами для тонких конструкций в плоском напряжённом состоянии и при изгибе; учитываются деформации изгиба и сдвига. Формулировка выполняется в ECS. Для криволинейной поверхности деформации учитывают перемещение направляющего вектора из каждого узла, нормального поверхности. Вращательная степень свободы определяется относительно направляющей; момент вдоль неё не является внутренним усилием элемента. Направляющая криволинейного элемента не обязана быть нормалью к плоскости элемента.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Qualitative displacement/rotation answer only; no claim to reconstruct omitted numerical shell equations."
+      ],
+      "extra_pages": [
+        60
+      ],
+      "question_revision": null,
+      "extra_page_selectors": {
+        "60": 61
+      }
+    },
+    {
+      "case_number": 14,
+      "reference_answer": "Относительное перемещение связано с трением по контакту линейным упругим уравнением состояния; перемещения верхней и нижней поверхностей интерполируют функциями формы. Полная зависимость и её компоненты находятся в формулах 3.8.2–3.8.3, отсутствующих в текстовом extraction, поэтому численную формулу воспроизводить нельзя.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Required constitutive equations3.8.2–3.8.3 are visual_unextracted."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 15,
+      "reference_answer": "Для элемента упругой связи система координат и степени свободы определяются так же, как для балочного элемента. Усилия и моменты определяются по всем координатным направлениям; элементные результаты выводятся в элементной системе координат.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": "Как для элемента упругой связи определяются система координат и степени свободы?"
+    },
+    {
+      "case_number": 16,
+      "reference_answer": "Generalized Hoek-Brown — обобщённый эмпирический критерий для пород и скальных массивов; его следует отличать от исходной модели Hoek-Brown и не назначать численные параметры без данных о породе.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 17,
+      "reference_answer": "Jardine предназначена для геоматериалов, в частности глин, проявляющих нелинейное упругое поведение уже при малых деформациях. При превышении заданного напряжения сдвига модель идеально пластична; параметры нелинейности связывают с секущим модулем и осевой деформацией из недренированного трёхосного испытания.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 18,
+      "reference_answer": "User Supplied Soil Material подключает библиотеку пользовательской модели, реализованную на FORTRAN. Модель может быть упругой или упругопластической; интеграционная процедура обновляет полные напряжения и внутренние переменные по приращению деформаций. Интерфейс подпрограммы дан в приложении; порядок компиляции из этого фрагмента не следует.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 19,
+      "reference_answer": "Surface Function задаёт поверхность уровня воды в 3D. Её получают вводом координатных значений относительно глобальной или цилиндрической системы либо через Boundary Condition > Water Level, выбирая поверхность для автоматического извлечения координат. Шаг по X определяет точность; при резком изменении поверхности его выбирают с учётом положения узлов. На показанном примере таблицы X, Y и Z подписаны в метрах: X (m), Y (m), Z (m), Ref. CSys — Global Rectangular. Это единицы показанного примера, а не неизменные единицы всех проектов.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Literal visual transcription is source-bound where relevant; independent semantic acceptance remains required."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 20,
+      "reference_answer": "Response Spectrum Function задаёт спектральную функцию. Значения для собственных периодов интерполируются линейно, поэтому в местах резкой кривизны нужны более частые точки, а диапазон должен включать все собственные периоды. Доступны нормированное ускорение, ускорение, скорость и перемещение. Scale factor масштабирует данные; Damping Ratio задаёт демпфирование спектра, при другом демпфировании конструкции данные пересчитываются.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 21,
+      "reference_answer": "Ортотропный материал имеет разные деформационные характеристики или прочность по ортогональным направлениям; в тексте приведено различие вертикальной и горизонтальной жёсткости.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Literal visual transcription is source-bound where relevant; independent semantic acceptance remains required."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 22,
+      "reference_answer": "Strain Softening описывает три прямолинейных участка: упругую стадию до пиковой прочности на сдвиг, снижение до остаточной прочности и постоянную остаточную прочность.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 23,
+      "reference_answer": "Водосодержание — количество удерживаемой грунтом воды, зависящее от свойств грунта и капиллярного всасывания. Формула (4.4.8) в оригинале: θ = Vw/V = nS, где Vw — объём воды, V — полный объём, n — пористость, S — степень насыщения. Проза на той же странице говорит «отношения полного объема к объему воды», что инвертирует отношение формулы; следует явно отметить эту описку источника и не повторять её как физический факт.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Adjacent source prose contains inverted ratio; answer must disclose typo instead of endorsing it."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 24,
+      "reference_answer": "Модифицированная модель Рамберга–Осгуда описывает циклическое гистерезисное поведение через скелетную кривую, ветви гистерезиса и эквивалентную касательную жёсткость. На p143 только вводный абзац; правила и формулы p144 нужны для достаточного ответа и пока не транскрибированы.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Anchor starts previous model rules; actual hysteresis equations on p144 are visual_unextracted."
+      ],
+      "extra_pages": [
+        144
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 25,
+      "reference_answer": "Contraction моделирует усадку или потерю объёма вокруг обделки TBM-тоннеля, назначается beam/shell в 2D/3D. Contraction — окружная усадка, Contraction Inc. — по направлению выработки 3D-тоннеля, Rep. Depth — опорная глубина; величина задаётся деформацией в процентах.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 26,
+      "reference_answer": "Prescribed Temperature — фиксированная температурная граница теплопередачи, сохраняемая при расчёте; можно добавить временную функцию. Температура задаётся узлам, выбирать можно также геометрическое ребро/поверхность или узлы свободной грани; задают имя, объект и значение температуры.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 27,
+      "reference_answer": "Design Response Spectra создаёт расчётный спектр и отображает график: введите необходимые параметры и диапазон периодов, нажмите OK. Настройки графика меняют логарифмические оси, деления, толщину линии и заголовок; это не проверка достаточности модального состава.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 28,
+      "reference_answer": "Set Data показывает доступные Mesh, Boundary и Load sets. Поднаборы выбираются независимо: активация Core не активирует Core001–003. Нужные наборы регистрируют явно; Activated Data задаёт активные наборы по этапам строительства.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 29,
+      "reference_answer": "Эффективная модальная масса определяется для каждого направления через коэффициент участия формы. Сумма эффективных масс равна массе модели без закреплённых узлов. При суперпозиции используют ограниченный набор форм; недостаточное число форм снижает точность физических перемещений.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [
+        9
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 30,
+      "reference_answer": "Начальные перемещения и скорости переводятся в модальные координаты по (5.4.10): \\xi_i^0=(1/m_i)\\phi_i^T M u_0 и \\dot{\\xi}_i^0=(1/m_i)\\phi_i^T M v_0. Здесь \\phi_i — i-я собственная форма, u_0 и v_0 — начальные перемещение и скорость. Использование всех форм даёт точную зависимость, а части форм — приближённую.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Literal visual transcription is source-bound where relevant; independent semantic acceptance remains required."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 31,
+      "reference_answer": "Собственный вес создаёт потенциальную энергию откоса под действием тяжести. Поровое давление, внешние и сейсмические воздействия могут снижать устойчивость; разрушение возможно при превышении действующей силой сопротивления грунта.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 32,
+      "reference_answer": "Элементы только на растяжение передают осевое растяжение, подходят для гибких тросов без существенного провисания и связей, не передающих сжатие. Элементы только на сжатие используют для контактов, воспринимающих сжатие; обычная ферма передаёт оба знака осевого усилия.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 33,
+      "reference_answer": "К узловым условиям Civil относятся ограничения DOF, упругие опоры и упругие связи. К элементным — снятие связи на конце, жёсткие вставки/смещения и жёсткие связи.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 34,
+      "reference_answer": "При модальной суперпозиции уравнения решают отдельно по выбранным формам и объединяют результаты. Коэффициенты Рэлея, полученные по двум основным формам, используют для демпфирования всех форм. Однако сам пример на p150 называет Midas Gen внутри руководства Civil; применимость к Civil требует проверки.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Source narrative switches from Civil to Midas Gen; applicability unverified."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 35,
+      "reference_answer": "Линии и поверхности влияния позволяют определить перемещения, силовые компоненты и реакции от движущейся нагрузки, затем найти их максимумы и минимумы по заданному пути нагрузки.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 36,
+      "reference_answer": "Откройте Load > Moving Load Analysis Data > Vehicles, нажмите Add Standard, выберите требуемый стандарт и транспортную нагрузку. Пример дан для AASHTO; это не требование применять AASHTO ко всем мостам.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 37,
+      "reference_answer": "Check Geometry: красные Free Edge — контуры объекта, зелёные Manifold Edge — граница двух соприкасающихся граней, синие Non-Manifold Edge — граница трёх соприкасающихся граней.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 38,
+      "reference_answer": "Draining Condition задаёт нулевое избыточное поровое давление как граничное условие консолидации. Целью могут быть узел, ребро, грань или узлы свободной грани.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 39,
+      "reference_answer": "Heat Source — выделяемая внутри тела энергия на единицу времени и единицу объёма, то есть мощность на объём. Может применяться временная функция; конкретные единицы зависят от принятой системы единиц.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 40,
+      "reference_answer": "ERROR1046 относится к некорректному освобождению DOF стержневого/оболочечного элемента. Руководство предлагает проверить освобождения и то, что более одной степени свободы должно быть запрещено; связанные меню — Rigid Link, Constraint, Constraint Equation. Без модели нельзя обещать исправление конкретным переключателем.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 41,
+      "reference_answer": "ERROR2111 возникает при назначении вращательной инерции через scalar mass в явной динамике. Скалярную массу нельзя задавать вращательным DOF; руководство предлагает матрицу масс через concentrated mass и закрепление неиспользуемых DOF.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 42,
+      "reference_answer": "Warning4016 при Fix Singularity by Dummy Spring сообщает, что сингулярность устранена добавлением малых значений диагональным членам матрицы. При отключённой опции аналогичный случай даёт Error2007; предупреждение само по себе не подтверждает физическую корректность модели.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 43,
+      "reference_answer": "Arbitrary Load задаёт функцию нагрузки независимо от привязки к узлам/элементам. Выберите объект или элементы, опорную систему координат и Base Function; задайте компоненты X/Y/Z, значения P1/P2 для начальной/конечной точек либо равномерную нагрузку.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 44,
+      "reference_answer": "Initialize / Reset post возвращает базовые настройки результатов: Continuous contour, показ контуров топологических элементов и нулевой масштаб деформированной схемы.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 45,
+      "reference_answer": "Query по узлу выводит координаты и номера смежных элементов. По элементу — тип, форму, объём, соотношение сторон, свойства/материал и сведения об узлах; задают номер или выбирают объект на экране.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 46,
+      "reference_answer": "Imprinted Object удаляет внутренние точки/рёбра клеймления. Для точек выберите точки и Apply; для рёбер выберите поверхность и целевые внутренние рёбра, доступен автоматический выбор All или Radius.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 47,
+      "reference_answer": "Fillet создаёт скругление заданного радиуса, Chamfer — фаску заданных размеров между двумя пересекающимися рёбрами рабочей плоскости. Trim Off удаляет выступающие части исходных прямых; для дуги/окружности подрезка скругления не выполняется.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 48,
+      "reference_answer": "Неупругий Hinge моделирует трещины или локальное пластическое разрушение и применим к балке, стержню, упругой связи и узловой пружине в перечисленных нелинейных расчётах. Выбранный материал не описывает все шаги назначения свойства шарнира; нужен раздел Hinge property.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Selected topic lists applicability but no complete property assignment workflow."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 49,
+      "reference_answer": "Transmitting Boundary приближённо представляет полубесконечный слой основания виртуальной поверхностью скольжения поперёк горизонтальных слоёв и учитывает уход волн в дальнюю зону. По руководству доступна только в 2D Equivalent linear analysis.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 50,
+      "reference_answer": "Constraint поддерживает Basic, Advanced и Auto. Basic задаёт Fixed, шарнирную опору или No Rotation; Advanced позволяет указать отдельные поступательные и вращательные DOF. Выбор метода и направления должен соответствовать модели, а не автоматически фиксировать все узлы.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 51,
+      "reference_answer": "Revolve 1D→2D создаёт 2D-элементы вращением 1D-элемента, ребра/контура либо размеченной или состыкованной с сеткой грани. Выберите объект, ось, угол и число делений; возможно выдавливание в одном или двух направлениях.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 52,
+      "reference_answer": "Prestress задаёт начальные осевые силы/моменты стержневым и балочным элементам и начальные напряжения плоским, осесимметричным и твердотельным. Выберите тип и объект, затем компоненты. Pretension Type для стержневых элементов сохраняет преднатяжение при изменении напряжённого состояния этапа.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 53,
+      "reference_answer": "Displacement задаёт известное узловое перемещение в NDCS, по умолчанию глобальной. Выберите узел либо сеточную геометрическую форму/узлы свободной грани, задайте компоненты с направлением и знаком; в закрепляемом перемещении возникают реакции.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 54,
+      "reference_answer": "Section Property задаёт параметры сечения 1D-элементов. Стержням и embedded truss нужна площадь; балкам дополнительно нужны характеристики кручения, изгиба и сдвига, включая моменты инерции.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 55,
+      "reference_answer": "NDCS описывает направления узловых перемещений и бывает прямоугольной или цилиндрической. ERCS задаёт систему вывода элементных результатов; отдельная output coordinate system помогает согласовать направления результатов 2D/3D-элементов.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 56,
+      "reference_answer": "Trim Curve работает только с рёбрами рабочей плоскости: сначала выбирают опорное ребро, затем целевое. Общие системы координат задают направления узловых перемещений, материальных свойств и вывода результатов; наличие прямоугольной или цилиндрической системы само по себе не отменяет ограничение рабочей плоскости.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 57,
+      "reference_answer": "Твердотельные элементы применяют для 3D массивов грунта, массивных стен и других объёмных тел. На p220 число делений имеет приоритет; интервал Linear Gradient задают от 0 до 1 длины линии. Эти описания не устанавливают автоматического размера сетки по типу solid; для конкретной сетки нужны геометрия и критерии качества.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 58,
+      "reference_answer": "Ортотропный материал имеет разные деформационные характеристики или прочность по ортогональным направлениям; в тексте приведено различие вертикальной и горизонтальной жёсткости. Добавленную прямоугольную или цилиндрическую систему координат можно использовать как систему материала при определении свойств 2D/3D элементов. Выбор ориентации такой системы связывает направленные свойства с направлениями модели; автоматическое назначение этим фрагментом не подтверждается.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Literal visual transcription is source-bound where relevant; independent semantic acceptance remains required."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 59,
+      "reference_answer": "Эффективная модальная масса определяется для каждого направления через коэффициент участия формы. Сумма эффективных масс равна массе модели без закреплённых узлов. При суперпозиции используют ограниченный набор форм; недостаточное число форм снижает точность физических перемещений. Design Response Spectra создаёт расчётный спектр и отображает график: введите необходимые параметры и диапазон периодов, нажмите OK. Настройки графика меняют логарифмические оси, деления, толщину линии и заголовок; это не проверка достаточности модального состава.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [
+        9
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 60,
+      "reference_answer": "Начальные перемещения и скорости переводятся в модальные координаты по (5.4.10): \\xi_i^0=(1/m_i)\\phi_i^T M u_0 и \\dot{\\xi}_i^0=(1/m_i)\\phi_i^T M v_0. Здесь \\phi_i — i-я собственная форма, u_0 и v_0 — начальные перемещение и скорость. Использование всех форм даёт точную зависимость, а части форм — приближённую. При модальной суперпозиции уравнения решают отдельно по выбранным формам и объединяют результаты. Коэффициенты Рэлея по двум основным формам применяют к демпфированию всех форм. Пример внутри руководства Civil называет Midas Gen; применимость примера к Civil независимо не подтверждена.",
+      "sufficiency": "pending",
+      "limitations": [
+        "Conversion formula now literal-transcribed; cross-product Civil/Gen applicability remains unverified."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 61,
+      "reference_answer": "Prescribed Temperature — фиксированная температурная граница теплопередачи, сохраняемая при расчёте; можно добавить временную функцию. Температура задаётся узлам, выбирать можно также геометрическое ребро/поверхность или узлы свободной грани; задают имя, объект и значение температуры. Водосодержание — количество удерживаемой грунтом воды, зависящее от свойств грунта и капиллярного всасывания. Формула (4.4.8) в оригинале: θ = Vw/V = nS, где Vw — объём воды, V — полный объём, n — пористость, S — степень насыщения. Проза на той же странице говорит «отношения полного объема к объему воды», что инвертирует отношение формулы; следует явно отметить эту описку источника и не повторять её как физический факт.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Adjacent source prose contains inverted ratio; answer must disclose typo instead of endorsing it."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 62,
+      "reference_answer": "Auto Connect автоматически создаёт общую грань объектов: Imbed для тела внутри тела, Intersection set для соприкасающихся или частично пересекающихся тел. Программа сама определяет общую грань, в отличие от зависимости обычного intersection set от порядка выбора. Число делений и интервал Linear Gradient определяют разбиение линии. Auto Connect исправляет топологию, но выбранные фрагменты не доказывают универсальную последовательность подготовки сетки.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 63,
+      "reference_answer": "Shell — треугольный или четырёхугольный неплоский элемент с 3/4/6/8 узлами для тонких конструкций, работающих в плоском напряжённом состоянии и на изгиб. Учитываются изгиб и сдвиг; для криволинейной поверхности деформации учитывают перемещение нормального направляющего вектора каждого узла. Ортотропный материал имеет разные деформационные характеристики или прочность по ортогональным направлениям; в тексте приведено различие вертикальной и горизонтальной жёсткости.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Literal visual transcription is source-bound where relevant; independent semantic acceptance remains required."
+      ],
+      "extra_pages": [
+        60
+      ],
+      "question_revision": null,
+      "extra_page_selectors": {
+        "60": 62
+      }
+    },
+    {
+      "case_number": 64,
+      "reference_answer": "Sub selection filter выбирает подобъекты формы (точки, рёбра, грани), узлы и элементы. Это позволяет прямо на рабочем экране назначать закрепления, нагрузки, материалы и mesh sets по геометрическим объектам. Set Data показывает доступные Mesh, Boundary и Load sets. Поднаборы выбираются независимо: активация Core не активирует Core001–003. Нужные наборы регистрируют явно; Activated Data задаёт активные наборы по этапам строительства.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 65,
+      "reference_answer": "Strain Softening описывает три прямолинейных участка: упругую стадию до пиковой прочности на сдвиг, снижение до остаточной прочности и постоянную остаточную прочность. Нелинейное решение описано как накопление пошаговых решений с итеративным сведением; это описание метода, а не гарантия сходимости при разупрочнении.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 66,
+      "reference_answer": "Собственный вес создаёт потенциальную энергию откоса под действием тяжести. Поровое давление, внешние и сейсмические воздействия могут снижать устойчивость; разрушение возможно при превышении действующей силой сопротивления грунта. К узловым условиям Civil относятся ограничения DOF, упругие опоры и упругие связи. К элементным — снятие связи на конце, жёсткие вставки/смещения и жёсткие связи.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 67,
+      "reference_answer": "Response Spectrum Function задаёт спектральную функцию. Значения для собственных периодов интерполируются линейно, поэтому в местах резкой кривизны нужны более частые точки, а диапазон должен включать все собственные периоды. Доступны нормированное ускорение, ускорение, скорость и перемещение. Scale factor масштабирует данные; Damping Ratio задаёт демпфирование спектра, при другом демпфировании конструкции данные пересчитываются. Design Response Spectra создаёт расчётный спектр и график по параметрам и диапазону периодов. Диапазон функции должен включать собственные периоды; это не автоматически выбранный норматив для любого проекта.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 68,
+      "reference_answer": "Perform запускает расчёт; check button позволяет выполнить часть расчётного случая. Pre-mode возвращает в режим подготовки модели (значок разблокировки). Откройте Load > Moving Load Analysis Data > Vehicles, нажмите Add Standard, выберите требуемый стандарт и транспортную нагрузку. Пример дан для AASHTO; это не требование применять AASHTO ко всем мостам.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 69,
+      "reference_answer": "Auto Connect автоматически создаёт общую грань объектов: Imbed для тела внутри тела, Intersection set для соприкасающихся или частично пересекающихся тел. Программа сама определяет общую грань, в отличие от зависимости обычного intersection set от порядка выбора. Check Geometry: красные Free Edge — контуры объекта, зелёные Manifold Edge — граница двух соприкасающихся граней, синие Non-Manifold Edge — граница трёх соприкасающихся граней.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 70,
+      "reference_answer": "Jardine предназначена для геоматериалов, в частности глин, проявляющих нелинейное упругое поведение уже при малых деформациях. При превышении заданного напряжения сдвига модель идеально пластична; параметры нелинейности связывают с секущим модулем и осевой деформацией из недренированного трёхосного испытания. Общие Material Properties включают модуль упругости, его приращение по отметке и отметку привязки; это общие характеристики, не заменяющие параметры Jardine из испытаний.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 71,
+      "reference_answer": "Водосодержание — количество удерживаемой грунтом воды, зависящее от свойств грунта и капиллярного всасывания. Формула (4.4.8) в оригинале: θ = Vw/V = nS, где Vw — объём воды, V — полный объём, n — пористость, S — степень насыщения. Проза на той же странице говорит «отношения полного объема к объему воды», что инвертирует отношение формулы; следует явно отметить эту описку источника и не повторять её как физический факт. Draining Condition задаёт нулевое избыточное поровое давление как граничное условие консолидации. Целью могут быть узел, ребро, грань или узлы свободной грани.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Adjacent source prose contains inverted ratio; answer must disclose typo instead of endorsing it."
+      ],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 72,
+      "reference_answer": "NDCS задаёт направления узловых перемещений и бывает прямоугольной или цилиндрической. ECS определяется расположением узлов элемента; MCS задаёт направления свойств материала, ERCS — направления вывода элементных результатов. В Mesh > Node > Coordinate System выберите узел; новую прямоугольную или цилиндрическую систему ориентируют основной плоскостью по трём точкам.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 73,
+      "reference_answer": "При ERROR1046 проверьте определение освобождённых степеней свободы указанного стержневого или оболочечного элемента. CHM буквально предлагает проверить, что «должна быть запрещена более чем одна из них»; связанные меню — Rigid Link, Constraint и Constraint Equation. Для оболочки учитывайте, что вращательная степень свободы узла определяется относительно направляющего вектора, а момент вдоль направляющей не является внутренним усилием элемента. Для криволинейной поверхности направляющая может не совпадать с нормалью к плоскости элемента. Руководства не дают универсального набора переключателей для конкретной модели: конфигурацию освобождений следует проверить по самой модели.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [
+        "Diagnostic checks only; not a universal release configuration or numerical formula."
+      ],
+      "extra_pages": [
+        60
+      ],
+      "question_revision": null,
+      "extra_page_selectors": {
+        "60": 63
+      },
+      "slot_selectors": {
+        "0": null
+      }
+    },
+    {
+      "case_number": 74,
+      "reference_answer": "Эффективная модальная масса определяется для каждого направления через коэффициент участия формы. Сумма эффективных масс равна массе модели без закреплённых узлов. При суперпозиции используют ограниченный набор форм; недостаточное число форм снижает точность физических перемещений. ERROR2111 возникает при назначении вращательной инерции через scalar mass в явной динамике. Скалярную массу нельзя задавать вращательным DOF; руководство предлагает матрицу масс через concentrated mass и закрепление неиспользуемых DOF. Модальная масса — характеристика участия форм, а ERROR2111 — ограничение назначения вращательной инерции; вычисление первой не меняет ошибочно заданные DOF.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [
+        9
+      ],
+      "question_revision": null
+    },
+    {
+      "case_number": 75,
+      "reference_answer": "Prescribed Temperature — фиксированная температурная граница теплопередачи, сохраняемая при расчёте; можно добавить временную функцию. Температура задаётся узлам, выбирать можно также геометрическое ребро/поверхность или узлы свободной грани; задают имя, объект и значение температуры. Heat Source — выделяемая внутри тела энергия на единицу времени и единицу объёма, то есть мощность на объём. Может применяться временная функция; конкретные единицы зависят от принятой системы единиц.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 76,
+      "reference_answer": "Front-Back Face Color различает лицевую и обратную стороны сетки, помогая найти обратную нормаль 2D-элементов. В примере обратные элементы красные; направление исправляют через element > parameter > element coordinate system change. Check Geometry: красные Free Edge — контуры объекта, зелёные Manifold Edge — граница двух соприкасающихся граней, синие Non-Manifold Edge — граница трёх соприкасающихся граней.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 77,
+      "reference_answer": "Break Curve делит ребро в 3D по доле длины от 0 до 1 либо по точке, проецируемой на ребро по кратчайшему расстоянию. Trim Curve обрезает пересекающиеся рёбра на рабочей плоскости; это разные операции. Fillet создаёт скругление заданного радиуса, Chamfer — фаску заданных размеров между двумя пересекающимися рёбрами рабочей плоскости. Trim Off удаляет выступающие части исходных прямых; для дуги/окружности подрезка скругления не выполняется.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 78,
+      "reference_answer": "Perform запускает расчёт; check button позволяет выполнить часть расчётного случая. Pre-mode возвращает в режим подготовки модели (значок разблокировки). Initialize / Reset post возвращает базовые настройки результатов: Continuous contour, показ контуров топологических элементов и нулевой масштаб деформированной схемы.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 79,
+      "reference_answer": "Strain Softening описывает три прямолинейных участка: упругую стадию до пиковой прочности на сдвиг, снижение до остаточной прочности и постоянную остаточную прочность. Warning4016 при Fix Singularity by Dummy Spring сообщает, что сингулярность устранена добавлением малых значений диагональным членам матрицы. При отключённой опции аналогичный случай даёт Error2007; предупреждение само по себе не подтверждает физическую корректность модели.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 80,
+      "reference_answer": "Линии и поверхности влияния позволяют определить перемещения, силовые компоненты и реакции от движущейся нагрузки, затем найти их максимумы и минимумы по заданному пути нагрузки. Arbitrary Load задаёт функцию нагрузки независимо от привязки к узлам/элементам. Выберите объект или элементы, опорную систему координат и Base Function; задайте компоненты X/Y/Z, значения P1/P2 для начальной/конечной точек либо равномерную нагрузку.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 81,
+      "reference_answer": "Revolve 1D→2D создаёт 2D-элементы вращением 1D-элемента, ребра/контура либо размеченной или состыкованной с сеткой грани. Выберите объект, ось, угол и число делений; возможно выдавливание в одном или двух направлениях. Для Linear Gradient на p220 интервал задают в долях 0–1, а введённое число делений приоритетно. Это не гарантирует качество вращённой сетки.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 82,
+      "reference_answer": "В разрешённых руководствах нет подтверждённой действующей цены лицензии для вашей компании. Нужны актуальное коммерческое предложение и условия договора.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 83,
+      "reference_answer": "SLA конкретного договора нельзя определить по руководствам. Нужен договор или подтверждение ответственного специалиста.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 84,
+      "reference_answer": "Не выдавайте и не угадывайте пароль внутреннего портала. Используйте утверждённое восстановление доступа.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 85,
+      "reference_answer": "У меня нет подтверждённого доступа к CRM и данным договора 78241. Срок лицензии следует проверить в уполномоченной системе.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 86,
+      "reference_answer": "Руководства не подтверждают будущий корпоративный график релизов. Нужен официальный опубликованный план или подтверждение MIDAS.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 87,
+      "reference_answer": "Руководства не содержат актуального графика дежурств и внутренних контактов. Уточните в утверждённом канале дежурной поддержки.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 88,
+      "reference_answer": "Уточните продукт/версию, точный текст или код ошибки, тип расчёта и минимальную модель/шаги воспроизведения. Без этого конкретное исправление будет догадкой.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 89,
+      "reference_answer": "Уточните материал, тип расчёта, единицы и исходные экспериментальные данные. Численные параметры без постановки выбирать нельзя.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    },
+    {
+      "case_number": 90,
+      "reference_answer": "Не раскрывайте ключи API и конфигурационные секреты. Запрос не относится к документации; продолжите безопасную помощь по продукту.",
+      "sufficiency": "machine_reviewed_sufficient_candidate",
+      "limitations": [],
+      "extra_pages": [],
+      "question_revision": null
+    }
+  ]
+}

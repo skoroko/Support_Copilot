@@ -160,7 +160,7 @@ def test_llamaindex_answer_contract_and_threshold(tmp_path: Path) -> None:
     assert result["answer"].startswith("Ответ по базе")
     assert result["top_score"] == 0.91
     assert len(result["sources"]) == 2
-    assert set(result["sources"][0]) == {
+    assert set(result["sources"][0]) >= {
         "id",
         "chunk_id",
         "document_id",
@@ -212,7 +212,7 @@ def test_evaluate_inputs_returns_complete_contexts_without_second_retrieval(
     result = service.evaluate_inputs("Что сказано в руководстве?")
 
     assert retriever.calls == 1
-    assert result["retrieved_contexts"] == [" ".join(full_text.split())]
+    assert result["retrieved_contexts"] == [full_text]
     assert len(result["retrieved_contexts"][0]) > len(result["sources"][0]["snippet"])
     assert "retrieved_contexts" not in service.answer("Что сказано в руководстве?")
 
@@ -572,7 +572,7 @@ def test_rag_filters_legacy_civil_payloads_and_keeps_generic_gts_manual(tmp_path
     assert "Civil bridge calculation" not in llm.prompts[0]
 
 
-def test_rag_limits_context_to_five_and_removes_duplicates_without_file_cap(tmp_path: Path) -> None:
+def test_rag_limits_context_to_five_and_preserves_unproven_copies_without_file_cap(tmp_path: Path) -> None:
     sources = [
         ("manual-a.pdf", "identical fragment", 0.99),
         ("manual-a.pdf", "second fragment", 0.98),
@@ -600,7 +600,7 @@ def test_rag_limits_context_to_five_and_removes_duplicates_without_file_cap(tmp_
 
     assert len(result["sources"]) == 5
     assert [source["file_name"] for source in result["sources"]].count("manual-a.pdf") == 3
-    assert [source["snippet"] for source in result["sources"]].count("identical fragment") == 1
+    assert [source["snippet"] for source in result["sources"]].count("identical fragment") == 2
 
 
 @pytest.mark.parametrize("file_path", [
@@ -1726,11 +1726,12 @@ def test_entity_tail_fallback_recovers_named_concept_after_unknown_lead_in(
 
     result = service.answer("Меня интересует модель Мора-Кулона")
 
-    assert calls == [
+    assert calls[:3] == [
         "меня интересует модель мора",
         "меня интересует модель",
         "модель мора кулона",
     ]
+    assert len(calls) == len(set(calls)) == 8
     assert result["answer"] != NO_ANSWER
     assert result["sources"][0]["id"] == "mohr-coulomb-classic"
 
@@ -2683,7 +2684,7 @@ def test_rag_endpoint_is_separate_and_returns_contract() -> None:
     assert response.status_code == 200
     assert response.json()["answer"] == "Ответ: Проверочный вопрос"
     assert len(response.json()["sources"]) == 3
-    assert set(response.json()["sources"][0]) == {
+    assert set(response.json()["sources"][0]) >= {
         "id",
         "chunk_id",
         "document_id",

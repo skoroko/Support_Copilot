@@ -1,6 +1,6 @@
 # Техническая документация Support Copilot
 
-Актуальный комплект для итоговой сдачи, 15 октября 2026 года.
+Актуальный комплект для итоговой сдачи, 16 октября 2026 года.
 Основной продукт — Telegram-ассистент с одним persistent LangGraph-агентом,
 поиском по мануалам и подтверждением внешних действий.
 
@@ -24,6 +24,7 @@
 |---|---|---|
 | Telegram | [telegram_bot.md](telegram_bot.md) | Текущие меню, команды, feedback, approval и renderer |
 | Retrieval и ingestion | [rag.md](rag.md) | Текущий поиск по мануалам, provenance, ограничения и эксплуатация |
+| Общая обработка документации | [documentation_evidence.md](documentation_evidence.md) | Новый каталог PDF/CHM/HTML, общий retrieval-first путь, 120 новых eval-сценариев; release gate ещё не пройден |
 | Корпус | [data_inventory.md](data_inventory.md) | Состав документов и отложенное пополнение |
 | История диалогов | [chat.md](chat.md) | Repository, API и исходный sliding-window контракт; Telegram теперь использует graph adapter, см. `unified_agent.md` |
 | Checkpoints и отправка | [agent-persistent-report.md](agent-persistent-report.md) | Устройство saver/HIL; Docker transcript относится к учебному снимку |

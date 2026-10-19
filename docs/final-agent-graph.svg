@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1170" viewBox="0 0 1600 1170" role="img" aria-labelledby="title description">
   <title id="title">Support Copilot — финальный persistent LangGraph</title>
-  <desc id="description">START → begin_turn → prefetch_overview → call_model. Условные переходы call_model: execute_safe_tool → call_model; prepare_telegram_message → confirm_and_execute_telegram_message → finish; finish → END. Подтверждение приостанавливает тот же узел через interrupt. Подробнее пропускает prefetch и использует тот же граф без tools.</desc>
+  <desc id="description">START → begin_turn → prepare_knowledge → call_model. Общая подготовка источников для вопросов по документации. Условные переходы call_model: execute_safe_tool → call_model; prepare_telegram_message → confirm_and_execute_telegram_message → finish; finish → END. Подтверждение приостанавливает тот же узел через interrupt. Подробнее использует прежние evidence без tools.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#52647c"/></marker>
     <style>
@@ -21,8 +21,8 @@
   <text class="subtitle" x="70" y="101">Telegram → ChatAgent → build_agent() · 16.10.2026 · семь исполняемых узлов</text>
 
   <path class="edge" data-source="__start__" data-target="begin_turn" d="M770 180V220"/>
-  <path class="edge" data-source="begin_turn" data-target="prefetch_overview" d="M550 267H440"/>
-  <path class="edge" data-source="prefetch_overview" data-target="call_model" d="M260 315V350H650V380"/>
+  <path class="edge" data-source="begin_turn" data-target="prepare_knowledge" d="M550 267H440"/>
+  <path class="edge" data-source="prepare_knowledge" data-target="call_model" d="M260 315V350H650V380"/>
   <path class="edge conditional" data-source="call_model" data-target="execute_safe_tool" d="M550 440H440"/>
   <path class="edge conditional" data-source="call_model" data-target="prepare_telegram_message" d="M990 440H1100"/>
   <path class="edge conditional" data-source="call_model" data-target="finish" d="M770 500V870"/>
@@ -38,9 +38,9 @@
   <text class="name" x="770" y="257">begin_turn</text>
   <text class="body" x="770" y="289">Инициализация состояния turn</text>
 
-  <rect class="node" data-node="prefetch_overview" x="80" y="220" width="360" height="95" rx="16"/>
-  <text class="name" x="260" y="257">prefetch_overview</text>
-  <text class="body" x="260" y="289">Opt-in: 1–2 поиска → evidence</text>
+  <rect class="node" data-node="prepare_knowledge" x="80" y="220" width="360" height="95" rx="16"/>
+  <text class="name" x="260" y="257">prepare_knowledge</text>
+  <text class="body" x="260" y="289">Вопрос → поиск → evidence</text>
 
   <rect class="node" data-node="call_model" x="550" y="380" width="440" height="120" rx="16" style="fill:#eaf0ff;stroke:#7396da"/>
   <text class="name" x="770" y="418">call_model</text>

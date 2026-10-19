@@ -1,0 +1,8 @@
+{
+  "count": 30,
+  "split_method": "curated disjoint source-record/topic families; frozen before tuning",
+  "dev_source_record_overlap": 0,
+  "curated_topic_component_overlap": 0,
+  "semantic_split_review": "pending_expert_review; tags cannot prove complete semantic independence",
+  "references_pending_review": 30
+}

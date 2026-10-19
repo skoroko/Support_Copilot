@@ -14,7 +14,9 @@ from app.services.rag import MAX_SOURCE_SNIPPET_CHARS, RAGService
 
 _MODELS = {
     "Hardening Soil": ("hardening soil", "харденинг соил", "харденинг сойл"),
-    "Hardening Soil small strain": ("hardening soil small strain", "hs small"),
+    "Hardening Soil small strain": ("hardening soil small strain", "hs small",
+                                   "hardening soil(small strain stiffness)",
+                                   "hardening soil (small strain stiffness)"),
     "Mohr Coulomb": ("mohr coulomb", "мора кулона", "мор кулон"),
     "Modified Mohr Coulomb": ("modified mohr coulomb", "модифицированная мора кулона"),
     "Soft Soil": ("soft soil", "софт соил"),

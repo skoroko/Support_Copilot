@@ -1,0 +1,133 @@
+{
+  "captured_at": "2026-10-16T11:13:38.106872+00:00",
+  "read_only": true,
+  "comparison": "exact bytes in current working tree, including uncommitted changes",
+  "services": [
+    {
+      "service": "app",
+      "status": "source_mismatch",
+      "image_id": "sha256:a9ae86239ad27440597e0c8a1d2918088158f381d94a08648390540f1b612f12",
+      "revision": null,
+      "files": {
+        "app/services/agent_persistent.py": {
+          "matches": false,
+          "expected_sha256": "5e1476df690591b86152c4d4a2ade336cec3df124936ec400afa528a15128c87",
+          "deployed_sha256": "9bfbbf82c1b8cd9e210de549deb4f51aff20e471427d44aeffe3b87cac30c2ef"
+        },
+        "app/services/rag.py": {
+          "matches": false,
+          "expected_sha256": "fca52d6d0b5f6b0203e0afd78a29739f9ca15b0c98b90a11d7d71611d952f27f",
+          "deployed_sha256": "da9801d2351bb28484ffc685fdc68677a28dfaa51774eaed01e1cad5deea258a"
+        },
+        "app/services/evidence_text.py": {
+          "matches": false,
+          "expected_sha256": "dc96673f72994262aa62a0122fb7cd6f767236dd1fe8ef0bf763462f041df00e",
+          "deployed_sha256": "f6b65c76427f8cd9e89ed811fa69814c286d7ea0f0cb7a454c64b31740fafb1e"
+        },
+        "app/services/evidence_scope.py": {
+          "matches": false,
+          "expected_sha256": "65478562d1d06cbdbdab7db982bebb0ef7e970824e0f41bae539a2720d3ccd62",
+          "deployed_sha256": null
+        },
+        "app/services/overview_evidence.py": {
+          "matches": false,
+          "expected_sha256": "e9a6c4c4a5fd241576eee36f0cc536fd8812971500e8f8b87a48f630833b4edc",
+          "deployed_sha256": null
+        },
+        "app/services/verified_overview.py": {
+          "matches": false,
+          "expected_sha256": "7102b40da03621a648481142e10be7fe23915d2e182432b722a1e746ceced0d5",
+          "deployed_sha256": null
+        },
+        "app/services/runtime_model.py": {
+          "matches": true,
+          "expected_sha256": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+          "deployed_sha256": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167"
+        },
+        "app/chat/agent.py": {
+          "matches": false,
+          "expected_sha256": "fc4f11da6c27fad18d757a6f6582185d27c2c7ac80f8827fafd4b4d7726e7ac7",
+          "deployed_sha256": "780f73f6a051c2a7af5570c615366b68ca559ff5b5e1b02cd620076d62b13733"
+        },
+        "app/core/config.py": {
+          "matches": false,
+          "expected_sha256": "844f1a5a3a8ecba7a638f1ee78858c9cce56e77ff3561c296441c0dcee2ca18e",
+          "deployed_sha256": "a231fc97eb1f8e562f4b310443485259f0c3f2d2ecc90e6eaa6298c99d99363e"
+        },
+        "bot/handlers/text.py": {
+          "matches": true,
+          "expected_sha256": "4f6bd4f0974865694b2cfc948009fbd718269ec685131ea38d888497704dac90",
+          "deployed_sha256": "4f6bd4f0974865694b2cfc948009fbd718269ec685131ea38d888497704dac90"
+        },
+        "bot/handlers/expansion.py": {
+          "matches": true,
+          "expected_sha256": "80485d96cf1e880e891167cf8c34f9fd8d138dcd6b43c8c8ec65306b938e2ed0",
+          "deployed_sha256": "80485d96cf1e880e891167cf8c34f9fd8d138dcd6b43c8c8ec65306b938e2ed0"
+        }
+      }
+    },
+    {
+      "service": "bot",
+      "status": "source_mismatch",
+      "image_id": "sha256:93da4577d8ac4d9e7fc4ec49371a45a154e2a2cf626485ff5e341c06257b7d72",
+      "revision": null,
+      "files": {
+        "app/services/agent_persistent.py": {
+          "matches": false,
+          "expected_sha256": "5e1476df690591b86152c4d4a2ade336cec3df124936ec400afa528a15128c87",
+          "deployed_sha256": "d22da09da1bf58500b55c9a2e1e9b0bbd5b852f3d3ec67e07a6f34a842e3c567"
+        },
+        "app/services/rag.py": {
+          "matches": false,
+          "expected_sha256": "fca52d6d0b5f6b0203e0afd78a29739f9ca15b0c98b90a11d7d71611d952f27f",
+          "deployed_sha256": "584321caff7dc9f107303acd4429502d51afdfb6f489976825430ba7195a861e"
+        },
+        "app/services/evidence_text.py": {
+          "matches": false,
+          "expected_sha256": "dc96673f72994262aa62a0122fb7cd6f767236dd1fe8ef0bf763462f041df00e",
+          "deployed_sha256": "de57b9ce882e18a5d13462c732491e14343f276ba10eff4e0b44e9bb4b929b07"
+        },
+        "app/services/evidence_scope.py": {
+          "matches": false,
+          "expected_sha256": "65478562d1d06cbdbdab7db982bebb0ef7e970824e0f41bae539a2720d3ccd62",
+          "deployed_sha256": null
+        },
+        "app/services/overview_evidence.py": {
+          "matches": false,
+          "expected_sha256": "e9a6c4c4a5fd241576eee36f0cc536fd8812971500e8f8b87a48f630833b4edc",
+          "deployed_sha256": null
+        },
+        "app/services/verified_overview.py": {
+          "matches": false,
+          "expected_sha256": "7102b40da03621a648481142e10be7fe23915d2e182432b722a1e746ceced0d5",
+          "deployed_sha256": null
+        },
+        "app/services/runtime_model.py": {
+          "matches": true,
+          "expected_sha256": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+          "deployed_sha256": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167"
+        },
+        "app/chat/agent.py": {
+          "matches": false,
+          "expected_sha256": "fc4f11da6c27fad18d757a6f6582185d27c2c7ac80f8827fafd4b4d7726e7ac7",
+          "deployed_sha256": "780f73f6a051c2a7af5570c615366b68ca559ff5b5e1b02cd620076d62b13733"
+        },
+        "app/core/config.py": {
+          "matches": false,
+          "expected_sha256": "844f1a5a3a8ecba7a638f1ee78858c9cce56e77ff3561c296441c0dcee2ca18e",
+          "deployed_sha256": "a231fc97eb1f8e562f4b310443485259f0c3f2d2ecc90e6eaa6298c99d99363e"
+        },
+        "bot/handlers/text.py": {
+          "matches": true,
+          "expected_sha256": "4f6bd4f0974865694b2cfc948009fbd718269ec685131ea38d888497704dac90",
+          "deployed_sha256": "4f6bd4f0974865694b2cfc948009fbd718269ec685131ea38d888497704dac90"
+        },
+        "bot/handlers/expansion.py": {
+          "matches": true,
+          "expected_sha256": "80485d96cf1e880e891167cf8c34f9fd8d138dcd6b43c8c8ec65306b938e2ed0",
+          "deployed_sha256": "80485d96cf1e880e891167cf8c34f9fd8d138dcd6b43c8c8ec65306b938e2ed0"
+        }
+      }
+    }
+  ]
+}

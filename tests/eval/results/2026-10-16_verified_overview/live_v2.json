@@ -1,0 +1,1342 @@
+{
+  "manifest": {
+    "protocol": "verified_hss_live_v1",
+    "run_id": "verified_overview_live_v2",
+    "schedule": [
+      {
+        "slot": 0,
+        "question": "hss_explicit",
+        "repeat": 0,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 1,
+        "question": "hss_explicit",
+        "repeat": 0,
+        "arm": "pilot"
+      },
+      {
+        "slot": 2,
+        "question": "hss_title_alias",
+        "repeat": 0,
+        "arm": "pilot"
+      },
+      {
+        "slot": 3,
+        "question": "hss_title_alias",
+        "repeat": 0,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 4,
+        "question": "hss_after_hs",
+        "repeat": 0,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 5,
+        "question": "hss_after_hs",
+        "repeat": 0,
+        "arm": "pilot"
+      },
+      {
+        "slot": 6,
+        "question": "hss_explicit",
+        "repeat": 1,
+        "arm": "pilot"
+      },
+      {
+        "slot": 7,
+        "question": "hss_explicit",
+        "repeat": 1,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 8,
+        "question": "hss_title_alias",
+        "repeat": 1,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 9,
+        "question": "hss_title_alias",
+        "repeat": 1,
+        "arm": "pilot"
+      },
+      {
+        "slot": 10,
+        "question": "hss_after_hs",
+        "repeat": 1,
+        "arm": "pilot"
+      },
+      {
+        "slot": 11,
+        "question": "hss_after_hs",
+        "repeat": 1,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 12,
+        "question": "hss_explicit",
+        "repeat": 2,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 13,
+        "question": "hss_explicit",
+        "repeat": 2,
+        "arm": "pilot"
+      },
+      {
+        "slot": 14,
+        "question": "hss_title_alias",
+        "repeat": 2,
+        "arm": "pilot"
+      },
+      {
+        "slot": 15,
+        "question": "hss_title_alias",
+        "repeat": 2,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 16,
+        "question": "hss_after_hs",
+        "repeat": 2,
+        "arm": "ordinary"
+      },
+      {
+        "slot": 17,
+        "question": "hss_after_hs",
+        "repeat": 2,
+        "arm": "pilot"
+      }
+    ],
+    "cases": [
+      {
+        "id": "hss_explicit",
+        "messages": [
+          [
+            "human",
+            "Расскажи про модель Hardening Soil small strain в GTS NX."
+          ]
+        ]
+      },
+      {
+        "id": "hss_title_alias",
+        "messages": [
+          [
+            "human",
+            "Что такое Hardening Soil (small strain stiffness) в GTS NX?"
+          ]
+        ]
+      },
+      {
+        "id": "hss_after_hs",
+        "messages": [
+          [
+            "human",
+            "В этой беседе ранее обсуждалась базовая модель Hardening Soil."
+          ],
+          [
+            "ai",
+            "Следующий самостоятельный вопрос рассмотрим отдельно, по документации."
+          ],
+          [
+            "human",
+            "Дай краткий обзор модели Hardening Soil small strain в GTS NX."
+          ]
+        ]
+      }
+    ],
+    "comparison": "same candidate code and runtime profile; flag false vs true",
+    "concurrency": 1,
+    "fresh_process_per_sample": true,
+    "local_tokenizer_warmed_before_timing": true,
+    "rag_initialization_excluded_from_answer_time": true,
+    "service_tier": "default",
+    "external_destination": "OpenAI API",
+    "telegram_allowed": false,
+    "production_mutation_allowed": false,
+    "generation_answer_limit": 18,
+    "attempts_per_slot": 1,
+    "code_sha256": {
+      "app/__init__.py": "36103b282de7f452e648f74c1f7a9849a0abf9514be035ebc93909439993d7c0",
+      "app/admin/__init__.py": "79240738fe8bd030ba32497677d05d9b236b0b9f409cd12cc39bb1a830b336e3",
+      "app/admin/auth.py": "7de5ed5db3bb4bfe9eec869100c9f340572467cedeeccfca11fcf46070491717",
+      "app/admin/broadcast_state.py": "7f40f0c4eb84258cae324e37617495f418f2b371a9dcaa02df460c525b65e084",
+      "app/admin/deps.py": "632a42028e4fb109f537cc8ab8f093e3fae114f6d248ff57d9ed25da238fdbc6",
+      "app/admin/models.py": "e5fd369a3d7a964b2897156efce66d94787820cc3aec1fbdcd444f60e66c76b0",
+      "app/admin/routes.py": "43b7e6fd3f373937968f33f3512d98e2d9eaf8cf0d5f8d7a8307019c201d387d",
+      "app/admin/service.py": "2d11db7fac9cb6969f05f415fb8adef7494f5bd91037504406b998d8c340b5d0",
+      "app/chat/__init__.py": "1029a8b95a0a62109ed6a2ebe27fab0e9f7fd66535bd138036447fdf65e68bce",
+      "app/chat/agent.py": "fc4f11da6c27fad18d757a6f6582185d27c2c7ac80f8827fafd4b4d7726e7ac7",
+      "app/chat/deps.py": "c3ee88aeda360a473d3dc94142c8ad70c6065587ad1c188d660284a3feae442a",
+      "app/chat/domain.py": "2f090af15612988d64a2ce3563bbe01fea40d4db955746fd1b4ab77132c36980",
+      "app/chat/expansion.py": "e7f8aa5c806f55f8457f1b4ac4e58778728a7d1776b644c5a7e4fd233c6a7c36",
+      "app/chat/feedback.py": "25b3e94be28add23fe8af8ad99a2b8871fe483bc21fe6861cf7a2e52f6bbfb8c",
+      "app/chat/media.py": "775611f47ad3eb2c68de91cad8870c3f3ee8743565ef8c1f5b74765206d10779",
+      "app/chat/media_worker.py": "f5992c4e92a658aa1c11d37cea3a69acdf3de16ed302f2918cb29aac2c08eb68",
+      "app/chat/repositories/__init__.py": "11bdd431c8464c041df747c47d8dbb38e67913969d551e5f88bcb4f2e5fafa66",
+      "app/chat/repositories/json_repo.py": "4d898fa6332cd5dd51969ffa6845db5d43f513ce94274a5e2ed2198753e2e9a8",
+      "app/chat/repositories/pg_models.py": "5bf4a50d979c7e64ad05c515f275f673931ef3f6e4bf80a9b655cb3069466748",
+      "app/chat/repositories/pg_repo.py": "f3beab022ac79328ffc5eb2e443c73b72f61eec003744def02a568d40ba38aac",
+      "app/chat/repository.py": "9a08ff20468b1080fbf9d742e0c1c489fcb3e6f3481f521f6ae8da62ea6cad1d",
+      "app/chat/routes.py": "5b04868013d8e77007b5c3fcfedb6820b95c91bec13b9fb9b3d519531022cb08",
+      "app/chat/service.py": "042330d9fb3e21807b0c2a892ba00db4d188798af438aa8ffd413c69ec4c9e2e",
+      "app/core/__init__.py": "78b4a4b9ca921b8cc23f3571a48900268d8aa95f411f314b8caf993ba5eca37b",
+      "app/core/auth.py": "c6483e379d3f69fe6208a89a5aa2a925fdb8e0633fa87feeaa5cf920e88fd618",
+      "app/core/config.py": "844f1a5a3a8ecba7a638f1ee78858c9cce56e77ff3561c296441c0dcee2ca18e",
+      "app/core/exceptions.py": "d3708c7a82e3152b556b8eccd8e3de1a59256414768d8345860b3ff11cb75713",
+      "app/core/upload_boundary.py": "6c187a6abb0fa0a3506de41622d0e5ca0e5cfdce33f4e187d79b7fc4082aac0e",
+      "app/deps/__init__.py": "3c8157f4031e0859537d7fc0c8aa8004872e2922e20fc29db85d345a7addee35",
+      "app/deps/providers.py": "d670277d8ff15fd92a0e38ff48c95d70e29f6b5697b284339957b860214c8bfd",
+      "app/eval/__init__.py": "9b3647f4b254c57e78bb490e44c77ce70a2bb60cfd37b16681d490aeafebd660",
+      "app/eval/dataset.py": "9946866455a009752f33b07cbc003b23332c975dd06fbef7dd96c058ca5bcae0",
+      "app/eval/metrics.py": "8de768440a7c2bb7fd35a9ffe73aed569719be54676ed41dc522661f31225c3a",
+      "app/main.py": "a4c8eb802324d5051f6552f2ebdf2b1293cbb862e937b3b6296b216731801f62",
+      "app/moderation/__init__.py": "b1b04ce8de11fadbf00e2f2bab897dd9f64ef47c7696f948cf3402b1b644d68d",
+      "app/moderation/models.py": "d5f860cacd639d33623f641687335cc7f11ddfc5a44c4eed9d348b52e3db277d",
+      "app/moderation/service.py": "607587961d7c2c2cb23cca4bd3de63877c07670391e2d9f0077ec5e06ccf0871",
+      "app/observability/__init__.py": "5bbf50f5ae4c805e0084eef1e6477c80ed8e9ef7e76dc19bea924cd712886f04",
+      "app/observability/logging.py": "6e4a38122753cf6e6b30fc9f1892cbd44de75cad2cf91938ccbabfe09d6d329a",
+      "app/observability/pii.py": "8cb449480a43b5a9b82e795f4e798d6bdedf6f399246523e44a4a2eca365ca37",
+      "app/observability/tracing.py": "f3b69b0c0b6d4ddf23b66d1b021864565dd6e3089cd9e1f2795d6a92cb153ebc",
+      "app/routers/__init__.py": "5323279183dcabc63413303be1dc76b4cb2d7dcc736a54c92cc8b4452e3e2ae9",
+      "app/routers/agent.py": "450876c610106ff738c1424331c83224faa754dff9a8cd794b1e9876fee5cf46",
+      "app/routers/chat.py": "386cb32700f59a468d177dfef7132a3379f28a6b917083d9273c586afc95653d",
+      "app/routers/documents.py": "d74956416771e6b87cbaa38eae4b7c19c961734c28c04496613b273ffc8ff860",
+      "app/routers/health.py": "7f3ec8a292810830c305a5bfeae7658bfa5a68c684c675c82897b575f8456424",
+      "app/routers/models.py": "d48b676ca872566b9336ef34c062a6c858de89eafe5c6cbc6dbc4d1e20c60e3b",
+      "app/routers/rag.py": "d644828ae7e7dcfbd0af0d7f93e11c9b6ad58f5f0d6e0a2d25a9fa1e8616921e",
+      "app/schemas/__init__.py": "545a9662272f6247cbacc1025aa33656976be017916249bdb92c5ec051540e04",
+      "app/schemas/chat.py": "e7b696ecfa0f92f74ac48e1d1587854024ec22eef3ae83175b6fc49437ffcc18",
+      "app/schemas/models.py": "c89d7d8296b5f5916c9915b6876ca7cc5e29ad7cc42daa195d6ef97736e53ebd",
+      "app/schemas/rag.py": "2b9489f287e7d17564c04ffcf6238908f1dee85efc683b9b7c416b2a7b77b34d",
+      "app/services/__init__.py": "5ee368b8b403ddb926e38792d6c660d7a6ec88ea5bd628ded82a91e52931d2f1",
+      "app/services/agent_graph.py": "393a5d88e8da34d9a6617d81cd102de887934f7c7c891a65353477f71aa6b477",
+      "app/services/agent_naive.py": "a1fcba131e494eda00e38a60a831080269fc475329843e27f538867aa8465d01",
+      "app/services/agent_naive_tools.py": "ee9a2d29b76006a0c07faafcfb9656d15b7e629802d111efd302cc4c98efe7d1",
+      "app/services/agent_persistent.py": "5e1476df690591b86152c4d4a2ade336cec3df124936ec400afa528a15128c87",
+      "app/services/agent_react.py": "ed7391b632fc59464932d6ef21a77b1b344dc437f694eea93dafcd212edc0764",
+      "app/services/agent_react_tools.py": "f507505ceaaaa5e1a812e9f40c68a51c52ad81b5e9032945695721ba3bd30d23",
+      "app/services/agent_react_worker.py": "fdd6aa8fc6c5813409e90ce50b1767a542b18032dcbf22005256c528d2c110fa",
+      "app/services/answer_quality.py": "e5f3dfe0cad95cf02e24aabd63038997999cf3efef1ed1cd193c8c393e7c82b4",
+      "app/services/chm_reader.py": "7640b5cf4c14dbd8804d16ae8d60cfe1f98efd3459218e4b4f9969ccc1a8b2fb",
+      "app/services/chunking.py": "e1885723d9fcb6872f585c5ac2df14496ff0e5cf92e036c546a70c59b990ec8b",
+      "app/services/cost.py": "7438764228bb75fb6cfaab1a3a41de7b4c04fdcd4c7b4b1e93553e97782bbc60",
+      "app/services/embeddings.py": "85c840924f8cfa106c91828e2caee016faf0019a50dc0d04f798e731969c2fd3",
+      "app/services/evidence_scope.py": "65478562d1d06cbdbdab7db982bebb0ef7e970824e0f41bae539a2720d3ccd62",
+      "app/services/evidence_text.py": "dc96673f72994262aa62a0122fb7cd6f767236dd1fe8ef0bf763462f041df00e",
+      "app/services/ingestion.py": "9204abce29bd4a20f7d75f40d66a4b5a9d02779b126e3516abbea710e8be1c21",
+      "app/services/llm.py": "d37cdd2b27f999410e6d5a2b31027dbb939bc3cd69da31017e55992f9988a483",
+      "app/services/notifier.py": "8283e8a43bf375f1f09a26d2bbb8c0b3f135f3f779ffdb2ffb64ac4b205da072",
+      "app/services/overview_evidence.py": "e9a6c4c4a5fd241576eee36f0cc536fd8812971500e8f8b87a48f630833b4edc",
+      "app/services/parsing.py": "ede99803409cb9413ba5c441faad87fe6008aebe623b7b7b9c5ef65c5e15c3a4",
+      "app/services/prompting.py": "20caab2911f3fe756f8ee84bd85cccb7632b878b5983efa3accf7434e90d10ff",
+      "app/services/rag.py": "fca52d6d0b5f6b0203e0afd78a29739f9ca15b0c98b90a11d7d71611d952f27f",
+      "app/services/rag_baremetal.py": "0c238d0f59eb02defb699aa70f985f9c8b175a7a5e0e375c92f1c67923f6c92e",
+      "app/services/reranker.py": "41c6fe1e7f4cd5aeeb5cedd1982d3b0ba53990624c2a2d1ff29a42fbded3b51a",
+      "app/services/retrieval_eval.py": "4bb5ac4874731d803a249f0dba39b422937ba9ff2b69ca916faf093334bca0c7",
+      "app/services/retry.py": "fcac40bc95f9a2ce7981ad293fc0f0bcab70ad0140b810816384439f4ce72f60",
+      "app/services/runtime_model.py": "ae8faddcc6ba596a8b43af765618416ccab31d8c7e90dd944445ea2a018e9167",
+      "app/services/security/__init__.py": "9746ae17af2cd4caeb6da20afec99cda5f2a4f79cddbdd1c9d773078e8e09af6",
+      "app/services/security/input_validator.py": "377be4c8ea9cba66787834b53cc4d73f8bd504f0c15df2e1176e63e929875c34",
+      "app/services/security/output_filter.py": "675857a7ab2e2e9d6842e49d9491650cb9cdc61229976e0bde17f3dae0af4cd0",
+      "app/services/vector_store.py": "44c06852e2b4ffa13cb3c0da1e99c4d78caeec0e3ccc00d21b20af61ea191f62",
+      "app/services/verified_overview.py": "7102b40da03621a648481142e10be7fe23915d2e182432b722a1e746ceced0d5",
+      "bot/__init__.py": "161b07463b1aabb8221e7154c6395b07bdb2e08ac4c9da75799b8fc52cd838c4",
+      "bot/__main__.py": "0499ef29232f3e7547219427aae2a320c080d02ef21a11ae72e51f903cc0430f",
+      "bot/admission.py": "4e44ab8299e77c72653ac65d3e1ae88e05c3b7b58e63e92005215b8ff66336ab",
+      "bot/background.py": "84fb1e81b0a0e206e03c5826e945d88a448771c18cd87f3914614c8a0b78f207",
+      "bot/config.py": "f24325b90f87eeb95c920749e03c950a1ef354f0c7363106099ffa473ca79527",
+      "bot/handlers/__init__.py": "a141288da5474b399e48e6f3c1c577345adedfe252932418106fd49f3b566b07",
+      "bot/handlers/_burst.py": "e723c9755ac7a9dcb7517e490a0517b97ef1f8190b551255397c8ccc1592e7d6",
+      "bot/handlers/_common.py": "dd5094c533377e44711993e1a18c61214c33f1ce2b20c991027df09e718a0cc0",
+      "bot/handlers/admin.py": "06a8633a29f06f6b4b814e62bbd51dfb254ca9cd81464a4a4c547b2782567516",
+      "bot/handlers/approval.py": "87ee2480a413a79ecdcec5a0694ae368c1f6c3db3d3fead77c468a9cf92b2083",
+      "bot/handlers/commands.py": "846e6a01cf7a6198265a5f2346f607f736eb32b3786f29a53140483006035ea3",
+      "bot/handlers/expansion.py": "80485d96cf1e880e891167cf8c34f9fd8d138dcd6b43c8c8ec65306b938e2ed0",
+      "bot/handlers/feedback.py": "2ae0ea65054c3c7ff8dfa2dc131e1b9e8e073f140ec1cb0e736382b182c30943",
+      "bot/handlers/media.py": "5ae24c9a112dbe95f4026642231399a65042ec67bc7d41ecfb27475d0c2faf15",
+      "bot/handlers/menu.py": "424d25009cd939c7c03c33f660b61ba9bce3cfad9faa40a5efe74bcdf3b20873",
+      "bot/handlers/text.py": "4f6bd4f0974865694b2cfc948009fbd718269ec685131ea38d888497704dac90",
+      "bot/keyboards/__init__.py": "fe619581ab5f820cd77d94681356702d4bd8521dd98ab140355259575664a41d",
+      "bot/keyboards/inline.py": "c32d6391118393d65fd1b91b65de84045811693109e66ae78e4172eec6185332",
+      "bot/keyboards/menu.py": "2898a4ebf5908b8cda4b7d1c52104c93de8832e667c10362c1d620ea4da53b62",
+      "bot/navigation.py": "3f198b9353142564c3b30a04f58aa3df5bc0d00edec669f449694d8b58281e50",
+      "bot/services/__init__.py": "63b23dd7cca0580c705744dd471a74916c6d8e29b1d9efd8f48e93c3b5c29574",
+      "bot/services/backend_client.py": "eb132b4cb51fdc997cbbac547671447761fe101f198a8f69be4630f19312c97b",
+      "bot/text_chunks.py": "f44885406a4a1f155b22e47b2ce60bfbef3766fb9c280bf8515e71153bdf0e5f",
+      "bot/web.py": "cd41015e352195565caf433323784b3135cddc7a4966b8c11d1a19166797994b",
+      "support_copilot/data/knowledge_base.json": "695ee43a5d65f5b93e974c008b361d8dcb7295cfee11bd28794500f481b48895",
+      "support_copilot/prompts/__init__.py": "9778b14933d781909f87304f4f44f76a1c1fca06a82cf8db1f7c6662cb6a2127",
+      "support_copilot/prompts/cli_system_v1.txt": "15a4e2bcf1ce8e56a828a2c2289e6f8df65dccb1e3352f11c6724710e1f6acbd",
+      "support_copilot/prompts/loader.py": "0160110fc1ff862c4f8753c2e9cd98a9d1223743c75a1bd87205f8b6df8949e3",
+      "support_copilot/prompts/vision_system_v1.txt": "26efa36797c44fa6709ac97771d127bc0638428b0ffb984cbc410c098569a5b1",
+      "support_copilot/tools/__init__.py": "909dd22ba8a71b6922799d8af57c38f4d3b655c2f5f58ff3dc704cb3fcfba558",
+      "support_copilot/tools/handlers.py": "c9939f00cf2731c555b4e77bb63becd9574dd8bc7e5679a04595169b9f20ad92",
+      "support_copilot/tools/schemas.py": "804b001d0152fe496b4b414186043701ecb1ad136f683629c7741ff050b08ffa",
+      "support_copilot/__init__.py": "2bb77ab56e1777743cc0cf57a5212a64577fc7903628066418277ea0195df9e8",
+      "support_copilot/config.py": "bed70dea5018b7bf9c4134d27b38740ab30239b64e27ca3ddab51b8f46198a83",
+      "scripts/compare_verified_overview.py": "4810c274ab72affece182eb22793cbbf61b335e95e7245fb9ed0c141fe6d7c8b"
+    },
+    "release_gate": {
+      "latency": "pilot median <= 0.8 * ordinary median; pilot faster in >= 7/9 pairs",
+      "all_pilot_answers": "verified route, complete useful answer, one generation call",
+      "accuracy": "zero material unsupported or incorrect technical claims in pilot",
+      "completeness": "all four required facets in every pilot answer; no worse paired score",
+      "citations": "all technical claims supported by their exact cited text; no wrong variant",
+      "facets": [
+        "explicit HSS and Modified Mohr Coulomb basis",
+        "small-strain stiffness behavior",
+        "E50ref/Eoedref/Eurref and distinct meanings",
+        "G0ref and gamma0.7 with correct meaning"
+      ],
+      "failures": "all failures retained, no successful-answer replacement",
+      "scope": "brief explicit HSS overview only; not general quality or latency SLA"
+    }
+  },
+  "candidate_image": {
+    "tag": "llm-service:verified-overview-v2-20261016",
+    "image_id": "sha256:3ae2943aec6384c18c01c87f6fabf50b2b2fdd93046677c51a272fc04f1afefe"
+  },
+  "samples": [
+    {
+      "slot": 0,
+      "question": "hss_explicit",
+      "repeat": 0,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 11.034462376999727,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.548865380002098,
+      "retrieval_seconds": 2.425662793000811,
+      "selection_seconds": 0.42648465300044336,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6470,
+        "output_tokens": 529,
+        "reasoning_tokens": 233,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "016f163d399a1caf8e82e9eb43fcbb38f7763631dd4794c0c0791bd759ba82fd"
+    },
+    {
+      "slot": 1,
+      "question": "hss_explicit",
+      "repeat": 0,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.147334749999573,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 6.831455552999614,
+      "retrieval_seconds": 2.2676192929993704,
+      "selection_seconds": 0.6653225460013346,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 529,
+        "reasoning_tokens": 235,
+        "cache_read_tokens": 0
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "4cfd8df146d57b9bd9968409eb09b49c3bc4a0209a4fe09fd75405b16255e2e0"
+    },
+    {
+      "slot": 2,
+      "question": "hss_title_alias",
+      "repeat": 0,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 13.094669358000829,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 10.310348937000526,
+      "retrieval_seconds": 2.7310851410002215,
+      "selection_seconds": 0.8811636959999305,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 882,
+        "reasoning_tokens": 550,
+        "cache_read_tokens": 1832
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": [
+          "Filename label GTS NX2021 is followed by an explicit unknown-document-version caveat; no claim of current/latest product version."
+        ]
+      },
+      "private_sample_sha256": "ef3deb7b7cabe4fed70082e1e2047b2c96e2e57244e5ec4940a6260ade743f64"
+    },
+    {
+      "slot": 3,
+      "question": "hss_title_alias",
+      "repeat": 0,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 10.805537910000567,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.207138082998426,
+      "retrieval_seconds": 2.5367262390009273,
+      "selection_seconds": 0.8300123979988712,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6496,
+        "output_tokens": 563,
+        "reasoning_tokens": 261,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": false,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing",
+          "Small strain overlay is supported by delivered CHM source [1], but the opening paragraph cites PDF203 source [2], which does not name the overlay model."
+        ]
+      },
+      "private_sample_sha256": "390898c4156b16151c408087bb2bce15091410394bdcd221d2d48eadd5360dea"
+    },
+    {
+      "slot": 4,
+      "question": "hss_after_hs",
+      "repeat": 0,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.607309991000875,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 7.220866617999491,
+      "retrieval_seconds": 2.3163008720002836,
+      "selection_seconds": 0.7703799730006722,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6584,
+        "output_tokens": 447,
+        "reasoning_tokens": 186,
+        "cache_read_tokens": 3398
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "0fc6e927b10f005b5c78709dbc40d5020241684a217626da0522656349d77885"
+    },
+    {
+      "slot": 5,
+      "question": "hss_after_hs",
+      "repeat": 0,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 11.612354757999128,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 8.638583489999291,
+      "retrieval_seconds": 2.9391281659991364,
+      "selection_seconds": 0.694820886999878,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4404,
+        "output_tokens": 533,
+        "reasoning_tokens": 233,
+        "cache_read_tokens": 1832
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "ccd76c3a0d67f2c701803f8cb2bf15daee7a7483cff2ddb3f75a2d1c18b5e49a"
+    },
+    {
+      "slot": 6,
+      "question": "hss_explicit",
+      "repeat": 1,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 14.835473144999924,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 12.399345255000298,
+      "retrieval_seconds": 2.390834506999454,
+      "selection_seconds": 0.6419704550007737,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 1063,
+        "reasoning_tokens": 762,
+        "cache_read_tokens": 4273
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "3bc0f34970242995ba5cc91ed0c7497af1771afd3c402327cdd14b9b0ade0eb2"
+    },
+    {
+      "slot": 7,
+      "question": "hss_explicit",
+      "repeat": 1,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 10.662091557000167,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 9.200517635999859,
+      "retrieval_seconds": 1.414265883000553,
+      "selection_seconds": 0.37367635699956736,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6475,
+        "output_tokens": 535,
+        "reasoning_tokens": 233,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": true,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "181b19c9abd77896a5f13192291268d3d59a7522f34895988c394c911ef01ad1"
+    },
+    {
+      "slot": 8,
+      "question": "hss_title_alias",
+      "repeat": 1,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 10.498374270999193,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.853121248001116,
+      "retrieval_seconds": 1.6069826510010898,
+      "selection_seconds": 0.31501851299981354,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6497,
+        "output_tokens": 458,
+        "reasoning_tokens": 138,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": true,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "cf71ea830e780d70dbbabea350dde1eb668242dd553397b59f04ce92dc41fad0"
+    },
+    {
+      "slot": 9,
+      "question": "hss_title_alias",
+      "repeat": 1,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 13.446325636999973,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 11.696032369000022,
+      "retrieval_seconds": 1.7116913800000475,
+      "selection_seconds": 0.6271000540000387,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 1003,
+        "reasoning_tokens": 714,
+        "cache_read_tokens": 4273
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "451800984b68a8e977d237712b84549766bb732ebabfc5900620b2358186b394"
+    },
+    {
+      "slot": 10,
+      "question": "hss_after_hs",
+      "repeat": 1,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 11.670525203999205,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 9.615458771999329,
+      "retrieval_seconds": 2.0254315290003433,
+      "selection_seconds": 0.4375316979985655,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4404,
+        "output_tokens": 878,
+        "reasoning_tokens": 581,
+        "cache_read_tokens": 4329
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "1aae6e2d562242ad29fcf9128648519f5cfe54ad4a3b14e9e24c9634b9f8ed38"
+    },
+    {
+      "slot": 11,
+      "question": "hss_after_hs",
+      "repeat": 1,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.85717314700014,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.1389913790008,
+      "retrieval_seconds": 1.6784191070000816,
+      "selection_seconds": 0.5273015220009256,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6575,
+        "output_tokens": 463,
+        "reasoning_tokens": 195,
+        "cache_read_tokens": 3398
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "991d455fda2bc76639ad877c04ba3fe95b48742a1c083b57f7e7c45072055bb5"
+    },
+    {
+      "slot": 12,
+      "question": "hss_explicit",
+      "repeat": 2,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.527253903999735,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 7.893077557000652,
+      "retrieval_seconds": 1.5955189790001896,
+      "selection_seconds": 0.23702734700054862,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6493,
+        "output_tokens": 547,
+        "reasoning_tokens": 220,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "b86980404c4fcdcd80a975c93b398ce22a57e5f52e4dbc61b1f9f5fa9e81b193"
+    },
+    {
+      "slot": 13,
+      "question": "hss_explicit",
+      "repeat": 2,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.013393331999396,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 6.955199238000205,
+      "retrieval_seconds": 2.030876436998369,
+      "selection_seconds": 0.43863365499964857,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 588,
+        "reasoning_tokens": 285,
+        "cache_read_tokens": 4273
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "6ee967b8419e4a35594a271778c8bda6bfc7f363d1bd7e35efcea5bc8ab84944"
+    },
+    {
+      "slot": 14,
+      "question": "hss_title_alias",
+      "repeat": 2,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.451915600000575,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 7.751060108999809,
+      "retrieval_seconds": 1.6727781030003825,
+      "selection_seconds": 0.4430857300012576,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4348,
+        "output_tokens": 761,
+        "reasoning_tokens": 464,
+        "cache_read_tokens": 4273
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "9bdf81df451bf3cfe6de0c9dbc6326c0f9c2770e83b87145df8429fc1bf7a4b2"
+    },
+    {
+      "slot": 15,
+      "question": "hss_title_alias",
+      "repeat": 2,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 9.803143296001508,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.00526335900031,
+      "retrieval_seconds": 1.7557974310002464,
+      "selection_seconds": 0.32950193800024863,
+      "evidence_count": 5,
+      "evidence_chars": 5880,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6322,
+        "output_tokens": 599,
+        "reasoning_tokens": 284,
+        "cache_read_tokens": 3286
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": true,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "ee82097c738b50d95b62b4234083e65e5b5644c5a19c6a94cf9aa536e03c393d"
+    },
+    {
+      "slot": 16,
+      "question": "hss_after_hs",
+      "repeat": 2,
+      "arm": "ordinary",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 10.416821081998933,
+      "route": "agent",
+      "answer_incomplete": false,
+      "model_calls": 2,
+      "retrieval_calls": 1,
+      "model_seconds": 8.172538220000206,
+      "retrieval_seconds": 2.202233216999957,
+      "selection_seconds": 0.3009958940001525,
+      "evidence_count": 5,
+      "evidence_chars": 6476,
+      "served_tiers": [
+        "default",
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 6579,
+        "output_tokens": 501,
+        "reasoning_tokens": 234,
+        "cache_read_tokens": 3398
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": false,
+        "extras": {
+          "elastic_range": false,
+          "Hardin": false,
+          "m": false
+        },
+        "notes": [
+          "E_parameters_missing"
+        ]
+      },
+      "private_sample_sha256": "ee9e4a9965125d31e886a5bb39265554bd02366c7a870782a2ef8cdc2a49ee36"
+    },
+    {
+      "slot": 17,
+      "question": "hss_after_hs",
+      "repeat": 2,
+      "arm": "pilot",
+      "status": "completed",
+      "error_type": null,
+      "total_seconds": 10.38118262900025,
+      "route": "verified",
+      "answer_incomplete": false,
+      "model_calls": 1,
+      "retrieval_calls": 1,
+      "model_seconds": 8.452464871999837,
+      "retrieval_seconds": 1.890649362001568,
+      "selection_seconds": 0.49095918300008634,
+      "evidence_count": 2,
+      "evidence_chars": 3685,
+      "served_tiers": [
+        "default"
+      ],
+      "usage": {
+        "input_tokens": 4404,
+        "output_tokens": 700,
+        "reasoning_tokens": 404,
+        "cache_read_tokens": 4329
+      },
+      "usage_incomplete": false,
+      "quality": {
+        "facets": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "accuracy_pass": true,
+        "citations_pass": true,
+        "required_complete": true,
+        "extras": {
+          "elastic_range": true,
+          "Hardin": true,
+          "m": true
+        },
+        "notes": []
+      },
+      "private_sample_sha256": "5da7c33c9cf642627de523673030effe21af3468ad71e9af3fb42002b4e1e5dd"
+    }
+  ],
+  "groups": {
+    "ordinary": {
+      "attempted": 9,
+      "completed": 9,
+      "median_seconds": 10.416821081998933,
+      "range_seconds": [
+        9.527253903999735,
+        11.034462376999727
+      ],
+      "times_seconds": [
+        11.034462376999727,
+        10.805537910000567,
+        9.607309991000875,
+        10.662091557000167,
+        10.498374270999193,
+        9.85717314700014,
+        9.527253903999735,
+        9.803143296001508,
+        10.416821081998933
+      ],
+      "model_seconds_median": 8.172538220000206,
+      "retrieval_seconds_median": 1.7557974310002464,
+      "input_tokens_median": 6496,
+      "reasoning_tokens_median": 233,
+      "verified_count": 0,
+      "factually_correct": 9,
+      "required_completeness_pass": 0,
+      "citation_pass": 8,
+      "model_calls": 18,
+      "retrieval_calls": 9
+    },
+    "pilot": {
+      "attempted": 9,
+      "completed": 9,
+      "median_seconds": 11.612354757999128,
+      "range_seconds": [
+        9.013393331999396,
+        14.835473144999924
+      ],
+      "times_seconds": [
+        9.147334749999573,
+        13.094669358000829,
+        11.612354757999128,
+        14.835473144999924,
+        13.446325636999973,
+        11.670525203999205,
+        9.013393331999396,
+        9.451915600000575,
+        10.38118262900025
+      ],
+      "model_seconds_median": 8.638583489999291,
+      "retrieval_seconds_median": 2.030876436998369,
+      "input_tokens_median": 4348,
+      "reasoning_tokens_median": 464,
+      "verified_count": 9,
+      "factually_correct": 9,
+      "required_completeness_pass": 9,
+      "citation_pass": 9,
+      "model_calls": 9,
+      "retrieval_calls": 9
+    }
+  },
+  "pairs": [
+    {
+      "question": "hss_explicit",
+      "repeat": 0,
+      "both_completed": true,
+      "pilot_faster": true,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_explicit",
+      "repeat": 1,
+      "both_completed": true,
+      "pilot_faster": false,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_explicit",
+      "repeat": 2,
+      "both_completed": true,
+      "pilot_faster": true,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_title_alias",
+      "repeat": 0,
+      "both_completed": true,
+      "pilot_faster": false,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_title_alias",
+      "repeat": 1,
+      "both_completed": true,
+      "pilot_faster": false,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_title_alias",
+      "repeat": 2,
+      "both_completed": true,
+      "pilot_faster": true,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_after_hs",
+      "repeat": 0,
+      "both_completed": true,
+      "pilot_faster": false,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_after_hs",
+      "repeat": 1,
+      "both_completed": true,
+      "pilot_faster": false,
+      "pilot_no_less_complete": true
+    },
+    {
+      "question": "hss_after_hs",
+      "repeat": 2,
+      "both_completed": true,
+      "pilot_faster": true,
+      "pilot_no_less_complete": true
+    }
+  ],
+  "median_improvement_fraction": -0.11476953156718506,
+  "pilot_faster_pairs": 4,
+  "release_gate": {
+    "all_samples_completed": true,
+    "latency": false,
+    "verified_one_call": true,
+    "complete_responses": true,
+    "accuracy": true,
+    "completeness": true,
+    "citations": true
+  },
+  "release_allowed": false,
+  "usage_scope": "Agent generation calls only; reasoning included in output tokens. Embeddings excluded; failed-call usage may be unknown.",
+  "quality_method": "Independent manual source-based review of all answers; primary agent spot checks and release decision. Delivered marker to displayed source to chunk_id to complete evidence text.",
+  "limitations": "Three HSS formulations, three repeats per arm; synthetic histories, not a general benchmark or SLA. Failures retained; no replacement attempts."
+}

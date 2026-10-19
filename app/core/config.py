@@ -68,6 +68,10 @@ class _SettingsFields(BaseModel):
         default=8192, ge=0, le=65536, validation_alias=AliasChoices("AGENT_REASONING_TOKEN_RESERVE"))
     agent_generation_timeout: float = Field(
         default=120.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
+    agent_prepared_evidence_enabled: bool = Field(
+        default=True, validation_alias=AliasChoices("AGENT_PREPARED_EVIDENCE_ENABLED"))
+    agent_verified_overview_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("AGENT_VERIFIED_OVERVIEW_ENABLED"))
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         validation_alias=AliasChoices("APP_REDIS_URL", "REDIS_URL"),
@@ -177,6 +181,15 @@ class _SettingsFields(BaseModel):
         default=PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json",
         validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
+    rag_evidence_catalog_path: Path | None = Field(
+        default=None, validation_alias=AliasChoices("RAG_EVIDENCE_CATALOG_PATH"),
+    )
+    rag_visual_transcriptions_path: Path | None = Field(
+        default=None, validation_alias=AliasChoices("RAG_VISUAL_TRANSCRIPTIONS_PATH"),
+    )
+    rag_retrieval_concurrency: int = Field(
+        default=2, ge=1, le=4, validation_alias=AliasChoices("RAG_RETRIEVAL_CONCURRENCY"),
+    )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
     rag_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
         default="low", validation_alias=AliasChoices("RAG_REASONING_EFFORT"))
@@ -246,6 +259,10 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_CONDENSE_LLM_ENABLED"),
     )
+    rag_planner_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_PLANNER_ENABLED"))
+    rag_planner_model: str = Field(default="", validation_alias=AliasChoices("RAG_PLANNER_MODEL"))
+    rag_planner_effort: Literal["none", "low"] = Field(default="none", validation_alias=AliasChoices("RAG_PLANNER_EFFORT"))
+    rag_planner_timeout: float = Field(default=5., gt=0, le=15, validation_alias=AliasChoices("RAG_PLANNER_TIMEOUT"))
     rag_lexical_retrieval_enabled: bool = Field(
         default=True,
         validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
@@ -425,6 +442,8 @@ def get_settings() -> Settings:
         agent_expanded_reasoning_effort=os.getenv("AGENT_EXPANDED_REASONING_EFFORT") or None,
         agent_reasoning_token_reserve=int(os.getenv("AGENT_REASONING_TOKEN_RESERVE") or 8192),
         agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 120),
+        agent_prepared_evidence_enabled=(os.getenv("AGENT_PREPARED_EVIDENCE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}),
+        agent_verified_overview_enabled=(os.getenv("AGENT_VERIFIED_OVERVIEW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
@@ -481,6 +500,11 @@ def get_settings() -> Settings:
         rag_docstore_path=Path(
             os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json"
         ),
+        rag_evidence_catalog_path=(Path(os.environ["RAG_EVIDENCE_CATALOG_PATH"])
+                                   if os.getenv("RAG_EVIDENCE_CATALOG_PATH") else None),
+        rag_visual_transcriptions_path=(Path(os.environ["RAG_VISUAL_TRANSCRIPTIONS_PATH"])
+                                       if os.getenv("RAG_VISUAL_TRANSCRIPTIONS_PATH") else None),
+        rag_retrieval_concurrency=int(os.getenv("RAG_RETRIEVAL_CONCURRENCY") or 2),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_reasoning_effort=os.getenv("RAG_REASONING_EFFORT") or "low",
         rag_condense_reasoning_effort=os.getenv("RAG_CONDENSE_REASONING_EFFORT") or "none",
@@ -506,6 +530,10 @@ def get_settings() -> Settings:
         rag_condense_llm_enabled=(
             os.getenv("RAG_CONDENSE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
+        rag_planner_enabled=os.getenv("RAG_PLANNER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
+        rag_planner_model=os.getenv("RAG_PLANNER_MODEL") or "",
+        rag_planner_effort=os.getenv("RAG_PLANNER_EFFORT") or "none",
+        rag_planner_timeout=float(os.getenv("RAG_PLANNER_TIMEOUT") or 5.),
         rag_lexical_term_weight=float(os.getenv("RAG_LEXICAL_TERM_WEIGHT") or 0.7),
         rag_lexical_pair_weight=float(os.getenv("RAG_LEXICAL_PAIR_WEIGHT") or 0.3),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_eval_chunk_1024",

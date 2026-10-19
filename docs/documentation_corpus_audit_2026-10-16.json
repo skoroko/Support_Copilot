@@ -1,0 +1,89 @@
+{
+  "catalog": {
+    "block_types": {
+      "anchor": 123,
+      "formula_candidate": 2419,
+      "heading": 2104,
+      "image": 3102,
+      "link": 2807,
+      "paragraph": 35539,
+      "table": 432,
+      "table_row": 2970,
+      "visual_unextracted": 3968
+    },
+    "blocks": 53464,
+    "extraction_version": "corpus-v1",
+    "failed_sources": 0,
+    "formats": {
+      "chm": 1,
+      "html": 60,
+      "pdf": 9
+    },
+    "location_statuses": {
+      "no_text": 2,
+      "text": 1994
+    },
+    "locations": 1996,
+    "partial_sources": 0,
+    "relations": {
+      "derived_from": 60,
+      "explicit_link": 2517,
+      "next_page": 1431,
+      "parent_section": 2019,
+      "parent_table": 2970,
+      "previous_page": 1431,
+      "table_caption_for": 54
+    },
+    "schema_version": 1,
+    "sources": 70,
+    "untranscribed_image_regions": 3968,
+    "visual_reviews": 2
+  },
+  "docstore": {
+    "documents": 1992,
+    "legacy_documents": 1992,
+    "missing_provenance_ids": 1992,
+    "missing_text_locations": 2,
+    "product_mismatch_documents": 701,
+    "products": {
+      "civil": 398,
+      "gts_nx": 893,
+      "projects": 701
+    },
+    "reindex_required": true,
+    "source_hash_unverified_documents": 1992,
+    "stale_or_deleted_source_documents": 0,
+    "unexpected_locations": 0
+  },
+  "mode": "read_only",
+  "qdrant": {
+    "conclusive": true,
+    "docstore_ids_missing_in_snapshot": 0,
+    "formats": {
+      "chm": 757,
+      "html": 117,
+      "pdf": 1482
+    },
+    "missing_provenance_ids": 2356,
+    "missing_text_locations": 2,
+    "points": 2356,
+    "product_mismatch_points": 701,
+    "products": {
+      "civil": 431,
+      "gts_nx": 1224,
+      "projects": 701
+    },
+    "ref_documents": 1992,
+    "repair_applied": false,
+    "snapshot_complete": true,
+    "snapshot_ids_missing_in_docstore": 0,
+    "text_locations": 1992
+  },
+  "sources": {
+    "changed_sources": 0,
+    "current": 70,
+    "deleted_sources": 0,
+    "extracted": 70,
+    "new_sources": 0
+  }
+}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -38,6 +38,39 @@ class RAGSource(BaseModel):
     score: float
     snippet: str
     confident: bool
+    product: str = "unknown"
+    version: str = "unknown"
+    language: str = "unknown"
+    chm_member: str | None = None
+    source_locator: str | None = None
+    section: str | list[str] = "unknown"
+    section_path: list[str] = Field(default_factory=list)
+    source_id: str | None = None
+    source_hash: str | None = None
+    parent_source_id: str | None = None
+    canonical_origin: str | None = None
+    derived_from: str | dict[str, Any] | None = None
+    location_id: str | None = None
+    extraction_version: str | None = None
+    extraction_status: str | None = None
+    extraction_warnings: list[str] = Field(default_factory=list)
+    figure_regions: list[dict[str, Any]] = Field(default_factory=list)
+    title: str | None = None
+    anchor: str | None = None
+    heading: str | None = None
+    html_anchor: str | None = None
+    relations: list[dict[str, Any]] = Field(default_factory=list)
+    block_id: str | None = None
+    block_ids: list[str] = Field(default_factory=list)
+    block_type: str | None = None
+    block_bbox: list[float] | None = None
+    block_attributes: dict[str, Any] = Field(default_factory=dict)
+    block_relations: list[dict[str, Any]] = Field(default_factory=list)
+    atomic_evidence: bool | None = None
+    origin: str | None = None
+    relation: str | None = None
+    related_to: list[str] = Field(default_factory=list)
+    text_sha256: str | None = None
 
 
 class RAGResponse(BaseModel):

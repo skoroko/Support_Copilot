@@ -1,0 +1,14 @@
+{
+  "loader": "actual MAIN load_suite(dev) + load_dev_candidate",
+  "loader_file_sha256": "8e32940f917966f62578d3010ec49a2d3b2e32498ddab74118ed37bce8a8f217",
+  "candidate_manifest_file_sha256": "cbd045565b2824dac790168a0bda1e78bb40219ea8d9f89b918a0a83b757da8f",
+  "base_manifest_file_sha256": "25ddcdb6488e7d516396b48c6ed811f3d19effe8b9a6685f0accaf6dc2a875d8",
+  "catalog_sha256": "3d11548c16b48d11fa6762967f9304fb7e8a5ae6c42b0b7af8ec994a11a258ed",
+  "reference_contract_sha256": "5c7a3a0189ca2ee55b4a7ceabf440cb746d06ad8bac211d0ad117e811f1f023a",
+  "case_count": 90,
+  "context_count": 90,
+  "reference_rows": 90,
+  "passed": true,
+  "provider_calls": 0,
+  "holdout_opened": false
+}

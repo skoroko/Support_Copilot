@@ -1,0 +1,9 @@
+{
+  "app_health_http": 200,
+  "app_ready_http": 200,
+  "bot_tcp_listening": true,
+  "running_images_unchanged": {
+    "app": true,
+    "bot": true
+  }
+}

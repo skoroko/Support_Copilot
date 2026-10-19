@@ -29,7 +29,7 @@ def test_retrieval_logs_stage_times_and_actual_attempts_without_content(monkeypa
 
     def lexical(query):
         lexical_queries.append(query)
-        return [source]  # First full-text attempt succeeds; variants are not all executed.
+        return [source]  # Every bounded variant runs; duplicate evidence is merged.
 
     service._retriever = SimpleNamespace(retrieve=dense)
     service._lexical_available = True
@@ -40,13 +40,13 @@ def test_retrieval_logs_stage_times_and_actual_attempts_without_content(monkeypa
     result = service.retrieve(question, standalone_question=question, translated_question=translation)
 
     assert dense_queries == [question, translation]
-    assert lexical_queries == ["first"]
+    assert lexical_queries == ["first", "unused"]
     assert result["status"] == "ok" and result["sources"][0]["page"] == 7
     assert len(events) == 1
     event, fields = events[0]
     assert event == "rag_retrieval_completed" and fields["outcome"] == "evidence_ready"
     assert fields["dense_query_count"] == 2
-    assert fields["lexical_attempt_count"] == 1
+    assert fields["lexical_attempt_count"] == 2
     assert fields["lexical_query_variant_count"] == 2
     for key in ("dense_retrieval_ms", "lexical_retrieval_ms", "selection_ms", "retrieval_ms"):
         assert isinstance(fields[key], (int, float)) and fields[key] >= 0

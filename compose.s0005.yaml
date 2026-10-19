@@ -1,0 +1,90 @@
+# Standalone candidate project. Never combine with compose.yaml/compose.luna.yaml.
+name: s0005-candidate
+services:
+  app:
+    image: s0005-candidate:20261016
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.eval.candidate_runtime:app --host 0.0.0.0 --port 8000 --no-access-log"]
+    env_file:
+      - ${S0005_SECRETS_FILE:?absolute path to existing private env file required}
+    environment:
+      APP_DEFAULT_MODEL: gpt-6-luna
+      APP_ALLOWED_MODELS: '["gpt-6-luna","gpt-5.4-mini"]'
+      AGENT_LLM_API: responses
+      AGENT_REASONING_EFFORT: low
+      AGENT_EXPANDED_REASONING_EFFORT: medium
+      AGENT_REASONING_TOKEN_RESERVE: "8192"
+      AGENT_GENERATION_TIMEOUT: "120"
+      AGENT_PREPARED_EVIDENCE_ENABLED: "true"
+      CHAT_REPOSITORY: postgres
+      CHAT_DATABASE_URL: postgresql+asyncpg://candidate:candidate@postgres:5432/candidate
+      AGENT_CHECKPOINTER: postgres
+      AGENT_POSTGRES_URI: postgresql://candidate:candidate@postgres:5432/candidate
+      LANGGRAPH_STRICT_MSGPACK: "true"
+      APP_REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://host.docker.internal:16333
+      RAG_COLLECTION: s0005_candidate_v1
+      RAG_ENABLED: "true"
+      RAG_PRODUCT_SCOPE: all
+      RAG_PLANNER_ENABLED: "false"
+      RAG_PLANNER_MODEL: gpt-5.4-mini
+      RAG_PLANNER_EFFORT: none
+      RAG_PLANNER_TIMEOUT: "5"
+      RAG_INGEST_ON_START: "false"
+      RAG_REBUILD_ON_START: "false"
+      RAG_DATA_DIR: /app/data
+      RAG_DOCSTORE_PATH: /acceptance/index/docstore.json
+      RAG_EVIDENCE_CATALOG_PATH: /acceptance/index/catalog.json
+      RAG_VISUAL_TRANSCRIPTIONS_PATH: /acceptance/index/visual_transcriptions.json
+      RAG_ALLOW_EXTERNAL_DATA_TRANSFER: "true"
+      BOT_URL: http://127.0.0.1:9
+      TRACING_ENABLED: "false"
+      LOG_LEVEL: WARNING
+      S0005_CANDIDATE: "true"
+      S0005_BUDGET_LEDGER: /acceptance/budget.sqlite3
+      S0005_BUDGET_URL: http://host.docker.internal:16334
+      S0005_PROVIDER_TRACE_DIR: /acceptance/provider_generation_traces
+    ports: ["127.0.0.1:18001:8000"]
+    volumes:
+      - ${S0005_DATA_DIR:?absolute corpus directory required}:/app/data:ro
+      - ${S0005_ARTIFACT_DIR:?absolute isolated acceptance directory required}:/acceptance
+      - ${S0005_CODE_DIR:?absolute frozen candidate code root required}/app:/app/app:ro
+      - ${S0005_CODE_DIR:?absolute frozen candidate code root required}/bot:/app/bot:ro
+      - ${S0005_CODE_DIR:?absolute frozen candidate code root required}/scripts:/app/scripts:ro
+      - ${S0005_CODE_DIR:?absolute frozen candidate code root required}/tests/eval/corpus_suite:/suite:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: "no"
+  postgres:
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    environment:
+      POSTGRES_DB: candidate
+      POSTGRES_USER: candidate
+      POSTGRES_PASSWORD: candidate
+    volumes: ["candidate-pg:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candidate -d candidate"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: "no"
+  redis:
+    image: redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["candidate-redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: "no"
+volumes:
+  candidate-pg: {}
+  candidate-redis: {}

@@ -616,6 +616,11 @@ async def test_public_retrieve_api_evidence_contract_and_503(tmp_path):
     from app.routers.rag import router as rag_router
 
     rag, _ = rag_service(tmp_path)
+    rag._retriever.retrieve("fixture")[0].node.metadata.update({
+        "language": "en", "version": "2024", "section_path": ["Mesh", "Generate"],
+        "html_anchor": "mesh-generate", "title": "Mesh generation", "location_id": "page-7",
+        "source_id": "original", "source_hash": "a" * 64, "parent_source_id": "parent",
+        "extraction_version": "corpus-v1"})
     api = FastAPI()
     api.include_router(rag_router)
     api.dependency_overrides[get_settings] = settings
@@ -637,6 +642,13 @@ async def test_public_retrieve_api_evidence_contract_and_503(tmp_path):
         result = response.json()
         assert result["status"] == "ok" and "answer" not in result
         assert result["sources"][0]["chunk_id"] == "chunk-mesh"
+        source = result["sources"][0]
+        assert source["product"] == "gts_nx" and source["language"] == "en"
+        assert source["version"] == "2024" and source["location_id"] == "page-7"
+        assert source["section_path"] == ["Mesh", "Generate"] and source["html_anchor"] == "mesh-generate"
+        assert source["source_id"] == "original" and source["parent_source_id"] == "parent"
+        assert source["source_hash"] == "a" * 64 and source["extraction_version"] == "corpus-v1"
+        assert source["source_locator"].endswith("#page=7")
         api.state.rag_service = None
         assert (
             await client.post("/rag/retrieve", json={"question": "Mesh Generate"})

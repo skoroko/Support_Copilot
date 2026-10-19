@@ -267,7 +267,7 @@ def test_concurrent_failure_cannot_erase_another_upload_from_docstore(
     assert b_obsolete_id not in {(point.payload or {}).get("doc_id") for point in indexed_points(service)}
 
 
-def test_failure_is_renamed_and_does_not_abort_other_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_failure_preserves_source_and_does_not_abort_other_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     data = tmp_path / "data"
     data.mkdir()
     good = data / "good.md"
@@ -286,8 +286,8 @@ def test_failure_is_renamed_and_does_not_abort_other_files(tmp_path: Path, monke
 
     assert result.changed_documents == 1
     assert len(result.failed_files) == 1
-    assert not bad.exists()
-    assert (data / "bad.md.failed").exists()
+    assert bad.exists()
+    assert not (data / "bad.md.failed").exists()
 
 
 def test_external_embedding_requires_explicit_confirmation(tmp_path: Path) -> None:
@@ -401,8 +401,8 @@ def test_pdf_page_numbers_are_preserved_before_metadata_enrichment(
     assert all(document.metadata["product"] == "gts_nx" for document in documents)
 
 
-def test_pdf_ingestion_uses_pypdf_reader() -> None:
-    assert type(_file_extractors()[".pdf"]).__name__ == "PDFReader"
+def test_pdf_ingestion_uses_layout_reader_with_physical_page_ledger() -> None:
+    assert type(_file_extractors()[".pdf"]).__name__ == "StructuredPDFReader"
 
 
 def test_chm_pages_can_be_materialized_as_safe_deterministic_html(tmp_path: Path) -> None:

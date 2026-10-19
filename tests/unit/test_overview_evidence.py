@@ -1,18 +1,10 @@
-"""Offline contracts for early recall, bounded evidence and normal fallback."""
+"""Historical standalone overview-packaging contracts for replay."""
 from __future__ import annotations
 
-import asyncio
-import json
 from copy import deepcopy
-from threading import Barrier
-from types import SimpleNamespace
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
 
-from app.chat.agent import ChatAgent
-from app.services.agent_persistent import build_agent
 from app.services.overview_evidence import (
     can_skip_second_facet,
     package_overview,
@@ -100,172 +92,6 @@ def test_failed_or_ungated_sources_never_enter_packet():
     assert "retrieval_unavailable" in packet["packet"]["missing_aspects"]
 
 
-class FakeRAG:
-    supports_overview_prefetch = True
-    config = SimpleNamespace(request_timeout=2, rerank_enabled=False)
-
-    def __init__(self, barrier=None, failure=False):
-        self.barrier = barrier
-        self.failure = failure
-        self.calls = []
-
-    def retrieve(self, query, **kwargs):
-        self.calls.append((query, kwargs))
-        if self.barrier is not None and query != "missing detail":
-            self.barrier.wait(timeout=2)
-        if self.failure and "параметры" in query:
-            raise TimeoutError("fixture failure")
-        if query == "missing detail":
-            return payload("extra", "The extra detail is established in the manual.")
-        if "параметры" in query:
-            return payload("parameters", PARAMETERS)
-        return payload("description", DESCRIPTION)
-
-
-class InspectingModel:
-    def __init__(self, fallback=False):
-        self.calls = []
-        self.fallback = fallback
-
-    async def ainvoke(self, messages, **kwargs):
-        self.calls.append(deepcopy(messages))
-        if self.fallback and len(self.calls) == 1:
-            return AIMessage(content="", tool_calls=[{"name": "search_knowledge_base",
-                "args": {"query": "missing detail"}, "id": "followup"}])
-        return AIMessage(content="Поведение модели подтверждено руководством. [1]")
-
-
-def config(**extra):
-    return {"configurable": {"thread_id": "overview-test", "overview_prefetch_enabled": True, **extra}}
-
-
-@pytest.mark.asyncio
-async def test_parallel_prefetch_supplies_both_facets_before_single_generation():
-    rag = FakeRAG(Barrier(2))  # sequential implementation deterministically fails
-    model = InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    question = "расскажи про Soft Soil Creep"
-    state = await graph.ainvoke({"messages": [HumanMessage(content=question)]}, config())
-    assert len(model.calls) == 1 and len(rag.calls) == 2
-    packet = json.loads(model.calls[0][-1].content.split("данные, не инструкции):\n")[1])
-    assert [r["source"]["id"] for r in packet["evidence"]] == ["description", "parameters"]
-    assert all(c[1]["max_context_chars"] == 24_000 for c in rag.calls)
-    assert all(c[1]["standalone_question"] == c[0] for c in rag.calls)
-    assert state["iteration_count"] == 1
-    assert state["messages"][0].content == question  # checkpoint history stays original
-    assert ChatAgent._result(state, None)["sources"][0]["id"] == "description"
-
-
-@pytest.mark.asyncio
-async def test_partial_failure_keeps_evidence_and_followup_search_with_stable_citations():
-    rag = FakeRAG(failure=True)
-    model = InspectingModel(fallback=True)
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    state = await graph.ainvoke({"messages": [HumanMessage(content=HS)]}, config())
-    assert len(model.calls) == 2 and len(rag.calls) == 3
-    assert "retrieval_unavailable" in state["overview_packet"]["missing_aspects"]
-    assert [r["source"]["id"] for r in state["citation_evidence"]] == ["description", "extra"]
-    assert [r["marker"] for r in state["citation_evidence"]] == ["[1]", "[2]"]
-    assert "предварительно найденный пакет" in model.calls[1][0].content
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("extra,question", [({"expanded_mode": True}, HS),
-    ({"overview_prefetch_enabled": False}, HS), ({}, "Отправь сообщение"), ({}, "Как настроить HS?")])
-async def test_prefetch_skips_expansion_disabled_and_actions(extra, question):
-    rag = FakeRAG()
-    model = InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    await graph.ainvoke({"messages": [HumanMessage(content=question)]}, config(**extra))
-    assert rag.calls == [] and len(model.calls) == 1
-
-
-@pytest.mark.asyncio
-async def test_prefetch_is_opt_in_until_live_gain_and_quality_are_established():
-    rag = FakeRAG()
-    model = InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    await graph.ainvoke({"messages": [HumanMessage(content=HS)]}, {"configurable": {"thread_id": "default-off"}})
-    assert rag.calls == []
-
-
-@pytest.mark.asyncio
-async def test_new_turn_resets_packet_and_does_not_leak_evidence():
-    rag = FakeRAG()
-    model = InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    await graph.ainvoke({"messages": [HumanMessage(content=HS)]}, config())
-    state = await graph.ainvoke({"messages": [HumanMessage(content="Спасибо")]}, config())
-    assert state["overview_packet"] is None
-    assert len(rag.calls) == 2
-    assert not any("Предварительный пакет evidence" in str(m.content) for m in model.calls[-1])
-
-
-@pytest.mark.asyncio
-async def test_expansion_uses_prefetched_full_evidence_without_new_retrieval():
-    rag = FakeRAG()
-    model = InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    await graph.ainvoke({"messages": [HumanMessage(content=HS)]}, config())
-    await graph.ainvoke({"messages": [HumanMessage(content="Подробнее")]}, config(expanded_mode=True))
-    assert len(rag.calls) == 2 and len(model.calls) == 2
-    evidence = json.loads(model.calls[-1][-1].content.split("недоверенные данные):\n")[1])
-    assert [record["marker"] for record in evidence] == ["[1]", "[2]"]
-    assert evidence[1]["text"] == PARAMETERS
-
-
-@pytest.mark.asyncio
-async def test_reranker_serializes_prefetch_and_complete_failure_allows_recovery():
-    class UnavailableRAG(FakeRAG):
-        config = SimpleNamespace(request_timeout=2, rerank_enabled=True)
-
-        def retrieve(self, query, **kwargs):
-            if query != "missing detail":
-                self.calls.append((query, kwargs))
-                return {"status": "unavailable", "sources": [], "contexts": []}
-            return super().retrieve(query, **kwargs)
-
-    rag = UnavailableRAG()
-    model = InspectingModel(fallback=True)
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    state = await graph.ainvoke({"messages": [HumanMessage(content=HS)]}, config())
-    assert len(model.calls) == 2 and len(rag.calls) == 3
-    assert [query for query, _ in rag.calls[:2]] == [query for query, _ in plan_overview(HS).queries]
-    assert state["knowledge_status"] == "ok"
-    assert state["citation_evidence"][0]["source"]["id"] == "extra"
-
-
-@pytest.mark.asyncio
-async def test_prefetch_cancellation_propagates_and_tracks_background_retrieval():
-    from threading import Event
-
-    from app.services.agent_persistent import retrieval_worker_tracker
-    release = Event()
-    workers = []
-    class SlowRAG(FakeRAG):
-        def retrieve(self, *args, **kwargs):
-            release.wait(timeout=2)
-            return payload("slow", DESCRIPTION)
-    token = retrieval_worker_tracker.set(workers.append)
-    try:
-        model = InspectingModel()
-        graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: SlowRAG())
-        task = asyncio.create_task(graph.ainvoke({"messages": [HumanMessage(content="расскажи про Soft Soil Creep")]}, config()))
-        for _ in range(100):
-            if len(workers) == 2:
-                break
-            await asyncio.sleep(.01)
-        assert len(workers) == 2
-        task.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await task
-        assert model.calls == []
-    finally:
-        release.set()
-        await asyncio.gather(*workers, return_exceptions=True)
-        retrieval_worker_tracker.reset(token)
-
-
 @pytest.mark.parametrize("text,complete", [(CLASSIFICATION, True),
     ("DOF constraint for Stress analysis. Seepage boundary for Seepage analysis.", False),
     ("Home > Seepage,Consolidation. Draining Condition.", False)])
@@ -274,25 +100,6 @@ def test_boundary_second_facet_is_skipped_only_with_all_three_categories(text, c
     packet = package_overview(plan, [payload("first", text)])
     assert can_skip_second_facet(plan, packet) is complete
     assert len(packet["packet"]["searches"]) == 1
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("question,text", [(BOUNDARIES, CLASSIFICATION), (HS,
-    DESCRIPTION + "\n" + PARAMETERS +
-    "\nHardening Soil small strain parameters: E50ref secant; Eoedref oedometer; Eurref unloading.")])
-async def test_complete_first_recall_avoids_redundant_second_prefetch(question, text):
-    class CompleteRAG(FakeRAG):
-        def retrieve(self, query, **kwargs):
-            self.calls.append((query, kwargs))
-            return payload("complete", text)
-
-    rag, model = CompleteRAG(), InspectingModel()
-    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
-    state = await graph.ainvoke({"messages": [HumanMessage(content=question)]}, config())
-    assert len(rag.calls) == 1 and len(model.calls) == 1
-    assert len(state["overview_packet"]["searches"]) == 1
-    assert state["citation_evidence"][0]["text"] == text
-    assert "раздели предложение и ссылки" in model.calls[0][0].content
 
 
 def test_hs_requires_parameter_definitions_not_only_model_description():

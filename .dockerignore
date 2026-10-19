@@ -17,6 +17,9 @@ __pycache__/
 .env
 .env.*
 !.env.example
+var/
+.belief_map.sexp
+.belief_map_cache.json
 
 tests/
 notebooks/

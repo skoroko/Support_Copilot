@@ -1,0 +1,90 @@
+"""Saved full evidence must survive the raw/API to compact/model boundary."""
+import json
+from copy import deepcopy
+
+import pytest
+from langchain_core.messages import ToolMessage
+
+from app.services.agent_persistent import _citation_record, _saved_citation_evidence
+from app.services.prepared_evidence import evidence_identity, source_for_model
+
+
+def source():
+    return {"id": "chunk-A", "chunk_id": "chunk-A", "document_id": "C:/private/data/manual.pdf",
+            "file_name": "manual.pdf", "source_locator": "manual.pdf#page=3", "page": 3,
+            "product": "product-A", "version": "unknown", "source_id": "source-A",
+            "source_hash": "hash-A", "location_id": "location-A", "block_id": "block-A",
+            "block_bbox": [1., 2., 3., 4.], "snippet": "Display only.",
+            "figure_regions": [{"region_id": "untranscribed"}],
+            "block_attributes": {"glyphs": [{"text": "x"}], "raw_char_text": "bulky",
+                                 "verification_scope": "literal_source_text", "semantic_verified": False}}
+
+
+def test_full_saved_evidence_survives_consistent_raw_compact_identity():
+    raw = source()
+    full = "Full exact evidence beyond display.\nComplete table row | condition | units."
+    record = _citation_record(raw, full, 1)
+    restored = _saved_citation_evidence({"answer_evidence": [raw],
+        "citation_evidence": [record], "messages": []})
+    assert restored[0]["text"] == full
+    assert restored[0]["text_sha256"] == record["text_sha256"]
+    assert evidence_identity(raw) == evidence_identity(record["source"])
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("chunk_id", "chunk-B"), ("block_id", "block-B"), ("block_bbox", [2., 3., 4., 5.]),
+    ("page", 4), ("product", "product-B"), ("version", "2024"),
+    ("source_hash", "hash-B"), ("location_id", "location-B"),
+    ("chm_member", "/different/member.htm"),
+])
+def test_distinct_evidence_binding_does_not_borrow_saved_text(field, value):
+    first, second = source(), source()
+    second[field] = value
+    records = [_citation_record(first, "Complete first evidence.", 1),
+               _citation_record(second, "Complete second evidence.", 2)]
+    restored = _saved_citation_evidence({"answer_evidence": [first, second],
+        "citation_evidence": records, "messages": []})
+    assert [record["text"] for record in restored] == [
+        "Complete first evidence.", "Complete second evidence."]
+    assert evidence_identity(first) != evidence_identity(second)
+
+
+def test_model_source_projection_stays_compact_idempotent_and_does_not_mutate_raw():
+    raw = source()
+    original = deepcopy(raw)
+    compact = source_for_model(raw)
+    assert source_for_model(compact) == compact
+    assert raw == original
+    assert compact["document_id"] == raw["document_id"]
+    assert "snippet" not in compact
+    assert "figure_regions" not in compact
+    assert "glyphs" not in compact["block_attributes"]
+    assert "raw_char_text" not in compact["block_attributes"]
+    assert compact["block_attributes"]["semantic_verified"] is False
+    assert compact["untranscribed_visual_regions_present"] is True
+
+
+@pytest.mark.parametrize("compact", [False, True])
+def test_legacy_tool_evidence_recovers_full_text_with_raw_or_compact_source(compact):
+    raw = source()
+    saved_source = source_for_model(raw) if compact else raw
+    message = ToolMessage(name="search_knowledge_base", tool_call_id="legacy-search",
+        content=json.dumps({"evidence": [{"source": saved_source, "text": "Full legacy evidence."}]}))
+    restored = _saved_citation_evidence({"answer_evidence": [raw],
+        "citation_evidence": [], "messages": [message]})
+    assert restored[0]["text"] == "Full legacy evidence."
+
+
+def test_document_id_only_legacy_distinction_is_preserved_without_portable_provenance():
+    first = {"id": "legacy-reused", "chunk_id": "legacy-reused", "file_name": "manual.pdf",
+             "page": 3, "product": "product-A", "version": "unknown",
+             "document_id": "C:/legacy-A/manual.pdf", "snippet": "First display."}
+    second = {**first, "document_id": "C:/legacy-B/manual.pdf", "snippet": "Second display."}
+    records = [_citation_record(first, "Complete first legacy document.", 1),
+               _citation_record(second, "Complete second legacy document.", 2)]
+    assert evidence_identity(first) != evidence_identity(second)
+    assert evidence_identity(source_for_model(first)) != evidence_identity(source_for_model(second))
+    restored = _saved_citation_evidence({"answer_evidence": [first, second],
+        "citation_evidence": records, "messages": []})
+    assert [record["text"] for record in restored] == [
+        "Complete first legacy document.", "Complete second legacy document."]

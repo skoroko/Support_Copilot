@@ -82,7 +82,8 @@ async def test_preview_confirm_strict_consent_owner_and_repeat(tmp_path):
         repeat = await http.post(url + "/expand", json={"confirmed": True}, headers=headers)
         assert repeat.json() == first.json()
         assert (await http.get(url + "/expansion", headers=headers)).status_code == 409
-    assert len(model.received) == 3 and len(questions) == 1
+    # One generic preparation + the scripted model's targeted search; expanded adds none.
+    assert len(model.received) == 3 and len(questions) == 2
     assert model.kwargs == [{"max_tokens": 500}, {"max_tokens": 500}, {"max_tokens": 1500, "tool_choice": "none"}]
     stored = await service.repository.list_messages(chat_id)
     assert len(stored) == 4
@@ -115,7 +116,7 @@ async def test_concurrent_service_instances_share_claim_and_restart_replays(tmp_
         await restarted.clear_history(chat_id)
         with pytest.raises(ExpansionUnavailableError):
             await restarted.expand_response(chat_id, message_id)
-    assert len(model.received) == 3 and len(questions) == 1 and not fail_model.received
+    assert len(model.received) == 3 and len(questions) == 2 and not fail_model.received
 
 
 @pytest.mark.asyncio
@@ -167,7 +168,7 @@ async def test_compacted_empty_body_can_expand_valid_evidence_and_tools_are_reje
     result = await service.expand_response(chat_id, message_id)
     assert result["answer"] == ANSWER_QUALITY_UNAVAILABLE
     assert not await service.pending_approval(chat_id)
-    assert len(model.received) == 3 and len(questions) == 1
+    assert len(model.received) == 3 and len(questions) == 2
 
 
 @pytest.mark.asyncio
@@ -191,7 +192,7 @@ async def test_expanded_compaction_explains_its_cause_without_requesting_missing
     assert "Подробнее" not in result["answer"]
     assert result["answer_info"] == {"mode": "expanded", "incomplete": True, "expandable": False}
     assert (await service.repository.list_messages(chat_id))[-1].content == result["answer"]
-    assert len(model.received) == 3 and len(questions) == 1
+    assert len(model.received) == 3 and len(questions) == 2
 
 
 @pytest.mark.asyncio
@@ -230,9 +231,9 @@ async def test_original_citation_ids_and_untrusted_evidence_survive_history_trim
     assert [s["chunk_id"] for s in expanded["sources"]] == ["first", "second"]
     messages = model.received[-1]
     assert malicious not in messages[0].content
-    assert "Подробный ответ:" in messages[0].content
+    assert "Подробный ответ раскрой" in messages[0].content
     assert "Краткий ответ: 3–5" not in messages[0].content
-    assert "**обозначение** — смысл" in messages[0].content
+    assert "Для параметра приведи определение, единицы и существенные условия" in messages[0].content
     assert "Начинай с содержательного ответа" in messages[0].content
     assert messages[-1].type == "human" and malicious in messages[-1].content
     assert all(m.type not in {"tool"} for m in messages)

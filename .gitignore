@@ -11,3 +11,7 @@ docs/architecture.pdf
 
 # Local garak runtime cache and reports before curated copies are moved to docs/security.
 .garak_runtime/
+
+# Codespaces belief map generated artifacts
+.belief_map.sexp
+.belief_map_cache.json

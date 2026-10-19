@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "split": "dev",
+  "holdout_opened": false,
+  "base_manifest_sha256": "bb141a2bb5ff93f9f15e5945778f6b863dcb1494e7e8d0a967c21e0288cd6174",
+  "original_dev_cases_sha256": "3fe788a75ebd0fa5102bc032d46080913c6da4c390360e329eb436e092613cfd",
+  "catalog_sha256": "3d11548c16b48d11fa6762967f9304fb7e8a5ae6c42b0b7af8ec994a11a258ed",
+  "previous_candidate_audit": {
+    "manifest_file_sha256": "e67db57197496ae794c50b9875dea31ccd4b12741fea478ded4b6312f3da925b",
+    "manifest_canonical_sha256": "fa50d73891f83ab6dfba59d89e534d4ec4d4c5951821a678cc67d3a2fce007e7",
+    "status": "preserved"
+  },
+  "literal_approval_file_sha256": "e1f3022dd81d0a8996027e53b7f2745f54a930f807d9266a61efde3c81187464",
+  "draft_file_sha256": "ba48715c8b799bffb05dd821a6506e2b99f4fcb60e03a7e59d7fe18b7ff3250c",
+  "builder_sha256": "75e137c2b536e7725b8f7adf00878f4a9ed2ee4f2a263dcae94c406ff116fa58",
+  "updated_reference_cases": [
+    "corpus-dev-012",
+    "corpus-dev-014",
+    "corpus-dev-024",
+    "corpus-dev-048"
+  ],
+  "questions_changed_from_previous": [],
+  "review_summary": {
+    "machine_reviewed_sufficient_candidate": 87,
+    "pending": 3
+  },
+  "human_expert_approval": false,
+  "semantic_release": "blocked pending independent engineering semantic reference acceptance, all layers and holdout",
+  "artifacts": {
+    "dev_cases_v2.json": {
+      "file_sha256": "c8d9bc6414d2940b2b5ae8b571877abe5fa40570ce36c000ffbf864cf64db256",
+      "canonical_sha256": "2a4a487b70001246dfdeb67a5f68bafe5229b996affed6348c516da97aa8ba3b"
+    },
+    "dev_contexts_v2.json": {
+      "file_sha256": "6109eaf445cbc87b6af6555a1acc8f192a5e2656605071cda9095fe3664c9fbb",
+      "canonical_sha256": "b24da5192e8a0beafca0890adffab546fc1eed822a796838a355f33b6bcb0b8e"
+    },
+    "dev_reference_contract_v2.json": {
+      "file_sha256": "05248dba5af8c9fd81c0ff143759f6a97ec58c8a965c0006e53644417a0fe89e",
+      "canonical_sha256": "5c7a3a0189ca2ee55b4a7ceabf440cb746d06ad8bac211d0ad117e811f1f023a"
+    }
+  },
+  "provider_calls": 0,
+  "superseded_candidate_audit": {
+    "manifest_file_sha256": "4279a39b7f7a802243c753676114ac2c2105992e04bcfc8472748a74bb8c688a",
+    "status": "preserved; missing original dev binding field; runner rejected before API"
+  }
+}

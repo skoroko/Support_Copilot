@@ -1,0 +1,121 @@
+{
+  "selection": "Balanced worst mean curated recall within source groups; tie by most missing evidence spans, then case ID. Diagnostic examples only; no question-specific production tuning.",
+  "parent_diagnostic_sha256": "8a22a4a01bbae5566b2a1550b3638759b64593b215e8ae5b84bc99d438e2bc61",
+  "cases": [
+    {
+      "case_id": "corpus-dev-032",
+      "source_group": "pdf_only",
+      "task_type": "comparison",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-032:0"
+    },
+    {
+      "case_id": "corpus-dev-020",
+      "source_group": "pdf_only",
+      "task_type": "procedure",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-020:0"
+    },
+    {
+      "case_id": "corpus-dev-033",
+      "source_group": "pdf_only",
+      "task_type": "procedure",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-033:0"
+    },
+    {
+      "case_id": "corpus-dev-017",
+      "source_group": "pdf_only",
+      "task_type": "concept",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-017:0"
+    },
+    {
+      "case_id": "corpus-dev-038",
+      "source_group": "html_chm",
+      "task_type": "procedure",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_block_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-038:0"
+    },
+    {
+      "case_id": "corpus-dev-044",
+      "source_group": "html_chm",
+      "task_type": "procedure",
+      "mean_curated_recall": 0.0,
+      "required_slots": 1,
+      "patterns": [
+        "required_block_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-044:0"
+    },
+    {
+      "case_id": "corpus-dev-066",
+      "source_group": "multi_pdf",
+      "task_type": "comparison",
+      "mean_curated_recall": 0.0,
+      "required_slots": 2,
+      "patterns": [
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-066:0"
+    },
+    {
+      "case_id": "corpus-dev-061",
+      "source_group": "multi_pdf",
+      "task_type": "comparison",
+      "mean_curated_recall": 0.0,
+      "required_slots": 3,
+      "patterns": [
+        "required_source_absent",
+        "reviewed_visual_evidence_not_retrieved"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-061:0"
+    },
+    {
+      "case_id": "corpus-dev-070",
+      "source_group": "mixed",
+      "task_type": "synthesis",
+      "mean_curated_recall": 0.0,
+      "required_slots": 2,
+      "patterns": [
+        "missing_required_second_source",
+        "required_location_absent",
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-070:0"
+    },
+    {
+      "case_id": "corpus-dev-076",
+      "source_group": "mixed",
+      "task_type": "diagnosis",
+      "mean_curated_recall": 0.0,
+      "required_slots": 2,
+      "patterns": [
+        "missing_required_second_source",
+        "required_location_absent",
+        "required_source_absent"
+      ],
+      "representative_attempt_id": "configured_default:retrieval:corpus-dev-076:0"
+    }
+  ]
+}
