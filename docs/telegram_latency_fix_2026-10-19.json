@@ -1,0 +1,188 @@
+{
+  "date": "2026-10-19",
+  "scope": "Public verification_set golden questions; isolated fresh graph, production corpus/provider settings, no Telegram send or real conversation replay",
+  "runtime_profile": "gpt-6-luna / Responses / medium",
+  "limits_seconds": {
+    "model_with_retries": 60,
+    "turn": 90,
+    "bot_backend_wait": 105,
+    "query_embedding": 15,
+    "translation": 8,
+    "tls_connect": 10,
+    "idle_keepalive": 60
+  },
+  "primary_run": {
+    "completed": 4,
+    "attempts": 5,
+    "timeouts": 1
+  },
+  "explicit_followup_run": {
+    "completed": 2,
+    "attempts": 2,
+    "purpose": "diagnose first/last provider event; same code/image, repeated cases reported separately"
+  },
+  "samples": [
+    {
+      "run": "verified",
+      "case_id": "golden-01",
+      "elapsed_seconds": 32.09,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 3,
+      "retrievals": 3,
+      "source_count": 3,
+      "provider_progress": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "run": "verified",
+      "case_id": "golden-07",
+      "elapsed_seconds": 26.44,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 1,
+      "retrievals": 1,
+      "source_count": 3,
+      "provider_progress": [
+        null
+      ]
+    },
+    {
+      "run": "verified",
+      "case_id": "golden-10",
+      "elapsed_seconds": 63.34,
+      "outcome": "timeout",
+      "error_type": "TimeoutError",
+      "model_calls": 1,
+      "retrievals": 1,
+      "source_count": 0,
+      "provider_progress": [
+        null
+      ]
+    },
+    {
+      "run": "verified",
+      "case_id": "golden-16",
+      "elapsed_seconds": 33.78,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 3,
+      "retrievals": 3,
+      "source_count": 5,
+      "provider_progress": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "run": "verified",
+      "case_id": "golden-32",
+      "elapsed_seconds": 49.17,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 2,
+      "retrievals": 2,
+      "source_count": 7,
+      "provider_progress": [
+        null,
+        null
+      ]
+    },
+    {
+      "run": "progress",
+      "case_id": "golden-10",
+      "elapsed_seconds": 13.17,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 1,
+      "retrievals": 1,
+      "source_count": 2,
+      "provider_progress": [
+        {
+          "chunks": 261,
+          "text_chars": 256,
+          "first_chunk_s": 2.235,
+          "first_text_s": 4.254,
+          "last_chunk_s": 7.376
+        }
+      ]
+    },
+    {
+      "run": "progress",
+      "case_id": "golden-16",
+      "elapsed_seconds": 75.24,
+      "outcome": "completed",
+      "error_type": null,
+      "model_calls": 2,
+      "retrievals": 2,
+      "source_count": 5,
+      "provider_progress": [
+        {
+          "chunks": 63,
+          "text_chars": 0,
+          "first_chunk_s": 0.571,
+          "first_text_s": null,
+          "last_chunk_s": 12.22
+        },
+        {
+          "chunks": 293,
+          "text_chars": 288,
+          "first_chunk_s": 0.959,
+          "first_text_s": 32.925,
+          "last_chunk_s": 57.907
+        }
+      ]
+    }
+  ],
+  "quality_scope": {
+    "model_reasoning_and_evidence_budgets_unchanged": true,
+    "citations_resolve_in_successful_answers": true,
+    "universal_semantic_equivalence_proven": false,
+    "observations": [
+      "golden-01 cylindrical r/theta/z detail is not explicit in available text; retain as quality limitation, not evidence of all-case semantic parity",
+      "Provider/model tail remains variable: golden-16 final invoke 57.91s with first text at32.925s"
+    ]
+  },
+  "offline_verification": {
+    "full_passed": 1432,
+    "skipped": 12,
+    "full_seconds": 160.71,
+    "targeted_passed": 88,
+    "subsequent_chat_routes_passed": 26,
+    "subsequent_planner_and_deadline_passed": 33,
+    "full_includes_uncommitted_neighbor_benchmark_tests": 23
+  },
+  "deployed": [
+    {
+      "service": "app",
+      "status": "matches_working_tree",
+      "image_id": "sha256:c6431c9f8237148745f05ecdf1c6f1b8b9dbaf2385fef848b53b006cf305c444",
+      "matched_source_files": 20
+    },
+    {
+      "service": "bot",
+      "status": "matches_working_tree",
+      "image_id": "sha256:c6431c9f8237148745f05ecdf1c6f1b8b9dbaf2385fef848b53b006cf305c444",
+      "matched_source_files": 20
+    }
+  ],
+  "measured_image_id": "sha256:55b701cf39136c4ae48ec4c82f2ccf41c56644e076e1ff2aa7872405e381e29b",
+  "post_measurement_runtime_change": "Explicit max_retries=0 for default-disabled optional retrieval planner; regression test passed. EOF whitespace only in two extracted modules. Existing-stack profile disables startup ingestion as already configured in the measured harness; health start grace300s covers observed cold warmup.",
+  "independent_astra_high_review": {
+    "blocking_findings": 0,
+    "non_blocking_findings_fixed": [
+      "Optional planner had hidden default SDK retries"
+    ],
+    "verdict": "Ship as bounded latency hotfix; stable historical latency and semantic parity not proven"
+  },
+  "deployment_limits": {
+    "existing_accepted_index_required": true,
+    "ready_proves_index_freshness": false,
+    "observed_cold_bm25_ready_seconds_approx": 194,
+    "health_start_grace_seconds": 300
+  }
+}

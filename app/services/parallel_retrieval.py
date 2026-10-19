@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from dataclasses import dataclass
 from typing import Any
 
@@ -42,5 +43,20 @@ def independent_searches(
     if workers <= 1:
         return [one(query) for query in queries]
     with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="corpus-recall") as executor:
-        futures = [executor.submit(one, query) for query in queries]
+        futures = [executor.submit(copy_context().run, one, query) for query in queries]
         return [future.result() for future in futures]
+
+
+def search_while_translating(search: Callable[[], Any], translate: Callable[[], str | None]):
+    """Start original-language recall immediately; join before English recall.
+
+    Translation remains auxiliary and never holds up starting the original
+    searches. Both jobs inherit the turn deadline. No worker escapes the join.
+    """
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="original-recall") as executor:
+        original = executor.submit(copy_context().run, search)
+        try:
+            translated = translate()
+        except Exception:  # Translation failures must retain original recall.
+            translated = None
+        return original.result(), translated

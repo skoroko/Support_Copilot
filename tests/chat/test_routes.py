@@ -12,6 +12,7 @@ from app.chat.domain import Chat, ChatMessage
 from app.chat.service import StreamReplace
 from app.main import app
 from app.services.security.input_validator import MAX_MESSAGE_CHARS
+from app.services.turn_budget import AgentTurnTimeout
 
 
 def auth_headers(owner: str = "test-1", interface: str = "cli") -> dict[str, str]:
@@ -86,6 +87,23 @@ def fake_chat_service() -> FakeChatService:
     app.dependency_overrides[get_chat_service] = lambda: fake
     yield fake
     app.dependency_overrides.clear()
+
+
+@pytest.mark.parametrize('error_type', [AgentTurnTimeout, TimeoutError])
+def test_elapsed_turn_timeout_uses_safe_sse_error_contract(fake_chat_service, error_type):
+    async def timed_out(*_args, **_kwargs):
+        raise error_type('private-provider-detail')
+        yield  # pragma: no cover - preserve the async iterator contract
+
+    fake_chat_service.send_message = timed_out
+    with TestClient(app, headers=auth_headers()) as client:
+        chat_id = client.post('/chats').json()['chat_id']
+        response = client.post(f'/chats/{chat_id}/messages', data={'content': 'Вопрос'})
+    assert response.status_code == 200
+    assert 'event: error' in response.text
+    assert '"code": "chat_turn_timeout"' in response.text
+    assert 'private-provider-detail' not in response.text
+    assert '"type":"done"' not in response.text
 
 
 def test_chat_routes_create_get_stream_list_and_clear(fake_chat_service: FakeChatService) -> None:

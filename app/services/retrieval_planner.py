@@ -135,7 +135,7 @@ class CachedRetrievalPlanner:
                 from app.services.runtime_model import ResponsesTextLLM
                 owned_llm = llm = ResponsesTextLLM(model=self.model, effort=self.effort,
                     api_key=self.api_key, base_url=self.base_url, timeout=remaining,
-                    max_output_tokens=500, system_prompt=SYSTEM_PROMPT)
+                    max_output_tokens=500, system_prompt=SYSTEM_PROMPT, max_retries=0)
             prompt = SYSTEM_PROMPT + "\nJSON schema:\n" + json.dumps(FacetPlan.model_json_schema(), ensure_ascii=False)
             prompt += "\nUntrusted request data:\n" + json.dumps(packet, ensure_ascii=False)
             response = llm.complete(prompt)

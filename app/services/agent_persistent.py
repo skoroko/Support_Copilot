@@ -37,6 +37,7 @@ from langgraph.types import Command, interrupt
 
 from app.core.config import PROJECT_ROOT, get_settings
 from app.observability.logging import get_logger
+from app.services.agent_history import _model_history as _model_history
 from app.services.agent_naive_tools import get_current_time as _get_current_time
 from app.services.answer_quality import (
     ANSWER_QUALITY_UNAVAILABLE,
@@ -54,6 +55,7 @@ from app.services.prepared_evidence import (
 )
 from app.services.rag import NO_ANSWER, RAGService
 from app.services.runtime_model import AgentModel, normalize_response
+from app.services.turn_budget import remaining_seconds
 
 logger = get_logger("persistent-agent")
 
@@ -214,48 +216,6 @@ def _saved_citation_evidence(state: PersistentState) -> list[dict[str, Any]]:
         ), number)
         for number, source in enumerate(sources, start=1)
     ]
-
-
-_HISTORY_LITERAL = re.compile(
-    r"```.*?(?:```|$)|`[^`\n]*`|\\\(.*?\\\)|\\\[.*?\\\]|\$\$.*?\$\$|\$[^$\n]*\$"
-    r"|\b\w+(?:\[[^\]\n]*\])+"
-    r"|\[\s*[+-]?\d+(?:\.\d+)?(?:\s*,\s*[+-]?\d+(?:\.\d+)?)+\s*\]",
-    re.DOTALL,
-)
-
-
-def _historical_prose(text: str) -> str:
-    """Remove unambiguous old labels while preserving code, math and vectors."""
-
-    pieces, offset = [], 0
-    for literal in _HISTORY_LITERAL.finditer(text):
-        pieces.append(re.sub(r"(?<![\w\]])\[[1-9]\d*\]", "", text[offset:literal.start()]))
-        pieces.append(literal.group())
-        offset = literal.end()
-    pieces.append(re.sub(r"(?<![\w\]])\[[1-9]\d*\]", "", text[offset:]))
-    return "".join(pieces)
-
-
-def _model_history(messages: list[AnyMessage]) -> list[AnyMessage]:
-    """Retain conversation meaning without previous turns' citation namespaces."""
-
-    latest_human = next(
-        (index for index in range(len(messages) - 1, -1, -1) if messages[index].type == "human"),
-        0,
-    )
-    history: list[AnyMessage] = []
-    for message in messages[:latest_human]:
-        if isinstance(message, ToolMessage) or (
-            isinstance(message, AIMessage) and (message.tool_calls or message.invalid_tool_calls)
-        ):
-            continue
-        if isinstance(message, AIMessage):
-            message = message.model_copy(update={
-                "content": "Исторический ответ (не источник; его ссылки относятся к прежнему вопросу):\n"
-                + _historical_prose(str(message.content)),
-            })
-        history.append(message)
-    return [*history, *messages[latest_human:]]
 
 
 @tool
@@ -684,12 +644,12 @@ def build_agent(
                     history.pop()
                 history = history[-10:]
                 try:
-                    timeout = min(
+                    timeout = remaining_seconds(min(
                         float(
                             getattr(getattr(rag, "config", None), "request_timeout", 60)
                         ),
                         60.0,
-                    )
+                    ))
                     worker = asyncio.create_task(
                         asyncio.to_thread(
                             rag.retrieve,
@@ -1211,8 +1171,10 @@ async def agent_lifespan(app: Any) -> AsyncIterator[None]:
             except Exception:
                 logger.warning("agent_checkpoint_prune_failed", exc_info=True)
 
+        model = _default_model()
+        stack.push_async_callback(model.aclose)
         app.state.agent_graph = build_agent(
-            saver, rag_provider=lambda: getattr(app.state, "rag_service", None)
+            saver, model=model, rag_provider=lambda: getattr(app.state, "rag_service", None)
         )
         app.state.agent_checkpointer = saver
         app.state.agent_checkpointer_backend = backend

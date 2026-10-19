@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import hashlib
+import time
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.types import Command
 
 from app.chat.domain import Chat
+from app.observability.logging import get_logger
 from app.services.agent_persistent import APPROVAL_NODE, retrieval_worker_tracker
 from app.services.rag import RAGService
+from app.services.turn_budget import turn_budget
+
+logger = get_logger("chat-agent")
 
 
 class StaleApprovalError(ValueError):
@@ -61,7 +66,17 @@ class ChatAgent:
                         "history_window": self.settings.chat_context_window,
                     }
                 )
-            return await self.graph.ainvoke(value, config)
+            started = time.perf_counter()
+            outcome = "completed"
+            try:
+                async with turn_budget(getattr(self.settings, "agent_turn_timeout", 90.0)):
+                    return await self.graph.ainvoke(value, config)
+            except BaseException:
+                outcome = "interrupted"
+                raise
+            finally:
+                logger.info("agent_turn_completed", outcome=outcome,
+                            total_ms=round((time.perf_counter() - started) * 1000, 2))
         finally:
             retrieval_worker_tracker.reset(token)
 

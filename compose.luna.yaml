@@ -9,4 +9,8 @@ services:
       AGENT_REASONING_EFFORT: medium
       AGENT_EXPANDED_REASONING_EFFORT: medium
       AGENT_REASONING_TOKEN_RESERVE: "8192"
-      AGENT_GENERATION_TIMEOUT: "120"
+      AGENT_GENERATION_TIMEOUT: "60"
+      AGENT_TURN_TIMEOUT: "90"
+      # This override updates an existing stack with an accepted populated index.
+      # Corpus ingestion remains an explicit job; app restarts only load it.
+      RAG_INGEST_ON_START: "false"
