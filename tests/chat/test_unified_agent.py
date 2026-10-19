@@ -84,7 +84,7 @@ def rag_service(tmp_path, *, product="gts_nx", score=0.9):
             embedding_model="offline",
             embedding_dimensions=3,
             allow_external_data_transfer=True,
-            condense_llm_enabled=False,
+            translate_llm_enabled=False,
             lexical_retrieval_enabled=False,
             product_scope="strict",
         )

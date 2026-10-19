@@ -30,7 +30,7 @@ def candidate_identity(settings, root: Path) -> dict:
         "rag_product", "rag_product_scope", "rag_retrieval_concurrency", "rag_min_score",
         "rag_reranker_enabled", "rag_reranker_model", "rag_reranker_device",
         "rag_reranker_batch_size", "rag_reranker_top_n", "rag_condense_enabled",
-        "rag_condense_llm_enabled", "rag_condense_reasoning_effort", "rag_lexical_retrieval_enabled",
+        "rag_translate_llm_enabled", "rag_lexical_retrieval_enabled",
         "rag_planner_enabled", "rag_planner_model", "rag_planner_effort", "rag_planner_timeout",
         "rag_lexical_term_weight", "rag_lexical_pair_weight", "rag_llm_model",
         "rag_reasoning_effort", "rag_generation_timeout",

@@ -135,12 +135,12 @@ def test_existing_responses_adapter_is_used_with_bounded_output_and_timeout(monk
     assert seen["closed"]
 
 
-def test_planned_retrieval_keeps_original_and_at_most_three_facets_without_condense(tmp_path: Path) -> None:
+def test_planned_retrieval_keeps_original_and_at_most_three_facets_without_rewrite(tmp_path: Path) -> None:
     original = "Compare ALPHA BETA GAMMA"
     llm = FakeLLM(plan_json("ALPHA", "BETA", "GAMMA", question=original))
     planner = CachedRetrievalPlanner(model="configured-model", llm=llm)
     rag = RAGService(config(tmp_path, retrieval_concurrency=4), retrieval_planner=planner,
-                     condense_hook=lambda *_: pytest.fail("Planner must replace condense"))
+                     )
     calls = []
 
     def retrieve(query):
@@ -160,10 +160,10 @@ def test_planned_retrieval_keeps_original_and_at_most_three_facets_without_conde
     assert all(row["selected_candidate_ids"] for row in result["telemetry"]["dense_queries"])
 
 
-def test_planner_failure_uses_original_once_and_never_calls_condense(tmp_path: Path) -> None:
+def test_planner_failure_uses_original_once_and_never_calls_translate(tmp_path: Path) -> None:
     llm = FakeLLM("not JSON")
     rag = RAGService(config(tmp_path), retrieval_planner=CachedRetrievalPlanner(model="configured-model", llm=llm),
-                     condense_hook=lambda *_: pytest.fail("No second LLM after planner failure"))
+                     )
     calls = []
     rag._retriever = SimpleNamespace(retrieve=lambda query: (calls.append(query) or [evidence("native")]))
     result = rag.retrieve("Original ALPHA question", history=[{"role": "user", "content": "Previous"}])

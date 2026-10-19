@@ -23,7 +23,7 @@ from app.services.rag import (
     RAGConfig,
     RAGService,
     RetrievalPlan,
-    build_llm_condense_hook,
+    build_llm_translate_hook,
 )
 from app.services.rag_baremetal import BareMetalRAGService, TextRecord, naive_chunks
 
@@ -2147,72 +2147,87 @@ def test_printed_page_does_not_use_isolated_table_value_late_in_chunk(tmp_path: 
     assert source["printed_page"] is None
 
 
-def test_standalone_question_and_condense_hook_override_default_rewrite(tmp_path: Path) -> None:
+def test_standalone_question_overrides_heuristic_merge(tmp_path: Path) -> None:
     retriever = FakeRetriever([0.91, 0.82, 0.73])
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=FakeLLM(),
-        condense_hook=lambda question, _history: f"rewritten: {question}",
     )
     service._retriever = retriever
 
-    service.answer("А для электроники?", history=[{"role": "user", "content": "Каков срок возврата?"}])
     service.answer(
         "А для электроники?",
         history=[{"role": "user", "content": "Каков срок возврата?"}],
         standalone_question="срок возврата электроники",
     )
 
-    assert retriever.questions == ["rewritten: А для электроники?", "срок возврата электроники"]
+    assert retriever.questions == ["срок возврата электроники"]
 
 
-def test_llm_condense_hook_rewrites_follow_up_into_single_standalone_query(tmp_path: Path) -> None:
-    """The injected LLM hook replaces the regex merge with one resolved query."""
+def test_llm_translate_hook_translates_focused_question_for_retrieval(tmp_path: Path) -> None:
+    """A caller-free retrieval gets one bounded English variant of the focused query."""
 
-    condense_llm = FakeLLM("Какие степени свободы у элемента плоской деформации?")
+    translate_llm = FakeLLM("What are the degrees of freedom of a plane-strain element?")
     retriever = FakeRetriever([0.91])
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=FakeLLM("Ответ [1]."),
-        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm),
+        translate_hook=build_llm_translate_hook(rag_config(tmp_path), llm=translate_llm),
     )
     service._retriever = retriever
 
-    service.answer(
-        "А какие из них для плоской деформации?",
-        history=[{"role": "user", "content": "Какие типы элементов есть в GTS NX?"}],
-    )
+    service.answer("Какие степени свободы у элемента плоской деформации?")
 
-    assert retriever.questions == ["Какие степени свободы у элемента плоской деформации?"]
-    assert len(condense_llm.prompts) == 1
-    assert "Последнее сообщение пользователя: А какие из них для плоской деформации?" in (
-        condense_llm.prompts[0]
-    )
-    assert "Пользователь: Какие типы элементов есть в GTS NX?" in condense_llm.prompts[0]
+    assert set(retriever.questions) == {
+        "Какие степени свободы у элемента плоской деформации?",
+        "What are the degrees of freedom of a plane-strain element?",
+    }
+    assert len(translate_llm.prompts) == 1
+    assert "Question: Какие степени свободы у элемента плоской деформации?" in translate_llm.prompts[0]
 
 
-def test_llm_condense_hook_echo_marks_question_independent(tmp_path: Path) -> None:
-    """An unchanged rewrite is the model's verdict that the turn is standalone."""
+def test_llm_translate_hook_translates_merged_follow_up(tmp_path: Path) -> None:
+    """The translation covers the history-merged question, not the elliptical raw turn."""
 
-    condense_llm = FakeLLM("Какие модели материала доступны?")
+    translate_llm = FakeLLM("What is the return period for electronics?")
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=FakeLLM("Ответ [1]."),
-        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm),
+        translate_hook=build_llm_translate_hook(rag_config(tmp_path), llm=translate_llm),
+    )
+    service._retriever = FakeRetriever([0.91])
+
+    service.answer(
+        "А для электроники?",
+        history=[{"role": "user", "content": "Каков срок возврата товара?"}],
     )
 
-    plan = service._retrieval_plan(
+    prompt = translate_llm.prompts[0]
+    assert "Каков срок возврата товара?" in prompt
+    assert "А для электроники?" in prompt
+
+
+def test_llm_translate_hook_skipped_for_caller_translation_and_latin_question(tmp_path: Path) -> None:
+    translate_llm = FakeLLM("must not be called")
+    hook = build_llm_translate_hook(rag_config(tmp_path), llm=translate_llm)
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        llm=FakeLLM("Ответ [1]."),
+        translate_hook=hook,
+    )
+    service._retriever = FakeRetriever([0.91])
+
+    service.retrieve(
         "Какие модели материала доступны?",
-        [{"role": "user", "content": "Как настроить сетку?"}],
-        None,
+        translated_question="Which material models are available?",
     )
+    service.answer("What element types exist?")
 
-    assert plan.mode == "independent"
-    assert plan.queries == ("Какие модели материала доступны?",)
+    assert translate_llm.prompts == []
 
 
-def test_llm_condense_hook_failure_falls_back_to_deterministic_merge(tmp_path: Path) -> None:
-    """A condense outage must not disable the proven heuristic follow-up path."""
+def test_llm_translate_hook_failure_keeps_russian_path(tmp_path: Path) -> None:
+    """A translate outage must not block or shrink the Russian retrieval path."""
 
     class FailingLLM:
         def complete(self, _prompt: str):
@@ -2222,139 +2237,56 @@ def test_llm_condense_hook_failure_falls_back_to_deterministic_merge(tmp_path: P
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=FakeLLM("Ответ [1]."),
-        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=FailingLLM()),
+        translate_hook=build_llm_translate_hook(rag_config(tmp_path), llm=FailingLLM()),
     )
     service._retriever = retriever
 
-    service.answer(
-        "А для электроники?",
-        history=[{"role": "user", "content": "Каков срок возврата?"}],
-    )
+    service.answer("Какие модели материала доступны?")
 
-    assert retriever.questions == [
-        "А для электроники?",
-        "Каков срок возврата? А для электроники?",
-    ]
+    assert retriever.questions == ["Какие модели материала доступны?"]
 
 
-def test_raising_condense_hook_falls_back_to_deterministic_merge(tmp_path: Path) -> None:
-    """Even a non-cooperative hook must not crash the answer path."""
-
-    def broken_hook(_question: str, _history: object) -> str:
-        raise RuntimeError("custom hook exploded")
-
-    retriever = FakeRetriever([0.91])
-    service = RAGService(
-        rag_config(tmp_path, allow_external_data_transfer=True),
-        llm=FakeLLM("Ответ [1]."),
-        condense_hook=broken_hook,
-    )
-    service._retriever = retriever
-
-    service.answer(
-        "А для электроники?",
-        history=[{"role": "user", "content": "Каков срок возврата?"}],
-    )
-
-    assert retriever.questions == [
-        "А для электроники?",
-        "Каков срок возврата? А для электроники?",
-    ]
-
-
-@pytest.mark.parametrize("bad_output", ["", "   \n  ", "x" * 600])
-def test_llm_condense_hook_rejects_contract_violating_output(
+@pytest.mark.parametrize("bad_output", ["", "   \n  ", "x" * 600, "Всё ещё по-русски"])
+def test_llm_translate_hook_rejects_contract_violating_output(
     tmp_path: Path, bad_output: str
 ) -> None:
     retriever = FakeRetriever([0.91])
     service = RAGService(
         rag_config(tmp_path, allow_external_data_transfer=True),
         llm=FakeLLM("Ответ [1]."),
-        condense_hook=build_llm_condense_hook(rag_config(tmp_path), llm=FakeLLM(bad_output)),
+        translate_hook=build_llm_translate_hook(rag_config(tmp_path), llm=FakeLLM(bad_output)),
     )
     service._retriever = retriever
 
-    service.answer(
-        "А для электроники?",
-        history=[{"role": "user", "content": "Каков срок возврата?"}],
-    )
+    service.answer("Какие модели материала доступны?")
 
-    assert retriever.questions == [
-        "А для электроники?",
-        "Каков срок возврата? А для электроники?",
-    ]
+    assert retriever.questions == ["Какие модели материала доступны?"]
 
 
-def test_llm_condense_hook_prompt_renders_bounded_dialog_without_stale_citations(
-    tmp_path: Path,
-) -> None:
-    condense_llm = FakeLLM("Каков срок возврата электроники?")
-    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
+def test_llm_translate_hook_strips_output_label_and_quotes(tmp_path: Path) -> None:
+    translate_llm = FakeLLM("English question: «Which element types exist?»")
+    hook = build_llm_translate_hook(rag_config(tmp_path), llm=translate_llm)
 
-    result = hook(
-        "А для электроники?",
-        [
-            {"role": "user", "content": "Каков срок возврата товара?"},
-            {"role": "assistant", "content": "Для большинства товаров 30 дней [1]."},
-        ],
-    )
-
-    assert result == "Каков срок возврата электроники?"
-    prompt = condense_llm.prompts[0]
-    assert "Пользователь: Каков срок возврата товара?" in prompt
-    assert "Ассистент: Для большинства товаров 30 дней" in prompt
-    assert "[1]" not in prompt
-    assert "Последнее сообщение пользователя: А для электроники?" in prompt
+    assert hook("Какие типы элементов есть?") == "Which element types exist?"
 
 
-def test_llm_condense_hook_renders_full_history_window(tmp_path: Path) -> None:
-    """The rewrite sees the opening report, not only the last exchanges.
+def test_llm_translate_hook_caches_repeat_questions(tmp_path: Path) -> None:
+    translate_llm = FakeLLM("Which element types exist?")
+    hook = build_llm_translate_hook(rag_config(tmp_path), llm=translate_llm)
 
-    Answer generation keeps the tighter six-message block, but the auxiliary
-    condense call renders the caller's full window so incident details stay
-    visible to the rewrite on later turns.
-    """
-
-    condense_llm = FakeLLM("самостоятельный вопрос")
-    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
-    history = [
-        {"role": "user", "content": f"сообщение-{index}"} for index in range(10)
-    ]
-
-    hook("Итоговый вопрос", history)
-
-    prompt = condense_llm.prompts[0]
-    assert "Пользователь: сообщение-0" in prompt
-    assert "Пользователь: сообщение-3" in prompt
-    assert "Пользователь: сообщение-9" in prompt
+    assert hook("Какие типы элементов есть?") == "Which element types exist?"
+    assert hook("Какие типы элементов есть?") == "Which element types exist?"
+    assert len(translate_llm.prompts) == 1
 
 
-def test_llm_condense_hook_skips_llm_without_usable_history(tmp_path: Path) -> None:
-    condense_llm = FakeLLM("не должен вызываться")
-    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
-
-    assert hook("Вопрос", []) is None
-    assert hook("Вопрос", [{"role": "system", "content": "правила"}]) is None
-    assert condense_llm.prompts == []
-
-
-def test_llm_condense_hook_strips_output_label_and_quotes(tmp_path: Path) -> None:
-    condense_llm = FakeLLM("Самостоятельный вопрос: «Какие типы элементов есть?»")
-    hook = build_llm_condense_hook(rag_config(tmp_path), llm=condense_llm)
-
-    result = hook("А какие?", [{"role": "user", "content": "Расскажи про элементы."}])
-
-    assert result == "Какие типы элементов есть?"
-
-
-def test_lexical_query_uses_condensed_question_terms(tmp_path: Path) -> None:
-    """A hook-rewritten plan feeds lexical recall from the resolved subject."""
+def test_lexical_query_uses_rewritten_question_terms(tmp_path: Path) -> None:
+    """A caller-rewritten plan feeds lexical recall from the resolved subject."""
 
     service = RAGService(rag_config(tmp_path))
     plan = RetrievalPlan(
         "Какие степени свободы у элемента плоской деформации?",
         ("Какие степени свободы у элемента плоской деформации?",),
-        "condense_hook",
+        "caller_standalone",
     )
 
     assert service._lexical_query(
@@ -2362,10 +2294,10 @@ def test_lexical_query_uses_condensed_question_terms(tmp_path: Path) -> None:
     ) == "степени свободы элемента плоской"
 
 
-def test_rag_config_reads_condense_llm_setting() -> None:
-    config = RAGConfig.from_settings(SimpleNamespace(rag_condense_llm_enabled=False))
+def test_rag_config_reads_translate_llm_setting() -> None:
+    config = RAGConfig.from_settings(SimpleNamespace(rag_translate_llm_enabled=False))
 
-    assert config.condense_llm_enabled is False
+    assert config.translate_llm_enabled is False
 
 
 def test_rag_config_reads_lexical_rank_weights() -> None:

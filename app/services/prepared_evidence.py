@@ -11,12 +11,10 @@ import re
 from typing import Any
 
 _MODEL_SOURCE_FIELDS = frozenset({
-    "id", "chunk_id", "document_id", "file_name", "source_locator", "page", "printed_page",
-    "product", "version", "language", "chm_member", "section", "section_path", "source_id",
-    "source_hash", "location_id", "extraction_version", "extraction_status", "parent_source_id",
-    "canonical_origin", "derived_from", "title", "heading", "anchor", "html_anchor", "block_id",
-    "block_type", "block_bbox", "atomic_evidence", "origin", "relation", "related_to",
-    "extraction_warnings", "text_sha256",
+    "chunk_id", "document_key", "file_name", "source_locator", "page", "printed_page",
+    "product", "version", "language", "chm_member", "section", "section_path",
+    "title", "heading", "block_type", "atomic_evidence", "origin", "relation",
+    "related_to", "extraction_warnings",
 })
 _MODEL_QUALITY_FIELDS = frozenset({"header_status", "quality_status", "review_status", "visual_review_required",
     "verified", "transcription", "reading_order", "layout", "approved_transcription_id", "method",
@@ -26,12 +24,19 @@ _MODEL_QUALITY_FIELDS = frozenset({"header_status", "quality_status", "review_st
 def source_for_model(source: dict[str, Any]) -> dict[str, Any]:
     """Project runtime metadata; full geometry remains in API/catalog sources.
 
-    Source identity and scope are retained. Full chunk membership stays in the
-    saved API evidence, where it can be verified mechanically. Glyph arrays, image inventories,
+    Source scope is retained; service telemetry (absolute paths, hashes,
+    geometry, extraction diagnostics) stays out of the model packet.  The
+    document binding survives as a short ``document_key`` fingerprint so
+    citation identity still separates same-named files without leaking host
+    paths.  Full chunk membership stays in the saved API evidence, where it
+    can be verified mechanically. Glyph arrays, image inventories,
     duplicated cells and page-relation graphs are extraction artifacts, not
     generation text. This projection is shared by initial/tools/expanded.
     """
     compact = {key: value for key, value in source.items() if key in _MODEL_SOURCE_FIELDS}
+    document_key = _document_key(source)
+    if document_key:
+        compact["document_key"] = document_key
     attributes = source.get("block_attributes") or {}
     compact["block_attributes"] = {key: value for key, value in attributes.items()
                                     if key in _MODEL_QUALITY_FIELDS and isinstance(value, (str, bool, int, float, type(None)))}
@@ -73,17 +78,29 @@ def should_prepare_evidence(question: Any) -> bool:
                  r"rewrite|rephrase|edit|translate|shorten|proofread)\b", text)
 
 
+def _document_key(source: dict[str, Any]) -> str | None:
+    """Short portable document fingerprint shared by raw and compact evidence."""
+
+    key = source.get("document_key")
+    if isinstance(key, str) and key:
+        return key
+    document_id = source.get("document_id")
+    if not document_id:
+        return None
+    return hashlib.sha256(str(document_id).encode("utf-8")).hexdigest()[:16]
+
+
 def evidence_identity(source: dict[str, Any]) -> str:
     """Citation identity shared by raw and compact saved evidence.
 
-    Retain document_id in both forms: legacy records may have no positive
-    source/location binding. Block/region and product/version distinctions
-    also remain separate without inventing aliases for incomplete provenance.
+    The document binding is its fingerprint in both forms: raw records hash
+    ``document_id`` on the fly, compact records carry the precomputed
+    ``document_key``.  Per-block provenance fields stay out of the identity so
+    a raw and a projected record for the same chunk still match.
     """
-    fields = ("product", "version", "document_id", "source_locator", "file_name",
-              "chm_member", "page", "printed_page", "section", "source_id",
-              "source_hash", "location_id", "extraction_version", "block_id", "block_bbox")
-    return json.dumps([source.get("chunk_id") or source.get("id"),
+    fields = ("product", "version", "source_locator", "file_name",
+              "chm_member", "page", "printed_page", "section")
+    return json.dumps([source.get("chunk_id") or source.get("id"), _document_key(source),
                        *(source.get(key) for key in fields)], sort_keys=True, ensure_ascii=False)
 
 
@@ -130,7 +147,8 @@ def evidence_limitations(result: dict[str, Any], sources: list[dict[str, Any]], 
     if planning.get("history_truncated"):
         limitations.append("planning_history_truncated")
     for field, label in (("retrieval_partial_failure", "retrieval_partial_failure"),
-                         ("related_evidence_truncated", "structural_expansion_truncated")):
+                         ("related_evidence_truncated", "structural_expansion_truncated"),
+                         ("evidence_dropped_for_budget", "evidence_dropped_for_budget")):
         if telemetry.get(field):
             limitations.append(label)
     if any((source.get("block_attributes") or {}).get("visual_review_required") for source in sources):
@@ -179,13 +197,11 @@ def prepare_evidence(result: dict[str, Any], *, query: str, budget: int = 24_000
         sources.append({**source, "snippet": bounded[:MAX_SOURCE_SNIPPET_CHARS]})
         records.append({"citation_number": number, "marker": f"[{number}]",
                         "source": source_for_model(source),
-                        "text": bounded,
-                        "text_sha256": hashlib.sha256(bounded.encode("utf-8")).hexdigest()})
+                        "text": bounded})
     knowledge_status = "ok" if records else ("no_evidence" if status in {"ok", "no_evidence"} else status)
     return {"sources": sources, "citation_evidence": records,
             "knowledge_status": knowledge_status,
             "packet": {"contract": "prepared_evidence_v1", "evidence": records,
-                       "searches": [{"query": query, "status": status,
-                                     "telemetry": dict(result.get("telemetry") or {})}],
+                       "searches": [{"query": query, "status": status}],
                        "context_truncated": truncated,
                        "limitations": evidence_limitations(result, sources, truncated=truncated)}}

@@ -1,4 +1,5 @@
 """Saved full evidence must survive the raw/API to compact/model boundary."""
+import hashlib
 import json
 from copy import deepcopy
 
@@ -27,15 +28,15 @@ def test_full_saved_evidence_survives_consistent_raw_compact_identity():
     restored = _saved_citation_evidence({"answer_evidence": [raw],
         "citation_evidence": [record], "messages": []})
     assert restored[0]["text"] == full
-    assert restored[0]["text_sha256"] == record["text_sha256"]
+    assert "text_sha256" not in restored[0]
     assert evidence_identity(raw) == evidence_identity(record["source"])
 
 
 @pytest.mark.parametrize(("field", "value"), [
-    ("chunk_id", "chunk-B"), ("block_id", "block-B"), ("block_bbox", [2., 3., 4., 5.]),
-    ("page", 4), ("product", "product-B"), ("version", "2024"),
-    ("source_hash", "hash-B"), ("location_id", "location-B"),
-    ("chm_member", "/different/member.htm"),
+    ("chunk_id", "chunk-B"), ("document_id", "C:/private/data/other.pdf"),
+    ("file_name", "other.pdf"), ("source_locator", "manual.pdf#page=9"),
+    ("page", 4), ("printed_page", "4-1"), ("product", "product-B"), ("version", "2024"),
+    ("section", "other-section"), ("chm_member", "/different/member.htm"),
 ])
 def test_distinct_evidence_binding_does_not_borrow_saved_text(field, value):
     first, second = source(), source()
@@ -55,9 +56,10 @@ def test_model_source_projection_stays_compact_idempotent_and_does_not_mutate_ra
     compact = source_for_model(raw)
     assert source_for_model(compact) == compact
     assert raw == original
-    assert compact["document_id"] == raw["document_id"]
-    assert "snippet" not in compact
-    assert "figure_regions" not in compact
+    assert compact["document_key"] == hashlib.sha256(raw["document_id"].encode()).hexdigest()[:16]
+    for dropped in ("document_id", "source_id", "source_hash", "location_id", "block_id",
+                    "block_bbox", "text_sha256", "snippet", "figure_regions"):
+        assert dropped not in compact
     assert "glyphs" not in compact["block_attributes"]
     assert "raw_char_text" not in compact["block_attributes"]
     assert compact["block_attributes"]["semantic_verified"] is False

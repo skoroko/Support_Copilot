@@ -24,7 +24,7 @@ from app.observability.logging import bind_request_context, clear_request_contex
 from app.observability.tracing import setup_tracing
 from app.routers import agent, chat, documents, health, models, rag
 from app.services.agent_persistent import agent_lifespan
-from app.services.rag import RAGConfig, RAGService, build_llm_condense_hook
+from app.services.rag import RAGConfig, RAGService, build_llm_translate_hook
 from app.services.security.output_filter import build_security_system_prompt
 
 try:
@@ -70,15 +70,16 @@ def _initialize_rag(settings: Settings) -> tuple[RAGService | None, str | None]:
         error_type = "ExternalDataTransferNotAllowed"
         logger.warning("rag_startup_failed", error_type=error_type)
         return None, error_type
-    # LLM-based query rewriting resolves follow-up references the regex
-    # heuristics cannot; a hook failure degrades to the deterministic merge.
-    condense_hook = (
-        build_llm_condense_hook(config)
-        if getattr(config, "condense_enabled", True)
-        and getattr(config, "condense_llm_enabled", True)
+    # Retrieval calls without a caller-supplied English variant (the agent's
+    # evidence prefetch, plain answer()/retrieve() turns) translate the
+    # effective question once so English manuals are covered; a hook failure
+    # degrades to the Russian-only path.
+    translate_hook = (
+        build_llm_translate_hook(config)
+        if getattr(config, "translate_llm_enabled", True)
         else None
     )
-    service = RAGService(config, condense_hook=condense_hook)
+    service = RAGService(config, translate_hook=translate_hook)
     try:
         service.build()
     except Exception as exc:

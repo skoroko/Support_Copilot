@@ -89,7 +89,7 @@ class BudgetLedger:
 
     def reserve(self, *, kind: str, model: str, amount: float, fingerprint: str = "") -> str:
         charge = micros(amount)
-        if model not in RATES or kind not in {"embedding", "generation", "condense", "review", "vision"}:
+        if model not in RATES or kind not in {"embedding", "generation", "auxiliary", "review", "vision"}:
             raise ValueError("Unregistered provider operation")
         identity = uuid4().hex
         with closing(self._connect()) as db, db:
@@ -313,7 +313,7 @@ def install_acceptance_budget(path: Path, *, limit_usd: float = 10.) -> BudgetLe
             self.resource = resource
 
         def create(self, **kwargs):
-            return metered_create(self.resource.create, ledger, kind="condense", **kwargs)
+            return metered_create(self.resource.create, ledger, kind="auxiliary", **kwargs)
 
     class MeteredTextLLM(original_text):
         def __init__(self, **kwargs):
@@ -327,7 +327,7 @@ def install_acceptance_budget(path: Path, *, limit_usd: float = 10.) -> BudgetLe
         return build_embedding(ledger=ledger, model=kwargs["model"], dimensions=kwargs["dimensions"],
                                api_key=kwargs.get("api_key"), api_base=kwargs.get("api_base"))
 
-    # The legacy condense adapter exposes the same .complete(). Use its configured
+    # The auxiliary text adapter exposes the same .complete(). Use its configured
     # model through Responses with an explicit cap so no paid call escapes metering.
     def legacy_text_factory(**kwargs):
         return MeteredTextLLM(model=kwargs["model"], api_key=kwargs.get("api_key"),

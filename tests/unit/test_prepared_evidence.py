@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 from copy import deepcopy
 from dataclasses import replace
@@ -46,7 +45,7 @@ def test_model_projection_preserves_literal_scope_and_visual_limitations_on_reus
                                     "semantic_verified": False})
     compact = source_for_model(source)
     assert source_for_model(compact) == compact
-    assert compact["source_id"] == "exact-source" and compact["location_id"] == "exact-location"
+    assert "source_id" not in compact and "location_id" not in compact
     assert compact["block_attributes"]["semantic_verified"] is False
     assert compact["block_attributes"]["verification_scope"] == "literal_image_transcription"
     assert "visual_regions_not_transcribed" in evidence_limitations({}, [compact])
@@ -137,9 +136,9 @@ def test_model_metadata_projection_bounds_geometry_without_changing_evidence_or_
     assert len(json.dumps(prepared["packet"])) < 5000
     assert record["source"]["visual_region_count"] == 100
     assert record["source"]["block_attributes"] == {"visual_review_required": True, "verified": False}
-    assert record["source"]["source_hash"] == "b" * 64 and record["source"]["version"] == "unknown"
+    assert "source_hash" not in record["source"] and record["source"]["version"] == "unknown"
     assert record["text"] == "x = 1" and record["marker"] == "[1]"
-    assert record["text_sha256"] == hashlib.sha256(b"x = 1").hexdigest()
+    assert "text_sha256" not in record
     assert prepared["sources"][0]["block_attributes"]["glyphs"]
     assert result == before and "visual_regions_not_transcribed" in prepared["packet"]["limitations"]
 
@@ -192,7 +191,7 @@ async def test_targeted_same_chunk_refreshes_authoritative_projection_hash_and_s
     assert len(packet["evidence"]) == 1 and len(packet["searches"]) == 2
     record = packet["evidence"][0]
     assert "First aspect." in record["text"] and "Complementary aspect." in record["text"]
-    assert record["text_sha256"] == hashlib.sha256(record["text"].encode()).hexdigest()
+    assert "text_sha256" not in record
     assert state["citation_evidence"] == packet["evidence"]
     assert packet["context_truncated"] and "context_truncated" in packet["limitations"]
     tool_payload = json.loads(next(message.content for message in model.calls[1][0] if message.type == "tool"))

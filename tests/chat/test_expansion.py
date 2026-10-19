@@ -84,7 +84,7 @@ async def test_preview_confirm_strict_consent_owner_and_repeat(tmp_path):
         assert (await http.get(url + "/expansion", headers=headers)).status_code == 409
     # One generic preparation + the scripted model's targeted search; expanded adds none.
     assert len(model.received) == 3 and len(questions) == 2
-    assert model.kwargs == [{"max_tokens": 500}, {"max_tokens": 500}, {"max_tokens": 1500, "tool_choice": "none"}]
+    assert model.kwargs == [{"max_tokens": 800}, {"max_tokens": 800}, {"max_tokens": 1500, "tool_choice": "none"}]
     stored = await service.repository.list_messages(chat_id)
     assert len(stored) == 4
     assert stored[-2].content == "Раскрой предыдущий ответ подробнее."
@@ -207,9 +207,9 @@ async def test_response_reservation_matches_explicit_mode():
     brief_config = graph.ainvoke.call_args.args[1]["configurable"]
     await agent._invoke({}, chat, expanded=True)
     expanded_config = graph.ainvoke.call_args.args[1]["configurable"]
-    assert brief_config["response_tokens"] == 500
+    assert brief_config["response_tokens"] == 800
     assert expanded_config["response_tokens"] == 1500
-    assert brief_config["context_budget"] - expanded_config["context_budget"] == 1000
+    assert brief_config["context_budget"] - expanded_config["context_budget"] == 700
 
 
 @pytest.mark.asyncio

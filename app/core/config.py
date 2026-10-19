@@ -123,7 +123,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("CHAT_MODEL_CONTEXT_TOKENS"),
     )
     chat_expanded_response_tokens: int = Field(default=1500, gt=0, validation_alias=AliasChoices("CHAT_EXPANDED_RESPONSE_TOKENS"))
-    chat_response_tokens: int = Field(default=500, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
+    chat_response_tokens: int = Field(default=800, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
     chat_safety_margin_tokens: int = Field(
         default=500,
         ge=0,
@@ -193,8 +193,6 @@ class _SettingsFields(BaseModel):
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
     rag_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
         default="low", validation_alias=AliasChoices("RAG_REASONING_EFFORT"))
-    rag_condense_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
-        default="none", validation_alias=AliasChoices("RAG_CONDENSE_REASONING_EFFORT"))
     # Answer generation gets a dedicated budget: retrieval (embedding + Qdrant)
     # stays on the shared request_timeout, while a grounded completion over
     # several fragments legitimately needs longer.
@@ -255,9 +253,9 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_CONDENSE_ENABLED"),
     )
-    rag_condense_llm_enabled: bool = Field(
+    rag_translate_llm_enabled: bool = Field(
         default=True,
-        validation_alias=AliasChoices("RAG_CONDENSE_LLM_ENABLED"),
+        validation_alias=AliasChoices("RAG_TRANSLATE_LLM_ENABLED"),
     )
     rag_planner_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_PLANNER_ENABLED"))
     rag_planner_model: str = Field(default="", validation_alias=AliasChoices("RAG_PLANNER_MODEL"))
@@ -463,7 +461,7 @@ def get_settings() -> Settings:
         chat_context_strategy=os.getenv("CHAT_CONTEXT_STRATEGY") or "sliding",
         chat_context_window=int(os.getenv("CHAT_CONTEXT_WINDOW") or 10),
         chat_model_context_tokens=int(os.getenv("CHAT_MODEL_CONTEXT_TOKENS") or 128_000),
-        chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 500),
+        chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 800),
         chat_expanded_response_tokens=int(os.getenv("CHAT_EXPANDED_RESPONSE_TOKENS") or 1500),
         chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
         transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
@@ -507,7 +505,6 @@ def get_settings() -> Settings:
         rag_retrieval_concurrency=int(os.getenv("RAG_RETRIEVAL_CONCURRENCY") or 2),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_reasoning_effort=os.getenv("RAG_REASONING_EFFORT") or "low",
-        rag_condense_reasoning_effort=os.getenv("RAG_CONDENSE_REASONING_EFFORT") or "none",
         rag_generation_timeout=float(os.getenv("RAG_GENERATION_TIMEOUT") or 120.0),
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
@@ -527,8 +524,8 @@ def get_settings() -> Settings:
         rag_condense_enabled=(
             os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
-        rag_condense_llm_enabled=(
-            os.getenv("RAG_CONDENSE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+        rag_translate_llm_enabled=(
+            os.getenv("RAG_TRANSLATE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
         rag_planner_enabled=os.getenv("RAG_PLANNER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
         rag_planner_model=os.getenv("RAG_PLANNER_MODEL") or "",

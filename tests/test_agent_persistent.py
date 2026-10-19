@@ -67,7 +67,7 @@ async def test_bad_final_answer_is_compacted_without_regeneration(broken):
     assert result["answer_incomplete"] is True
     assert result["iteration_count"] == 1
     assert len(model.received) == 1
-    assert model.invocation_kwargs == [{"max_tokens": 500}]
+    assert model.invocation_kwargs == [{"max_tokens": 800}]
 
 
 @pytest.mark.asyncio

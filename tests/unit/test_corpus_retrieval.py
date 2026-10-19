@@ -33,7 +33,7 @@ def service(tmp_path):
     config = RAGConfig(data_dir=tmp_path, qdrant_url="http://unused", qdrant_api_key=None,
                        collection_name="test", baremetal_collection_name="other", llm_model="test",
                        embedding_model="test", embedding_dimensions=3, evidence_catalog_path=catalog_path,
-                       condense_llm_enabled=False, lexical_retrieval_enabled=False)
+                       translate_llm_enabled=False, lexical_retrieval_enabled=False)
     rag = RAGService(config, embed_model=MockEmbedding(embed_dim=3))
     rag._index = object()
     node = NodeWithScore(node=TextNode(id_="row", text="Pressure | 25", metadata={
