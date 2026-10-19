@@ -201,6 +201,7 @@ async def _run(args: argparse.Namespace) -> dict:
         - settings.chat_safety_margin_tokens
     )
     rows: list[dict] = []
+    measured: list[dict] = []
     private_path = ROOT / "var" / f"verification_{args.label}_private.json"
     done_keys: set[tuple[str, int]] = set()
     if args.resume and private_path.exists():
@@ -304,10 +305,20 @@ async def _run(args: argparse.Namespace) -> dict:
                         (item, repeat) for item in items for repeat in range(args.repeats)
                     )
                 }
-                rows.sort(key=lambda row: position[(row["id"], row["repeat"])])
+                # Rows captured by a wider earlier selection (e.g. a --resume
+                # after a partial --ids run) keep their stored order at the end;
+                # they cannot be re-measured without their suite items.
+                stored_order = {id(row): index for index, row in enumerate(rows)}
+                rows.sort(
+                    key=lambda row: position.get(
+                        (row["id"], row["repeat"]),
+                        len(position) + stored_order[id(row)],
+                    )
+                )
                 measured = [
                     _measure_row(row, expanded_items[position[(row["id"], row["repeat"])]])
                     for row in rows
+                    if (row["id"], row["repeat"]) in position
                 ]
                 out_dir = ROOT / "tests" / "eval" / "results" / args.label
                 out_dir.mkdir(parents=True, exist_ok=True)
@@ -323,7 +334,7 @@ async def _run(args: argparse.Namespace) -> dict:
                 )
     finally:
         rag.close()
-    return {"manifest": manifest, "results": [_measure_row(r, i) for r, i in zip(rows, _expanded(items, args.repeats), strict=True)]}
+    return {"manifest": manifest, "results": measured}
 
 
 def _expanded(items: list[dict], repeats: int) -> list[dict]:
