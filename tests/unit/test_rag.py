@@ -2831,9 +2831,9 @@ def _payloads(*nodes: TextNode) -> list[dict[str, Any]]:
 
 
 def test_lexical_bm25_index_ranks_clean_text_and_separates_languages(tmp_path: Path) -> None:
-    from app.services.rag import _LexicalBM25Index
+    from app.services.lexical import LexicalBM25Index
 
-    index = _LexicalBM25Index.build(
+    index = LexicalBM25Index.build(
         _payloads(
             TextNode(
                 id_="ru",
