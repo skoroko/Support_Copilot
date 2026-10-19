@@ -25,6 +25,7 @@
 | Telegram | [telegram_bot.md](telegram_bot.md) | Текущие меню, команды, feedback, approval и renderer |
 | Retrieval и ingestion | [rag.md](rag.md) | Текущий поиск по мануалам, provenance, ограничения и эксплуатация |
 | Общая обработка документации | [documentation_evidence.md](documentation_evidence.md) | Новый каталог PDF/CHM/HTML, общий retrieval-first путь, 120 новых eval-сценариев; release gate ещё не пройден |
+| Проверка пакета 19 октября | [Отчёт перед merge](../tasks/commits/sprint-0/2026-10-19_corpus-evidence-pipeline_0b5f071.md) | Итоговые изменения, замеры до/после, проверки и ограничения; S0-005 остаётся открытой |
 | Корпус | [data_inventory.md](data_inventory.md) | Состав документов и отложенное пополнение |
 | История диалогов | [chat.md](chat.md) | Repository, API и исходный sliding-window контракт; Telegram теперь использует graph adapter, см. `unified_agent.md` |
 | Checkpoints и отправка | [agent-persistent-report.md](agent-persistent-report.md) | Устройство saver/HIL; Docker transcript относится к учебному снимку |

@@ -45,7 +45,7 @@
   <rect class="node" data-node="call_model" x="550" y="380" width="440" height="120" rx="16" style="fill:#eaf0ff;stroke:#7396da"/>
   <text class="name" x="770" y="418">call_model</text>
   <text class="body" x="770" y="451">Контекст + модель + tool calls</text>
-  <text class="body" x="770" y="480">Ceiling 500 · до 6 model turns</text>
+  <text class="body" x="770" y="480">Ceiling 800 · до 6 model turns</text>
 
   <rect class="node" data-node="execute_safe_tool" x="80" y="390" width="360" height="140" rx="16"/>
   <text class="name" x="260" y="429">execute_safe_tool</text>

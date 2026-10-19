@@ -60,4 +60,3 @@ def validate_isolation(settings) -> None:
         raise ValueError("candidate startup must not ingest or rebuild")
     if settings.bot_url != "http://127.0.0.1:9":
         raise ValueError("outbound action transport must remain disconnected")
-

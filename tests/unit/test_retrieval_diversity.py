@@ -74,7 +74,7 @@ def test_complementary_chunks_keep_exact_locator_and_independent_citations(tmp_p
 
 
 @pytest.mark.parametrize("changed", [{"version": "2027"}, {"source_hash": "b" * 64}, {"location": "other"}])
-def test_location_completion_preserves_version_hash_and_location_boundaries(tmp_path: Path, changed: dict) -> None:
+def test_location_completion_keeps_different_scopes_independently_citable(tmp_path: Path, changed: dict) -> None:
     rag = service(tmp_path)
     title = node("title", "Overview.", .95, location="same")
     values = {"location": "same", **changed}
@@ -82,7 +82,17 @@ def test_location_completion_preserves_version_hash_and_location_boundaries(tmp_
     others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     result = rag.retrieve("explain")
-    assert "body" not in {source["chunk_id"] for source in result["sources"]}
+    pairs = {source["chunk_id"]: (source, text)
+             for source, text in zip(result["sources"], result["contexts"], strict=True)}
+    # A different scope may fill idle capacity as independent evidence; it
+    # must never inherit the seed's scope or claim a same-location relation.
+    body_source, body_text = pairs["body"]
+    assert body_text == body.node.text
+    assert body_source["origin"] == "retrieved_other_location"
+    assert body_source["related_to"] == []
+    for field in ("version", "source_hash", "location_id"):
+        assert body_source[field] == body.node.metadata[field]
+        assert pairs["title"][0][field] == title.node.metadata[field]
 
 
 def test_location_diversity_defers_chunks_and_completion_is_bounded(tmp_path: Path) -> None:

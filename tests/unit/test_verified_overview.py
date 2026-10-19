@@ -73,5 +73,3 @@ def test_coverage_is_checked_after_budget_and_never_recovers_dropped_rows():
     assert not prepared["ready"]
     assert prepared["context_chars"] <= 100
     assert "stiffness_parameters" in prepared["packet"]["missing_aspects"]
-
-

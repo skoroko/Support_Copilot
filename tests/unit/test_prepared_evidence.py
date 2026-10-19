@@ -373,4 +373,3 @@ async def test_prepared_retrieval_keeps_previous_dialogue_without_current_query_
     assert rag.calls[0][1]["history"] == [
         {"role": "user", "content": "Ранее обсуждали расчёт"},
         {"role": "assistant", "content": "Предыдущий ответ"}]
-
