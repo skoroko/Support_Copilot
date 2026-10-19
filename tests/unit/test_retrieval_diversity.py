@@ -59,7 +59,7 @@ def test_complementary_chunks_keep_exact_locator_and_independent_citations(tmp_p
     title = node("title", "Overview of the command.", .95, location="same", suffix=suffix)
     body = node("body", "Procedure: choose the element, apply the command, inspect the result.", .4,
                 location="same", suffix=suffix)
-    others = [node(f"other-{i}", f"Different context {i}.", .9-i*.01, suffix=suffix) for i in range(4)]
+    others = [node(f"other-{i}", f"Different context {i}.", .9-i*.01, suffix=suffix) for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     result = rag.retrieve("explain")
     pairs = {source["chunk_id"]: (source, text) for source, text in zip(result["sources"], result["contexts"], strict=True)}
@@ -70,7 +70,7 @@ def test_complementary_chunks_keep_exact_locator_and_independent_citations(tmp_p
     assert pairs["body"][0]["location_id"] == "same"
     assert pairs["body"][0]["source_hash"] == "a" * 64
     assert pairs["body"][0]["source_locator"] == pairs["title"][0]["source_locator"]
-    assert len(result["sources"]) == 6
+    assert len(result["sources"]) == 8
 
 
 @pytest.mark.parametrize("changed", [{"version": "2027"}, {"source_hash": "b" * 64}, {"location": "other"}])
@@ -79,7 +79,7 @@ def test_location_completion_preserves_version_hash_and_location_boundaries(tmp_
     title = node("title", "Overview.", .95, location="same")
     values = {"location": "same", **changed}
     body = node("body", "Different applicability.", .4, **values)
-    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(4)]
+    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     result = rag.retrieve("explain")
     assert "body" not in {source["chunk_id"] for source in result["sources"]}
@@ -103,7 +103,7 @@ def test_oversized_atomic_companion_is_omitted_with_diagnostic(tmp_path: Path) -
     rag = service(tmp_path)
     title = node("title", "Overview.", .95, location="same")
     body = node("table", "Visible cell | exact value\n" * 600, .4, location="same", atomic=True)
-    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(4)]
+    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     result = rag.retrieve("explain")
     assert "table" not in {source["chunk_id"] for source in result["sources"]}
@@ -115,7 +115,7 @@ def test_missing_source_hash_never_joins_chunks_by_filename_alone(tmp_path: Path
     rag = service(tmp_path)
     title = node("title", "Overview.", .95, location="same", source_hash="")
     body = node("body", "Unbound body.", .4, location="same", source_hash="")
-    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(4)]
+    others = [node(f"other-{i}", f"Context {i}.", .9-i*.01) for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     result = rag.retrieve("explain")
     assert "body" not in {source["chunk_id"] for source in result["sources"]}

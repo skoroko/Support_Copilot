@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from llama_index.core.schema import NodeWithScore, TextNode
 
+import app.services.rag as rag_module
 from app.services.rag import RAGConfig, RAGService, RetrievalPlan
 
 
@@ -25,7 +26,7 @@ def select(tmp_path: Path, pool, *, structural=False, structural_limit=8, struct
     ))
     # Isolate selection from ranking: this is the original complete-ranked order.
     rag._fuse_retrieval_candidates = lambda rankings: list(rankings[0])
-    rag._rank_by_lexical_evidence = lambda question, items: list(items)
+    rag._rank_by_lexical_evidence = lambda question, items, **_kwargs: list(items)
     calls = []
     structural_selected = 0
 
@@ -45,11 +46,18 @@ def select(tmp_path: Path, pool, *, structural=False, structural_limit=8, struct
         return result
 
     rag._related_evidence = SimpleNamespace(resolve=resolve, source_relative_path=lambda _: None)
-    result = rag._select_context(
-        question="explain", plan=RetrievalPlan("explain", ("explain",), "independent"),
-        rankings=[pool], lexical_candidates=[], lexical_query=None, overview_question=False,
-        preserve_full_context=True,
-    )
+    # These ordering scenarios were written for the five-seed selection cap;
+    # pin it locally so the companion pass still exercises tail candidates.
+    previous_limit = rag_module.MAX_CONTEXT_SOURCES
+    rag_module.MAX_CONTEXT_SOURCES = 5
+    try:
+        result = rag._select_context(
+            question="explain", plan=RetrievalPlan("explain", ("explain",), "independent"),
+            rankings=[pool], lexical_candidates=[], lexical_query=None, overview_question=False,
+            preserve_full_context=True,
+        )
+    finally:
+        rag_module.MAX_CONTEXT_SOURCES = previous_limit
     return result, calls
 
 

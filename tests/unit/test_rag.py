@@ -2805,3 +2805,168 @@ def test_query_forwards_system_prompt(tmp_path: Path) -> None:
     service.query("Вопрос", system_prompt="Отвечай как дежурный инженер MIDAS.")
 
     assert "Отвечай как дежурный инженер MIDAS." in llm.prompts[0]
+
+
+class _FakeScrollClient:
+    """Minimal scroll-only client feeding BM25 index construction."""
+
+    def __init__(self, payloads: list[dict[str, Any]]) -> None:
+        self._payloads = payloads
+
+    def scroll(self, *, limit: int, offset: Any = None, **_kwargs: Any):
+        start = int(offset or 0)
+        batch = self._payloads[start:start + limit]
+        records = [
+            SimpleNamespace(payload=payload, id=start + index)
+            for index, payload in enumerate(batch)
+        ]
+        next_offset = start + limit if start + limit < len(self._payloads) else None
+        return records, next_offset
+
+
+def _payloads(*nodes: TextNode) -> list[dict[str, Any]]:
+    from llama_index.core.vector_stores.utils import node_to_metadata_dict
+
+    return [node_to_metadata_dict(node) for node in nodes]
+
+
+def test_lexical_bm25_index_ranks_clean_text_and_separates_languages(tmp_path: Path) -> None:
+    from app.services.rag import _LexicalBM25Index
+
+    index = _LexicalBM25Index.build(
+        _payloads(
+            TextNode(
+                id_="ru",
+                text="Нормальное давление грунта задаётся модулем деформации.",
+                metadata={"file_name": "a.pdf"},
+            ),
+            TextNode(
+                id_="en",
+                text="Boundary stiffness controls the kPa pressure response.",
+                metadata={"file_name": "b.pdf"},
+            ),
+            TextNode(
+                id_="noise",
+                text="Установка программы занимает несколько минут.",
+                metadata={"file_name": "pressure.pdf"},
+            ),
+        ),
+        RAGService._lexical_terms,
+    )
+
+    english = index.query(RAGService._lexical_terms("boundary stiffness"), 5)
+    assert english and english[0][0].node_id == "en"
+    russian = index.query(RAGService._lexical_terms("давление грунта"), 5)
+    assert russian and russian[0][0].node_id == "ru"
+    # Payload field names (file_name, metadata keys) never become terms.
+    assert index.query(RAGService._lexical_terms("file name metadata payload"), 5) == []
+
+
+def test_lexical_candidates_come_from_bm25_ranking(tmp_path: Path) -> None:
+    service = RAGService(
+        rag_config(tmp_path, allow_external_data_transfer=True),
+        client=_FakeScrollClient(
+            _payloads(
+                TextNode(
+                    id_="generic",
+                    text="В разделе описывается настройка проекта.",
+                    metadata={"file_name": "generic.pdf"},
+                ),
+                TextNode(
+                    id_="exact",
+                    text="Boundary stiffness задаёт жёсткость граничных условий модели.",
+                    metadata={"file_name": "exact.pdf"},
+                ),
+            )
+        ),
+    )
+
+    candidates = service._retrieve_lexical_candidates("boundary stiffness")
+
+    assert [item.node.node_id for item in candidates] == ["exact"]
+    # The dense-comparable score stays neutral; order carries relevance.
+    assert candidates[0].score == 0.0
+
+
+def test_lexical_boost_counts_translated_terms(tmp_path: Path) -> None:
+    english = NodeWithScore(
+        node=TextNode(
+            text="Soil pressure on the boundary is configured via the Load menu.",
+            metadata={"source": "manual.pdf"},
+        ),
+        score=0.45,
+    )
+    russian_distractor = NodeWithScore(
+        node=TextNode(
+            text="Общие сведения о моделировании конструкций.",
+            metadata={"source": "manual.pdf"},
+        ),
+        score=0.50,
+    )
+    service = RAGService(rag_config(tmp_path))
+
+    without_translation = service._rank_by_lexical_evidence(
+        "давление грунта на границе", [russian_distractor, english]
+    )
+    with_translation = service._rank_by_lexical_evidence(
+        "давление грунта на границе",
+        [russian_distractor, english],
+        extra_questions=["soil pressure boundary"],
+    )
+
+    assert without_translation[0] is russian_distractor
+    assert with_translation[0] is english
+
+
+def test_rerank_input_is_capped_and_tail_preserved(tmp_path: Path) -> None:
+    from app.services.rag import MAX_RERANK_CANDIDATES
+
+    nodes = [
+        NodeWithScore(
+            node=TextNode(text=f"chunk {index}", metadata={"source": f"m-{index}.pdf"}),
+            score=0.5,
+        )
+        for index in range(MAX_RERANK_CANDIDATES + 5)
+    ]
+    sizes: list[int] = []
+
+    class Cap:
+        def rerank(self, _question: str, candidates, *, top_n: int):
+            sizes.append(len(candidates))
+            return list(reversed(candidates))[:top_n]
+
+    service = RAGService(
+        rag_config(tmp_path, rerank_enabled=True, allow_external_data_transfer=True),
+        reranker=Cap(),
+    )
+
+    ranked = service._rerank("q", nodes)
+
+    assert sizes == [MAX_RERANK_CANDIDATES]
+    assert len(ranked) == len(nodes)
+    # Head was reversed by the fake reranker; the tail keeps original order.
+    assert ranked[-1].node.text == f"chunk {len(nodes) - 1}"
+
+
+def test_partial_absence_phrase_keeps_grounded_answer() -> None:
+    answer = (
+        "Жёсткость границы задаётся через меню Model [1]. "
+        "В документах нет сведений о времени вычисления."
+    )
+
+    grounded, cited_sources = RAGService._ground_answer(answer, [{"id": "a"}])
+
+    assert grounded == answer
+    assert cited_sources == [{"id": "a"}]
+
+
+def test_full_abstention_with_escalation_still_maps_to_no_answer() -> None:
+    answer = (
+        "В документах нет сведений о стоимости лицензий. "
+        "Также отсутствуют данные о скидках. Обратитесь к инженеру поддержки."
+    )
+
+    grounded, cited_sources = RAGService._ground_answer(answer, [{"id": "a"}])
+
+    assert grounded == NO_ANSWER
+    assert cited_sources == []

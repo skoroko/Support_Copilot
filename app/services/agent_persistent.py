@@ -70,7 +70,7 @@ MAX_ITERATIONS_MESSAGE = "Превышен лимит из 6 итераций. �
 # ``_PREPARED_CONTEXT_CHARS``; targeted follow-up searches receive their own
 # additional quota so a full prepared packet can no longer truncate fresh
 # evidence to nothing.
-_PREPARED_CONTEXT_CHARS = 24_000
+_PREPARED_CONTEXT_CHARS = 12_000
 _TARGETED_SEARCH_CONTEXT_CHARS = 6_000
 TELEGRAM_DELIVERY_RULES = (
     " ОТПРАВКА В TELEGRAM. Для отправки Telegram нужны явные подтверждения точных chat_id и текста;"
@@ -475,7 +475,7 @@ def build_agent(
             # projects it once; projection cannot reconstruct stripped fields.
             "sources": list(evidence.get("sources") or []),
             "contexts": [record["text"] for record in records],
-        }, query=question)
+        }, query=question, budget=_PREPARED_CONTEXT_CHARS)
         logger.info("agent_evidence_prepared", status=prepared["knowledge_status"],
                     source_count=len(prepared["sources"]),
                     preparation_ms=round((time.perf_counter() - started) * 1000, 2))
@@ -696,7 +696,7 @@ def build_agent(
                             query,
                             history=history,
                             timeout_seconds=timeout,
-                            max_context_chars=24_000,
+                            max_context_chars=_PREPARED_CONTEXT_CHARS,
                             **retrieval_options,
                         )
                     )

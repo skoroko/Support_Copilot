@@ -39,6 +39,24 @@ _LITERALS = re.compile(
 _WORDS = re.compile(r"\b[^\W\d_]+\b")
 _CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 _LATIN = re.compile(r"[A-Za-z]")
+_WORD_RUNS = re.compile(r"[A-Za-z]+|[А-Яа-яЁё]+")
+# Technical notation legitimately fuses scripts: a Latin SI prefix joins a
+# Cyrillic unit base (``kПа``, ``kВ``, ``MПa``) or a Cyrillic prefix precedes a
+# Latin unit (``кPa``, ``мHz``).  Corrupted prose instead mixes scripts inside
+# longer words (``программa``), which must still be flagged.
+_SI_LATIN_PREFIXES = frozenset({"k", "m", "g", "t", "p", "e", "z", "y", "n", "u", "d", "c", "h", "da", "mu", "µ"})
+_CYRILLIC_PREFIXES = frozenset({"к", "м", "г", "т", "п", "е", "з", "и", "н", "ц", "д", "мк"})
+_LATIN_UNITS = frozenset({
+    "pa", "n", "w", "v", "a", "hz", "j", "l", "g", "m", "s", "k", "bar",
+    "rad", "ohm", "min", "h", "wh", "var", "kn", "kw", "kv", "kg", "tf",
+    "mw", "kj", "nm", "db", "rpm", "mph", "kpa", "mpa",
+})
+_CYRILLIC_UNITS = frozenset({
+    "па", "н", "вт", "в", "а", "ом", "гц", "дж", "л", "г", "м", "с", "к",
+    "бар", "рад", "мин", "ч", "т", "кгс", "тс", "мм", "см", "км", "кн",
+    "мн", "мпа", "кпа", "гпа", "кв", "квт", "мвт", "кдж", "ккал", "мг",
+    "мл", "мкм", "нм", "кг", "сут", "об",
+})
 _LIST_PREFIX = re.compile(r"^\s*(?:\d+[.)]|[-*+])\s+")
 _SENTENCES = re.compile(
     r".*?(?:[!?…]|\.(?!\d))(?:[ \t]*\[\d+(?:\s*,\s*\d+)*\])*(?:\*\*)?(?=\s|$)"
@@ -59,13 +77,29 @@ def _is_heading(line: str) -> bool:
     ))
 
 
+def _is_technical_mixed_word(word: str) -> bool:
+    """Distinguish fused units/notation (``kПа``, ``кPa``) from mojibake."""
+    if len(word) <= 3:
+        return True
+    runs = _WORD_RUNS.findall(word)
+    if len(runs) != 2:
+        return False
+    first, second = runs
+    if _LATIN.fullmatch(first):
+        return first.lower() in _SI_LATIN_PREFIXES and second.lower() in _CYRILLIC_UNITS
+    return first.lower() in _CYRILLIC_PREFIXES and second.lower() in _LATIN_UNITS
+
+
 def answer_quality_issue(text: str, finish_reason: str | None = None) -> str | None:
     if finish_reason == "length":
         return "length"
     if not text.strip():
         return "empty"
     prose = _LITERALS.sub(" ", text)
-    if any(_CYRILLIC.search(word) and _LATIN.search(word) for word in _WORDS.findall(prose)):
+    if any(
+        _CYRILLIC.search(word) and _LATIN.search(word) and not _is_technical_mixed_word(word)
+        for word in _WORDS.findall(prose)
+    ):
         return "mixed_script"
     return None
 

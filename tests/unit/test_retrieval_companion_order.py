@@ -34,7 +34,7 @@ def test_direct_retrieved_complements_precede_saturating_structural_expansion(
     body = node("body", "Documented cause, including its applicability.", .7, location="same", suffix=suffix)
     remedy = node("remedy", "Documented remedy and conditions.", .69, location="same", suffix=suffix)
     others = [node(f"other-{i}", f"Different context {i}.", .9-i*.01, location=f"other-{i}", suffix=suffix)
-              for i in range(4)]
+              for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, body, remedy, *others])
     calls = []
 
@@ -62,7 +62,7 @@ def test_direct_retrieved_complements_precede_saturating_structural_expansion(
         assert source["source_hash"] == "a" * 64
         assert source["location_id"] == "same"
     assert calls[0] == (6, 12_000 - len(body.node.text) - len(remedy.node.text))
-    assert len(result["sources"]) == 13
+    assert len(result["sources"]) == 15
     assert len([source for source in result["sources"] if source["origin"] == "structural_relation"]) == 6
     assert sum(len(text) for source, text in pairs.values() if source["origin"] in
                {"retrieved_same_location", "structural_relation"}) <= 12_000
@@ -75,7 +75,7 @@ def test_direct_complement_over_shared_char_budget_is_omitted_whole(tmp_path: Pa
     body = node("body", "Exact table cell | value\n" * 600, .4, location="same", suffix=".chm")
     body.node.metadata["atomic_evidence"] = True
     others = [node(f"other-{i}", f"Context {i}.", .9-i*.01, location=f"other-{i}", suffix=".chm")
-              for i in range(4)]
+              for i in range(6)]
     rag._retriever = SimpleNamespace(retrieve=lambda _: [title, *others, body])
     calls = []
 
