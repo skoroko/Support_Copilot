@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from pathlib import Path
 from threading import Event
+from types import SimpleNamespace
 
 import pytest
 from docx import Document as DocxDocument
@@ -267,7 +268,7 @@ def test_concurrent_failure_cannot_erase_another_upload_from_docstore(
     assert b_obsolete_id not in {(point.payload or {}).get("doc_id") for point in indexed_points(service)}
 
 
-def test_failure_is_renamed_and_does_not_abort_other_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_failure_preserves_source_and_does_not_abort_other_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     data = tmp_path / "data"
     data.mkdir()
     good = data / "good.md"
@@ -286,8 +287,8 @@ def test_failure_is_renamed_and_does_not_abort_other_files(tmp_path: Path, monke
 
     assert result.changed_documents == 1
     assert len(result.failed_files) == 1
-    assert not bad.exists()
-    assert (data / "bad.md.failed").exists()
+    assert bad.exists()
+    assert not (data / "bad.md.failed").exists()
 
 
 def test_external_embedding_requires_explicit_confirmation(tmp_path: Path) -> None:
@@ -401,8 +402,8 @@ def test_pdf_page_numbers_are_preserved_before_metadata_enrichment(
     assert all(document.metadata["product"] == "gts_nx" for document in documents)
 
 
-def test_pdf_ingestion_uses_pypdf_reader() -> None:
-    assert type(_file_extractors()[".pdf"]).__name__ == "PDFReader"
+def test_pdf_ingestion_uses_layout_reader_with_physical_page_ledger() -> None:
+    assert type(_file_extractors()[".pdf"]).__name__ == "StructuredPDFReader"
 
 
 def test_chm_pages_can_be_materialized_as_safe_deterministic_html(tmp_path: Path) -> None:
@@ -422,3 +423,30 @@ def test_chm_pages_can_be_materialized_as_safe_deterministic_html(tmp_path: Path
     rendered = files[0].read_text(encoding="utf-8")
     assert "&lt;script&gt;ignore()&lt;/script&gt;" in rendered
     assert "<script>ignore()" not in rendered
+
+
+def test_supported_files_excludes_named_mirror_dirs_but_keeps_explicit_files(tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    mirror = data / "gts_nx_help_html"
+    manuals = data / "manuals"
+    mirror.mkdir(parents=True)
+    manuals.mkdir(parents=True)
+    mirrored = mirror / "001-topic-htm.html"
+    canonical = manuals / "guide.pdf"
+    mirrored.write_text("mirror", encoding="utf-8")
+    canonical.write_text("canonical", encoding="utf-8")
+
+    found = supported_files(data, exclude_dir_names={"gts_nx_help_html"})
+    assert found == [canonical.resolve()]
+    # An explicitly named file is still returned — the caller asked for it.
+    assert supported_files(mirrored, exclude_dir_names={"gts_nx_help_html"}) == [mirrored.resolve()]
+
+
+def test_ingest_exclude_dir_names_defaults_to_chm_mirror_and_parses_csv() -> None:
+    from app.services.ingestion import ingest_exclude_dir_names
+
+    assert ingest_exclude_dir_names(SimpleNamespace()) == ("gts_nx_help_html",)
+    assert ingest_exclude_dir_names(
+        SimpleNamespace(rag_ingest_exclude_dirs="mirror_a, mirror_b ,,")
+    ) == ("mirror_a", "mirror_b")
+    assert ingest_exclude_dir_names(SimpleNamespace(rag_ingest_exclude_dirs="")) == ()

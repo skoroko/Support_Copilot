@@ -1,0 +1,23 @@
+{
+  "full_regression": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m pytest tests --basetemp=var/pytest-verified-overview-live-final -q --disable-warnings",
+    "passed": 944,
+    "skipped": 12,
+    "warnings": 134,
+    "seconds": 151.06
+  },
+  "targeted_regression": {
+    "passed": 86,
+    "skipped": 1
+  },
+  "ruff_checked_pilot_and_evaluation_files": "pass",
+  "rag_ruff_baseline_findings": 13,
+  "rag_new_ruff_findings": 0,
+  "diff_check": "pass",
+  "live_answer_attempts": 36,
+  "live_completed_answers": 35,
+  "agent_model_call_attempts": 62,
+  "failed_agent_model_call_attempts": 1,
+  "release_allowed": false,
+  "production_updated": false
+}

@@ -10,6 +10,7 @@ import tempfile
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import lru_cache
+from os import stat_result
 from pathlib import Path
 
 from bs4 import BeautifulSoup, CData, NavigableString
@@ -62,8 +63,13 @@ def behavior_context(text: str, question: str) -> str:
     return text[:caption.start()].rstrip() if caption else text
 
 
+def archive_stamp(stat: stat_result) -> tuple[int, int, int]:
+    """Use the same replacement-sensitive cache identity for text and scope."""
+    return stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino
+
+
 @lru_cache(maxsize=64)
-def _read_member(path: str, _mtime: int, _size: int, member: str) -> bytes:
+def _read_member(path: str, _stamp: tuple[int, int, int], _size: int, member: str) -> bytes:
     with tempfile.TemporaryDirectory(prefix="support-copilot-evidence-") as directory:
         archive_path = CHMReader._ascii_compatible_path(Path(path), Path(directory))
         return ChmArchive(str(archive_path)).read(member, max_size=16 * 1024 * 1024)
@@ -81,7 +87,7 @@ def chm_context(data_dir: Path, file_name: str, member: str, text: str) -> str:
     path = matches[0]
     try:
         stat = path.stat()
-        raw = _read_member(str(path), stat.st_mtime_ns, stat.st_size, member)
+        raw = _read_member(str(path), archive_stamp(stat), stat.st_size, member)
         return project_table_rows(text, raw)
     except Exception:  # noqa: BLE001 - an unavailable archive cannot justify table facts
         return ""

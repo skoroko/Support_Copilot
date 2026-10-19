@@ -1,0 +1,55 @@
+{
+  "schema_version": 2,
+  "split": "dev",
+  "holdout_opened": false,
+  "base_manifest_sha256": "bb141a2bb5ff93f9f15e5945778f6b863dcb1494e7e8d0a967c21e0288cd6174",
+  "original_dev_cases_sha256": "3fe788a75ebd0fa5102bc032d46080913c6da4c390360e329eb436e092613cfd",
+  "original_dev_contexts_file_sha256": "9cd31f9a71d5db5c4c6d92a659444cd6980501e9bff94d975112987ae37d5131",
+  "catalog_sha256": "d695f8df61950e29240feeca1851ba7b2a27a11b0d20f61373194c26cd76b030",
+  "source_root": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant",
+  "source_hashes": {
+    "rag-block-03/02_User Manual_Chapter2_General Information.pdf": "6f928d566712886abb31b0dbd516a558a225aeadb735ff8a5e7a32f775a5d16d",
+    "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+    "rag-block-03/03_User Manual_Chapter3_Geometry.pdf": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+    "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+    "rag-block-03/04_User Manual_Chapter4_Mesh.pdf": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+    "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+    "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+    "rag-block-03/Руководство по расчетам midas Civil 2020.pdf": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+    "rag-block-03/GTS_NX 2021.chm": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+    "gts_nx_help_html/040-gts-nx-dynamic-analysis-boundary-transmitting-htm.html": "6a4297f2737eec8712ecec0f02ecb7464c787bd0930d8a350fd0861c7b0daeba",
+    "gts_nx_help_html/037-gts-nx-dynamic-analysis-boundary-boundary-condition-htm.html": "a64fd85b1def8080834057df0fbfb1d35b753147f4305263b9d550565e89c0e8"
+  },
+  "artifacts": {
+    "dev_cases_v2.json": {
+      "file_sha256": "a5680608f2faa6004e2399f6ec506e318f21e7e2f9ea77be7e9658a0a4b24b41",
+      "canonical_sha256": "420b736e4dcbb387ca16f2c6f716152edb8ecbc075020a8bb1d846d8e57fafa5"
+    },
+    "dev_contexts_v2.json": {
+      "file_sha256": "e2c417fc49df1e356d3475905473cb8fd5ac1aa5426664a4a8a6b37cf4812d3d",
+      "canonical_sha256": "e307dcf084b380003a3e7df19938d5b57a76be0af6f556aa848b6b445a993050"
+    },
+    "dev_reference_contract_v2.json": {
+      "file_sha256": "b5b367fba80aa048396f2ef20dbf7915ab8e2eb32d552f2c9dadd9321e96780d",
+      "canonical_sha256": "9be9cfe12d7ce256628d358b31a50550b3247f9beb94e0902e044d407369b0ec"
+    }
+  },
+  "review_summary": {
+    "machine_reviewed_sufficient_candidate": 73,
+    "pending": 17
+  },
+  "changed_questions": [
+    "corpus-dev-015"
+  ],
+  "semantic_release": "blocked; independent reference acceptance and result review required",
+  "api_budget_ledger": {
+    "task_user_budget_usd": 10,
+    "quota_usd": 0,
+    "quota_authorized_by_root": false,
+    "attempts": [],
+    "actual_calls": 0,
+    "actual_cost_usd": 0
+  },
+  "claim_coverage_metric": "strict source+location+block+literal quote; mechanical only; not answer correctness"
+}

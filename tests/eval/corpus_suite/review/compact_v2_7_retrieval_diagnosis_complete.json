@@ -1,0 +1,137 @@
+{
+  "method": "offline_exact_saved_attempt_diagnosis",
+  "original_run_sha256": "e9d5f7d6429402bbf9c309dab63a7c6b7caf6ab86a9f7fd1385ccc5bc9559082",
+  "reference_contract_sha256": "a992dc25f0b8c7347e5938310ccbf81ea98b83b3d57e4c46b7da805b3377d37b",
+  "original_result_unchanged": true,
+  "semantic_success": null,
+  "findings": {
+    "037": "Full curated CHM sourcehash/location/block/308character quote found in record0. Legacy650character anchor scoring causes false zero.",
+    "055": "NDCS claim exactly found in record3; required Mesh143 source absent. Curated recall1of2; real missing second-source evidence.",
+    "079": "Warning4016 claim exactly found in record3; Materials45 source absent. Curated recall1of2; real missing first-source evidence.",
+    "023": "Legacy650character prose anchor is fully retrieved, but exact reviewed formula4.4.8 is absent from every saved record. Curated recall1of2; formula completeness is a real retrieval gap."
+  },
+  "attempts": [
+    {
+      "case_id": "corpus-dev-023",
+      "attempt_id": "configured_default:retrieval:corpus-dev-023:0",
+      "attempt_sha256": "845bcf87a7e41df63218581d711690b29eec787dd764f5c67ad472c7965fdbb6",
+      "legacy_anchor_metrics": {
+        "evidence_recall_at_10": 1.0,
+        "all_slots_at_10": 1.0
+      },
+      "curated_block_coverage": {
+        "scope": "mechanical_source_bound_slot_block_coverage",
+        "semantic_success": null,
+        "required_slots": 2,
+        "matched_slots": 1,
+        "recall": 0.5,
+        "all_slots": false,
+        "slots": [
+          {
+            "slot_id": "fact-1",
+            "matched": true
+          },
+          {
+            "slot_id": "fact-2",
+            "matched": false
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "corpus-dev-037",
+      "attempt_id": "configured_default:retrieval:corpus-dev-037:0",
+      "attempt_sha256": "6542c00e88be93b7aff6e85d55c7085d28907c714b891c81c435ca9742acada1",
+      "legacy_anchor_metrics": {
+        "evidence_recall_at_10": 0.0,
+        "all_slots_at_10": 0.0
+      },
+      "curated_block_coverage": {
+        "scope": "mechanical_source_bound_slot_block_coverage",
+        "semantic_success": null,
+        "required_slots": 1,
+        "matched_slots": 1,
+        "recall": 1.0,
+        "all_slots": true,
+        "slots": [
+          {
+            "slot_id": "fact-1",
+            "matched": true
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "corpus-dev-055",
+      "attempt_id": "configured_default:retrieval:corpus-dev-055:0",
+      "attempt_sha256": "f2a1652bbe013d81f3f301a55303c08a763ecd2014f39fac1674ec67a6f2b53a",
+      "legacy_anchor_metrics": {
+        "evidence_recall_at_10": 0.0,
+        "all_slots_at_10": 0.0
+      },
+      "curated_block_coverage": {
+        "scope": "mechanical_source_bound_slot_block_coverage",
+        "semantic_success": null,
+        "required_slots": 2,
+        "matched_slots": 1,
+        "recall": 0.5,
+        "all_slots": false,
+        "slots": [
+          {
+            "slot_id": "fact-1",
+            "matched": true
+          },
+          {
+            "slot_id": "fact-2",
+            "matched": false
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "corpus-dev-079",
+      "attempt_id": "configured_default:retrieval:corpus-dev-079:0",
+      "attempt_sha256": "74ee27802ca00df05a70f3404830a898350ac4299d9230f60d4d123ead1858d0",
+      "legacy_anchor_metrics": {
+        "evidence_recall_at_10": 0.0,
+        "all_slots_at_10": 0.0
+      },
+      "curated_block_coverage": {
+        "scope": "mechanical_source_bound_slot_block_coverage",
+        "semantic_success": null,
+        "required_slots": 2,
+        "matched_slots": 1,
+        "recall": 0.5,
+        "all_slots": false,
+        "slots": [
+          {
+            "slot_id": "fact-1",
+            "matched": false
+          },
+          {
+            "slot_id": "fact-2",
+            "matched": true
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "corpus-dev-082",
+      "attempt_id": "configured_default:retrieval:corpus-dev-082:0",
+      "attempt_sha256": "2623f5fb260c777849749fd5492d64ea5dda29862ef42c769b9da392892bc021",
+      "legacy_anchor_metrics": {
+        "evidence_recall_at_10": null,
+        "all_slots_at_10": null
+      },
+      "curated_block_coverage": {
+        "scope": "mechanical_source_bound_slot_block_coverage",
+        "semantic_success": null,
+        "required_slots": 0,
+        "matched_slots": 0,
+        "recall": null,
+        "all_slots": null,
+        "slots": []
+      }
+    }
+  ]
+}

@@ -581,3 +581,58 @@ async def test_unchanged_answer_edits_never_send_duplicate_content(case, monkeyp
     if case != "long":
         assert len(visible) == 1
     placeholder.delete.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_waiting_status_rotates_while_backend_stream_is_silent(monkeypatch):
+    monkeypatch.setattr("bot.handlers._common.STATUS_ROTATE_SECONDS", 0.01)
+    placeholder = SimpleNamespace(edit_text=AsyncMock(), delete=AsyncMock())
+    answer = SimpleNamespace(edit_text=AsyncMock())
+    sends: list[str] = []
+
+    async def send(text, **_kwargs):
+        sends.append(text)
+        return placeholder if text == "Готовлю ответ…" else answer
+
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=SimpleNamespace(send_chat_action=AsyncMock()),
+        answer=AsyncMock(side_effect=send),
+    )
+
+    async def tokens():
+        await asyncio.sleep(0.06)
+        yield "Ответ."
+
+    assert await stream_to_chat(message, tokens()) == "Ответ."
+
+    statuses = [call.args[0] for call in placeholder.edit_text.await_args_list]
+    assert statuses
+    assert statuses[0] == "Ищу в мануалах…"
+    assert statuses[-1] == "Формулирую ответ…"
+    assert answer.edit_text.await_args_list[-1].args[0] == "Ответ."
+
+
+@pytest.mark.asyncio
+async def test_waiting_status_stops_on_backend_failure(monkeypatch):
+    monkeypatch.setattr("bot.handlers._common.STATUS_ROTATE_SECONDS", 0.01)
+    placeholder = SimpleNamespace(edit_text=AsyncMock(), delete=AsyncMock())
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=42),
+        bot=SimpleNamespace(send_chat_action=AsyncMock()),
+        answer=AsyncMock(return_value=placeholder),
+    )
+
+    async def tokens():
+        await asyncio.sleep(0.05)
+        raise httpx.ReadError("offline stream failure")
+        yield ""  # Keep the failing provider double an async iterator.
+
+    with pytest.raises(httpx.ReadError):
+        await stream_to_chat(message, tokens())
+
+    # No status edit may land after the turn failed and the rotation stopped.
+    await asyncio.sleep(0.05)
+    edits = placeholder.edit_text.await_count
+    await asyncio.sleep(0.05)
+    assert placeholder.edit_text.await_count == edits

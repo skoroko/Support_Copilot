@@ -15,6 +15,7 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.core.sse import with_heartbeats
 from app.core.auth import (
     InMemoryRequestBudget,
     RequestBudgetLease,
@@ -325,7 +326,7 @@ async def stream_agent(
     await budget.acquire(principal.user_id)
     lease = RequestBudgetLease(budget, principal.user_id)
     return _BudgetedStreamingResponse(
-        events(),
+        with_heartbeats(events()),
         budget=budget,
         principal=principal.user_id,
         drive=drive,

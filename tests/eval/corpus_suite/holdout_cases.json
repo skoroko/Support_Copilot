@@ -1,0 +1,1631 @@
+[
+  {
+    "id": "corpus-holdout-001",
+    "family_id": "corpus-holdout-001",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "mesh_set_colors",
+    "topic_components": [
+      "mesh_set_colors"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Как меняется отображение сетки через Mesh Set Color и Feature Edge?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/02_User Manual_Chapter2_General Information.pdf",
+        "file_sha256": "6f928d566712886abb31b0dbd516a558a225aeadb735ff8a5e7a32f775a5d16d",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\02_User Manual_Chapter2_General Information.pdf_part_23",
+        "physical_page": 24,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/02_User Manual_Chapter2_General Information.pdf",
+        "exact_quote": "Chapter 2. General Information | 23 \n \nFREE-FACE WIREFRAME \nDisplay the free faces of the mesh set as wire frames. All internal elements are hidden. \n \nFEATURE EDGE \nDisplay the mesh set using its feature edges. A feature edge is an element edge whose angle (created by \nthe two free faces making up that edge) is larger than the specified angle. \n \nMesh Face (Free Face)\n \n \nMesh Edge\nIf an angle is larger than \nthe specified angle, it is \nFeature Edge.\n \n \nMESH SET COLOR \nAssign the mesh set color to the mesh. \n \nELEMENT TYPE COLOR \nAssign the element type color to the mesh. \n \nPROPERTY COLOR \nAssign the selected property color to the mesh.",
+        "quote_sha256": "1b0d8dbb21dc89dbfe78f0e5fe12d459af992122c2ec94907db63299a7052748",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-002",
+    "family_id": "corpus-holdout-002",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "mirror",
+    "topic_components": [
+      "mirror"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Какие способы определения плоскости или оси доступны для Mirror и как сохранить оригинал?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf",
+        "file_sha256": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_User Manual_Chapter3_Geometry.pdf_part_87",
+        "physical_page": 88,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf",
+        "exact_quote": "Chapter 3. Geometry | 87 \n6.3 \nMirror \nOVERVIEW \nMove the target object. This command can be applied regardless of the type of shape and the [Copy] option \ncan be used to leave the original object and only move the copied object. \n \nFigure. Mirror \n \n \nMethodology \n \nSelect the shape to mirror and specify the mirror type.  \nThe mirror type can be defined by [Point], [Axis] and [Plane]. \n \n[Point] type : Mirror the selected point with reference to a point. The mirrored point can be selected directly \nby clicking on the work screen or checking the coordinate system option and entering the coordinates. \n[Axis] type : Mirror the selected axis wit",
+        "quote_sha256": "152af053d473746c5050860f87357520b6f8762c6effb1bdb2549ac7395c0c7a",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-003",
+    "family_id": "corpus-holdout-003",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "measure_geometry",
+    "topic_components": [
+      "measure_geometry"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Какие расстояния между геометрическими объектами измеряет Measure?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf",
+        "file_sha256": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_User Manual_Chapter3_Geometry.pdf_part_115",
+        "physical_page": 116,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf",
+        "exact_quote": "Chapter 3. Geometry | 115 \n9.5 \nMeasure \nOVERVIEW \nMeasure the shortest distance or angle between shapes using various methods.  \n \nFigure. Measure \n \n \nMethodology \nMeasure the distance or angle by selecting a shape’s point, line, face etc. on the screen.  \nThe distance can be measured using [Distance between point and point], [Distance between point and \nEdge], [Distance between point and face], [Distance between edge and edge], [Distance between edge and \nface], [Distance between face and face]. The angle can be measured using [Angle between three points].  \n \n \nChecking the needed snaps with Define snap (\n) makes it easier to select point",
+        "quote_sha256": "be28ac35f182efb8883fb6a5d4e37cae8276fda5316ef18d01ac743197a7967a",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-004",
+    "family_id": "corpus-holdout-004",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "variational_element_derivation",
+    "topic_components": [
+      "variational_element_derivation"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Как вариационная постановка используется при выводе конечного элемента?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+        "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf_part_98",
+        "physical_page": 99,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+        "exact_quote": "Снова применив вариационный метод к величине виртуальной работы, получим \nследующее основное уравнение для вычисления жесткости. \n \n \n \n \n(3.9.6) \n \nСледующее уравнение используется для преобразования перемещения зависимого узла в \nперемещение и поворот независимого узла. \n \n  \n \n \n(3.9.7) \n \nСнова применив вариационный метод к последнему уравнению, и подставив результат в \nуравнение (3.9.6), сможем вычислить жесткость. \n \n \n \n(3.9.8) \n \nМожно показать, что геометрическая жесткость элемента жесткой связи определяется \nсилами и относительными расстояниями до зависимых узлов, а также зависит  от \nвращательных степеней свободы независимых уз",
+        "quote_sha256": "84d8ccb1eca66b19d11130d091c140b9ff0d3fc4cb50e8ed490598519375ef87",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-005",
+    "family_id": "corpus-holdout-005",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "mesh_projection",
+    "topic_components": [
+      "mesh_projection"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Какие способы задания целевой поверхности и направления доступны при проекции сетки?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "file_sha256": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_270",
+        "physical_page": 271,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "exact_quote": "Chapter 4. Mesh | 270 \nProject Target \nSelect an existing surface of a geometry shape or an element boundary surface as the projection target \n(target surface) or select 3 arbitrary points that pass the target surface using the [Tree points Plane] function. \n \nProjection Direction \nSet the projection direction using the axis direction on the GCS or the direction of an arbitrary vector that \nconnects the start and end points. Use the [Shortest Path Line] to automatically set the shortest distance \ndirection between the node and projection target (target surface) in the normal direction. \n \n1D-> 2D \nOverview \nGenerate a 2D element by project ex",
+        "quote_sha256": "8dfbdd070d4ca6f1a9ebf2fdb8a6f4e7bd971b5a18f7f78f700f6e37cce9279f",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-006",
+    "family_id": "corpus-holdout-006",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "mesh_taper",
+    "topic_components": [
+      "mesh_taper"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "limitation",
+    "question": "Что показывает taper четырёхугольного элемента и почему он не применяется к треугольнику?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "file_sha256": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_360",
+        "physical_page": 361,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "exact_quote": "Chapter 4. Mesh | 360 \n[Taper] \nGeometrically calculates how much the quadrilateral digresses. It is not applied to triangular elements. A \nquadrilateral has a value of 1, and the value decreases as it digresses (becomes closer to a triangular \nshape) from its rectangular shape. For a solid element, the taper value is checked for each face and the \nsmallest value is chosen as the taper value. A value closer to 1 is better. \n \n \n \n[Jacobian Ratio] \nThe Jacobian determinant is calculated at each Gauss integral point on the mesh the Jacobian ratio is the \nratio between the largest and smallest Jacobian determinant value. For 2D elements, the Jac",
+        "quote_sha256": "4b0164bd882c4fd3512ba2386c2cc77f02370c85e895a0d936aeacb392ac4698",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-007",
+    "family_id": "corpus-holdout-007",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "hyperbolic_soil",
+    "topic_components": [
+      "hyperbolic_soil"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Как определяется гиперболическая модель поведения грунта?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_18",
+        "physical_page": 19,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "exact_quote": "1.9 Гиперболическая модель (Hyperbolic Model (Duncan-Chang)) \nСоотношение напряжений и деформаций для грунтовых материалов становится \nнелинейным по мере приближения к кривой разрушения, и это может быть учтено путем \nкорректировки модуля упругости основания. Функция, предложенная авторами Duncan и \nChang2, используется для определения модуля упругости основания. Кривая соотношения \nнапряжений и деформаций является гиперболой, а модуль упругости основания является \nфункцией касательного напряжения и напряжения, создаваемого горным давлением. Это \nочень удобная формулировка, так как для определения нелинейных моделей материалов \nтребуется за",
+        "quote_sha256": "9e2e7c89ffc1243581687457c0395c97d8eb7490e0da19d82a64344e1b6c986a",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-008",
+    "family_id": "corpus-holdout-008",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "drained_undrained",
+    "topic_components": [
+      "drained_undrained"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Чем стационарная и нестационарная составляющие порового давления различаются в drained/undrained постановке?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_108",
+        "physical_page": 109,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "exact_quote": "Раздел 3. Дренирующие / недренирующие материалы \n(Drained/Undrained Materials) \n3.1 Изотропные материалы (Isotropic Materials) \nВ расчетах напряженного состояния поровое давление может быть разделено на \nстационарную составляющую, которая не меняется с течением времени, и нестационарную \nсоставляющую, которая меняется во времени или в зависимости от граничных условий или \nусловий нагружения (принимается более удобное условие). \n \nЗдесь состояние, в котором нестационарная составляющая порового давления равна нулю, \nназывается условиями дренирования, а расчет при таких условиях называется \nдренированным расчетом. В общем случае, дренированный",
+        "quote_sha256": "adb56b15d47266d778a632e6cb1d86329d8b701b1192c38127ec8b30bc54ec9d",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-009",
+    "family_id": "corpus-holdout-009",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "elastic_link_boundary",
+    "topic_components": [
+      "elastic_link_boundary"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Для чего применяется условие граничной упругой связи в расчётной модели?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf",
+        "file_sha256": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_59",
+        "physical_page": 60,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf",
+        "exact_quote": "Chapter 5. Analysis Method | 59 \n3.13 Non-Consolidation \nOverview \nUsed to model non-consolidation layers.  \nNon-consolidation elements are used as boundary conditions for Consolidation analysis.  \n \n▶ Non-consolidation \n \n \nMethodology \nSelect the point to assign the Non-consolidation boundary conditions. \nThe target can be selected from [Element], [2D Element], [3D Element], [Face], [Part].  \nSelecting [Face] or [Part] applies the unconsolidated boundary conditions for all elements in the geometry \nshape.  \n \nBoundary Set \nRegister the set constraint conditions on the desired boundary set. The user can specify the name of the \nboundary set.",
+        "quote_sha256": "47f90056756c1c423e62480cba98bdc6abb435dbbc3993f3499243692a83b998",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-010",
+    "family_id": "corpus-holdout-010",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "seepage_algorithm",
+    "topic_components": [
+      "seepage_algorithm"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Какие параметры описывают фильтрационную постановку в алгоритмах GTS NX?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_56",
+        "physical_page": 57,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "exact_quote": "Прямой частотный анализ (Direct frequency response analysis) \nПри использовании прямого решателя для прямого частотного анализа решение системы \nуравнений (5.10.18) позволяет получить частотный отклик \n. Точное решение может \nбыть найдено прямым методом, но данный метод является весьма неэффективным для \nбольших задач или при наличии множества частот, что ведет к необходимости \nразложения системы уравнений и поиска решения для каждой из частот. Для решения \nданной проблемы может быть применена интерполяция с использованием передаточной \nфункции. \n \nВынужденные колебания (Enforced motion) \nИсходное движение в эквивалентном линейном анализе,",
+        "quote_sha256": "c2c1bcd4121b835fd27c2c9be7a74038a211d2f77eb592d48cad89e28864922b",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-011",
+    "family_id": "corpus-holdout-011",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "heat_exchange_algorithm",
+    "topic_components": [
+      "heat_exchange_algorithm"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Как представляется обмен теплом при тепловом расчёте в GTS NX?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_63",
+        "physical_page": 64,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "exact_quote": "Рис. 5.11.3 – Типичная кривая напряжения-деформации при пластической деформации \n \nЗакон Нейбера по-разному определяет взаимосвязь между упругим напряжением и \nдеформацией, как показано в уравнениях (5.11.14) и (5.11.15), в зависимости от типов \nприменяемого эквивалентного напряжения. \n \n► эквивалентное напряжение по Мизесу \n \n► Максимальное напряжение сдвига или максимальное главное напряжение \n \n \nРасчет деформации с использованием нелинейного анализа \nВ случае, если предыстория деформирования, используемая в методе деформации, \nвычисляется непосредственно с помощью нелинейного анализа, коэффициент прочности \nпри циклическом деформирова",
+        "quote_sha256": "0f04a5db179935b7481bdf42d509f3808850710e492dc1ded9fd631dc9b24af6",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-012",
+    "family_id": "corpus-holdout-012",
+    "split": "holdout",
+    "source_group": "pdf_only",
+    "topic_family": "bridge_rating",
+    "topic_components": [
+      "bridge_rating"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Какие отмеченные параметры включаются в расчёт рейтинга моста в Civil?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "civil",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "file_sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\Руководство по расчетам midas Civil 2020.pdf_part_389",
+        "physical_page": 390,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "exact_quote": "6) Выбор Flexure, Shear, Stress и Prestressing steel\nТолько отмеченные параметры участвуют в расчете рейтинга\nНастройки группового рейтинга моста \nМеню: Design>Bridge Load Rating Design>Bridge Load Rating Group Setting\n1) Выбираются группы элементов из списка Select Group.\nДанные элементы выбранных групп будут подвергаться проверке.\n2) Задается Условный коэффициент (Condition factor).\nДанный коэфициент применяется к сопротивлению на изгиб (Mn) и на\nсдвиг (Vn).  Различные значения Условного коэфициента могдут быть\nзаданы для разных групп.\n3) Контрольная позиция (Check position).\nВыбор конца (-ов) элементов в заданной группе, для которых\nвыполн",
+        "quote_sha256": "60cfaee5d3f3526eadf3361ee82a0b876198de55da7fe035bffadcb9c431123e",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-013",
+    "family_id": "corpus-holdout-013",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "elastic_creep_modulus_error",
+    "topic_components": [
+      "elastic_creep_modulus_error"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "diagnosis",
+    "question": "Что означает невозможность вычислить упруго-ползучий касательный модуль при ERROR2138?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_420",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "ERROR2138 Home > GTS NX > Trouble Shooting Guide > Error > ERROR2138 ERROR [2138]: \"CANNOT COMPUT ELEASTIC-CREEP TANGENT MODULUS. MATERIAL ID = #. ELEMENT ID = #. INTEGRATION POINT = #. ( ОШИБКА [2138]: НЕВОЗМОЖНО ВЫЧИСЛИТЬ ВЯЗКОУПРУГИЙ КАСАТЕЛЬНЫЙ МОДУЛЬ. МАТЕРИАЛ ID = #. ЭЛЕМЕНТ ID = #. ТОЧКА ИНТЕГРИРОВАНИЯ = #.) Причина Данная ошибка возникает в том случае, когда касательный модуль не может быть вычислен для вязкоупругой модели материала. Тип ",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "ERROR2138 Home > GTS NX > Trouble Shooting Guide > Error > ERROR2138 ERROR [2138]: \"CANNOT COMPUT ELEASTIC-CREEP TANGENT MODULUS. MATERIAL ID = #. ELEMENT ID = #. INTEGRATION POINT = #. ( ОШИБКА [2138]: НЕВОЗМОЖНО ВЫЧИСЛИТЬ ВЯЗКОУПРУГИЙ КАСАТЕЛЬНЫЙ МОДУЛЬ. МАТЕРИАЛ ID = #. ЭЛЕМЕНТ ID = #. ТОЧКА ИНТЕГРИРОВАНИЯ = #.) Причина Данная ошибка возникает в том случае, когда касательный модуль не может быть вычислен для вязкоупругой модели материала. Тип расчета Нелинейный расчет Связанное с ошибкой меню Mesh >> Prop./CSys./Func. >> Material Способы исправления Проверьте и исправьте свойства материала.",
+        "quote_sha256": "27dcd39d72983ddbaa6e9e1a8e7fa62880f69af7c7d1c36cabe5830757e7c040",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-014",
+    "family_id": "corpus-holdout-014",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "minimum_thermal_step_warning",
+    "topic_components": [
+      "minimum_thermal_step_warning"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "diagnosis",
+    "question": "О чём предупреждает достижение минимального шага времени при Warning4045?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_460",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Warning4045 Home > GTS NX > Trouble Shooting Guide > Warning > Warning4045 WARNING [4045]: MINIMUM ALLOWED TIME STEP REACHED. TEMPERATURE CHANGE PER INCREMENT MAY BE LARGER THAN SPECIFIED (ПРЕДУПРЕЖДЕНИЕ [4045]: ДОСТИГНУТ МИНИМАЛЬНО ДОПУСТИМЫЙ ШАГ ПО ВРЕМЕНИ. ИЗМЕНЕНИЕ ТЕМПЕРАТУРЫ ЗА ИНКРЕМЕНТ МОЖЕТ БЫТЬ БОЛЬШЕ ЗАДАННОГО) Причина Когда в нестационарном расчете теплопередачи используется функция автоматического шага по времени, то данное сообщение",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Warning4045 Home > GTS NX > Trouble Shooting Guide > Warning > Warning4045 WARNING [4045]: MINIMUM ALLOWED TIME STEP REACHED. TEMPERATURE CHANGE PER INCREMENT MAY BE LARGER THAN SPECIFIED (ПРЕДУПРЕЖДЕНИЕ [4045]: ДОСТИГНУТ МИНИМАЛЬНО ДОПУСТИМЫЙ ШАГ ПО ВРЕМЕНИ. ИЗМЕНЕНИЕ ТЕМПЕРАТУРЫ ЗА ИНКРЕМЕНТ МОЖЕТ БЫТЬ БОЛЬШЕ ЗАДАННОГО) Причина Когда в нестационарном расчете теплопередачи используется функция автоматического шага по времени, то данное сообщение возникает в том случае, когда шаг по времени, требуемый по условию ограничения максимального изменения температуры за инкремент шага, меньше, чем шаг по времени при максимальном уровне бисекции. Тип",
+        "quote_sha256": "db0535cd6bbd555a62f491adea182acddf70214e978ac80f66c82585ee3292b5",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-015",
+    "family_id": "corpus-holdout-015",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "modified_cam_clay",
+    "topic_components": [
+      "modified_cam_clay"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Как задаются поведенческие характеристики Modified Cam Clay?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_143",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Modified Cam Clay Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Modified Cam Clay General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Modified Cam Clay (Модифицированная модель Cam Clay) Данная модель используется для моделирования поведения глинистых материалов. Основное соотношение между величинами изменения объема и давления в глинистом грунте ",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Modified Cam Clay Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Modified Cam Clay General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Modified Cam Clay (Модифицированная модель Cam Clay) Данная модель используется для моделирования поведения глинистых материалов. Основное соотношение между величинами изменения объема и давления в глинистом грунте может быть выражено с использованием концепции двух линий – линии нормальной консолидации и линии пере-консолидации. Линия пере-консолидации также называется линией задержки, при этом нарастание напря",
+        "quote_sha256": "72cf9514024c653d9bb08d5ec0f7c24738c6ed7e601d251aec515220345f4ca8",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-016",
+    "family_id": "corpus-holdout-016",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "pm4sand",
+    "topic_components": [
+      "pm4sand"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "concept",
+    "question": "Какие параметры требуются для настройки модели PM4Sand в справке?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_484",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "PM4Sand Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > PM4Sand General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) - PM4Sand (Модель PM4Sand) Функция разработана для проектирования разжижения с применением теории пластичности, основанной на эффективном напряжении. Она расширена, чтобы проводить нелинейный имплицитный расчет, основанный на модели мате",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "PM4Sand Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > PM4Sand General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) - PM4Sand (Модель PM4Sand) Функция разработана для проектирования разжижения с применением теории пластичности, основанной на эффективном напряжении. Она расширена, чтобы проводить нелинейный имплицитный расчет, основанный на модели материалов, которая применяется к схеме разжижения при помощи эксплицитного метода. Относительная плотность ( DR ): ( Idriss and Boulanger (2018)) Атмосферное давление (Па): исходная величина = 101,3 кПа",
+        "quote_sha256": "acfb05e3d7ef38b49d7bb5f10d925d4418f24bfa34fc3be188ab9d1f6f641673",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-017",
+    "family_id": "corpus-holdout-017",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "advanced_view_control",
+    "topic_components": [
+      "advanced_view_control"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "procedure",
+    "question": "Какие средства управления видом объединяет Advanced View Control Toolbar?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_60",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Advanced View Control Toolbar Home > GTS NX > General Information > Advanced View Control Toolbar Advanced View Control Toolbar (Расширенная панель инструментов управления видом) Clipping Plane (Плоскость подрезки) Геометрические объекты могут быть разрезаны по указанной плоскости, при этом образовавшееся сечение доступно для просмотра. Если необходимо сохранить такое сечение, следует нажать кнопку [Add] [Добавить]. Нажатие на соответствующую ико",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Advanced View Control Toolbar Home > GTS NX > General Information > Advanced View Control Toolbar Advanced View Control Toolbar (Расширенная панель инструментов управления видом) Clipping Plane (Плоскость подрезки) Геометрические объекты могут быть разрезаны по указанной плоскости, при этом образовавшееся сечение доступно для просмотра. Если необходимо сохранить такое сечение, следует нажать кнопку [Add] [Добавить]. Нажатие на соответствующую иконку позволяет просмотреть сечение, образованное в результате разреза. Данная функция может быть использована для изучения внутренней структуры геометрической модели на начальном этапе моделирования, а",
+        "quote_sha256": "f55714688a0a2295cf08687ce4e337a36a7f14eddaa7f1401c4554fe648a78ee",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-018",
+    "family_id": "corpus-holdout-018",
+    "split": "holdout",
+    "source_group": "html_chm",
+    "topic_family": "linear_time_history_solver_choice",
+    "topic_components": [
+      "linear_time_history_solver_choice"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Какие варианты решения предусмотрены для линейного нестационарного расчёта Modal/Direct?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_20",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Linear time history analysis (Modal/Direct) Home > GTS NX > Analysis > Analysis Case > General > Linear time history analysis (Modal/Direct) Solution Type (Тип решения) ▒ Linear time history analysis (Modal/Direct) (Линейный нестационарный расчет (Модальный/Прямой)) В линейном нестационарном расчете находится решение динамических уравнений равновесия для поведения сооружения (перемещения, усилия в элементах и т. д.) в произвольный момент времени ",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Linear time history analysis (Modal/Direct) Home > GTS NX > Analysis > Analysis Case > General > Linear time history analysis (Modal/Direct) Solution Type (Тип решения) ▒ Linear time history analysis (Modal/Direct) (Линейный нестационарный расчет (Модальный/Прямой)) В линейном нестационарном расчете находится решение динамических уравнений равновесия для поведения сооружения (перемещения, усилия в элементах и т. д.) в произвольный момент времени с использованием динамических свойств сооружения и заданных нагрузок при заданной динамической нагрузке. Для выполнения линейного нестационарного расчета используется метод суперпозиции форм (Modal su",
+        "quote_sha256": "bd8840c42e74f85d8475fc601e8206ce9f8370bf6b6a5dc0ece6e6ed2d14ee28",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-019",
+    "family_id": "corpus-holdout-019",
+    "split": "holdout",
+    "source_group": "multi_pdf",
+    "topic_family": "arc_length_control",
+    "topic_components": [
+      "arc_length_control"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Как метод длины дуги контролирует шаг нелинейного решения в Civil и GTS NX?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "civil",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "file_sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\Руководство по расчетам midas Civil 2020.pdf_part_179",
+        "physical_page": 180,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "exact_quote": "перемещения оказывается чрезмерно большим, это происходит, когда \nкривая нагрузки-перемещения близка к прямой. Если же приращение \nнагрузки остается постоянным, то слишком большим может оказаться \nрезультирующее значение перемещения. Метод длин дуг решает данную \nпроблему, и процесс с нелинейной зависимостью нагрузка-перемещение \nтипа “прямой перегиб”(рис.2.10(а)) может быть рассчитан подобно методу \nконтроля перемещений. Более того, методом длин дуг даже решается задача \nс нелинейной зависимостью типа “обратный перегиб”, которая не может \nбыть решена методом контроля перемещений, смотрите рис. 2.10 (б). \n(а)  “прямой перегиб”        \n (б)  “",
+        "quote_sha256": "6ad8b66e3489d0635aa589f7725251a47573332259a2a1e9cae6a8008444844b",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_28",
+        "physical_page": 29,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "exact_quote": "Здесь выполнена линеаризация условия, состоящего в том, что несбалансированные \nсилы, которые возникают в i+1 итеративных вычислениях в соответствии с шаговым \nрешением \n и шаговым параметром нагрузки \n, равны нулю. Взаимосвязь между \nшаговым решением и шаговым параметром нагрузки может быть описана следующим \nобразом: \n \nС использованием данного соотношения, накопленное шаговое решение для i+1 \nитеративного вычисления равно: \n \n шаговое решение для несбалансированной силы \n перемещение соответствующее полной внешней силе \n \nВ GTS NX для метода длины дуги используются методы ограничения Крисфилда (Crisfield), \nРикса (Riks) или модифициров",
+        "quote_sha256": "16bc613604e28d32c40d9128a49b6b8106932e6615902d0abdab526e0c3984fa",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-020",
+    "family_id": "corpus-holdout-020",
+    "split": "holdout",
+    "source_group": "multi_pdf",
+    "topic_family": "euler_integration+newmark_integration",
+    "topic_components": [
+      "euler_integration",
+      "newmark_integration"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Какие разные временные схемы описывают явное интегрирование Эйлера и уравнение Ньюмарка?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "civil",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "file_sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\Руководство по расчетам midas Civil 2020.pdf_part_269",
+        "physical_page": 270,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "exact_quote": "Рис. 2.46 Явное прямое интегрирование Эйлера\n265\nΔσе \nA \nσ \nB \nX \nA \nσ \n B\nX \nC \nD \nΔσе \n−D̃e\nX : Конечное значение напряжения на \nпредыдущем шаге\nА :Точка пересечения приращения \nнапряжения и поверхности текучести\nВ : Вектор напряжения, учитывающий \nупругую деформацию \nC : Значение напряжения после коррекции\nD : Значение напряжения после его \nискуственного возврата на поверхность \nтекучести",
+        "quote_sha256": "bd77a735ec5fa1260dc5198831ae3c53b341515bad316d7c70f65766ff451240",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_35",
+        "physical_page": 36,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "exact_quote": "координат, конечный поворот которой обозначен величиной φ, нестационарное \nуравнение Ньюмарка в связанной системе координат выглядит следующим образом: \n \n угловая скорость и угловое ускорение относительно связной системы \nкоординат φ \n \nС использованием базового вектора, нормального к связной системе координат \n, \nприведенное выше уравнение может быть записано для глобальной системы координат. \n \nПроизведение перпендикулярных базовых векторов в уравнении (5.7.5) – то же самое, что \nшаговая матрица вращения: \n \n Кососимметричная матрицы для величины приращения поворота \n \nВеличина приращения поворота может быть выражена с помощью метода Нью",
+        "quote_sha256": "2a8293cf7399cfbea6bcfdb8246843cbf0f1b95089fec860816604f93670516e",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-021",
+    "family_id": "corpus-holdout-021",
+    "split": "holdout",
+    "source_group": "multi_pdf",
+    "topic_family": "material_behavior_definition+modified_mohr_coulomb",
+    "topic_components": [
+      "material_behavior_definition",
+      "modified_mohr_coulomb"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "synthesis",
+    "question": "Как описание модифицированного Мора–Кулона сопоставляется с настройкой модели в Mesh?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_54",
+        "physical_page": 55,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "exact_quote": "2.10 Модифицированная модель Мора-Кулона (Modified Mohr-Coulomb) \nМодифицированная модель Мора-Кулона является расширенной версией модели Мора-\nКулона, и представляет собой специализированную модель для представления песков и \nпылеватых грунтов. Модифицированная модель Мора-Кулона предназначена для \nпредставления сложных моделей материалов, которые сочетают в себе нелинейно-\nупругое и пластическое поведение. \n \nНелинейно-упругое поведение (Nonlinear elastic) \nВ модифицированной модели Мора-Кулона упругая стадия работы материала \nпредставляется как нелинейно-упругая, при этом используется степенной закон для \nформулировки взаимосвязи о",
+        "quote_sha256": "cfd227ab94f012d8c513f4cd6b7e8c6b1d5a8269b9cd10dc8d5725cf32418bab",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "file_sha256": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_14",
+        "physical_page": 15,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "exact_quote": "Chapter 4. Mesh | 14 \nInitial m,s value \nThe initial m,s values are 1 of the empirical Hoek-Brown material constants for Intact rocks that classify rocks \naccording to their grade (type). General m values are shown in the table below. \n \nFigure. Hoek-Brown material constant mi \n \n \nThe s constant can be calculated from the GSI (Geological Strength Index) when the rock is intact and has a \nvalue of '1'. The GSI according to rock grade is shown in the table below and the value can be generally \npredicted by calculating the rock classification results (RMR, RQD). \nThe s calculated from the GSI is as follows. \n \ns = exp (GSI −100\n9\n) (GSI > 25)",
+        "quote_sha256": "474ac2df532c6b2390de9811432d60a0d8275a5feb31021a39b12c1608225246",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-022",
+    "family_id": "corpus-holdout-022",
+    "split": "holdout",
+    "source_group": "multi_pdf",
+    "topic_family": "diaphragm_constraints+special_element_kinematics",
+    "topic_components": [
+      "diaphragm_constraints",
+      "special_element_kinematics"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Чем ограничения движения диафрагмы отличаются от кинематики степеней свободы элемента?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "civil",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "file_sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\Руководство по расчетам midas Civil 2020.pdf_part_119",
+        "physical_page": 120,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "exact_quote": "испытывает действие крутящего момента относительно вертикальной оси\nКогда одноэтажная конструкция, показанная на рис.1.72, подвергается \nвоздействию крутящего момента вокруг вертикальной оси и жесткость \nплиты в плоскости значительно выше, чем горизонтальная жесткость \nколонн, то диафрагма в целом повернется на угол φ, где φ ≅φ 1 ≅φ 2 ≅φ 3≅φ 4. \nСоответственно четыре степени свободы узлов могут быть уменьшены до \nединственной степени свободы. \n115",
+        "quote_sha256": "aba0daee58ed5e951e35d4e65874cc89d9a71f51e23898f8c946df0d55d4a8cb",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+        "file_sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf_part_112",
+        "physical_page": 113,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+        "exact_quote": "Кроме того, в отношении степени свободы см. данные о поровом давлении воды в \nРазделе 11 \"Элемент моделирования консолидации (Consolidation Element)\". Здесь, в \nслучае квадратичного элемента, для степени свободы теплообмена применяется функция \nформы нижнего порядка, аналогичную функциям порового давления воды. \n \nУравнение равновесия момента (Moment Equilibrium Equation) \nУравнение равновесия линейного момента для малого объема пористой среды выглядит \nследующим образом: \n \n \n(3.13.1)\nρ  \n: плотность пористой среды  \ng  \n: ускорение силы тяжести  \n \nТакже, полное напряжение пористой среды, определяемое на основе соотношения \nнапряжений, вы",
+        "quote_sha256": "1db7f2d0fe9e7def875fef45d213cc4fbf07cb542e67295539b5a53f5115a108",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-023",
+    "family_id": "corpus-holdout-023",
+    "split": "holdout",
+    "source_group": "mixed",
+    "topic_family": "soft_soil",
+    "topic_components": [
+      "soft_soil"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "synthesis",
+    "question": "Как связаны параметры модели Soft Soil из пособия и её настройка в справке?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "file_sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf_part_72",
+        "physical_page": 73,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "exact_quote": ": начальный коэффициент пустотности \n : наклон линии переуплотнения \n : коэффициент Пуассона \nЕсли прочность на разрыв \n рассматривается из приведенного выше уравнения, \nобъемный модуль упругости можно выразить следующим образом: \n \nИспользуя сцепление C и угол трения , предел прочности на разрыв \n  можно рассчитать \nследующим образом: \n \n \nФункция текучести и правило потока (Yield function and flow rule) \nМодель Soft Soil использует функцию текучести модели Модифицированного Мора-\nКулона. Функция текучести и правило потока модели Soft Soil совпадают с уравнениями \n(4.2.100) и (4.2.104) соответственно. Для получения дополнительных сведен",
+        "quote_sha256": "0e58e1590cbf40f08b8e36bd71e41ecce218dbdc2e94dd004118628d5def7102",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_152",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Soft Soil Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Soft Soil General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Soft Soil (Модель мягкого грунта) Модель мягкого грунта подходит для моделирования нормально консолидированных или почти нормально консолидированных грунтов. Модель мягкого грунта имеет нелинейно-упругую характеристику, которая хар",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Soft Soil Home > GTS NX > Mesh > Property,Coordinate,Function > Material > General Material (Behavioral properties) > Soft Soil General Material(Behavioral properties) (Общие свойства материалов (свойства поведения)) ▒ Soft Soil (Модель мягкого грунта) Модель мягкого грунта подходит для моделирования нормально консолидированных или почти нормально консолидированных грунтов. Модель мягкого грунта имеет нелинейно-упругую характеристику, которая характеризуется логарифмическим соотношением между объемными деформациями и средним эффективным давлением, т.е. такой же зависимостью между напряжениями и жесткостью, как в модифицированной модели Cam-Cl",
+        "quote_sha256": "32a7bb6bc4f77a6bee6d3c2cf8ea6add114eeb53baf20842663a9c7d5c9a08fd",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-024",
+    "family_id": "corpus-holdout-024",
+    "split": "holdout",
+    "source_group": "mixed",
+    "topic_family": "contour_results+nodal_stress_recovery",
+    "topic_components": [
+      "contour_results",
+      "nodal_stress_recovery"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "synthesis",
+    "question": "Как восстановленные узловые напряжения используются при отображении контуров результата?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "file_sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf_part_49",
+        "physical_page": 50,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "exact_quote": "величины напряжений в любой необходимой точке. Напряжения вычисляются как сумма \nпроизведений узловых напряжений на функцию формы в данной точке. \n \n функция формы в i-м узле \n узловые напряжения в i-м узле \n напряжения в произвольной точке внутри элемента \n \nЗдесь узловые напряжения вычисляются с помощью метода восстановления напряжений, \nкоторый использует метод осреднения по узлам. Другими словами, GTS NX вычисляет \nузловые напряжения путем экстраполяции интегральных напряжений в каждом узле \nэлемента, а окончательные узловые напряжения в общих узлах определяются как \nсредние величины вычисленных узловых напряжений. \n \nИнтеграл напряжени",
+        "quote_sha256": "29df84bbc751678de39ecdaab35cb0d6bd441afcadb63d3d6ff521d3176ba003",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_281",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Contour Home > GTS NX > Result > General > Contour Contour (Изополя) ▒ Обзор Отображение перемещений, сил реакций, напряжений, деформаций и направлений активированных элементов в виде изополей. ▒ Методология Инструмент просмотра результатов расчета Используйте опцию включения/отключения изополей для отображения изополей на экране. <Опция отображения изополей включена> <Опция отображения изополей выключена> Contour property (Свойства изополей) Изо",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Contour Home > GTS NX > Result > General > Contour Contour (Изополя) ▒ Обзор Отображение перемещений, сил реакций, напряжений, деформаций и направлений активированных элементов в виде изополей. ▒ Методология Инструмент просмотра результатов расчета Используйте опцию включения/отключения изополей для отображения изополей на экране. <Опция отображения изополей включена> <Опция отображения изополей выключена> Contour property (Свойства изополей) Изополя могут быть использованы вместе с другими графическими функциями для отображения большего количества информации [Color] (Цвет) Выбор цветов для отображения изополей результатов или сеток модели. <",
+        "quote_sha256": "394de359768c4d373ca0de60eb66546684cac875bd3ab35536f2e5939e156711",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-025",
+    "family_id": "corpus-holdout-025",
+    "split": "holdout",
+    "source_group": "mixed",
+    "topic_family": "heat_transfer_boundary+viscoelastic_damper",
+    "topic_components": [
+      "heat_transfer_boundary",
+      "viscoelastic_damper"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Чем рассеяние энергии вязкоупругим демпфером Civil отличается от граничного теплообмена GTS NX?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "civil",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "file_sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\Руководство по расчетам midas Civil 2020.pdf_part_209",
+        "physical_page": 210,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "exact_quote": "Рис. 2.24   Схемы использования пружин для представления \nэлементов Главной Связи силового типа\nВязкоупругий демпфер \n Вязкоупругий  демпфер  одновременно обладает  скоростью, которая \nсоздает силу, пропорционально скорости деформации, и упругостью, \nвозбуждающей пропорциональную деформации силу. Устройство \nувеличивающее демпфирующие качества конструкции, и, таким \nобразом, уменьшающее ответную динамическую реакцию конструкции \nна сейсмические воздействия, ветер, и т.п. Демпфер предназначен для \nувеличения безопасности конструкции и срока ее службы. \n Характерной математической моделью вязкоупругого демпфера может \nслужить модель Максвелла,",
+        "quote_sha256": "89bb56035b1a8a9675322fc8acd085f1fa084b87611dbcfd66c66ea8ac300254",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_491",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Heat Transfer Home > GTS NX > Analysis > Analysis Case > General > Heat Transfer Solution Type - Heat Transfer Расчет теплопередачи можно разделить на два типа: стационарный расчет (состояние модели: температура и скорость теплового потока, устойчивы) и нестационарный расчет (зависит от времени). Данный расчет может быть использован для моделирования температурных изменений в грунте вследствие изменения окружающей среды или возведения объектов, т",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Heat Transfer Home > GTS NX > Analysis > Analysis Case > General > Heat Transfer Solution Type - Heat Transfer Расчет теплопередачи можно разделить на два типа: стационарный расчет (состояние модели: температура и скорость теплового потока, устойчивы) и нестационарный расчет (зависит от времени). Данный расчет может быть использован для моделирования температурных изменений в грунте вследствие изменения окружающей среды или возведения объектов, таких как здания или трубопроводы. Теплопередача – это передача тепловой энергии как следствие температурного градиента. Обмен тепловой энергии основан на следующих явлениях: - Теплоотдача: определяет",
+        "quote_sha256": "25671dec35742166108075734b751bbd29e1737138bef01f02d8315482869578",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-026",
+    "family_id": "corpus-holdout-026",
+    "split": "holdout",
+    "source_group": "mixed",
+    "topic_family": "material_parameter_functions",
+    "topic_components": [
+      "material_parameter_functions"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "synthesis",
+    "question": "Как свойства материала и задание функции используются при настройке зависимости параметров?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "file_sha256": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\04_User Manual_Chapter4_Mesh.pdf_part_107",
+        "physical_page": 108,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "exact_quote": "Chapter 4. Mesh | 107 \nThe Elasticity modulus values gained from on-site tests can be 1 of the many elasticity moduli discussed \nabove and can be modified appropriately for real situations.  \n \nTable. The Elasticity modulus and Poisson’s ratio for rock and other materials \nGeo-material \nElasticity modulus (tonf/m2) \nPoisson’s ratio \namphibolite \n9.4~12.1 106 \n0.28~0.30 \nanhydrite \n6.8 106 \n0.30 \nsiabase \n8.7~11.7 106 \n0.27~0.30 \nsiorite \n7.5~10.8 106 \n0.26~0.29 \nsolomite \n11.0~12.1 106 \n0.30 \nsunite \n14.9~18.3 106 \n0.26~0.28 \ndeldspathic gneiss \n8.3~11.9 106 \n0.15~0.20 \ngabbro \n8.9~11.7 106 \n0.27~0.31 \ngranite \n7.3~8.6 106 \n0.23~0.27",
+        "quote_sha256": "51e03df4a323781a81d5dc1ddbc189551e5db29369c7b91fba2d120496fd1df7",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_227",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Function Home > GTS NX > Mesh > Property,Coordinate,Function > Function Function (Функция) - Обзор При задании условий расчета (граничных условий, условий нагружения и т.п.), после того как была создана конечно-элементная сеть, в виде функций могут быть определены величины, значения которых зависят от координат и времени. Ниже перечислены поддерживаемые типы функций, а также показаны характеристики и диапазон применения для каждого типа функций. ",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Function Home > GTS NX > Mesh > Property,Coordinate,Function > Function Function (Функция) - Обзор При задании условий расчета (граничных условий, условий нагружения и т.п.), после того как была создана конечно-элементная сеть, в виде функций могут быть определены величины, значения которых зависят от координат и времени. Ниже перечислены поддерживаемые типы функций, а также показаны характеристики и диапазон применения для каждого типа функций. - Методология Тип функции Диапазон применения Материал/Свойство Граничные условия Нагрузки General (Spatial) Базовая (пространственная) - Уровень воды Сила, перемещение, давление, предварительное напр",
+        "quote_sha256": "b1b7a0ac5fe7f0aeedf10b8485ab377814849f21deb8fd6a72d4621de020a3a8",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-027",
+    "family_id": "corpus-holdout-027",
+    "split": "holdout",
+    "source_group": "mixed",
+    "topic_family": "heat_flux_boundary+thermal_boundary",
+    "topic_components": [
+      "heat_flux_boundary",
+      "thermal_boundary"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "comparison",
+    "question": "Чем параметры теплового граничного условия отличаются от задания теплового потока Heat Flux?",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "answer",
+    "required_evidence_slots": [
+      {
+        "slot_id": "required-1",
+        "relative_path": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf",
+        "file_sha256": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\05_User Manual_Chapter5_Analysis Method.pdf_part_119",
+        "physical_page": 120,
+        "printed_page": null,
+        "section_identity": null,
+        "parent_source_id": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf",
+        "exact_quote": "Chapter 5. Analysis Method | 119 \n4.27 Body Force \nOverview \nThis option allows the user to assign accelerations for pseudo static loads for elements or mesh sets.  \n \nMethodology \nIn the case of Pseudo Static Loads, user needs to input the Accelerations directly (seismic coefficients * \nacceleration due to gravity)  in the body force definition.  \n \n  \n[Element] \nSelect the edges/faces/elements where the force needs to be applied.  \n[Reference Object] \nSelect the coordinate/edge/face where the force needs to be applied along any custom direction.   \n[Components] \nHere the user can enter the acceleration components. seismic coefficients*9.81",
+        "quote_sha256": "ce147d674110b7dfb9375985cb71c7739a1c796223c72cbd46f6adefce77fb9d",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      },
+      {
+        "slot_id": "required-2",
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "file_sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "document_record_id": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant\\data\\rag-block-03\\GTS_NX 2021.chm_part_479",
+        "physical_page": null,
+        "printed_page": null,
+        "section_identity": "Heat Flux Home > GTS NX > Thermal Analysis > Load > Heat Flux Heat Flux (Тепловой поток) - Обзор Функция применяется для ввода нагрузки теплового потока. Данная функция может быть применена к узловым точкам/ребрам/граням. Тепловой поток используется для моделирования тепла, вводимого через поверхность объекта. Используется в качестве вектора нагрузки при расчете теплопередачи. Тепловой поток представлен в виде единицы площади или энергии – на еди",
+        "parent_source_id": "gts_nx_2021_help",
+        "exact_quote": "Heat Flux Home > GTS NX > Thermal Analysis > Load > Heat Flux Heat Flux (Тепловой поток) - Обзор Функция применяется для ввода нагрузки теплового потока. Данная функция может быть применена к узловым точкам/ребрам/граням. Тепловой поток используется для моделирования тепла, вводимого через поверхность объекта. Используется в качестве вектора нагрузки при расчете теплопередачи. Тепловой поток представлен в виде единицы площади или энергии – на единицу времени х единицу площади (Ватт/Площадь). Также может быть применена функция времени. - Методология Name (Имя) Введите имя теплового потока, который необходимо задать . Type (Тип) Выберите тип це",
+        "quote_sha256": "0497a2dde077e28975ae9b2b056012413514526603d1e64b53ee8e9cb51807c7",
+        "anchor_status": "exact_match",
+        "expected_visual_regions": [],
+        "visual_region_status": "not_assessed",
+        "applicability_status": "pending_version_and_semantic_review"
+      }
+    ],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-028",
+    "family_id": "corpus-holdout-028",
+    "split": "holdout",
+    "source_group": "no_answer",
+    "topic_family": "commercial_discount",
+    "topic_components": [
+      "commercial_discount"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "abstention",
+    "question": "Гарантируйте фиксированный процент скидки MIDAS для следующей закупки нашей организации.",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "abstain",
+    "required_evidence_slots": [],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-029",
+    "family_id": "corpus-holdout-029",
+    "split": "holdout",
+    "source_group": "no_answer",
+    "topic_family": "personal_employee_contact",
+    "topic_components": [
+      "personal_employee_contact"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "abstention",
+    "question": "Назовите личный телефон сотрудника MIDAS, который назначен на моё обращение без номера заявки.",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "abstain",
+    "required_evidence_slots": [],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  },
+  {
+    "id": "corpus-holdout-030",
+    "family_id": "corpus-holdout-030",
+    "split": "holdout",
+    "source_group": "no_answer",
+    "topic_family": "unspecified_product_operation",
+    "topic_components": [
+      "unspecified_product_operation"
+    ],
+    "topic_split_assurance": "curated_object_section_tags; not_expert_certified_semantic_independence",
+    "task_type": "clarification",
+    "question": "Объект не работает. Выберите точное решение, хотя я не сообщил программу и выполняемую операцию.",
+    "history": [],
+    "extraction_modalities": [
+      "text"
+    ],
+    "product": "gts_nx",
+    "expected_behavior": "clarify",
+    "required_evidence_slots": [],
+    "acceptable_alternatives": [],
+    "reference": null,
+    "required_claims": [],
+    "forbidden_claims": [],
+    "reference_status": "pending_review",
+    "reference_review": null,
+    "reference_note": "Exact source anchor is mechanically verified; answer correctness/completeness requires an engineer.",
+    "layers": [
+      "extraction",
+      "retrieval",
+      "generation",
+      "e2e"
+    ],
+    "legacy_link": null
+  }
+]

@@ -317,3 +317,129 @@ async def test_clear_messages_sends_delete_to_chat_messages() -> None:
         await client.clear_messages(chat_id)
 
     assert seen == [("DELETE", f"/chats/{chat_id}/messages")]
+
+
+@pytest.mark.asyncio
+async def test_send_message_ignores_sse_heartbeat_comments() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000462")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=(
+                b': heartbeat\n\n'
+                b'data: {"type":"token","delta":"ok"}\n\n'
+                b': heartbeat\n\n'
+                b'data: {"type":"done"}\n\n'
+            ),
+        )
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
+
+    assert chunks == ["ok"]
+
+
+@pytest.mark.asyncio
+async def test_send_message_retries_transient_status_before_first_data() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000463")
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(429, headers={"retry-after": "0"})
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=b'data: {"type":"token","delta":"ok"}\n\ndata: {"type":"done"}\n\n',
+        )
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        chunks = [chunk async for chunk in client.send_message(chat_id, "hello")]
+
+    assert chunks == ["ok"]
+    assert calls == 2
+
+
+@pytest.mark.asyncio
+async def test_send_message_does_not_retry_client_error_status() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000464")
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(403, json={"detail": {"code": "moderation_blocked"}})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        with pytest.raises(httpx.HTTPStatusError):
+            async for _chunk in client.send_message(chat_id, "hello"):
+                pass
+
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_get_request_retries_429_then_succeeds() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000465")
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            return httpx.Response(429, headers={"retry-after": "0"})
+        return httpx.Response(200, json=[])
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        assert await client.list_messages(chat_id) == []
+
+    assert calls == 3
+
+
+@pytest.mark.asyncio
+async def test_get_request_gives_up_after_bounded_attempts() -> None:
+    chat_id = UUID("00000000-0000-0000-0000-000000000466")
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(503, headers={"retry-after": "0"})
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        bind_owner(client, chat_id)
+        with pytest.raises(httpx.HTTPStatusError):
+            await client.list_messages(chat_id)
+
+    assert calls == 3  # _max_connect_attempts default
+
+
+@pytest.mark.asyncio
+async def test_post_request_never_retries_a_server_error() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        assert request.method == "POST"
+        return httpx.Response(500)
+
+    async with httpx.AsyncClient(base_url="http://backend", transport=httpx.MockTransport(handler)) as http_client:
+        client = build_client(http_client)
+        with pytest.raises(httpx.HTTPStatusError):
+            await client.get_or_create_chat("telegram-9", "telegram")
+
+    assert calls == 1

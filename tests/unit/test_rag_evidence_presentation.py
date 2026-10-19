@@ -114,7 +114,7 @@ def test_context_budget_keeps_later_sources_and_redistributes_unused_share():
 def test_context_budget_never_emits_half_a_structured_row():
     text = 'Column 1=Model | Column 2=Behavior\nColumn 1=A | Column 2=Elastic\nColumn 1=B | Column 2=Elastoplastic'
     cap = text.index("Elastoplastic") + 4
-    assert RAGService._bounded_context(text, cap) == text.rsplit("\n", 1)[0]
+    assert RAGService._bounded_context(text, cap) == ""  # an incomplete table is withheld as a unit
 
 
 def test_tiny_context_budget_does_not_cut_a_word():

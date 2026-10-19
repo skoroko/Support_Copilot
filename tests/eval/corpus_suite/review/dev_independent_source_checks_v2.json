@@ -1,0 +1,1737 @@
+{
+  "method": "machine_source_verification",
+  "scope": "original_file_hash_plus_independent_literal_location_not_semantic",
+  "dev_cases_sha256": "3fe788a75ebd0fa5102bc032d46080913c6da4c390360e329eb436e092613cfd",
+  "checks": [
+    {
+      "case_id": "corpus-dev-001",
+      "case_sha256": "612aefedee66ec2ffc164c20a09afadc39dd08c54605b7c0511ab0d07da02c6e",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 3950.483599997824,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-002",
+      "case_sha256": "81979a187f30d82f23772b0d1371b4060f6f15a2b3cb26f8a88de5ba04b90bfa",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 3950.483599997824,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-003",
+      "case_sha256": "a50119702e8c0a59b6d5a3aa2c9bf60167d96c27b4f3d6fc066a6d106b591c7c",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 3950.483599997824,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-004",
+      "case_sha256": "16013ca10b4169520d06fcf29ca4f9edbd360cd27d2b23771772869757dc7ae6",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 3950.483599997824,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-005",
+      "case_sha256": "6eef135d0caf5f2f01891150d28de281fa6b1df97c92ade12d0ed616c8855db6",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 4342.719499982195,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-006",
+      "case_sha256": "8d7cb92cb5a8876d462c081db46fa2dff36f342e64f692bca9f59a151575d4fc",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 4342.719499982195,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-007",
+      "case_sha256": "5946ba317407f1db47f766cbdd50269782292fa5a0aff9d4a807995770b94d16",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 4342.719499982195,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-008",
+      "case_sha256": "d80c549c896c850dbc3a80367ab0c8b4a667cbaa5f56f904e63945d1fb3a4261",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 12331.07299997937,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-009",
+      "case_sha256": "154fab30930f6d0396df0e6407edca9ef6615d34d89749038c177c82435bc7be",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 12331.07299997937,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-010",
+      "case_sha256": "bc02448d86bd43726ab6f9a4be85ddacb5d374c713739826a2fc7d1f40626380",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 12331.07299997937,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-011",
+      "case_sha256": "ea290fe9c67a8c0cee858b39d852575f11ca06c13b223f23185c5e4943ea86da",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 12331.07299997937,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-012",
+      "case_sha256": "1921001b0acb2e706677f01c1c1264d85fe4f09e3419c84e59cfcf7eb6ba610c",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 22079.825599998003,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-013",
+      "case_sha256": "af389366779d0e00d84f0b7e777af06cfc709bebe59d90125ea4a4eddec6eb06",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 22079.825599998003,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-014",
+      "case_sha256": "51efc06148caba450ef923d3f1735632f7239ca80a6a764d5957ca9e0cd79c37",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 22079.825599998003,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-015",
+      "case_sha256": "da13a06834d4cd116d19535fcf0f15bf42865c46ace9385570c1c6416803336f",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 22079.825599998003,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-016",
+      "case_sha256": "55e4e02d932efaf56e857b97199693dd51e327fb02e70cd2affaab419a9bc1a8",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 42111.48689998663,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-017",
+      "case_sha256": "52ceb469f6d8338a86cc1ccfc5a3703b5278e46e9dc7c5880b5f64f7ec4b03a4",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 42111.48689998663,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-018",
+      "case_sha256": "31e8ed6f649fd1f781ef32efed866db19545cdf69b43a46301b976b1238bf950",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 42111.48689998663,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-019",
+      "case_sha256": "24a0efc1f8d66a3f222bc29d27b7c9195c12cdc1f0983209c51e2ac117fb49e6",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 42111.48689998663,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-020",
+      "case_sha256": "4d6fe9bb2e8f64a9d3bccedf08a75446078c8704dbd29766d896a5856530f226",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 42111.48689998663,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-021",
+      "case_sha256": "8256b8f13d4f4cf35b2f98db007f8a9178b25d72a02993c58b95eb6ac7fbd7ec",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 57045.28789999313,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-022",
+      "case_sha256": "9123f46321c86d51e3ab3b6a3f36171782125d5a71ff1c66207cf93b0cab9cd3",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 57045.28789999313,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-023",
+      "case_sha256": "6e7da1453137b62aa5faff2977d064117bb9d6ee70b1697002c28de796f91666",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 57045.28789999313,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-024",
+      "case_sha256": "6ddfdd6005b6808e2d935394cf522bed7c18e4cb08e1aaf88779a8f8ad9d2bd8",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 57045.28789999313,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-025",
+      "case_sha256": "caeeb2af4133e0aa71fb6b4513015676ae0164cc7fd834d7fd13b6d38ff25ddf",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 66574.2554999888,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-026",
+      "case_sha256": "2ed919bb7229e328805c9cec9d3cb0b778d75268a19747d773287522203b31bd",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 66574.2554999888,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-027",
+      "case_sha256": "7468066efb8edb67cbc230c249acdb5fbb9e1a91816330f61bd4b6155dbf076f",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 66574.2554999888,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-028",
+      "case_sha256": "4765cb5094e3621785ea6007ef75c6b37318cd42818b718b1f73f0dc2d33a9d1",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 66574.2554999888,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-029",
+      "case_sha256": "2c07293abd90ab7ec1fb1bda1d1534d021bd9272048fe0f3cfba5c558a485849",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 71995.03999997978,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-030",
+      "case_sha256": "49166da6a251ffee0ed66b4b12cb4fdf338e1542e4c632bedc6483be978ba75e",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 71995.03999997978,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-031",
+      "case_sha256": "8eb7ada5ec72f2fd064f4e2061f1505c10d56dbce93c29eceea0788efdf56d44",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 71995.03999997978,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-032",
+      "case_sha256": "5e1b4c6407a58bc12ee1faf46e3a704c0a5c2dcc17109fb0dabb0be8e8d50f8a",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104932.60949998512,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-033",
+      "case_sha256": "a341496ac9bc47a9b313734e250d3d64c28f3326d149202d375044879f24cc73",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104932.60949998512,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-034",
+      "case_sha256": "e0b03b31f533f919b7f45a229341104a3f96917eeb6a0bd720d971cc9876c2db",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104932.60949998512,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-035",
+      "case_sha256": "d5f4f611b706b7a5a8123c95d5cc9060b37f0b39265c1521903801f845002357",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104932.60949998512,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-036",
+      "case_sha256": "26919c68bacd7f5438484b58b389490ada79f86826d41f97856dcdc5c2a4f30f",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104932.60949998512,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-037",
+      "case_sha256": "6eb1c65d8b6a0bd8a06279a7ca7a8bc86fea3c80c6c2a3906fbeca85a4500e1f",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-038",
+      "case_sha256": "8ff6309077601360b812c8602e63792be122f09f2b639eae8275b010db4767ae",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-039",
+      "case_sha256": "1100f9e3cc544b3a10904a76f401502a2cb991dc36c3bb22d11b2093cc3a22df",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-040",
+      "case_sha256": "28b7174aedc2e60ab5036bf030f521d5ef03c0cfd2b259ce3fe348930cb36fbc",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-041",
+      "case_sha256": "a0a53e9cbca59b8bafc4a2217d14a99ccc573bf6b1c66b069578c22954035f36",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-042",
+      "case_sha256": "7440dfc7fbfe000e35afd9890c7f8c59c38e9dd20dc3428ec88131704f9ff58a",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-043",
+      "case_sha256": "c545f59887d1b63610e537837642bcb83d69a49c85f4a1025b79a8ffe9576940",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-044",
+      "case_sha256": "fd94fff950a93b9f85c56b8c7b404f3a87fc33f82dfe83c6f80478d2ac3c9dfd",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-045",
+      "case_sha256": "8ddfa5acb7c1a9e7718bc01ea457e8fd0e9c39f9d3b88fd81011836c48b081ab",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-046",
+      "case_sha256": "2cf178781e3c6bd2a5fc30cf468285b53341c42063d4a23b9218a49c4f4fae95",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-047",
+      "case_sha256": "b70aa79effaa03b2502ab4d6149b34691f6b360957a9b6feec0bda23d2da0c74",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-048",
+      "case_sha256": "55d890a36b48f2d9f55d0f42901b67698a0e9fa614327900971ff107948924c0",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-049",
+      "case_sha256": "71c50373bae0c09f38385ae5bb0f9c982f3f64e79abcee7287f48904bd257909",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104962.47939998284,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-050",
+      "case_sha256": "d89c95d7726eec4df7a7091aef81da5bb5f24e365e4c5c8f3c647f9950edf62c",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-051",
+      "case_sha256": "0772d0a1980343e73c3de5c8a71cd83807274afd7e147274253c01b7c3495a87",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-052",
+      "case_sha256": "e6b1936e567525f3ec38ec152f32180ccf8ea2a7b2d69a370d86a3469f718847",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-053",
+      "case_sha256": "c64ff0bf852542f4a124eae62bf222e7af3a7d5b2e3a97e1f6648dbf1761d8c1",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-054",
+      "case_sha256": "c895d5ed773439e28efb0536a87de90594936531e3821430eb04fa5a80ae8383",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-055",
+      "case_sha256": "d9d25b37b9332e3e59a8a23d11250017a29dadeba73e3c1ec253724905172dda",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-056",
+      "case_sha256": "3ac7f0e37182437d970b03f9a1049fb747547ce37565c8020a8012d2dc303305",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-057",
+      "case_sha256": "65e22a8cd49d4ca3e90e1c9d241e8997a8ced7f539b2d601ac53f8aa056f3a44",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-058",
+      "case_sha256": "906fecac367b6922114c0aa7f4c6c812add819f798f4bb5e3fa86f667050fa55",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-059",
+      "case_sha256": "1e15854f64a2d46d154e4b045c8afe4b2d5a9c9d9194e04a7b824ad1f8180838",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-060",
+      "case_sha256": "e5b129c49aa8923f4646bcd175889107a5c128c29e896ec5da46aa6066a02a51",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-061",
+      "case_sha256": "2c11b6bb65b2d9b608e0e5b15b38f7ea2fa87d7a81e1a0b67a03e1f818b996ab",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-062",
+      "case_sha256": "a3ccede4bf2e0ff1fd07643a1f0057c4bcad202018983e53caa228f4e2a06923",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-063",
+      "case_sha256": "06636a8cf51eef8bfb4ad78b994adf6bd18afac032e90bbe0d6475f1027aff2a",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": false
+          }
+        ],
+        "extraction_pass": false,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-064",
+      "case_sha256": "6ab13b19b2acdd168340067dc5e9cbf3b49aed89c6be3c3e4632682aa94eeff1",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-065",
+      "case_sha256": "aa5da48e6d1b076ec0d1325aab9fa2a5fee3cf25f332b2fd32808d54d01aa075",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-066",
+      "case_sha256": "4bdd2f3cfa92436a1bf4331b631fbcc7a58997580e136816cc0fbb837b05e801",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": false,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-067",
+      "case_sha256": "22f488a3b0118e6bf11830763a9f72874b18c6199fae4d67c9223e644983cb4e",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-068",
+      "case_sha256": "0dfedfeacdc1fcd16b2e505c72daa6b9640c60c47d6cbe8e882c308bc6c3ccc8",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [
+          {
+            "slot_id": "required-1",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          },
+          {
+            "slot_id": "required-2",
+            "snapshot_quote_match": true,
+            "independent_source_match": true,
+            "strict_layout_quote_match": true,
+            "source_hash_match": true,
+            "required_visual_regions_verified": true
+          }
+        ],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-069",
+      "case_sha256": "cb17f39dc03860fc16b8fa2c6b1c1205b3bd4b0e46664e1debcd828bfc791ed8",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-070",
+      "case_sha256": "44023df33efd22d4089c542c4d20bab36880956fc50682a165edc9706cbbc2ba",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-071",
+      "case_sha256": "6d5d9c7aa5df80935208cbb9bd1715ca4dc563bf71c571ad73586e562e7c8a9f",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-072",
+      "case_sha256": "573a7d5b90347c2672f20839a9dfce9fc7d7b0105e4860d4dc681cf45d3c2c86",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-073",
+      "case_sha256": "0522708154a575c2979a7409bfdff3cb6a0ac17dcffe79cbecf4b1367d3faf3a",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-074",
+      "case_sha256": "2cf441eccdfb173ca20d001b665804e7085635cfc7bd96d44d37b7cd7ebaf3aa",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-075",
+      "case_sha256": "bb5c0279a9476b04ead9ecdfffafd60e5bcbb712a365b605c30e77f6bfada18b",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-076",
+      "case_sha256": "8e236a30d6d37909502de48ee9ab29f5e1d87ba42fa398345b22dd44a5c7fa65",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-077",
+      "case_sha256": "c3889f3b632252fe99ca76d5019e930879b8807cb6ebc3791dea5e437ddd3308",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-078",
+      "case_sha256": "b2be989200df1b0dfdab8dc1412dc4ffa2a710ddd52336f997a7fe4e98749242",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-079",
+      "case_sha256": "06ca48a269c082daffe7c50eb4ecf87873558e32f82713cf066ed5ccd0c1f3b5",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-080",
+      "case_sha256": "588dcb63f79397c9883afb37d4039e89f466abb8197b5a9808ef2d611466c04d",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-081",
+      "case_sha256": "b1d171a424a2b63e64455bada63aba96b7d71ac806a85d164e8a9a72bd8c115a",
+      "status": "failed",
+      "error_type": "PermissionError"
+    },
+    {
+      "case_id": "corpus-dev-082",
+      "case_sha256": "0647e68a76c91849f3f1ca0e98f8e944fbcc9d5ae4f109105d8cb700ca3c40d9",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-083",
+      "case_sha256": "6ef65d05642d8866a25c202a207182a6d1a8ff6afae2c44513cbcadfde0f39c8",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-084",
+      "case_sha256": "06811c32f4b50358a8ab8cd500e4affb79d28375377e660baeebe3d60b6a439b",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-085",
+      "case_sha256": "2e3d84d3d2ce4e43b6070d33076f82998a49f5cf44cbb48b2f9b5a1cdd588f80",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-086",
+      "case_sha256": "b883e6e85dac7aafa3572f9c4c51da475da90be4a516cb3b6b6e58c65db8f235",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-087",
+      "case_sha256": "9ba4469e26004712cbbb49b56c17b60d6bd139adf6beedf4b7a07ba856bc0c0f",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-088",
+      "case_sha256": "4d98430788a31130662df7dcfb5b0cd882113b14692269c8084df9aa73cb333f",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-089",
+      "case_sha256": "043985a43fed328f28b0bd70ba4fe5bdebf7ccae7cb9eeb822d33b8419d515e1",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    },
+    {
+      "case_id": "corpus-dev-090",
+      "case_sha256": "4c3b159445732fd97c38eea50abff305e9315ab27c30a46d1f635ffa7b60e35b",
+      "status": "completed",
+      "output": {
+        "anchor_checks": [],
+        "extraction_pass": true,
+        "corpus_integrity": true,
+        "docstore_integrity": true,
+        "acquisition_ms_cumulative": 104965.16859999974,
+        "visual_regions_note": "Missing formula/table regions are extraction gaps in an existing source, not corpus no-answer.",
+        "extraction_assurance": "Text location/source integrity and explicitly required visual regions only; other image completeness not certified.",
+        "location_normalization": "whitespace_only; punctuation/numerals/operators preserved; strict diagnostic separate",
+        "measurement_scope": "independent_source_verification; cached_reader; not_full_ingestion"
+      }
+    }
+  ]
+}

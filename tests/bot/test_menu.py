@@ -178,7 +178,9 @@ async def test_expired_confirmation_does_not_clear():
     h = Harness()
     await h.click("new")
     data = h.last_text().reply_markup.inline_keyboard[0][0].callback_data
-    with patch("bot.handlers.menu.time.monotonic", return_value=float("inf")):
+    # A finite expired clock also lets aiogram measure/log its own duration.
+    future = menu.time.monotonic() + menu._CONFIRM_SECONDS + 1
+    with patch("bot.handlers.menu.time.monotonic", return_value=future):
         await h.click("reset", data=data)
     h.backend.clear_messages.assert_not_called()
 

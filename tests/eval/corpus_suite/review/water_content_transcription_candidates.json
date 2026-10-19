@@ -1,0 +1,176 @@
+[
+  {
+    "region_id": "1cd84336d951dc249da39161d78b9cb049fd1e2f7d5b4215e4b28f8ff8dc1821",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      261.8,
+      419.72,
+      552.8,
+      448.22
+    ],
+    "image_sha256": "7b56eba0de46930e53f4d91c28d016f9ea2474d58748202ae0617727345e02fb",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "formula",
+    "text": "\\theta = \\frac{V_w}{V} = nS\\quad(4.4.8)",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  },
+  {
+    "region_id": "f7237c5355927105876d59d8215bf857489056dd63f7de6952f19c6b365ccdd4",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      85.05,
+      450.24,
+      121.05,
+      464.59
+    ],
+    "image_sha256": "6a0b4dc29860ad46c9185d2efe577e02a02fd57903270630ceaade2e5a6385a6",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "definition",
+    "text": "\\theta",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  },
+  {
+    "region_id": "a623d63ed738ce616aa0310cdfa563936f85c5736862d2fad75dc5e18b2b600d",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      85.05,
+      470.66,
+      121.05,
+      485.01
+    ],
+    "image_sha256": "a7c8ada51b6c04148af5ad9b0da9f6e059e477e710734f77094a136ace70b190",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "definition",
+    "text": "V_w",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  },
+  {
+    "region_id": "5d2192cbb7176856fae321e1d83d732ff8e6f7fd2146e2f4fdfc26382a1d28f8",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      85.05,
+      491.08,
+      121.05,
+      505.33
+    ],
+    "image_sha256": "cbfcb9ec12b5eca5f5135bccdd1012f26585b80dd0e758c46f69d7ad2ee612a3",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "definition",
+    "text": "V",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  },
+  {
+    "region_id": "98e48df59ccf4e9b58f6187405d998470c5abb773435b96402ab0d79c151cdeb",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      85.05,
+      511.5,
+      121.05,
+      523.5
+    ],
+    "image_sha256": "86ba5cb6c6fe1e2a2a529c61fd66b3b5e45034d0c8f0681e535d4cb96acf4fba",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "definition",
+    "text": "n",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  },
+  {
+    "region_id": "7f499359f978e8cce8abd2bf8b715a4736dc886fa841500932b76f44969d2813",
+    "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "page": 115,
+    "bbox": [
+      85.05,
+      528.92,
+      121.05,
+      542.27
+    ],
+    "image_sha256": "28dbd0a7421fd3f425482ea099213aa68bde5419e8eca693003513611d01ee83",
+    "product": "gts_nx",
+    "version": "unknown",
+    "kind": "definition",
+    "text": "S",
+    "approval_status": "pending_review",
+    "candidate_author": "eval_source_review_agent",
+    "candidate_method": "direct_visual_read_of_complete_original_PDF_page_render",
+    "reviewer_type": "model_candidate_no_independent_approval",
+    "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "page_png": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\worktrees\\documentation-eval\\tests\\eval\\corpus_suite\\review\\materials-water-content-physical115.png",
+    "page_png_sha256": "ac601c79ef0869673d36ed97d7006477300d0544bd1bcfc83cea6c2c173e6677",
+    "case_ids": [
+      "corpus-dev-023",
+      "corpus-dev-061",
+      "corpus-dev-071"
+    ],
+    "note": "Original prose inverts V/Vw; visible equation4.4.8 explicitly theta=Vw/V=nS. Root must independently inspect and approve before ingestion."
+  }
+]

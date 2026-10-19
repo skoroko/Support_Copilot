@@ -201,3 +201,30 @@ def test_rag_stream_only_emits_visible_deltas_and_checks_final_status(status):
     else:
         with pytest.raises(RuntimeError, match="did not complete"):
             next(output)
+
+
+@pytest.mark.parametrize("configured", [None, 0, 3])
+def test_agent_model_retries_transient_provider_errors(configured, monkeypatch):
+    factory = Mock()
+    monkeypatch.setattr("app.services.runtime_model.ChatOpenAI", factory)
+    overrides = {} if configured is None else {"llm_max_retries": configured}
+    AgentModel(settings(**overrides), ["tool"])
+    assert factory.call_args.kwargs["max_retries"] == (2 if configured is None else configured)
+    factory.return_value.bind_tools.assert_called_once_with(["tool"])
+
+
+@pytest.mark.parametrize("configured", [None, 5])
+def test_rag_llm_retries_transient_provider_errors(configured, monkeypatch):
+    factory = Mock()
+    monkeypatch.setattr("app.services.runtime_model.OpenAI", factory)
+    kwargs = {} if configured is None else {"max_retries": configured}
+    ResponsesTextLLM(model="gpt-6-luna", api_key="k", base_url=None, timeout=10, **kwargs)
+    assert factory.call_args.kwargs["max_retries"] == (2 if configured is None else configured)
+
+
+def test_llm_max_retries_defaults_to_two_when_unset():
+    from app.core.config import Settings
+    from pydantic import SecretStr
+
+    config = Settings(_env_file=None, openai_api_key=SecretStr("test-only"))
+    assert config.llm_max_retries == 2

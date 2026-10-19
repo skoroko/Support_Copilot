@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "suite_id": "manual-corpus-120-v1",
+  "case_count": 120,
+  "split_counts": {
+    "dev": 90,
+    "holdout": 30
+  },
+  "group_counts": {
+    "dev": {
+      "pdf_only": 36,
+      "html_chm": 18,
+      "multi_pdf": 14,
+      "mixed": 13,
+      "no_answer": 9
+    },
+    "holdout": {
+      "pdf_only": 12,
+      "html_chm": 6,
+      "multi_pdf": 4,
+      "mixed": 5,
+      "no_answer": 3
+    }
+  },
+  "source_pdf_count": 9,
+  "reference_status": "all_pending_review",
+  "files_sha256": {
+    "corpus_manifest.json": "c4fe01c29715a4c97a2852afa85072d6623554c23a85261563beeefc2d7888e6",
+    "legacy_manifest.json": "fb40ca4edbe5740a0578d5cd65727926898856931729027194c79141d4df1ff3",
+    "release_policy.json": "8b767fc7ffe2626f4315f5ace0ad0214e8bdb9e26a961c0478d65da8f7e02d7d",
+    "holdout_manifest.json": "ae0c602c4b28363f82a5fa5546af1c714a4683d0b85b53f008ee513405f0bd8f",
+    "dev_cases.json": "295ea65a191713e1840099e627d2f8a7cb695a04ce4b12dc1612b28fe8f6244b",
+    "dev_contexts.json": "9cd31f9a71d5db5c4c6d92a659444cd6980501e9bff94d975112987ae37d5131",
+    "holdout_cases.json": "5f187f155b809387caec5bb9739ceef27a8d9ef49691bf17a9ff5f96403390b6",
+    "holdout_contexts.json": "c45cc8e8e00878d1fa77a57d8577ea4a45fac1e07f2c2a8543684ce636c79157"
+  },
+  "holdout_policy": "Default dev loader never opens holdout content. Explicit unlock only for final evaluation."
+}

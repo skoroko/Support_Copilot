@@ -57,6 +57,8 @@ class _SettingsFields(BaseModel):
         default=30.0,
         validation_alias=AliasChoices("LLM_REQUEST_TIMEOUT", "ASYNC_LLM_SDK_TIMEOUT_SEC", "LLM__REQUEST_TIMEOUT"),
     )
+    llm_max_retries: int = Field(
+        default=2, ge=0, le=10, validation_alias=AliasChoices("LLM_MAX_RETRIES", "LLM__MAX_RETRIES"))
     openai_base_url: str | None = Field(default=None, validation_alias=AliasChoices("OPENAI_BASE_URL"))
     agent_llm_api: Literal["auto", "chat_completions", "responses"] = Field(
         default="auto", validation_alias=AliasChoices("AGENT_LLM_API"))
@@ -68,6 +70,10 @@ class _SettingsFields(BaseModel):
         default=8192, ge=0, le=65536, validation_alias=AliasChoices("AGENT_REASONING_TOKEN_RESERVE"))
     agent_generation_timeout: float = Field(
         default=120.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
+    agent_prepared_evidence_enabled: bool = Field(
+        default=True, validation_alias=AliasChoices("AGENT_PREPARED_EVIDENCE_ENABLED"))
+    agent_verified_overview_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("AGENT_VERIFIED_OVERVIEW_ENABLED"))
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         validation_alias=AliasChoices("APP_REDIS_URL", "REDIS_URL"),
@@ -119,7 +125,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("CHAT_MODEL_CONTEXT_TOKENS"),
     )
     chat_expanded_response_tokens: int = Field(default=1500, gt=0, validation_alias=AliasChoices("CHAT_EXPANDED_RESPONSE_TOKENS"))
-    chat_response_tokens: int = Field(default=500, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
+    chat_response_tokens: int = Field(default=800, gt=0, validation_alias=AliasChoices("CHAT_RESPONSE_TOKENS"))
     chat_safety_margin_tokens: int = Field(
         default=500,
         ge=0,
@@ -165,6 +171,10 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_INGEST_ON_START"),
     )
+    rag_ingest_exclude_dirs: str = Field(
+        default="gts_nx_help_html",
+        validation_alias=AliasChoices("RAG_INGEST_EXCLUDE_DIRS"),
+    )
     rag_allow_external_data_transfer: bool = Field(
         default=False,
         validation_alias=AliasChoices("RAG_ALLOW_EXTERNAL_DATA_TRANSFER"),
@@ -177,11 +187,18 @@ class _SettingsFields(BaseModel):
         default=PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json",
         validation_alias=AliasChoices("RAG_DOCSTORE_PATH"),
     )
+    rag_evidence_catalog_path: Path | None = Field(
+        default=None, validation_alias=AliasChoices("RAG_EVIDENCE_CATALOG_PATH"),
+    )
+    rag_visual_transcriptions_path: Path | None = Field(
+        default=None, validation_alias=AliasChoices("RAG_VISUAL_TRANSCRIPTIONS_PATH"),
+    )
+    rag_retrieval_concurrency: int = Field(
+        default=2, ge=1, le=4, validation_alias=AliasChoices("RAG_RETRIEVAL_CONCURRENCY"),
+    )
     rag_llm_model: str = Field(default="gpt-5.4-mini", min_length=1, validation_alias=AliasChoices("RAG_LLM_MODEL"))
     rag_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
         default="low", validation_alias=AliasChoices("RAG_REASONING_EFFORT"))
-    rag_condense_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = Field(
-        default="none", validation_alias=AliasChoices("RAG_CONDENSE_REASONING_EFFORT"))
     # Answer generation gets a dedicated budget: retrieval (embedding + Qdrant)
     # stays on the shared request_timeout, while a grounded completion over
     # several fragments legitimately needs longer.
@@ -228,7 +245,7 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("RAG_RERANKER_BATCH_SIZE"),
     )
     rag_reranker_top_n: int = Field(
-        default=5,
+        default=7,
         gt=0,
         validation_alias=AliasChoices("RAG_RERANKER_TOP_N"),
     )
@@ -242,10 +259,14 @@ class _SettingsFields(BaseModel):
         default=True,
         validation_alias=AliasChoices("RAG_CONDENSE_ENABLED"),
     )
-    rag_condense_llm_enabled: bool = Field(
+    rag_translate_llm_enabled: bool = Field(
         default=True,
-        validation_alias=AliasChoices("RAG_CONDENSE_LLM_ENABLED"),
+        validation_alias=AliasChoices("RAG_TRANSLATE_LLM_ENABLED"),
     )
+    rag_planner_enabled: bool = Field(default=False, validation_alias=AliasChoices("RAG_PLANNER_ENABLED"))
+    rag_planner_model: str = Field(default="", validation_alias=AliasChoices("RAG_PLANNER_MODEL"))
+    rag_planner_effort: Literal["none", "low"] = Field(default="none", validation_alias=AliasChoices("RAG_PLANNER_EFFORT"))
+    rag_planner_timeout: float = Field(default=5., gt=0, le=15, validation_alias=AliasChoices("RAG_PLANNER_TIMEOUT"))
     rag_lexical_retrieval_enabled: bool = Field(
         default=True,
         validation_alias=AliasChoices("RAG_LEXICAL_RETRIEVAL_ENABLED"),
@@ -419,12 +440,15 @@ def get_settings() -> Settings:
         openai_api_key=SecretStr(api_key),
         default_model=os.getenv("APP_DEFAULT_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-5.4-mini",
         request_timeout=float(os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("ASYNC_LLM_SDK_TIMEOUT_SEC") or 30.0),
+        llm_max_retries=int(os.getenv("LLM_MAX_RETRIES") or 2),
         openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
         agent_llm_api=os.getenv("AGENT_LLM_API") or "auto",
         agent_reasoning_effort=os.getenv("AGENT_REASONING_EFFORT") or None,
         agent_expanded_reasoning_effort=os.getenv("AGENT_EXPANDED_REASONING_EFFORT") or None,
         agent_reasoning_token_reserve=int(os.getenv("AGENT_REASONING_TOKEN_RESERVE") or 8192),
         agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 120),
+        agent_prepared_evidence_enabled=(os.getenv("AGENT_PREPARED_EVIDENCE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}),
+        agent_verified_overview_enabled=(os.getenv("AGENT_VERIFIED_OVERVIEW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
         cors_origins=os.getenv("APP_CORS_ORIGINS") or os.getenv("CORS_ORIGINS") or "*",
@@ -444,7 +468,7 @@ def get_settings() -> Settings:
         chat_context_strategy=os.getenv("CHAT_CONTEXT_STRATEGY") or "sliding",
         chat_context_window=int(os.getenv("CHAT_CONTEXT_WINDOW") or 10),
         chat_model_context_tokens=int(os.getenv("CHAT_MODEL_CONTEXT_TOKENS") or 128_000),
-        chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 500),
+        chat_response_tokens=int(os.getenv("CHAT_RESPONSE_TOKENS") or 800),
         chat_expanded_response_tokens=int(os.getenv("CHAT_EXPANDED_RESPONSE_TOKENS") or 1500),
         chat_safety_margin_tokens=int(os.getenv("CHAT_SAFETY_MARGIN_TOKENS") or 500),
         transcription_model=os.getenv("TRANSCRIPTION_MODEL") or "whisper-1",
@@ -473,6 +497,7 @@ def get_settings() -> Settings:
             os.getenv("RAG_INGEST_ON_START", "true").strip().lower()
             in {"1", "true", "yes", "on"}
         ),
+        rag_ingest_exclude_dirs=os.getenv("RAG_INGEST_EXCLUDE_DIRS") or "gts_nx_help_html",
         rag_allow_external_data_transfer=(
             os.getenv("RAG_ALLOW_EXTERNAL_DATA_TRANSFER", "false").strip().lower()
             in {"1", "true", "yes", "on"}
@@ -481,9 +506,13 @@ def get_settings() -> Settings:
         rag_docstore_path=Path(
             os.getenv("RAG_DOCSTORE_PATH") or PROJECT_ROOT / "var" / "rag_eval_chunk_1024_docstore.json"
         ),
+        rag_evidence_catalog_path=(Path(os.environ["RAG_EVIDENCE_CATALOG_PATH"])
+                                   if os.getenv("RAG_EVIDENCE_CATALOG_PATH") else None),
+        rag_visual_transcriptions_path=(Path(os.environ["RAG_VISUAL_TRANSCRIPTIONS_PATH"])
+                                       if os.getenv("RAG_VISUAL_TRANSCRIPTIONS_PATH") else None),
+        rag_retrieval_concurrency=int(os.getenv("RAG_RETRIEVAL_CONCURRENCY") or 2),
         rag_llm_model=os.getenv("RAG_LLM_MODEL") or "gpt-5.4-mini",
         rag_reasoning_effort=os.getenv("RAG_REASONING_EFFORT") or "low",
-        rag_condense_reasoning_effort=os.getenv("RAG_CONDENSE_REASONING_EFFORT") or "none",
         rag_generation_timeout=float(os.getenv("RAG_GENERATION_TIMEOUT") or 120.0),
         rag_embedding_model=os.getenv("RAG_EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL") or "text-embedding-3-large",
         rag_embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS") or os.getenv("EMBEDDING_DIMENSIONS") or 1024),
@@ -498,14 +527,18 @@ def get_settings() -> Settings:
         rag_reranker_model=os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-v2-m3",
         rag_reranker_device=os.getenv("RAG_RERANKER_DEVICE") or "",
         rag_reranker_batch_size=int(os.getenv("RAG_RERANKER_BATCH_SIZE") or 4),
-        rag_reranker_top_n=int(os.getenv("RAG_RERANKER_TOP_N") or 5),
+        rag_reranker_top_n=int(os.getenv("RAG_RERANKER_TOP_N") or 7),
         rag_min_score=float(os.getenv("RAG_SCORE_THRESHOLD") or os.getenv("RAG_MIN_SCORE") or 0.45),
         rag_condense_enabled=(
             os.getenv("RAG_CONDENSE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
-        rag_condense_llm_enabled=(
-            os.getenv("RAG_CONDENSE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+        rag_translate_llm_enabled=(
+            os.getenv("RAG_TRANSLATE_LLM_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
         ),
+        rag_planner_enabled=os.getenv("RAG_PLANNER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
+        rag_planner_model=os.getenv("RAG_PLANNER_MODEL") or "",
+        rag_planner_effort=os.getenv("RAG_PLANNER_EFFORT") or "none",
+        rag_planner_timeout=float(os.getenv("RAG_PLANNER_TIMEOUT") or 5.),
         rag_lexical_term_weight=float(os.getenv("RAG_LEXICAL_TERM_WEIGHT") or 0.7),
         rag_lexical_pair_weight=float(os.getenv("RAG_LEXICAL_PAIR_WEIGHT") or 0.3),
         rag_collection=os.getenv("RAG_COLLECTION") or "rag_eval_chunk_1024",

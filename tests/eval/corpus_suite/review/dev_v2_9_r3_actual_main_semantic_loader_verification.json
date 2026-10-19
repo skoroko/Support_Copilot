@@ -1,0 +1,25 @@
+{
+  "actual_main_load_dev_candidate": "pass",
+  "actual_main_semantic_review_load_inputs": "pass",
+  "attempt_fingerprints_checked": 90,
+  "synthetic_attempts_only": true,
+  "actual_attempts_modified": false,
+  "provider_calls": 0,
+  "holdout_opened": false,
+  "changed_contract_fields": [
+    "dev_cases_sha256"
+  ],
+  "candidate_cases_bytes_identical": true,
+  "contexts_bytes_identical": true,
+  "per_case_rows_identical": true,
+  "catalog_sha256_preserved": "3d11548c16b48d11fa6762967f9304fb7e8a5ae6c42b0b7af8ec994a11a258ed",
+  "reference_block_reason_counts": {
+    "source_bound_candidate": 87,
+    "reference_pending_or_insufficient": 3
+  },
+  "parent_contract_canonical_sha256": "5c7a3a0189ca2ee55b4a7ceabf440cb746d06ad8bac211d0ad117e811f1f023a",
+  "new_contract_canonical_sha256": "abf4661c99164a81c529076a7e108c95437f50d54b533d3d1987c11dbcae7adf",
+  "manifest_file_sha256": "18091f7a64c01dae9e1b2aa7e5722f8cf92aeb46ac225f5c96b96652f58dadb5",
+  "main_semantic_review_implementation_sha256": "0ef06365c3251a863f2f64bf262bc43641cb25c7cec8ddfcad58c4ca48a6d1a3",
+  "main_corpus_suite_implementation_sha256": "9233f43ec810e6d3f3f2dad4eb0c2d1a3b8c1c2612f5911b5450c7db5fcc5486"
+}

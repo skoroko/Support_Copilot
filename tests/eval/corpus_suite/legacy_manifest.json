@@ -1,0 +1,21 @@
+{
+  "source_root": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant",
+  "counts": {
+    "golden": 34,
+    "supplemental_turns": 9,
+    "expanded_modes": 5
+  },
+  "expansion_indices": [
+    1,
+    10,
+    16,
+    24,
+    32
+  ],
+  "files_sha256": {
+    "tests/eval/golden_dataset.json": "8d3d6460fb0ad9c287c29889169e0cdba03ed8d055dd77588f4e79922063b345",
+    "tests/eval/retrieval_dataset.json": "c5d80ab99911b1bcdb91048ab992f23a99d69c949e863df72de9e4f9c9249671",
+    "scripts/evaluate_telegram_agent.py": "71665e4d4fd2148256b5ac70f01c5366087759ce9cddc31fc9836144779adc87"
+  },
+  "note": "Immutable legacy regression; 43 ordinary turns and 48 answer modes, not holdout."
+}

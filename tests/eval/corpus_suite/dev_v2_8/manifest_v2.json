@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "split": "dev",
+  "holdout_opened": false,
+  "base_manifest_sha256": "bb141a2bb5ff93f9f15e5945778f6b863dcb1494e7e8d0a967c21e0288cd6174",
+  "original_dev_cases_sha256": "3fe788a75ebd0fa5102bc032d46080913c6da4c390360e329eb436e092613cfd",
+  "original_dev_contexts_file_sha256": "9cd31f9a71d5db5c4c6d92a659444cd6980501e9bff94d975112987ae37d5131",
+  "catalog_sha256": "f3f01e7d1e332246cdd38221522b3e97d9fe1ec115f735e5e3aff2bed4754ee8",
+  "source_root": "C:\\00.MIDAS\\PROJECTS\\19. HelpDesk_Assistant\\HelpDesk_Assistant",
+  "source_hashes": {
+    "rag-block-03/02_User Manual_Chapter2_General Information.pdf": "6f928d566712886abb31b0dbd516a558a225aeadb735ff8a5e7a32f775a5d16d",
+    "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+    "rag-block-03/03_User Manual_Chapter3_Geometry.pdf": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+    "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+    "rag-block-03/04_User Manual_Chapter4_Mesh.pdf": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+    "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+    "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+    "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+    "rag-block-03/Руководство по расчетам midas Civil 2020.pdf": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+    "rag-block-03/GTS_NX 2021.chm": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+    "gts_nx_help_html/040-gts-nx-dynamic-analysis-boundary-transmitting-htm.html": "6a4297f2737eec8712ecec0f02ecb7464c787bd0930d8a350fd0861c7b0daeba",
+    "gts_nx_help_html/037-gts-nx-dynamic-analysis-boundary-boundary-condition-htm.html": "a64fd85b1def8080834057df0fbfb1d35b753147f4305263b9d550565e89c0e8"
+  },
+  "artifacts": {
+    "dev_cases_v2.json": {
+      "file_sha256": "637ebad0f3daf76c898169365a0486affc85ac70be3e1e4df5c1b7b0b042b136",
+      "canonical_sha256": "daa2b9d22dae8dd247073778545afeb2df3c569ac48a630be6228108a1e3483b"
+    },
+    "dev_contexts_v2.json": {
+      "file_sha256": "31a04dadfb8429a3099b1d65fa8cb1132acb77989b0bb1c85eb79390185c9759",
+      "canonical_sha256": "2716c7e0278179df8f9feed0384e2af09e19fd32945854a8576a8a49821be182"
+    },
+    "dev_reference_contract_v2.json": {
+      "file_sha256": "e7074f28cc7513290ff81f4f8e47f4c6873eba0a7503515518fc077e49d527c6",
+      "canonical_sha256": "d608e573035c7eb726cccc9b6921a93b1d3a0d0e1a3e3c1dab21bae37ff80392"
+    }
+  },
+  "review_summary": {
+    "machine_reviewed_sufficient_candidate": 83,
+    "pending": 7
+  },
+  "review_decisions_sha256": "9f57a81b24e259e9665a4a0c001b77cd3daf137c80b5941299fd9b8d6c54eaf1",
+  "curated_claim_windows_sha256": "18b1620f4a5abbb8b5ff29e7b5f3eee70a60c402651f333cb6f2e52341e21e37",
+  "builder_sha256": "6bd0505c4ca49167813489addf8bb274c645f790394694a9d8d1b43186ca4212",
+  "changed_questions": [
+    "corpus-dev-015"
+  ],
+  "semantic_release": "blocked; independent reference acceptance and result review required",
+  "api_budget_ledger": {
+    "task_user_budget_usd": 10,
+    "quota_usd": 0,
+    "quota_authorized_by_root": false,
+    "attempts": [],
+    "actual_calls": 0,
+    "actual_cost_usd": 0
+  },
+  "claim_coverage_metric": "strict source+location+block+literal quote; mechanical only; not answer correctness",
+  "previous_candidate_audit": {
+    "manifest_file_sha256": "3047c8ce7d955f3d741db84ba2864e441bfdfe54b4182cbf74fc53a0e3065b66",
+    "manifest_canonical_sha256": "d866394aab7ccf1b4930b7411f67865ec717ce77c4b75484c4c3505f23c07ebd",
+    "catalog_sha256": "f3f01e7d1e332246cdd38221522b3e97d9fe1ec115f735e5e3aff2bed4754ee8",
+    "status": "preserved; superseded candidate, never independently accepted"
+  }
+}

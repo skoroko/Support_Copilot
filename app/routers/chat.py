@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 
 from app.core.auth import PrincipalDep
 from app.core.exceptions import LLMError
+from app.core.sse import with_heartbeats
 from app.deps.providers import LLMServiceDep
 from app.observability.logging import get_logger
 from app.schemas.chat import ChatRequest, ChatResponse
@@ -85,7 +86,7 @@ async def stream_chat(
                 return
             yield "data: [DONE]\n\n"
 
-        return StreamingResponse(insecure_events(), media_type="text/event-stream")
+        return StreamingResponse(with_heartbeats(insecure_events()), media_type="text/event-stream")
 
     _validate_chat_input(req)
     system_prompt, canary = _security_context(request)
@@ -109,7 +110,7 @@ async def stream_chat(
             return
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(events(), media_type="text/event-stream")
+    return StreamingResponse(with_heartbeats(events()), media_type="text/event-stream")
 
 
 def _security_enabled(request: Request) -> bool:

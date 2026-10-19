@@ -1,0 +1,79 @@
+{
+  "method": "machine_source_review",
+  "candidate_manifest_sha256": "fa50d73891f83ab6dfba59d89e534d4ec4d4c5951821a678cc67d3a2fce007e7",
+  "contract_sha256": "d608e573035c7eb726cccc9b6921a93b1d3a0d0e1a3e3c1dab21bae37ff80392",
+  "cases": [
+    {
+      "case_id": "corpus-dev-005",
+      "candidate_case_sha256": "d33094a46bb28fc4835fe4626e60e596843d5e08bc69b1a8712e2922682645c8",
+      "contract_case_sha256": "3ad7257fe394df2b4a9837ad89942333aab20714b4019b8d2d007b81a6f02b24",
+      "context_fingerprint": "97eb4137cdb7c22f18e8a88614a576e3b1a68d4676539116c026e294c97514f1",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Original Node pages define GCS, NDCS, ECS, MCS, ERCS, EFCS; UCS comparison is unsupported by selected context. Do not substitute NDCS for UCS.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-012",
+      "candidate_case_sha256": "0e596b2ebb83c7d8be2044cf3e30c092ada0e5e657c56b60c2ea166b0d229fb0",
+      "contract_case_sha256": "ee80f5d868defab8dc0d2a522bb11d32c1053617aead26e3513c3187ecf0cd5e",
+      "context_fingerprint": "543671937aa30200e7457647b836c074eb999b52fb98778c6d455c0ecf92989a",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Solid physical24 prose supports purpose, physical25 axes/DOF symbols remain images not covered by approved45. No complete axis-component transcription.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-014",
+      "candidate_case_sha256": "18eb43acba84478c16e2b999a63e253c757e5e3cddea1df7b5ca4cf872ebe325",
+      "contract_case_sha256": "e83be70ac06c4c760ab46a488f2ef90de388f9cd97f0f5f69e23b86ccef163d4",
+      "context_fingerprint": "56f6c7a0b61d359a803a1ac98d8b03607ffdae590a76e9481f5277a50ad9110f",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Interface physical71 prose supports linear elastic contact law and interpolated surface displacement, but required constitutive components3.8.2–3 are not transcribed. Keep incomplete mathematical relation pending.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-024",
+      "candidate_case_sha256": "38aaab6946484bfa24b13490cc1bd38d930f0286fb20413308ac37146b4949a5",
+      "contract_case_sha256": "08ae8c1bdc5ce836325be527736c270c5d2f0c08d9da10713104b64431442df0",
+      "context_fingerprint": "94ae6aa92e8abfdc7bfcbc7b2d7a0af7b6df23de274b2bbfcf09c23916a1e3c1",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Materials physical143 starts prior model rules; only new-model introduction after section6.9. Physical144 identifies skeleton/hysteresis/equivalent tangent stiffness, but exact cyclic constitutive behavior equations remain untranscribed.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-034",
+      "candidate_case_sha256": "2b9a2cb65ac65e013b581315907137ce770aa5e765548a504dcdd45f3703e48d",
+      "contract_case_sha256": "6d3bac5e50638e9947cc27a351501ec649af1673b230ff94385627ea23f984f1",
+      "context_fingerprint": "4056ad2843bbe8d9de9a8eacd3616b9b0b1421f2e69b8a3e672f2e0b6284bcc1",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Civil2020 physical150 explicitly names Midas Gen. Document containment does not prove Civil applicability; formula layout also differs from raw extraction.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-048",
+      "candidate_case_sha256": "900e97c8527fa0d3c4bde14cd6ddf7d2911ef62422c555e95b7733191ffae0a8",
+      "contract_case_sha256": "99890bdc0821011850b5452249866c7100ed90cd1e8cdfc5f9d7f278a26faaec",
+      "context_fingerprint": "2bd6fcdd9fd16fb174eb550f8f4cf5cd0020a099e76f66d7ec882b5c84635a8a",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Exact CHM /GTS_NX/Mesh/Element/Hinge.htm gives applicability and points to /GTS_NX/Mesh/Hinge.htm. Independently inspected Hinge Property topic defines types/components/hysteresis, but does not prove complete element selection/property assignment/save workflow.",
+      "human_expert_approval": false
+    },
+    {
+      "case_id": "corpus-dev-060",
+      "candidate_case_sha256": "5e102aa8f18cbd05b45b1154045c999db50acad2013c4fad8b843c3ba883f3ae",
+      "contract_case_sha256": "b8787acc04c68e85e58fb727cb903d9fcf758037b3916cb2458e80d1323ffc6a",
+      "context_fingerprint": "dae2dcb5667908fbfe6683e1c040e5d41d51e9c54598135387143a775e3e560e",
+      "method": "machine_source_review",
+      "decision": "pending_independent_reference_completion",
+      "finding": "Algorithms physical15 conversion equation5.4.10 is now exact approved transcription. Remaining Civil/Gen damping applicability uncertainty is independent and still blocks this mixed answer.",
+      "human_expert_approval": false
+    }
+  ],
+  "holdout_opened": false,
+  "api_calls": 0
+}

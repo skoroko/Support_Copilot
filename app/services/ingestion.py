@@ -7,28 +7,28 @@ until the caller explicitly confirms that transfer.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
+from collections import Counter
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
-from typing import Any, Iterable, Sequence
+from typing import Any
 from urllib.parse import urlparse
 
 from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.core.ingestion import DocstoreStrategy, IngestionPipeline
-from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import MetadataMode
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.readers.file import (
     FlatReader,
-    HTMLTagReader,
     MarkdownReader,
-    PDFReader,
 )
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
@@ -41,6 +41,21 @@ from qdrant_client.models import (
 )
 
 from app.services.chm_reader import CHMReader
+from app.services.corpus import (
+    EXTRACTION_VERSION,
+    CorpusCatalog,
+    apply_reviewed_relations,
+    apply_reviewed_transcriptions,
+    block,
+    file_hash,
+    source_identity,
+    stable_id,
+)
+from app.services.structured_readers import (
+    EvidenceSplitter,
+    StructuredHTMLReader,
+    StructuredPDFReader,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 logger = logging.getLogger(__name__)
@@ -64,6 +79,9 @@ EXCLUDED_EMBED_METADATA_KEYS = frozenset(
         "page",
         "total_pages",
         "chm_member",
+        "source_id", "source_hash", "location_id", "extraction_version", "extraction_status",
+        "language", "section_path", "evidence_blocks", "relations", "figure_regions", "page_bbox",
+        "warnings", "title", "extraction_error",
     }
 )
 _VERSION_RE = re.compile(r"(?ix)(?:^|[._\-\s])v(?:ersion)?[._\-\s]*(\d+(?:[._\-]\d+){0,3})(?=$|[._\-\s])")
@@ -144,6 +162,9 @@ class IngestionConfig:
     chunk_overlap: int = 64
     default_product: str = "gts_nx"
     docstore_path: Path = PROJECT_ROOT / "var" / "ingestion_docstore.json"
+    corpus_catalog_path: Path | None = None
+    visual_transcriptions_path: Path | None = None
+    exclude_dir_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.qdrant_url.strip():
@@ -162,7 +183,7 @@ class IngestionConfig:
             raise ValueError("default_product must name a product key, not a scope token")
 
     @classmethod
-    def from_settings(cls, settings: Any) -> "IngestionConfig":
+    def from_settings(cls, settings: Any) -> IngestionConfig:
         """Build configuration without forcing unrelated app settings changes.
 
         It intentionally reuses the existing RAG names until a future settings
@@ -198,6 +219,7 @@ class IngestionConfig:
             chunk_overlap=getattr(settings, "rag_chunk_overlap", 64),
             default_product=getattr(settings, "rag_product", "gts_nx"),
             docstore_path=docstore_path,
+            exclude_dir_names=ingest_exclude_dir_names(settings),
         )
 
 
@@ -211,6 +233,9 @@ class IngestionResult:
     unchanged_documents: int
     indexed_nodes: int
     failed_files: tuple[str, ...] = field(default_factory=tuple)
+    extracted_locations: int = 0
+    no_text_locations: int = 0
+    unreadable_locations: int = 0
 
     @property
     def failed_count(self) -> int:
@@ -232,11 +257,44 @@ class IngestionResult:
             "indexed_nodes": self.indexed_nodes,
             "failed_files": list(self.failed_files),
             "summary": self.summary,
+            "extracted_locations": self.extracted_locations,
+            "no_text_locations": self.no_text_locations,
+            "unreadable_locations": self.unreadable_locations,
         }
 
 
-def supported_files(path_or_paths: Path | str | Iterable[Path | str]) -> list[Path]:
-    """Return supported files in deterministic order, skipping prior failures."""
+DEFAULT_INGEST_EXCLUDE_DIRS = ("gts_nx_help_html",)
+
+
+def ingest_exclude_dir_names(settings: Any) -> tuple[str, ...]:
+    """Parse ``RAG_INGEST_EXCLUDE_DIRS`` (comma-separated directory names).
+
+    The default drops the CHM-derived HTML mirror documented in
+    ``docs/data_inventory.md``: its chunks duplicate the canonical CHM
+    members and compete for the same evidence slots.
+    """
+
+    raw = getattr(settings, "rag_ingest_exclude_dirs", None)
+    if raw is None:
+        return DEFAULT_INGEST_EXCLUDE_DIRS
+    if isinstance(raw, str):
+        parts = raw.split(",")
+    else:
+        parts = [str(item) for item in raw]
+    return tuple(part.strip() for part in parts if part.strip())
+
+
+def supported_files(
+    path_or_paths: Path | str | Iterable[Path | str],
+    *,
+    exclude_dir_names: frozenset[str] | set[str] = frozenset(),
+) -> list[Path]:
+    """Return supported files in deterministic order, skipping prior failures.
+
+    ``exclude_dir_names`` drops whole directories by name during the recursive
+    scan (e.g. a derivative mirror like the CHM-exported ``gts_nx_help_html``).
+    Files passed explicitly are still returned — the caller named them.
+    """
 
     if isinstance(path_or_paths, (str, Path)):
         candidates: Sequence[Path | str] = [path_or_paths]
@@ -248,7 +306,12 @@ def supported_files(path_or_paths: Path | str | Iterable[Path | str]) -> list[Pa
         if path.is_file():
             files = [path]
         elif path.is_dir():
-            files = [item for item in path.rglob("*") if item.is_file()]
+            files = [
+                item
+                for item in path.rglob("*")
+                if item.is_file()
+                and not (set(item.relative_to(path).parts[:-1]) & set(exclude_dir_names))
+            ]
         else:
             raise FileNotFoundError(f"Ingestion path does not exist: {path}")
         result.extend(
@@ -336,7 +399,7 @@ def _optional_author(path: Path) -> str | None:
             metadata = PdfReader(str(path)).metadata
             author = metadata.author if metadata else None
             return str(author).strip() or None
-    except Exception:
+    except Exception:  # noqa: BLE001 - optional author metadata cannot erase readable content
         # Source metadata must not make a readable document fail ingestion.
         return None
     return None
@@ -355,24 +418,26 @@ def enrich_metadata(
     metadata = dict(document.metadata or {})
     metadata.update(
         {
-            "source": source_path.name,
+            "source": metadata.get("source") or source_path.name,
             "file_name": source_path.name,
             "file_path": str(source_path.resolve()),
-            "created_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
-            "last_modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+            "created_at": datetime.fromtimestamp(stat.st_ctime, tz=UTC).isoformat(),
+            "last_modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
             "category": category_for_path(source_path, data_root=data_root),
             "product": product_for_path(
                 source_path, default_product=default_product, data_root=data_root
             ),
             "version": version_from_filename(source_path.name),
+            "language": metadata.get("language") or "unknown",
+            "extraction_version": metadata.get("extraction_version") or EXTRACTION_VERSION,
         }
     )
-    author = _optional_author(source_path)
+    author = metadata.get("author") if "author" in metadata else _optional_author(source_path)
     if author:
         metadata["author"] = author
     document.metadata = metadata
     document.excluded_embed_metadata_keys = sorted(
-        set(document.excluded_embed_metadata_keys) | EXCLUDED_EMBED_METADATA_KEYS
+        set(document.excluded_embed_metadata_keys) | EXCLUDED_EMBED_METADATA_KEYS | set(metadata)
     )
     # Retrieval code reads citation fields directly from ``node.metadata``.
     # They therefore do not need to occupy context or reduce split capacity.
@@ -385,9 +450,9 @@ def enrich_metadata(
 def _file_extractors() -> dict[str, Any]:
     """The explicit mapping is part of the assignment's format contract."""
 
-    html_reader = HTMLTagReader(tag="body", ignore_no_id=False)
+    html_reader = StructuredHTMLReader()
     return {
-        ".pdf": PDFReader(),
+        ".pdf": StructuredPDFReader(),
         ".docx": PythonDocxReader(),
         ".html": html_reader,
         ".htm": html_reader,
@@ -405,7 +470,7 @@ def _preserve_pdf_page_metadata(documents: Sequence[Document], path: Path) -> No
     total_pages = len(documents)
     for page, document in enumerate(documents, start=1):
         metadata = dict(document.metadata or {})
-        metadata["page"] = page
+        metadata.setdefault("page", page)
         metadata.setdefault("total_pages", total_pages)
         document.metadata = metadata
 
@@ -416,21 +481,30 @@ def _load_one_file(
     data_root: Path,
     default_product: str = "gts_nx",
 ) -> list[Document]:
+    source_id, _relative = source_identity(path, data_root)
+    source_hash = file_hash(path)
+    author = _optional_author(path)
     reader = SimpleDirectoryReader(
         input_files=[path],
         file_extractor=_file_extractors(),
         filename_as_id=True,
         raise_on_error=True,
+        file_metadata=lambda _path: {"source_id": source_id, "source_hash": source_hash, "author": author},
     )
     documents = reader.load_data()
     _preserve_pdf_page_metadata(documents, path)
-    nonempty = [
-        document
-        for document in documents
-        if document.get_content(metadata_mode=MetadataMode.NONE).strip()
-    ]
-    if not nonempty:
-        raise DocumentLoadError(f"No readable text found in {path.name}")
+    for index, document in enumerate(documents):
+        metadata = document.metadata
+        metadata.setdefault("source_id", source_id)
+        metadata.setdefault("source_hash", source_hash)
+        metadata.setdefault("location_id", stable_id("location", source_id, index))
+        metadata.setdefault("extraction_status", "text" if document.text.strip() else "no_text")
+        metadata.setdefault("evidence_blocks", [block(metadata["location_id"], 0, "paragraph", document.text).as_dict()]
+                            if document.text.strip() else [])
+        metadata.setdefault("relations", [])
+        metadata.setdefault("section_path", [])
+        # Absolute-path IDs retain legacy replacement semantics. Provenance IDs above are portable.
+        document.id_ = f"{path.resolve()}_part_{index}"
     return [
         enrich_metadata(
             document,
@@ -438,7 +512,7 @@ def _load_one_file(
             data_root=data_root,
             default_product=default_product,
         )
-        for document in nonempty
+        for document in documents
     ]
 
 
@@ -482,7 +556,7 @@ class IngestionService:
         self._ingest_lock = Lock()
 
     @classmethod
-    def from_settings(cls, settings: Any, **kwargs: Any) -> "IngestionService":
+    def from_settings(cls, settings: Any, **kwargs: Any) -> IngestionService:
         return cls(IngestionConfig.from_settings(settings), **kwargs)
 
     @property
@@ -512,30 +586,58 @@ class IngestionService:
                 "Qdrant URL is not local. Pass allow_external_data_transfer=True after explicit approval."
             )
 
-        source_files = supported_files(self.config.data_dir if path_or_paths is None else path_or_paths)
-        documents: list[Document] = []
+        source_files = supported_files(
+            self.config.data_dir if path_or_paths is None else path_or_paths,
+            exclude_dir_names=set(self.config.exclude_dir_names),
+        )
+        extracted: list[Document] = []
         failures: list[str] = []
+        errors: dict[str, str] = {}
         for path in source_files:
             try:
-                documents.extend(
+                extracted.extend(
                     _load_one_file(
                         path,
                         data_root=self.config.data_dir,
                         default_product=self.config.default_product,
                     )
                 )
-            except Exception:
+            except Exception as exc:
                 logger.exception("Could not load corpus file %s", path)
-                moved = _failed_path(path)
-                try:
-                    path.rename(moved)
-                except OSError:
-                    logger.exception("Could not rename failed corpus file %s", path)
-                    failures.append(str(path))
-                else:
-                    failures.append(str(moved))
+                failures.append(str(path))
+                errors[str(path)] = type(exc).__name__
+
+        if self.config.visual_transcriptions_path:
+            records = json.loads(self.config.visual_transcriptions_path.read_text(encoding="utf-8"))
+            apply_reviewed_transcriptions(extracted, records, data_root=self.config.data_dir)
+        documents = [document for document in extracted
+                     if document.metadata.get("extraction_status") == "text"
+                     and document.get_content(metadata_mode=MetadataMode.NONE).strip()]
+        catalog = CorpusCatalog.from_documents(source_files, extracted, data_root=self.config.data_dir, errors=errors)
+        # Catalog-confirmed outline/continuation links must reach production chunks too.
+        blocks_by_location: dict[str, list[dict[str, Any]]] = {}
+        for item in catalog.blocks:
+            blocks_by_location.setdefault(item["location_id"], []).append(
+                {key: value for key, value in item.items() if key not in {"location_id", "source_id"}}
+            )
+        relations_by_from: dict[str, list[dict[str, Any]]] = {}
+        for relation in catalog.relations:
+            relations_by_from.setdefault(relation["from_id"], []).append(relation)
+        for document in extracted:
+            location_id = document.metadata["location_id"]
+            document.metadata["evidence_blocks"] = blocks_by_location.get(location_id, [])
+            document.metadata["relations"] = [r for identity in [location_id, *(
+                b["block_id"] for b in document.metadata["evidence_blocks"]
+            )] for r in relations_by_from.get(identity, [])]
+        incomplete = {str(d.metadata["file_path"]) for d in extracted
+                      if d.metadata.get("extraction_status") == "unreadable"}
+        complete_sources = {str(p.resolve()) for p in source_files if str(p) not in errors} - incomplete
 
         if not documents:
+            with self._ingest_lock:
+                if any(source in self._source_ref_doc_ids() for source in complete_sources):
+                    self._index_documents([], len(source_files), tuple(failures), complete_sources=complete_sources)
+                self._persist_catalog(catalog)
             return IngestionResult(
                 source_files=len(source_files),
                 loaded_documents=0,
@@ -543,15 +645,227 @@ class IngestionService:
                 unchanged_documents=0,
                 indexed_nodes=0,
                 failed_files=tuple(failures),
+                extracted_locations=len(extracted),
+                no_text_locations=sum(d.metadata.get("extraction_status") == "no_text" for d in extracted),
+                unreadable_locations=sum(d.metadata.get("extraction_status") == "unreadable" for d in extracted),
             )
 
         # File I/O and parsing can proceed concurrently. Only the shared
         # docstore/pipeline/Qdrant transaction must be serialized per service.
         with self._ingest_lock:
-            return self._index_documents(documents, len(source_files), tuple(failures))
+            result = self._index_documents(documents, len(source_files), tuple(failures), complete_sources=complete_sources)
+            self._persist_catalog(catalog)
+            from dataclasses import replace
+            return replace(result, extracted_locations=len(extracted),
+                           no_text_locations=sum(d.metadata.get("extraction_status") == "no_text" for d in extracted),
+                           unreadable_locations=sum(d.metadata.get("extraction_status") == "unreadable" for d in extracted))
+
+    def ingest_reviewed_transcriptions(
+        self,
+        records: Sequence[dict[str, Any]] | Path | str | None = None,
+        *,
+        allow_external_data_transfer: bool | None = None,
+    ) -> IngestionResult:
+        """Update approved visual evidence using persisted original Documents.
+
+        This path never reparses source PDFs. It requires a complete current
+        catalog and its structured original text Documents, validates every
+        source hash, and upserts only pages changed by exact approved records.
+        Legacy/incomplete stores must be rebuilt through :meth:`ingest` first.
+        A repeat of an identical approval is a no-op; conflicting revisions
+        require explicit source reingestion rather than silently replacing text.
+        """
+        allowed = bool(allow_external_data_transfer)
+        if self._requires_external_data_transfer and not allowed:
+            raise ExternalDataTransferRequired("Explicit approval is required for hosted embeddings")
+        if not _is_local_qdrant_url(self.config.qdrant_url) and not allowed:
+            raise ExternalDataTransferRequired("Explicit approval is required for remote Qdrant")
+        if records is None:
+            records = self.config.visual_transcriptions_path
+        if records is None:
+            raise ValueError("A reviewed transcription sidecar or records are required")
+        if isinstance(records, (Path, str)):
+            records = json.loads(Path(records).read_text(encoding="utf-8"))
+        if not isinstance(records, (list, tuple)) or not all(isinstance(r, dict) for r in records):
+            raise ValueError("Reviewed transcriptions must be a list of records")
+
+        with self._ingest_lock:
+            catalog_path = self.config.corpus_catalog_path or self.config.docstore_path.with_suffix(".corpus.json")
+            if not catalog_path.is_file():
+                raise ValueError("A complete structured corpus catalog is required; run full ingestion first")
+            catalog = CorpusCatalog.load(catalog_path)
+            originals = self._validated_review_cache(catalog)
+            # Never mutate the persisted originals while validating a sidecar.
+            changed: dict[str, Document] = {}
+            seen_locations: set[str] = set()
+            for record in records:
+                if record.get("approval_status") != "approved":
+                    continue
+                has_locator = "visual_locator" in record
+                candidates = [loc for loc in catalog.locations
+                              if loc.get("source_hash") == record.get("source_hash")
+                              and loc.get("page") == record.get("page")
+                              and loc.get("product") == record.get("product")
+                              and loc.get("version") == record.get("version")
+                              and (not has_locator or loc.get("location_id") == record.get("location_id"))]
+                if len(candidates) != 1 or candidates[0]["location_id"] not in originals:
+                    raise ValueError("Approval requires one exact persisted source/page/product/version")
+                location = candidates[0]
+                lid = location["location_id"]
+                for key in ("source_id", "location_id"):
+                    if record.get(key) is not None and record[key] != location[key]:
+                        raise ValueError("Approval contains a conflicting source/location identity")
+                if record.get("relative_path") is not None and record["relative_path"] != next(
+                    s["relative_path"] for s in catalog.sources if s["source_id"] == location["source_id"]
+                ):
+                    raise ValueError("Approval contains a conflicting relative source path")
+                document = changed.get(lid) or deepcopy(originals[lid])
+                if has_locator:
+                    from app.services.reviewed_visual_regions import (
+                        apply_reviewed_visual_region,
+                    )
+
+                    seen_locations.add(lid)
+                    if apply_reviewed_visual_region(document, record, self.config.data_dir):
+                        document.excluded_embed_metadata_keys = sorted(set(document.excluded_embed_metadata_keys)
+                                                                       | set(document.metadata))
+                        document.excluded_llm_metadata_keys = sorted(set(document.excluded_llm_metadata_keys)
+                                                                     | set(document.metadata))
+                        changed[lid] = document
+                    continue
+                images = [b for b in document.metadata["evidence_blocks"]
+                          if b["kind"] == "visual_unextracted" and b.get("bbox") == record.get("bbox")
+                          and b.get("attributes", {}).get("image_sha256") == record.get("image_sha256")]
+                if len(images) != 1:
+                    raise ValueError("Approval does not match one exact persisted image region")
+                if record.get("region_id") is not None and record["region_id"] != images[0]["block_id"]:
+                    raise ValueError("Approval contains a conflicting image region identity")
+                existing_id = images[0].get("attributes", {}).get("approved_transcription_id")
+                seen_locations.add(lid)
+                if existing_id:
+                    existing = next((b for b in document.metadata["evidence_blocks"]
+                                     if b["block_id"] == existing_id), None)
+                    attrs = existing.get("attributes", {}) if existing else {}
+                    if (not existing or existing["kind"] != record.get("kind")
+                            or existing["text"] != record.get("text") or existing.get("bbox") != record.get("bbox")
+                            or attrs.get("method") != "reviewed_visual_transcription"
+                            or attrs.get("semantic_verified") is not False
+                            or attrs.get("verification_scope") != "literal_image_transcription"
+                            or not all(attrs.get(k) == record.get(k) and record.get(k)
+                                       for k in ("review_id", "reviewer", "reviewed_at", "image_sha256"))
+                            or {"kind": "transcription_of", "to_id": images[0]["block_id"]}
+                            not in existing.get("relations", [])):
+                        raise ValueError("Conflicting approved transcription; explicit source rebuild required")
+                    if apply_reviewed_relations(document, existing, record):
+                        changed[lid] = document
+                    continue
+                apply_reviewed_transcriptions([document], [record])
+                document.excluded_embed_metadata_keys = sorted(set(document.excluded_embed_metadata_keys)
+                                                               | set(document.metadata))
+                document.excluded_llm_metadata_keys = sorted(set(document.excluded_llm_metadata_keys)
+                                                             | set(document.metadata))
+                changed[lid] = document
+
+            if not changed:
+                return IngestionResult(source_files=len(catalog.sources), loaded_documents=len(seen_locations),
+                                       changed_documents=0, unchanged_documents=len(seen_locations), indexed_nodes=0,
+                                       extracted_locations=len(catalog.locations))
+
+            # Preserve all source entries, untouched locations and their review
+            # observations. Only blocks/relations rooted in affected locations
+            # are replaced; cross-page incoming links retain their stable IDs.
+            merged = deepcopy(catalog)
+            affected = set(changed)
+            old_blocks = {b["block_id"] for b in merged.blocks if b["location_id"] in affected}
+            merged.blocks = [b for b in merged.blocks if b["location_id"] not in affected]
+            merged.relations = [r for r in merged.relations if r["from_id"] not in affected | old_blocks]
+            for location in merged.locations:
+                if location["location_id"] in affected:
+                    document = changed[location["location_id"]]
+                    location["extraction_status"] = document.metadata["extraction_status"]
+                    merged.blocks.extend({"source_id": location["source_id"], "location_id": location["location_id"], **b}
+                                         for b in document.metadata["evidence_blocks"])
+                    merged.relations.extend({"source_id": location["source_id"], **r}
+                                            for r in document.metadata.get("relations", []))
+            merged._resolve_relations()
+            snapshot = deepcopy(self._docstore.to_dict())
+            try:
+                # An incremental page batch is not a complete source
+                # replacement: never apply disappeared-page cleanup here.
+                result = self._index_documents(list(changed.values()), len(catalog.sources), (), complete_sources=set())
+                merged.persist(catalog_path)
+            except Exception:
+                self._docstore = SimpleDocumentStore.from_dict(snapshot)
+                self._pipeline = None
+                self._persist_docstore()
+                raise
+            from dataclasses import replace
+            return replace(result, extracted_locations=len(merged.locations))
+
+    def _validated_review_cache(self, catalog: CorpusCatalog) -> dict[str, Document]:
+        """Reject stale source bytes, partial catalogs and lossy/legacy stores."""
+        if catalog.extraction_version != EXTRACTION_VERSION:
+            raise ValueError("Unsupported catalog extraction version; run full ingestion first")
+        current = {source_identity(p, self.config.data_dir)[0]: (p, file_hash(p))
+                   for p in supported_files(self.config.data_dir,
+                                            exclude_dir_names=set(self.config.exclude_dir_names))}
+        sources = {s["source_id"]: s for s in catalog.sources}
+        if len(sources) != len(catalog.sources) or sources.keys() != current.keys():
+            raise ValueError("Catalog must cover every current permitted source exactly once")
+        if any(s.get("source_hash") != current[sid][1] or s.get("status") != "extracted"
+               or s.get("relative_path") != source_identity(current[sid][0], self.config.data_dir)[1]
+               or s.get("extraction_version") != EXTRACTION_VERSION for sid, s in sources.items()):
+            raise ValueError("Source hash changed or extraction incomplete; run full ingestion first")
+        locations = {loc["location_id"]: loc for loc in catalog.locations}
+        if len(locations) != len(catalog.locations) or any(
+            loc.get("source_id") not in sources
+            or loc.get("source_hash") != sources[loc["source_id"]]["source_hash"]
+            or loc.get("extraction_status") not in {"text", "no_text"}
+            for loc in locations.values()
+        ):
+            raise ValueError("Catalog locations have incomplete or inconsistent source provenance")
+        for sid, source in sources.items():
+            units = [loc for loc in locations.values() if loc["source_id"] == sid]
+            if not units or dict(Counter(loc["extraction_status"] for loc in units)) != source.get("location_statuses"):
+                raise ValueError("Catalog source location coverage is incomplete")
+            if source["format"] == "pdf":
+                totals = {loc.get("total_pages") for loc in units}
+                if (len(totals) != 1 or type(next(iter(totals))) is not int
+                        or next(iter(totals)) < 1
+                        or sorted(loc.get("page", 0) for loc in units) != list(range(1, next(iter(totals)) + 1))):
+                    raise ValueError("Catalog must preserve every physical PDF page including blank pages")
+        blocks: dict[str, list[dict[str, Any]]] = {}
+        for evidence in catalog.blocks:
+            if (evidence.get("location_id") not in locations
+                    or evidence.get("source_id") != locations[evidence["location_id"]]["source_id"]):
+                raise ValueError("Catalog block is missing its exact source location")
+            blocks.setdefault(evidence["location_id"], []).append(
+                {k: v for k, v in evidence.items() if k not in {"source_id", "location_id"}}
+            )
+        originals: dict[str, Document] = {}
+        for document in self._docstore.docs.values():
+            metadata = document.metadata
+            lid = metadata.get("location_id")
+            loc = locations.get(lid)
+            if (not isinstance(document, Document) or not loc or lid in originals
+                    or metadata.get("extraction_version") != EXTRACTION_VERSION
+                    or any(metadata.get(k) != loc.get(k) for k in
+                           ("source_id", "source_hash", "page", "chm_member", "product", "version"))
+                    or Path(metadata.get("file_path", "")).resolve() != current[loc["source_id"]][0]
+                    or self._docstore.get_document_hash(document.id_) != document.hash
+                    or document.text != "\n\n".join(b["text"] for b in blocks.get(lid, [])
+                                                   if b.get("text") and b["kind"] != "outline_heading")
+                    or metadata.get("evidence_blocks") != blocks.get(lid, [])):
+                raise ValueError("Docstore lacks exact structured originals matching the catalog; rebuild required")
+            originals[lid] = document
+        expected = {lid for lid, loc in locations.items() if loc["extraction_status"] == "text"}
+        if originals.keys() != expected:
+            raise ValueError("Docstore is missing original extracted text locations; rebuild required")
+        return originals
 
     def _index_documents(
-        self, documents: list[Document], source_files: int, failures: tuple[str, ...]
+        self, documents: list[Document], source_files: int, failures: tuple[str, ...],
+        *, complete_sources: set[str] | None = None,
     ) -> IngestionResult:
         """Apply one ingestion batch while holding the service's state lock."""
 
@@ -560,7 +874,7 @@ class IngestionService:
         # Snapshot the old IDs before UPSERTS mutates it, and only remove IDs
         # missing from a successfully indexed replacement of that same source.
         old_ids = self._source_ref_doc_ids()
-        new_ids: dict[str, set[str]] = {}
+        new_ids: dict[str, set[str]] = {source: set() for source in complete_sources or ()}
         for document in documents:
             source = str(document.metadata["file_path"])
             new_ids.setdefault(source, set()).add(document.id_)
@@ -568,8 +882,10 @@ class IngestionService:
         docstore_snapshot = deepcopy(self._docstore.to_dict())
         try:
             self._ensure_collection()
-            nodes = self._pipeline_or_create().run(documents=documents, show_progress=False)
+            nodes = self._pipeline_or_create().run(documents=documents, show_progress=False) if documents else []
             for source, current_ids in new_ids.items():
+                if complete_sources is not None and source not in complete_sources:
+                    continue
                 for ref_doc_id in old_ids.get(source, set()) - current_ids:
                     # Qdrant must acknowledge deletion before the docstore
                     # forgets this ID, so a failed attempt remains retryable.
@@ -638,19 +954,18 @@ class IngestionService:
             vector_store = QdrantVectorStore(
                 client=self._client_or_create(),
                 collection_name=self.config.collection_name,
-                flat_metadata=True,
+                flat_metadata=False,
             )
             self._pipeline = IngestionPipeline(
                 transformations=[
                     # Citation metadata stays on the node, but must not consume
                     # the semantic chunk budget (or become embedding input).
-                    SentenceSplitter(
+                    EvidenceSplitter(
                         chunk_size=self.config.chunk_size,
                         chunk_overlap=self.config.chunk_overlap,
                         # Keep citation fields on produced nodes.  They remain
                         # excluded from embedding/LLM text by the per-document
                         # exclusion lists set in ``enrich_metadata``.
-                        include_metadata=True,
                     ),
                     self._embedding_model(),
                 ],
@@ -686,6 +1001,19 @@ class IngestionService:
     def _persist_docstore(self) -> None:
         self.config.docstore_path.parent.mkdir(parents=True, exist_ok=True)
         self._docstore.persist(str(self.config.docstore_path))
+
+    def _persist_catalog(self, incoming: CorpusCatalog) -> None:
+        """Merge coverage for partial uploads; audit handles deletion reconciliation explicitly."""
+        path = self.config.corpus_catalog_path or self.config.docstore_path.with_suffix(".corpus.json")
+        if path.exists():
+            old = CorpusCatalog.load(path)
+            replaced = {s["source_id"] for s in incoming.sources}
+            incoming.sources = [s for s in old.sources if s["source_id"] not in replaced] + incoming.sources
+            incoming.locations = [s for s in old.locations if s["source_id"] not in replaced] + incoming.locations
+            incoming.blocks = [s for s in old.blocks if s["source_id"] not in replaced] + incoming.blocks
+            incoming.relations = [s for s in old.relations if s["source_id"] not in replaced] + incoming.relations
+        incoming._resolve_relations()
+        incoming.persist(path)
 
 
 # The alternate name reads naturally in FastAPI composition roots and keeps the

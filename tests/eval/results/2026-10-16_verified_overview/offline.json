@@ -1,0 +1,90 @@
+{
+  "network_calls": 0,
+  "paid_model_calls": 0,
+  "rows": [
+    {
+      "slot": 1,
+      "verified_enabled": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "source_count": 5,
+      "context_chars": 9593,
+      "source_scope_counts": {
+        "Hardening Soil small strain": 4,
+        "unsupported_source": 6
+      },
+      "scope_seconds": 0.131044,
+      "local_graph_seconds": 0.802276,
+      "original_texts_unchanged": true,
+      "route": "agent"
+    },
+    {
+      "slot": 1,
+      "verified_enabled": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 1,
+      "source_count": 2,
+      "context_chars": 3685,
+      "source_scope_counts": {
+        "Hardening Soil small strain": 4,
+        "unsupported_source": 6
+      },
+      "scope_seconds": 0.131044,
+      "local_graph_seconds": 0.023612,
+      "original_texts_unchanged": true,
+      "route": "verified"
+    },
+    {
+      "slot": 4,
+      "verified_enabled": false,
+      "scripted_model_calls": 2,
+      "stored_retrieval_calls": 1,
+      "source_count": 5,
+      "context_chars": 9593,
+      "source_scope_counts": {
+        "Hardening Soil small strain": 4,
+        "unsupported_source": 6
+      },
+      "scope_seconds": 0.009928,
+      "local_graph_seconds": 0.025964,
+      "original_texts_unchanged": true,
+      "route": "agent"
+    },
+    {
+      "slot": 4,
+      "verified_enabled": true,
+      "scripted_model_calls": 1,
+      "stored_retrieval_calls": 1,
+      "source_count": 2,
+      "context_chars": 3685,
+      "source_scope_counts": {
+        "Hardening Soil small strain": 4,
+        "unsupported_source": 6
+      },
+      "scope_seconds": 0.009928,
+      "local_graph_seconds": 0.015507,
+      "original_texts_unchanged": true,
+      "route": "verified"
+    }
+  ],
+  "input_manifests": [
+    {
+      "slot": 1,
+      "sha256": "7e487f64da4cde353dd85cbaa1fb914fb7f69330e081ac731cab4fa0070c9883"
+    },
+    {
+      "slot": 4,
+      "sha256": "b533935b33468224bd6ba53605186c305b4e690e13fef87eed13017e61176bd9"
+    }
+  ],
+  "code_sha256": {
+    "app/services/agent_persistent.py": "623956ea35c340f62b301ea4f8061bc9af85781b628d003575e0cc6bc1aa1cbb",
+    "app/services/evidence_scope.py": "65478562d1d06cbdbdab7db982bebb0ef7e970824e0f41bae539a2720d3ccd62",
+    "app/services/evidence_text.py": "dc96673f72994262aa62a0122fb7cd6f767236dd1fe8ef0bf763462f041df00e",
+    "app/services/verified_overview.py": "0be398d8bfc33c9e347553cab9930d1c91409d8d8cc57f95e62707ba58df3ce6",
+    "app/services/rag.py": "fca52d6d0b5f6b0203e0afd78a29739f9ca15b0c98b90a11d7d71611d952f27f",
+    "scripts/replay_verified_overview.py": "8b79043fe9c86e1aa072eb8222012497f1034a9103c44d644c6c148623c030ee"
+  },
+  "original_pool_sha256": "7a62b78eb016c48ad595af095116eb217df142d8723aaa618bbe4072846d0df5",
+  "limitations": "Derived explicit HSS question, frozen older-query retrievals, scripted model. No live recall, model latency, answer quality or 15-second SLA claim."
+}

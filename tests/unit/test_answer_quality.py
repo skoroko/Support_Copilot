@@ -90,3 +90,28 @@ def test_orphan_label_is_not_attached_to_next_parameter_description():
 def test_compaction_treats_formatting_inside_code_as_opaque():
     text = "### Формула\n```python\nvalue = 2 ** 3\n```\nКод: `value = 2 ** 3`.\nОборвано"
     assert compact_answer(text, "length") == (text.rsplit("\n", 1)[0], True)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Опора воспринимает нагрузку 120 kПа [1].",
+        "Жёсткость пружины равна 50 kН/м на сваю.",
+        "Напряжение достигает 0.5 MПa на срезе элемента.",
+        "Модуль реакции задаётся в kPa и кН/м³.",
+        "Формула Fтр = kN задаёт трение [2].",
+        "Единицы: kВт, MПa, kДж, мkF.",
+    ],
+)
+def test_technical_mixed_units_are_preserved(text):
+    assert answer_quality_issue(text, "stop") is None
+
+
+def test_compaction_keeps_mixed_unit_sentence():
+    compact, incomplete = compact_answer("Нагрузка 120 kПа передаётся на сваи. Это пpoверка.")
+    assert compact == "Нагрузка 120 kПа передаётся на сваи."
+    assert incomplete is True
+
+
+def test_long_mojibake_word_is_still_detected():
+    assert answer_quality_issue("Проверьте парамeтры модели.", "stop") == "mixed_script"
