@@ -4,7 +4,17 @@ from types import SimpleNamespace
 import pytest
 from llama_index.core.schema import NodeWithScore, TextNode
 
+import app.services.rag as rag_module
 from app.services.rag import RAGConfig, RAGService
+
+
+@pytest.fixture(autouse=True)
+def companion_budget() -> None:
+    """These ordering scenarios were crafted for the original 12k budget."""
+    previous = rag_module.COMPANION_CONTEXT_BUDGET
+    rag_module.COMPANION_CONTEXT_BUDGET = 12_000
+    yield
+    rag_module.COMPANION_CONTEXT_BUDGET = previous
 
 
 def node(identity: str, text: str, score: float, *, location: str, suffix: str) -> NodeWithScore:

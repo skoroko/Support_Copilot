@@ -77,6 +77,7 @@ NO_ANSWER = "В предоставленной базе знаний нет до
 MAX_CONTEXT_SOURCES = 7
 FOLLOWUP_LEXICAL_CONTEXT_SOURCES = 3
 MAX_RAW_CANDIDATES = 30
+COMPANION_CONTEXT_BUDGET = 6_000
 DIALOG_HISTORY_MESSAGES = 6
 DIALOG_MESSAGE_CHARS = 600
 FOLLOWUP_CONTEXT_CHARS = 400
@@ -1925,7 +1926,7 @@ class RAGService:
                        if self._location_identity(previous) == location):
                     continue
                 if (location_counts.get(location, 0) >= MAX_LOCATION_COMPANIONS or len(companions) >= 8
-                        or companion_chars + len(text) > 12_000):
+                        or companion_chars + len(text) > COMPANION_CONTEXT_BUDGET):
                     companion_report["bounded"] = True
                     if len(companion_report["omitted"]) < 16:
                         companion_report["omitted"].append({"chunk_id": identity, "reason": "location_context_budget"})
@@ -1948,7 +1949,7 @@ class RAGService:
                 diagnostics: dict[str, Any] = {}
                 for related in self._related_evidence.resolve(
                     item.node.metadata, self._node_text(item), question=plan.ranking_question,
-                    max_blocks=8 - len(companions), max_chars=12_000 - companion_chars,
+                    max_blocks=8 - len(companions), max_chars=COMPANION_CONTEXT_BUDGET - companion_chars,
                     diagnostics=diagnostics,
                 ):
                     if related["block_id"] in seen_blocks:
@@ -1996,7 +1997,7 @@ class RAGService:
                 ):
                     continue
                 if (location_counts.get(location, 0) >= MAX_LOCATION_COMPANIONS or len(companions) >= 8
-                        or companion_chars + len(text) > 12_000):
+                        or companion_chars + len(text) > COMPANION_CONTEXT_BUDGET):
                     other_location_report["bounded"] = True
                     if len(other_location_report["omitted"]) < 16:
                         other_location_report["omitted"].append({

@@ -46,10 +46,13 @@ def select(tmp_path: Path, pool, *, structural=False, structural_limit=8, struct
         return result
 
     rag._related_evidence = SimpleNamespace(resolve=resolve, source_relative_path=lambda _: None)
-    # These ordering scenarios were written for the five-seed selection cap;
-    # pin it locally so the companion pass still exercises tail candidates.
+    # These ordering scenarios were written for the five-seed selection cap and
+    # a 12k companion char budget; pin both locally so the companion pass still
+    # exercises tail candidates and whole-block budget eviction.
     previous_limit = rag_module.MAX_CONTEXT_SOURCES
+    previous_budget = rag_module.COMPANION_CONTEXT_BUDGET
     rag_module.MAX_CONTEXT_SOURCES = 5
+    rag_module.COMPANION_CONTEXT_BUDGET = 12_000
     try:
         result = rag._select_context(
             question="explain", plan=RetrievalPlan("explain", ("explain",), "independent"),
@@ -58,6 +61,7 @@ def select(tmp_path: Path, pool, *, structural=False, structural_limit=8, struct
         )
     finally:
         rag_module.MAX_CONTEXT_SOURCES = previous_limit
+        rag_module.COMPANION_CONTEXT_BUDGET = previous_budget
     return result, calls
 
 
