@@ -15,6 +15,20 @@ def fixture():
     return bench.load_fixture(bench.DEFAULT_FIXTURE)
 
 
+V2_PATH = bench.DEFAULT_FIXTURE.with_name("source_routing_v2.json")
+V2_HASH = "8c49cffb5ecf03133db73be65279047ab29b1cd95b1253cd9fccb35966762dd8"
+V2_INPUT_HASHES = [
+    "ec0eb332d7704fe22d20726588162dec6ad046b4fac92161521516a7b4f5436b",
+    None,
+    "d26a57968ac51a6f24c1cbde6672670475dbef4cdd881552b32dc0ced0045890",
+    "f3ade62a664cf8dd99db08baff1c98de21a4c7defb5f198775508fe71ae2a470",
+    "ca761b9196caffe2a7603835b911b2e4f608e38891abbaf0af9d6bffae2a664d",
+    "410d08f864e9668ec283a14c487392443e01609fdd2dbb3ac912db025264c676",
+    "8766a225adcde5612ebb1788735de1191305937145954e22fa5b3fe4650b675d",
+    "11cbe2873b1f9334e7e22502ffa4741d4815e0e9f341f796522d4d915b474562",
+]
+
+
 def reseal(fixture):
     fixture["fixture_sha256"] = bench.digest({key: value for key, value in fixture.items() if key != "fixture_sha256"})
 
@@ -86,7 +100,10 @@ def test_result_validation_does_not_accept_false_pairs_or_false_successes(fixtur
         bench.validate_results(fixture, results)
 
 
-def test_fresh_clients_ab_ba_and_shared_request_bytes_with_mock_transport(fixture):
+@pytest.mark.parametrize("prospective", [False, True])
+def test_fresh_clients_ab_ba_and_shared_request_bytes_with_mock_transport(fixture, prospective, tmp_path, capsys):
+    if prospective:
+        fixture = bench.load_fixture(V2_PATH)
     clients, requests = [], []
     expected = {case["question"]: case["expected_id"] or "none" for case in fixture["cases"]}
 
@@ -121,6 +138,67 @@ def test_fresh_clients_ab_ba_and_shared_request_bytes_with_mock_transport(fixtur
     assert [path for path, _ in requests[14:16]] == ["/v1/responses", "/v1/decisions"]
     assert all(row["duration_ms"] is None for row in result["rows"] if not row["provider_called"])
     assert bench.summarize(fixture, result)["modes"][2]["provider_correct"] == 14
+    if prospective:
+        result_path = tmp_path / "new-results.json"
+        bench.save(result_path, result)
+        assert bench.main(["report", "--fixture", str(V2_PATH), "--results", str(result_path)]) == 0
+        assert json.loads(capsys.readouterr().out)["fixture_sha256"] == V2_HASH
+
+
+def test_prospective_fixture_preserves_controls_and_exact_new_input_hashes(fixture):
+    v2 = bench.load_fixture(V2_PATH)
+    assert fixture["fixture_sha256"] == "afbac046436291e39519756023e7aecc2816aa19a63da2511a1d51081aff1b2a"
+    assert v2["fixture_sha256"] == V2_HASH and v2["recorded_results"] is None
+    assert v2["scope"] == fixture["scope"]
+    assert [row["id"] for row in v2["candidates"]] == [row["id"] for row in fixture["candidates"]]
+    controls = ("id", "question", "expected_id", "lexical_selected_id", "semantic_invoked",
+                "requires_zero_anchor_fallback", "candidate_order")
+    for previous, current, input_hash in zip(fixture["cases"], v2["cases"], V2_INPUT_HASHES, strict=True):
+        assert {key: previous[key] for key in controls} == {key: current[key] for key in controls}
+        assert current["input_sha256"] == input_hash
+        if not current["semantic_invoked"]:
+            continue
+        data = bench.payload(v2, current)
+        shared, _ = TableSelectionService._input(**data)
+        assert hashlib.sha256(shared.encode()).hexdigest() == input_hash
+        assert len(shared) <= 40_000 and len(data["candidates"]) == 96
+        previews = [json.loads(row["description"]) for row in data["candidates"]]
+        assert all(row["preview"] and row["not_citable"] and row["examples"] for row in previews)
+        material = next(row["description"] for row in data["candidates"] if row["id"] == current["expected_id"]) if current["expected_id"] else None
+        if material:
+            assert "Elastic" in material and "Tresca" in material
+        assert any("Geogrid" in row["description"] and "Truss" in row["description"] for row in data["candidates"])
+    assert len(v2["cases"][4]["description_overrides"]) == 33
+
+
+@pytest.mark.parametrize("change", ["out_of_set", "oversized", "missing_override"])
+def test_prospective_description_overrides_are_bound_and_validated(change):
+    fixture = bench.load_fixture(V2_PATH)
+    case = fixture["cases"][4]
+    if change == "out_of_set":
+        case["description_overrides"]["invented"] = "preview"
+    elif change == "oversized":
+        case["description_overrides"][next(iter(case["description_overrides"]))] = "x" * 1501
+    else:
+        case["description_overrides"].pop(next(iter(case["description_overrides"])))
+    reseal(fixture)
+    with pytest.raises(bench.BenchmarkError):
+        bench.validate_fixture(fixture)
+
+
+def test_prospective_report_requires_new_results_and_refuses_original_observations(fixture, tmp_path, capsys):
+    assert bench.main(["validate", "--fixture", str(V2_PATH)]) == 0
+    assert json.loads(capsys.readouterr().out)["fixture_sha256"] == V2_HASH
+    assert bench.main(["report", "--fixture", str(V2_PATH)]) == 1
+    assert json.loads(capsys.readouterr().out) == {"error_type": "BenchmarkError"}
+    with pytest.raises(bench.BenchmarkError, match="ResultsRequired"):
+        bench.summarize(bench.load_fixture(V2_PATH), None)
+    old_results = deepcopy(fixture["recorded_results"])
+    old_results["fixture_sha256"] = fixture["fixture_sha256"]
+    result_path = tmp_path / "original-results.json"
+    bench.save(result_path, old_results)
+    assert bench.main(["report", "--fixture", str(V2_PATH), "--results", str(result_path)]) == 1
+    assert json.loads(capsys.readouterr().out) == {"error_type": "BenchmarkError"}
 
 
 @pytest.mark.parametrize("failure", ["cache", "hash", "selection", "exception"])

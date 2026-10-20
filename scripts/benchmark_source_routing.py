@@ -37,8 +37,11 @@ def digest(value: Any) -> str:
 
 
 def payload(fixture: dict, case: dict) -> dict:
+    candidates = [deepcopy(fixture["candidates"][index]) for index in case["candidate_order"]]
+    for candidate in candidates:
+        candidate["description"] = case.get("description_overrides", {}).get(candidate["id"], candidate["description"])
     return {"question": case["question"],
-            "candidates": [deepcopy(fixture["candidates"][index]) for index in case["candidate_order"]]}
+            "candidates": candidates}
 
 
 def pair_order(repeat: int, case_number: int) -> list[str]:
@@ -73,6 +76,12 @@ def validate_fixture(fixture: dict) -> None:
                 or case["lexical_selected_id"] is not None and case["lexical_selected_id"] not in identities):
             raise BenchmarkError("CaseContract")
         case_ids.add(case["id"])
+        overrides = case.get("description_overrides", {})
+        if (not isinstance(overrides, dict)
+                or any(identity not in {candidates[index]["id"] for index in order}
+                       or not isinstance(description, str) or len(description) > 1500
+                       for identity, description in overrides.items())):
+            raise BenchmarkError("DescriptionOverrideContract")
         if case["semantic_invoked"]:
             shared = encoded(payload(fixture, case))
             if not order or len(shared.decode("utf-8")) > 40_000 or hashlib.sha256(shared).hexdigest() != case["input_sha256"]:
@@ -83,10 +92,13 @@ def validate_fixture(fixture: dict) -> None:
             raise BenchmarkError("LexicalSkipContract")
         if case["requires_zero_anchor_fallback"] and not case["semantic_invoked"]:
             raise BenchmarkError("FallbackContract")
-    validate_results(fixture, fixture["recorded_results"])
+    if fixture["recorded_results"] is not None:
+        validate_results(fixture, fixture["recorded_results"])
 
 
 def validate_results(fixture: dict, results: dict) -> None:
+    if not isinstance(results, dict):
+        raise BenchmarkError("ResultsRequired")
     if results.get("fixture_sha256", fixture["fixture_sha256"]) != fixture["fixture_sha256"]:
         raise BenchmarkError("ResultFixtureMismatch")
     repeats = results["repeats"]

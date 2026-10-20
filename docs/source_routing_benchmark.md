@@ -79,3 +79,36 @@ quality gates не проверяются. Local 4/16 не измеряет prod
 конечного ответа. Confidence не сохранён и не откалиброван. Default selector
 остаётся `off` до отдельного multi-target routing и полного answer-quality
 gate; этот benchmark не меняет runtime-конфигурацию.
+
+## Проспективный v2: буквальные примеры строк
+
+Отдельный [source_routing_v2.json](../tests/eval/source_routing_v2.json) подготовлен
+для нового опыта, но не содержит записанных результатов (`recorded_results: null`).
+Его SHA-256: `8c49cffb5ecf03133db73be65279047ab29b1cd95b1253cd9fccb35966762dd8`.
+Исходный fixture и его результат 14/16 против 16/16 сохранены без изменений;
+этот результат нельзя переносить на новые входы.
+
+В v2 сохранены восемь вопросов, ожидания, lexical controls, порядок всех 96
+кандидатов, scope GTS NX / unknown и whole-table budget 6000 символов. Descriptions
+перестроены точным `build_table_candidates` из принятого неизменяемого каталога;
+hash каталога и normalized-LF hash helper записаны в provenance. Короткие title/row0
+prefixes и до трёх буквальных cell-value previews распределены между всеми
+кандидатами в общем JSON budget 40000 символов; каждый preview явно `not_citable`.
+Material содержит Elastic/Tresca, а Property — Geogrid/Truss. Эти примеры помогают
+различить источники, но не меняют ожидаемые ID и не доказывают качество выбора.
+
+Семь новых shared-input hashes зафиксированы в cases. Budget учитывает длину
+вопроса: для `paraphrase-ru-2` 33 описания отличаются от общего canonical набора.
+Они хранятся как `description_overrides`, применяемые до сериализации; остальные
+случаи используют тот же набор без изменений. Полный input занимает 36609–36669
+символов. Новые результаты принимаются только с hash именно v2 fixture.
+
+Offline validation не вызывает API. Следующая команда `run` предназначена для
+отдельно разрешённого платного опыта: два fresh AB/BA повтора, 28 endpoint calls.
+Без нового файла результатов `report` для v2 завершается ошибкой.
+
+```powershell
+uv run python scripts/benchmark_source_routing.py validate --fixture tests/eval/source_routing_v2.json
+uv run python scripts/benchmark_source_routing.py run --fixture tests/eval/source_routing_v2.json --allow-paid-calls --model gpt-6-luna --repeats 2 --output var/source_routing_v2_results.json
+uv run python scripts/benchmark_source_routing.py report --fixture tests/eval/source_routing_v2.json --results var/source_routing_v2_results.json
+```
