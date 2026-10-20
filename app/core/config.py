@@ -200,6 +200,9 @@ class _SettingsFields(BaseModel):
     rag_evidence_catalog_path: Path | None = Field(
         default=None, validation_alias=AliasChoices("RAG_EVIDENCE_CATALOG_PATH"),
     )
+    rag_catalog_inventory_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("RAG_CATALOG_INVENTORY_ENABLED"),
+    )
     rag_visual_transcriptions_path: Path | None = Field(
         default=None, validation_alias=AliasChoices("RAG_VISUAL_TRANSCRIPTIONS_PATH"),
     )
@@ -522,6 +525,7 @@ def get_settings() -> Settings:
         ),
         rag_evidence_catalog_path=(Path(os.environ["RAG_EVIDENCE_CATALOG_PATH"])
                                    if os.getenv("RAG_EVIDENCE_CATALOG_PATH") else None),
+        rag_catalog_inventory_enabled=os.getenv("RAG_CATALOG_INVENTORY_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
         rag_visual_transcriptions_path=(Path(os.environ["RAG_VISUAL_TRANSCRIPTIONS_PATH"])
                                        if os.getenv("RAG_VISUAL_TRANSCRIPTIONS_PATH") else None),
         rag_retrieval_concurrency=int(os.getenv("RAG_RETRIEVAL_CONCURRENCY") or 2),

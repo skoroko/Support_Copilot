@@ -412,6 +412,7 @@ class RAGConfig:
     ingest_exclude_dir_names: tuple[str, ...] = ()
     docstore_path: Path | None = None
     evidence_catalog_path: Path | None = None
+    catalog_inventory_enabled: bool = False
     visual_transcriptions_path: Path | None = None
     retrieval_concurrency: int = 2
     rebuild_on_start: bool = False
@@ -513,6 +514,7 @@ class RAGConfig:
             condense_enabled=bool(getattr(settings, "rag_condense_enabled", True)),
             translate_llm_enabled=bool(getattr(settings, "rag_translate_llm_enabled", True)),
             planner_enabled=bool(getattr(settings, "rag_planner_enabled", False)),
+            catalog_inventory_enabled=bool(getattr(settings, "rag_catalog_inventory_enabled", False)),
             planner_model=str(getattr(settings, "rag_planner_model", "")),
             planner_effort=str(getattr(settings, "rag_planner_effort", "none")),
             planner_timeout=float(getattr(settings, "rag_planner_timeout", 5.)),
@@ -626,7 +628,8 @@ class RAGService:
         # question. Cold docstore parsing is startup work, not user latency.
         self._lexical_bm25_index()
         evidence_started = time.perf_counter()
-        cache_status = self._related_evidence.warmup()
+        cache_status = (self._related_evidence.warmup(inventory=True) if self.config.catalog_inventory_enabled
+                        else self._related_evidence.warmup())
         logger.info("rag_evidence_cache_prepared", **cache_status,
                     preparation_ms=round((time.perf_counter() - evidence_started) * 1000, 2))
         return self
@@ -834,6 +837,7 @@ class RAGService:
         deadline: float | None = None,
         translated_question: str | None = None,
         preserve_full_context: bool = False,
+        inventory_budget: int | None = None,
     ) -> _PreparedAnswer:
         """Run the guarded retrieval pipeline shared by all answer paths."""
         if not question.strip():
@@ -989,6 +993,7 @@ class RAGService:
             translated_candidates=self._product_scoped(translated_ranking),
             preserve_full_context=preserve_full_context,
             query_rankings=product_rankings[:len(plan.queries)] if plan.mode == "planned" else (),
+            inventory_budget=inventory_budget,
         )
         selection_seconds = time.perf_counter() - selection_started_at
         product_scope = "all" if self._scope_all_products() else "primary"
@@ -1018,6 +1023,7 @@ class RAGService:
                 translated_candidates=translated_ranking,
                 preserve_full_context=preserve_full_context,
                 query_rankings=retrieved_by_query[:len(plan.queries)] if plan.mode == "planned" else (),
+                inventory_budget=inventory_budget,
             )
             selection_seconds += time.perf_counter() - selection_started_at
             product_scope = "fallback_all"
@@ -1141,13 +1147,27 @@ class RAGService:
             deadline=deadline,
             translated_question=translated_question,
             preserve_full_context=True,
+            inventory_budget=max_context_chars,
         )
         if time.perf_counter() >= deadline:
             raise TimeoutError("Retrieval budget exhausted")
         selection = prepared.selection
         sources: list[dict[str, Any]] = []
         contexts: list[str] = []
-        allocations = self._context_allocations(selection.retrieved_contexts, max_context_chars)
+        # A complete table is atomic. Reserve its bounded share first, then
+        # distribute the remaining existing budget across ordinary evidence.
+        group_indices = [i for i, source in enumerate(selection.sources) if source.get("origin") == "catalog_inventory"]
+        ordinary_indices = [i for i in range(len(selection.sources)) if i not in group_indices]
+        allocations = [0] * len(selection.sources)
+        remaining = max_context_chars
+        for index in group_indices:
+            size = len(selection.retrieved_contexts[index])
+            if size <= remaining:
+                allocations[index] = size
+                remaining -= size
+        for index, allocation in zip(ordinary_indices, self._context_allocations(
+                [selection.retrieved_contexts[i] for i in ordinary_indices], remaining), strict=True):
+            allocations[index] = allocation
         if selection.has_evidence:
             for source, context, allocation in zip(
                 selection.sources, selection.retrieved_contexts, allocations, strict=True
@@ -1519,6 +1539,7 @@ class RAGService:
         translated_candidates: Sequence[Any] = (),
         preserve_full_context: bool = False,
         query_rankings: Sequence[Sequence[Any]] = (),
+        inventory_budget: int | None = None,
     ) -> _ContextSelection:
         """Fuse, rank and gate one candidate pool into an answer context.
 
@@ -1619,6 +1640,25 @@ class RAGService:
         lexical_selected_count = sum(self._node_identity(item) in lexical_ids for item in ranked)
         has_evidence = bool(ranked) and (top_score >= self.config.min_score or lexical_selected_count > 0)
         related_diagnostics: list[dict[str, Any]] = []
+        group_block_ids: set[str] = set()
+        if (self.config.catalog_inventory_enabled and inventory_budget is not None
+                and context_limit >= 2 and lexical.is_inventory_question(question)
+                and has_evidence and top_score >= self.config.min_score):
+            scopes = {(self._candidate_product(item), str(item.node.metadata.get("version") or "unknown"))
+                      for item in ranked[:context_limit - 1] if float(item.score or 0.) >= self.config.min_score}
+            diagnostics: dict[str, Any] = {}
+            group = self._related_evidence.inventory_table(
+                [plan.ranking_question, *plan.queries, translated_question or ""],
+                product_versions=scopes, max_chars=min(COMPANION_CONTEXT_BUDGET, inventory_budget // 2),
+                diagnostics=diagnostics, anchor_queries=[question, translated_question or ""])
+            related_diagnostics.append(diagnostics)
+            if group:
+                node = NodeWithScore(node=TextNode(id_=group["id"], text=group["text"], metadata=group["metadata"]), score=0.)
+                presented_text[group["id"]] = group["text"]
+                group_block_ids = set(group["metadata"]["block_ids"])
+                # The table is selected before the final seed limit. Existing
+                # ordinary evidence remains and alone establishes confidence.
+                ranked = [node, *ranked[:context_limit - 1]]
         # Structural companions add exact independently cited material; they
         # cannot raise the seed score or convert weak recall into an answer.
         if has_evidence:
@@ -1640,6 +1680,9 @@ class RAGService:
             for item in complete_ranked:
                 location = self._location_identity(item)
                 identity = self._node_identity(item)
+                blocks = set(item.node.metadata.get("block_ids") or [item.node.metadata.get("block_id")])
+                if blocks and blocks <= group_block_ids:
+                    continue
                 if location not in selected_locations or identity in selected_ids:
                     continue
                 text = presented_text[identity]
@@ -1669,6 +1712,8 @@ class RAGService:
             # Already retrieved complements take precedence within the same
             # shared budget; table/link expansion must not starve their text.
             for item in ranked:
+                if item.node.metadata.get("origin") == "catalog_inventory":
+                    continue
                 diagnostics: dict[str, Any] = {}
                 for related in self._related_evidence.resolve(
                     item.node.metadata, self._node_text(item), question=plan.ranking_question,

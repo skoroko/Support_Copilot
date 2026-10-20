@@ -273,13 +273,20 @@ class LexicalBM25Index:
 
     @classmethod
     def build(cls, payloads: Sequence[Mapping[str, Any]], tokenize: Callable[[str], list[str]]) -> "LexicalBM25Index":
-        index = cls()
-        total = 0
+        nodes = []
         for payload in payloads:
             try:
-                node = metadata_dict_to_node(dict(payload))
+                nodes.append(metadata_dict_to_node(dict(payload)))
             except Exception:
                 continue
+        return cls.build_nodes(nodes, tokenize)
+
+    @classmethod
+    def build_nodes(cls, nodes: Sequence[Any], tokenize: Callable[[str], list[str]]) -> LexicalBM25Index:
+        """Build the same immutable view from already decoded local nodes."""
+        index = cls()
+        total = 0
+        for node in nodes:
             terms = tokenize(node.text or "")
             doc_index = len(index.nodes)
             index.nodes.append(node)
@@ -291,7 +298,7 @@ class LexicalBM25Index:
             index.avg_doc_length = max(total / len(index.nodes), 1.0)
         return index
 
-    def query(self, terms: Sequence[str], limit: int) -> list[tuple[Any, float]]:
+    def query(self, terms: Sequence[str], limit: int, *, allowed_ids: set[str] | None = None) -> list[tuple[Any, float]]:
         """Return BM25-ranked ``(node, score)`` pairs, best first."""
 
         if not terms or not self.nodes:
@@ -305,6 +312,8 @@ class LexicalBM25Index:
                 continue
             idf = math.log(1 + (doc_count - len(postings) + 0.5) / (len(postings) + 0.5))
             for doc_index, frequency in postings:
+                if allowed_ids is not None and self.nodes[doc_index].node_id not in allowed_ids:
+                    continue
                 length = self.doc_lengths[doc_index]
                 denominator = frequency + k1 * (1 - b + b * length / self.avg_doc_length)
                 scores[doc_index] += idf * (frequency * (k1 + 1)) / denominator
@@ -478,6 +487,42 @@ def is_overview_question(question: str) -> bool:
     if tokens & FOCUSED_QUESTION_WORDS:
         return False
     return not any(stem in normalized for stem in FOCUSED_QUESTION_STEMS)
+
+
+def is_inventory_question(question: str) -> bool:
+    """Recognize an explicit list operation, independent of documented topics.
+
+    Conservative by design: unknown/ambiguous requests keep ordinary retrieval.
+    A mixed procedure/comparison/definition does not reserve catalog context.
+    """
+    if not isinstance(question, str) or not question.strip() or len(question) > 1_000:
+        return False
+    text = " ".join(LEXICAL_TOKEN_RE.findall(question.casefold().replace("ё", "е")))
+    if re.search(r"\b(?:как|почему|сравни\w*|отлич\w*|разниц\w*|инструкци\w*|настро\w*|"
+                 r"порядок|процедур\w*|шаг\w*|определени\w*|установ\w*|задавать|задать|вычисл\w*|"
+                 r"how|why|compare\w*|comparison|difference\w*|versus|vs|configur\w*|install\w*|"
+                 r"calculate|define|definitions?|procedures?|steps?)\b", text):
+        return False
+    if re.search(r"\b(?:что такое|что означает|what is|what does)\b", text):
+        return False
+    text = re.sub(r"^(?:(?:пожалуйста|please)\s+)?(?:расскажи\w*|подскажи\w*|скажи\w*|"
+                  r"(?:could you\s+)?tell me)\s+(?:пожалуйста\s+)?", "", text)
+    return bool(re.search(
+        r"^(?:(?:пожалуйста|please)\s+)?(?:перечисли\w*|список|перечень|каталог|list|enumerate)\b"
+        r"|\b(?:дай\w*|покажи\w*|приведи\w*|show|give)\s+(?:(?:мне|me|a|the|all)\s+)*(?:список|перечень|list|catalog)\b"
+        r"|^(?:какие|каковы)\b.*\b(?:есть|доступ\w*|существ\w*|поддерж\w*|предусмотр\w*|бывают|можно|виды|типы|варианты)\b"
+        r"|^(?:what|which)\b.*\b(?:available|supported|exist|there|types|kinds|categories|options|can be used)\b", text))
+
+
+def inventory_subject_terms(question: str) -> list[str]:
+    """Remove operation words only; never expand a subject or model registry."""
+    operation = {light_stem(word) for word in (  # noqa: SIM905 - compact operation vocabulary
+        "какие каковы есть доступны доступные существуют поддерживаются предусмотрены бывают виды типы варианты "
+        "перечисли перечислите список перечень каталог дай покажи приведи мне пожалуйста "
+        "расскажи подскажи скажи можно tell could you can be used "
+        "what which are the a all list enumerate available supported exist there types kinds categories options "
+        "show give me please brief briefly describe").split()}
+    return [term for term in lexical_terms(question) if term not in operation]
 
 
 def rank_fulltext_evidence(

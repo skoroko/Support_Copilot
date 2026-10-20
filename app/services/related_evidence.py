@@ -53,6 +53,8 @@ class RelatedEvidenceIndex:
         self._by_location: dict[str, list[dict[str, Any]]] = {}
         self._incoming: dict[str, list[tuple[str, str]]] = {}
         self._source_checks: dict[str, tuple[tuple[int, int, int, int], bool]] = {}
+        self._table_view: Any = None
+        self._table_groups: dict[str, dict[str, Any]] = {}
 
     def _load(self) -> bool:
         try:
@@ -110,6 +112,8 @@ class RelatedEvidenceIndex:
             self._incoming = incoming
             self._catalog_stamp = stamp
             self._source_checks.clear()
+            self._table_view = None
+            self._table_groups = {}
             return True
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             # A corrupt or missing catalog leaves ordinary retrieved evidence
@@ -154,7 +158,7 @@ class RelatedEvidenceIndex:
                 return None
             return str(source["relative_path"])
 
-    def warmup(self) -> dict[str, Any]:
+    def warmup(self, *, inventory: bool = False) -> dict[str, Any]:
         """Prepare the same validated cache used by requests, before readiness.
 
         File stamps are still checked on every lookup. Preloading is never
@@ -164,6 +168,8 @@ class RelatedEvidenceIndex:
         with self._lock:
             loaded = self._load()
             valid = sum(self._valid_source(sid) for sid in self._sources) if loaded else 0
+            if loaded and inventory:
+                self._prepare_table_view()
             return {"catalog_loaded": loaded, "valid_sources": valid,
                     "invalid_sources": len(self._sources) - valid if loaded else 0}
 
@@ -203,6 +209,96 @@ class RelatedEvidenceIndex:
         # reach this fallback. Only uniquely attributable new spans qualify.
         matches = [row for row in candidates if normalized in _normalized(str(row.get("text") or ""))]
         return matches if len(matches) == 1 else []
+
+    def _prepare_table_view(self) -> None:
+        """Build once per catalog snapshot, under the shared resolver lock."""
+        from llama_index.core.schema import TextNode
+
+        from app.services import lexical
+        from app.services.catalog_tables import validated_table_group
+
+        if self._table_view is not None:
+            return
+        members: dict[str, list[dict[str, Any]]] = {}
+        for block in self._blocks.values():
+            parents = {str(rel.get("to_id")) for rel in block.get("relations", [])
+                       if rel.get("kind") == "parent_table"}
+            if table_id := (block.get("attributes") or {}).get("table_id"):
+                parents.add(str(table_id))
+            for parent in parents:
+                members.setdefault(parent, []).append(block)
+        groups = {}
+        for table_id, rows in members.items():
+            table = self._blocks.get(table_id, {})
+            group = validated_table_group(table, rows,
+                source=self._sources.get(str(table.get("source_id")), {}),
+                location=self._locations.get(str(table.get("location_id")), {}))
+            if group:
+                groups[group["id"]] = group
+        self._table_groups = groups
+        self._table_view = lexical.LexicalBM25Index.build_nodes([
+            TextNode(id_=key, text=group["ranking_text"]) for key, group in groups.items()
+        ], lexical.lexical_terms)
+
+    def inventory_table(self, queries: list[str], *, product_versions: set[tuple[str, str]],
+                        max_chars: int, diagnostics: dict[str, Any],
+                        anchor_queries: list[str] | None = None) -> dict[str, Any] | None:
+        """Find one exact table outside ordinary chunk top-k; never certify coverage."""
+        from app.services import lexical
+
+        diagnostics.update(origin="catalog_inventory", selected_blocks=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load():
+                diagnostics["catalog_status"] = "unavailable"
+                return None
+            diagnostics["catalog_status"] = "loaded"
+            self._prepare_table_view()
+            allowed = {key for key, group in self._table_groups.items()
+                       if group["metadata"]["product"] not in {None, "", "unknown", "unresolved", "all"}
+                       and (group["metadata"]["product"], group["metadata"]["version"]) in product_versions}
+            # Query only matching product/version partitions, before the bounded
+            # top-k, so another product's many tables cannot starve this one.
+            scores: dict[str, float] = {}
+            for query in list(dict.fromkeys(queries))[:5]:
+                for node, score in self._table_view.query(lexical.inventory_subject_terms(query), 8, allowed_ids=allowed):
+                    scores[node.node_id] = max(score, scores.get(node.node_id, 0.))
+            diagnostics["candidate_count"] = len(scores)
+            anchored = []
+            for identity, score in scores.items():
+                group = self._table_groups[identity]
+                metadata = group["metadata"]
+                # Product names and operation words cannot establish a topic.
+                excluded = set(lexical.lexical_terms("midas " + metadata["product"].replace("_", " ")
+                                                     + " " + metadata["version"]))
+                heading = set(lexical.inventory_subject_terms(group["anchor_text"])) - excluded
+                coverage = max((len(subject & heading) / len(subject)
+                    if len(subject & heading) >= 2 else 0.
+                    for query in (anchor_queries if anchor_queries is not None else queries)
+                    if (subject := set(lexical.inventory_subject_terms(query)) - excluded)), default=0.)
+                if coverage >= .5:
+                    anchored.append((coverage, score, identity))
+            anchored.sort(reverse=True)
+            diagnostics["anchored_candidates"] = len(anchored)
+            if (len(anchored) > 1 and anchored[0][0] == anchored[1][0]
+                    and anchored[1][1] >= anchored[0][1] * .95
+                    and self._table_groups[anchored[0][2]]["text"] != self._table_groups[anchored[1][2]]["text"]):
+                diagnostics["omitted"].append({"reason": "ambiguous_table_anchor"})
+                return None
+            for _, _, identity in anchored:
+                group = self._table_groups[identity]
+                if not self._valid_source(group["metadata"]["source_id"]):
+                    diagnostics["omitted"].append({"table_id": group["metadata"]["block_id"], "reason": "stale_source"})
+                    continue
+                if len(group["text"]) > max_chars:
+                    diagnostics["bounded"] = True
+                    diagnostics["omitted"].append({"table_id": group["metadata"]["block_id"], "reason": "atomic_table_budget"})
+                    continue
+                diagnostics["selected_blocks"] = len(group["metadata"]["block_ids"])
+                # The cached BM25 view and provenance must never receive query
+                # annotations or mutation from one request's citation merge.
+                from copy import deepcopy
+                return deepcopy(group)
+            return None
 
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,
