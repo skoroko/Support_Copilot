@@ -11,6 +11,7 @@ import heapq
 import json
 import re
 from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -299,6 +300,102 @@ class RelatedEvidenceIndex:
                 from copy import deepcopy
                 return deepcopy(group)
             return None
+
+    def location_context(
+        self, metadata: Mapping[str, Any], text: str, *, max_chars: int = 6_000,
+        diagnostics: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Complete one verified physical location, without asserting relations.
+
+        Only usable extracted text is complete: omitted visuals/unsafe grids are
+        recorded explicitly. Large locations have no arbitrary prefix fallback.
+        """
+        from app.services.catalog_tables import validated_table_group
+        from app.services.corpus import stable_id
+
+        report = diagnostics if diagnostics is not None else {}
+        report.update(origin="physical_location", selected_blocks=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load() or not self._seed_blocks(metadata, text):
+                report["reason"] = "unverified_location"
+                return None
+            lid, sid = str(metadata["location_id"]), str(metadata["source_id"])
+            location, source = self._locations[lid], self._sources[sid]
+            if any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                   for key in ("product", "version")):
+                report["reason"] = "scope_mismatch"
+                return None
+            rows = self._by_location.get(lid, [])
+            if any(row.get("source_id") != sid for row in rows):
+                report["reason"] = "invalid_location_membership"
+                return None
+            # Only mechanically validated DOM grids may expose their row text.
+            # Parent containers are never repeated alongside their children.
+            members: dict[str, list[dict[str, Any]]] = {}
+            for row in rows:
+                if row.get("kind") in {"table_row", "table_header"}:
+                    members.setdefault(str((row.get("attributes") or {}).get("table_id")), []).append(row)
+            safe_rows: set[str] = set()
+            for row in rows:
+                if row.get("kind") == "table":
+                    group = validated_table_group(row, members.get(str(row["block_id"]), []),
+                                                  source=source, location=location)
+                    if group:
+                        safe_rows.update(group["metadata"]["block_ids"])
+            selected = []
+            for row in rows:
+                kind, attrs = row.get("kind"), row.get("attributes") or {}
+                content = str(row.get("text") or "")
+                reason = None
+                if kind in {"table", "section"}:
+                    reason = "structural_container"
+                elif kind in {"image", "visual_unextracted", "figure"}:
+                    reason = "untranscribed_visual"
+                elif attrs.get("review_status") in {"pending_review", "rejected"}:
+                    reason = "unreviewed_text"
+                elif kind in {"table_row", "table_header"} and row["block_id"] not in safe_rows:
+                    reason = "unsafe_grid"
+                elif not content.strip():
+                    reason = "empty_text"
+                if reason:
+                    report["omitted"].append({"block_id": row["block_id"], "reason": reason})
+                else:
+                    selected.append(row)
+            content = "\n".join(row["text"] for row in selected)
+            if not content or len(selected) > 64 or len(content) > max_chars:
+                report.update(reason=("no_usable_text" if not content else "block_budget"
+                                      if len(selected) > 64 else "character_budget"), bounded=bool(content),
+                              required_chars=len(content), required_blocks=len(selected))
+                return None
+            ids = [str(row["block_id"]) for row in selected]
+            digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            identity = stable_id("physical-location-v1", sid, source["source_hash"], lid, *ids, digest)
+            path = str(source["relative_path"])
+            locator = path + (f"#page={location['page']}" if location.get("page") is not None
+                              else "::" + str(location["chm_member"]) if location.get("chm_member") else "")
+            report.update(selected_blocks=len(selected), required_chars=len(content))
+            return {"block_id": identity, "text": content, "metadata": {
+                "source_id": sid, "source_hash": source["source_hash"], "location_id": lid,
+                "block_id": identity, "block_ids": ids, "doc_id": identity,
+                "file_name": Path(path).name, "file_path": str(self.data_root / path),
+                "source_locator": locator, "page": location.get("page"),
+                "chm_member": location.get("chm_member"), "title": location.get("title"),
+                "product": location.get("product", "unknown"), "version": location.get("version") or "unknown",
+                "language": location.get("language") or "unknown", "section_path": [],
+                "figure_regions": deepcopy(location.get("figure_regions") or []),
+                "warnings": list(location.get("warnings") or []),
+                "extraction_status": location.get("extraction_status"),
+                "block_type": "location_text_group", "block_attributes": {
+                    "complete_text_location": True, "extraction_only": True,
+                    "omitted_block_count": len(report["omitted"]),
+                    "visual_review_required": any((row.get("attributes") or {}).get("visual_review_required")
+                                                  for row in rows),
+                    "visual_region_count": len(location.get("figure_regions") or []),
+                    "untranscribed_visual_regions_present": bool(location.get("figure_regions")) or any(
+                        row["reason"] == "untranscribed_visual" for row in report["omitted"])},
+                "atomic_evidence": True, "extraction_version": "corpus-location-group-v1",
+                "origin": "physical_location", "text_sha256": digest,
+            }}
 
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,
