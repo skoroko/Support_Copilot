@@ -11,11 +11,30 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter, defaultdict
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from itertools import pairwise
 from typing import Any
 
 from llama_index.core.vector_stores.utils import metadata_dict_to_node
+
+_term_memo: ContextVar[dict[str, tuple[str, ...]] | None] = ContextVar("lexical_term_memo", default=None)
+
+
+@contextmanager
+def memoized_terms() -> Iterator[None]:
+    """Reuse pure tokenization within one selection, including nested calls.
+
+    Each entry gets a fresh memo; reset restores an enclosing scope even on
+    failure. No query or corpus text is retained beyond the selection.
+    """
+    token = _term_memo.set({})
+    try:
+        yield
+    finally:
+        _term_memo.reset(token)
+
 
 # Unicode letters and digits (no underscore): accented Latin, Greek symbols
 # and other scripts stay whole instead of splitting into noise fragments.
@@ -460,6 +479,18 @@ def light_stem(token: str) -> str:
 
 
 def lexical_terms(text: str) -> list[str]:
+    memo = _term_memo.get()
+    if memo is None:
+        return _uncached_lexical_terms(text)
+    tokens = memo.get(text)
+    if tokens is None:
+        tokens = tuple(_uncached_lexical_terms(text))
+        memo[text] = tokens
+    # Preserve the existing fresh, mutable list contract on cache hits too.
+    return list(tokens)
+
+
+def _uncached_lexical_terms(text: str) -> list[str]:
     terms: list[str] = []
     for raw_token in LEXICAL_TOKEN_RE.findall(text.casefold().replace("ё", "е")):
         if raw_token in LEXICAL_STOP_WORDS or any(

@@ -1526,6 +1526,7 @@ class RAGService:
             not self._matches_target_product(item) for item in lexical_candidates
         )
 
+    @lexical.memoized_terms()
     def _select_context(
         self,
         *,
