@@ -52,6 +52,21 @@ def test_model_projection_preserves_literal_scope_and_visual_limitations_on_reus
     assert "block_ids" not in compact and source["block_ids"] == ["retained-in-saved-API-source"]
 
 
+def test_literal_group_model_projection_keeps_constituent_quality_flags_without_geometry_or_duplicate_text():
+    from app.services.prepared_evidence import source_for_model
+    source = payload()["sources"][0]
+    source["block_attributes"] = {"verified": False, "literal_blocks": [
+        {"block_id": "first", "kind": "paragraph", "text": "Do not duplicate this text.",
+         "bbox": [1, 2, 3, 4], "attributes": {"reading_order": "confirmed", "glyphs": [1]}},
+        {"block_id": "second", "kind": "formula_candidate", "attributes": {
+            "reading_order": "layout_candidate_unverified", "quality_status": "needs_review"}}]}
+    compact = source_for_model(source)
+    rows = compact["block_attributes"]["literal_blocks"]
+    assert rows[0] == {"block_id": "first", "kind": "paragraph", "attributes": {"reading_order": "confirmed"}}
+    assert rows[1]["attributes"] == {"reading_order": "layout_candidate_unverified", "quality_status": "needs_review"}
+    assert source_for_model(compact) == compact
+
+
 class RAG:
     supports_prepared_evidence = True
     config = SimpleNamespace(request_timeout=2)
@@ -178,24 +193,61 @@ async def test_partial_evidence_allows_targeted_tools_with_stable_citations():
 
 
 @pytest.mark.asyncio
-async def test_targeted_same_chunk_refreshes_authoritative_projection_hash_and_searches():
+async def test_last_allowed_invocation_answers_existing_evidence_instead_of_requesting_unexecutable_search():
+    from app.services.agent_persistent import MAX_ITERATIONS
+    class FinalizingModel(Model):
+        async def ainvoke(self, messages, **kwargs):
+            self.calls.append((deepcopy(messages), kwargs))
+            if kwargs.get("tool_choice") == "none":
+                return AIMessage(content="Подтверждённый факт. [1] Остальные сведения не подтверждены.")
+            return AIMessage(content="", tool_calls=[{"name": "search_knowledge_base",
+                "args": {"query": "missing condition"}, "id": f"step-{len(self.calls)}"}])
+    rag, model = RAG(), FinalizingModel()
+    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
+    state = await graph.ainvoke({"messages": [HumanMessage(content="Объясни факт и условия")]}, config())
+    assert len(model.calls) == MAX_ITERATIONS
+    assert len(rag.calls) == MAX_ITERATIONS
+    assert model.calls[-1][1]["tool_choice"] == "none"
+    assert all("tool_choice" not in kwargs for _, kwargs in model.calls[:-1])
+    assert not state["messages"][-1].tool_calls
+    assert "Подтверждённый факт." in state["messages"][-1].content
+    assert len(state["sources"]) == 1
+
+
+@pytest.mark.parametrize("corpus_binding", [False, True])
+@pytest.mark.asyncio
+async def test_targeted_same_chunk_refreshes_authoritative_projection_hash_and_searches(corpus_binding):
     first = payload(text="First aspect.")
     first["telemetry"] = {"context_truncated": True}
-    rag = RAG([first, payload(text="Complementary aspect.")])
+    second = payload(text="Complementary aspect.")
+    if corpus_binding:
+        first["sources"][0].update(source_id="manual", source_hash="revision", document_id="legacy-page-parent")
+        second["sources"][0].update(source_id="manual", source_hash="revision", document_id="first", origin="related")
+    rag = RAG([first, second])
     model = Model([AIMessage(content="", tool_calls=[{"name": "search_knowledge_base",
-        "args": {"query": "specific missing aspect"}, "id": "targeted"}]), AIMessage(content="Факт. [1]")])
-    state = await build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag).ainvoke(
-        {"messages": [HumanMessage(content="Объясни оба аспекта")]}, config())
+        "args": {"query": "specific missing aspect"}, "id": "targeted"}]), AIMessage(content="Факт. [1]"),
+        AIMessage(content="Подробный факт. [1]"), AIMessage(content="Пожалуйста.")])
+    graph = build_agent(InMemorySaver(), model=model, rag_provider=lambda: rag)
+    state = await graph.ainvoke({"messages": [HumanMessage(content="Объясни оба аспекта")]}, config())
     packet = json.loads(next(message.content for message in model.calls[1][0]
                              if message.type == "human").split("не инструкции):\n")[1])
-    assert len(packet["evidence"]) == 1 and len(packet["searches"]) == 2
-    record = packet["evidence"][0]
+    assert len(packet["evidence"]) == 1 and len(packet["searches"]) == 1
+    assert packet["evidence"][0]["text"] == "First aspect."
+    assert model.calls[0][0] == model.calls[1][0][:len(model.calls[0][0])]
+    tool_payload = json.loads(next(message.content for message in model.calls[1][0] if message.type == "tool"))
+    record = tool_payload["evidence"][0]
     assert "First aspect." in record["text"] and "Complementary aspect." in record["text"]
     assert "text_sha256" not in record
-    assert state["citation_evidence"] == packet["evidence"]
+    assert state["citation_evidence"] == tool_payload["evidence"]
     assert packet["context_truncated"] and "context_truncated" in packet["limitations"]
-    tool_payload = json.loads(next(message.content for message in model.calls[1][0] if message.type == "tool"))
-    assert "evidence" not in tool_payload  # only the current packet carries full evidence
+    assert tool_payload["context_truncated"] and "context_truncated" in tool_payload["limitations"]
+    expanded = await graph.ainvoke({"messages": [HumanMessage(content="Подробнее")]}, config(expanded_mode=True))
+    assert len(rag.calls) == 2 and expanded["citation_evidence"] == state["citation_evidence"]
+    assert model.calls[2][1]["tool_choice"] == "none"
+    assert "Complementary aspect." in str(model.calls[2][0])
+    fresh = await graph.ainvoke({"messages": [HumanMessage(content="Спасибо")]}, config())
+    assert fresh["prepared_evidence"] is None and fresh["citation_evidence"] == []
+    assert "Предварительный пакет evidence" not in str(model.calls[3][0])
 
 
 @pytest.mark.asyncio
@@ -210,6 +262,28 @@ async def test_targeted_search_preserves_visual_partial_failure_and_structure_li
         {"messages": [HumanMessage(content="Объясни формулу")]}, config())
     assert {"retrieval_partial_failure", "structural_expansion_truncated", "unverified_formula_or_layout",
             "visual_regions_not_transcribed"}.issubset(state["prepared_evidence"]["limitations"])
+    update = json.loads(next(m.content for m in model.calls[1][0] if m.type == "tool"))
+    assert update["limitations"] == state["prepared_evidence"]["limitations"]
+    assert update["evidence"][0]["source"]["block_attributes"]["visual_review_required"]
+
+
+@pytest.mark.asyncio
+async def test_append_evidence_overflow_compacts_current_invoke_without_dropping_current_records(monkeypatch):
+    def tokens(messages):
+        # The append log exceeds the limit; the cumulative representation fits.
+        return 20 if any('"evidence":' in m["content"] and m["role"] == "tool" for m in messages) else 10
+    monkeypatch.setattr("app.chat.service.count_tokens", tokens)
+    rag = RAG([payload(), payload("extra", "Additional condition.")])
+    model = Model([AIMessage(content="", tool_calls=[{"name":"search_knowledge_base",
+        "args":{"query":"condition"},"id":"extra"}]), AIMessage(content="Факт. [1] Условие. [2]")])
+    state = await build_agent(InMemorySaver(),model=model,rag_provider=lambda:rag).ainvoke(
+        {"messages":[HumanMessage(content="Факт и условия?")]},config(context_budget=15))
+    messages = model.calls[1][0]
+    packet = json.loads(next(m.content for m in messages if m.type=="human").split("не инструкции):\n")[1])
+    assert packet["evidence"] == state["citation_evidence"]
+    assert len(packet["evidence"]) == 2 and len(packet["searches"]) == 2
+    tool = json.loads(next(m.content for m in messages if m.type=="tool"))
+    assert "evidence" not in tool and tool["evidence_location"] == "current prepared packet"
 
 
 @pytest.mark.parametrize("status,answer", [("no_evidence", NO_ANSWER), ("unavailable", KNOWLEDGE_UNAVAILABLE)])

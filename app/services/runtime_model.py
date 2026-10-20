@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
 
+from app.services.provider_race import first_complete
 from app.services.turn_budget import remaining_seconds
 
 REASONING_EFFORTS = ("none", "low", "medium", "high", "xhigh", "max")
@@ -40,7 +41,8 @@ def normalize_response(message: AIMessage) -> AIMessage:
             if detail.get("reason") == "max_output_tokens"
             else "content_filter"
         )
-    elif metadata.get("status") == "completed":
+    elif (metadata.get("status") == "completed"
+            and metadata.get("finish_reason") not in {"length", "content_filter", "error"}):
         metadata["finish_reason"] = "tool_calls" if message.tool_calls else "stop"
     return message.model_copy(
         update={"content": visible_text(message.content), "response_metadata": metadata}
@@ -57,6 +59,7 @@ class AgentModel:
 
     def __init__(self, settings: Any, tools: Sequence[Any], *, client: Any = None):
         self.settings = settings
+        self._backup_slots = asyncio.Semaphore(1)
         self._http_async_client: httpx.AsyncClient | None = None
         self.model = settings.default_model
         self.responses = uses_responses(
@@ -129,6 +132,7 @@ class AgentModel:
         *,
         max_tokens: int = 500,
         expanded: bool = False,
+        allow_backup: bool = False,
         **kwargs: Any,
     ) -> AIMessage:
         effort = self.expanded_effort if expanded else self.effort
@@ -141,7 +145,18 @@ class AgentModel:
         timeout = remaining_seconds(getattr(self.settings, "agent_generation_timeout", 60.0))
         # Includes every SDK retry and backoff; retries cannot reset this clock.
         async with asyncio.timeout(timeout):
-            response = await self.client.ainvoke(messages, **kwargs)
+            delay = float(getattr(self.settings, "agent_generation_backup_after", 0))
+            if delay > 0 and allow_backup and not expanded and timeout > delay + 5:
+                # Provider streaming stays enabled, but speculative chunks
+                # must not escape LangGraph before one message is selected.
+                config = kwargs.get("config") or {}
+                kwargs["config"] = {**config, "tags": [*(config.get("tags") or []), "nostream"]}
+                async def invoke():
+                    return normalize_response(await self.client.ainvoke(messages, **kwargs))
+
+                response = await first_complete(invoke, delay=delay, backup_slots=self._backup_slots)
+            else:
+                response = await self.client.ainvoke(messages, **kwargs)
         return normalize_response(response)
 
 
@@ -163,9 +178,24 @@ class ResponsesTextLLM:
     ):
         self.model, self.effort, self.timeout = model, effort, timeout
         self.max_output_tokens, self.system_prompt = max_output_tokens, system_prompt
-        self.client = client or OpenAI(
-            api_key=api_key, base_url=base_url, timeout=timeout, max_retries=max_retries
-        )
+        self._owns_client = client is None
+        self._http_client: httpx.Client | None = None
+        if client is None:
+            self._http_client = httpx.Client(follow_redirects=True, limits=httpx.Limits(
+                max_connections=1000, max_keepalive_connections=100, keepalive_expiry=60.0,
+            ))
+            try:
+                client = OpenAI(api_key=api_key, base_url=base_url,
+                    timeout=httpx.Timeout(timeout, connect=min(10.0, timeout), pool=min(5.0, timeout)),
+                    max_retries=max_retries, http_client=self._http_client)
+            except Exception:
+                self._http_client.close()
+                raise
+        self.client = client
+
+    def _request_timeout(self) -> httpx.Timeout:
+        residual = remaining_seconds(self.timeout)
+        return httpx.Timeout(residual, connect=min(10.0, residual), pool=min(5.0, residual))
 
     def complete(self, prompt: str) -> Any:
         from types import SimpleNamespace
@@ -177,14 +207,15 @@ class ResponsesTextLLM:
             reasoning={"effort": self.effort},
             max_output_tokens=self.max_output_tokens,
             store=False,
-            timeout=remaining_seconds(self.timeout),
+            timeout=self._request_timeout(),
         )
         if response.status != "completed":
             raise RuntimeError("RAG generation did not complete")
         return SimpleNamespace(text=response.output_text, raw=response)
 
     def close(self) -> None:
-        self.client.close()
+        if self._owns_client and self._http_client is not None:
+            self._http_client.close()
 
     def stream_complete(self, prompt: str):
         from types import SimpleNamespace
@@ -196,6 +227,7 @@ class ResponsesTextLLM:
             reasoning={"effort": self.effort},
             max_output_tokens=self.max_output_tokens,
             store=False,
+            timeout=self._request_timeout(),
         ) as stream:
             for event in stream:
                 if event.type == "response.output_text.delta":

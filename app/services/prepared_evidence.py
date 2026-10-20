@@ -40,6 +40,13 @@ def source_for_model(source: dict[str, Any]) -> dict[str, Any]:
     attributes = source.get("block_attributes") or {}
     compact["block_attributes"] = {key: value for key, value in attributes.items()
                                     if key in _MODEL_QUALITY_FIELDS and isinstance(value, (str, bool, int, float, type(None)))}
+    if isinstance(attributes.get("literal_blocks"), list):
+        compact["block_attributes"]["literal_blocks"] = [
+            {"block_id": block.get("block_id"), "kind": block.get("kind"),
+             "attributes": {key: value for key, value in (block.get("attributes") or {}).items()
+                            if key in _MODEL_QUALITY_FIELDS
+                            and isinstance(value, (str, bool, int, float, type(None)))}}
+            for block in attributes["literal_blocks"]]
     if "figure_regions" in source:
         regions = source.get("figure_regions") or []
         compact["visual_region_count"] = len(regions)
@@ -84,6 +91,13 @@ def _document_key(source: dict[str, Any]) -> str | None:
     key = source.get("document_key")
     if isinstance(key, str) and key:
         return key
+    # Direct retrieval can carry a legacy page ref_doc_id while structural
+    # expansion of the very same chunk falls back to its node_id. Bind both
+    # routes to the corpus source and revision before projecting metadata.
+    source_id, source_hash = source.get("source_id"), source.get("source_hash")
+    if all(isinstance(value, str) and value.strip() for value in (source_id, source_hash)):
+        binding = json.dumps(["corpus-v1", source_id, source_hash], ensure_ascii=False)
+        return hashlib.sha256(binding.encode("utf-8")).hexdigest()[:16]
     document_id = source.get("document_id")
     if not document_id:
         return None
@@ -94,7 +108,7 @@ def evidence_identity(source: dict[str, Any]) -> str:
     """Citation identity shared by raw and compact saved evidence.
 
     The document binding is its fingerprint in both forms: raw records hash
-    ``document_id`` on the fly, compact records carry the precomputed
+    the corpus source/revision (or legacy document_id), compact records carry the precomputed
     ``document_key``.  Per-block provenance fields stay out of the identity so
     a raw and a projected record for the same chunk still match.
     """

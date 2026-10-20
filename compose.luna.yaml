@@ -11,6 +11,10 @@ services:
       AGENT_REASONING_TOKEN_RESERVE: "8192"
       AGENT_GENERATION_TIMEOUT: "60"
       AGENT_TURN_TIMEOUT: "90"
+      # Same model/reasoning; up to two paid backups for slow brief invocations.
+      # One extra request at a time, no backup queue, expanded replies stay single.
+      AGENT_GENERATION_BACKUP_AFTER: "6"
+      AGENT_GENERATION_BACKUP_LIMIT: "2"
       # This override updates an existing stack with an accepted populated index.
       # Corpus ingestion remains an explicit job; app restarts only load it.
       RAG_INGEST_ON_START: "false"

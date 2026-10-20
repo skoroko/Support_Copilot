@@ -11,6 +11,7 @@ import heapq
 import json
 import re
 from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -190,6 +191,98 @@ class RelatedEvidenceIndex:
         # reach this fallback. Only uniquely attributable new spans qualify.
         matches = [row for row in candidates if normalized in _normalized(str(row.get("text") or ""))]
         return matches if len(matches) == 1 else []
+
+    def literal_member_prefix(self, metadata: Mapping[str, Any], text: str, *,
+                              max_chars: int) -> dict[str, Any] | None:
+        """Read a complete text prefix of a short help member, before any image.
+
+        A retrieved opening fragment is not evidence for the rest of an article.
+        This returns exact contiguous native text with its own block provenance;
+        it neither follows links nor interprets an image or a semantic relation.
+        The entire eligible prefix must fit; no other selected text is displaced.
+        """
+        with self._lock:
+            if not self._load():
+                return None
+            seeds = self._seed_blocks(metadata, text)
+            if not seeds:
+                return None
+            seed = seeds[0]
+            source = self._sources[str(seed["source_id"])]
+            if Path(str(source["relative_path"])).suffix.lower() not in {".chm", ".html", ".htm"}:
+                return None
+            page = self._by_location.get(str(seed["location_id"]), [])
+            if (len(page) > 32 or sum(len(str(b.get("text") or "")) for b in page) > 2400
+                    or any(b.get("source_id") != seed["source_id"] for b in page)
+                    or [b["block_id"] for b in seeds] != [b["block_id"] for b in page[:len(seeds)]]
+                    or _normalized(text) != _normalized("\n".join(str(b.get("text") or "") for b in seeds))):
+                return None
+            prefix = []
+            for block in page:
+                if (block.get("kind") not in {"paragraph", "heading", "link"}
+                        or block.get("section_path", []) != seed.get("section_path", [])
+                        or (block.get("attributes") or {}).get("review_status") in {"pending_review", "rejected"}):
+                    break
+                prefix.append(block)
+            if len(prefix) <= len(seeds):
+                return None
+            content = text + "\n" + "\n".join(str(b.get("text") or "") for b in prefix[len(seeds):])
+            if len(content) > min(max_chars, 1200):
+                return None
+            return {"text": content, "blocks": deepcopy(prefix),
+                    "scope": "literal_member_prefix", "identity_prefix": "literal-member-"}
+
+    def literal_atom_group(self, metadata: Mapping[str, Any], text: str, *,
+                           max_chars: int) -> dict[str, Any] | None:
+        """Complete a native span on a short PDF page, without semantic links.
+
+        The caller may replace only that already selected span, within unused
+        space. No other evidence is reranked, removed or truncated to fit this.
+        """
+        kinds = {"definition", "formula", "formula_candidate"}
+        with self._lock:
+            if not self._load():
+                return None
+            seeds = self._seed_blocks(metadata, text)
+            if not seeds:
+                return None
+            seed = seeds[0]
+            source = self._sources[str(seed["source_id"])]
+            if (Path(str(source["relative_path"])).suffix.lower() != ".pdf"
+                    or any(b.get("kind") not in kinds | {"paragraph"} for b in seeds)
+                    or (len(seeds) == 1 and (_normalized(text) != _normalized(str(seed.get("text") or ""))
+                                            or seed.get("relations")))):
+                return None
+            page = self._by_location.get(str(seed["location_id"]), [])
+            if (len(page) > 32 or sum(len(str(b.get("text") or "")) for b in page) > 2400
+                    or self._locations[str(seed["location_id"])].get("page") is None
+                    or any(b.get("source_id") != seed["source_id"] for b in page)
+                    or any(b.get("section_path", []) != seed.get("section_path", []) for b in seeds)):
+                return None
+            atoms = [b for b in page if b.get("kind") in kinds and not b.get("relations")
+                     and b.get("section_path", []) == seed.get("section_path", []) and b.get("text", "").strip()]
+            if len(atoms) < 2 or any((b.get("attributes") or {}).get("review_status")
+                                    in {"pending_review", "rejected"} for b in [*seeds,*atoms]):
+                return None
+            atoms = sorted(atoms, key=lambda b: (b.get("ordinal", 0), str(b["block_id"])))
+            seed_ids = {b["block_id"] for b in seeds}
+            missing = [b for b in atoms if b["block_id"] not in seed_ids]
+            if not missing:
+                return None
+            if len(seeds) == 1 and seed.get("kind") in kinds:
+                content, members = "\n".join(str(b["text"]) for b in atoms), atoms
+            else:
+                if (_normalized(text) != _normalized("\n".join(str(b.get("text") or "") for b in seeds))
+                        or any(b["ordinal"] <= max(s["ordinal"] for s in seeds) for b in missing)):
+                    return None
+                content = text + "\n" + "\n".join(str(b["text"]) for b in missing)
+                members = sorted([*seeds,*missing],key=lambda b:(b.get("ordinal",0),str(b["block_id"])))
+            member_ids = {b["block_id"] for b in members}
+            low, high = min(b["ordinal"] for b in members), max(b["ordinal"] for b in members)
+            if any(low <= b["ordinal"] <= high and str(b.get("text") or "").strip()
+                   and b["block_id"] not in member_ids for b in page):
+                return None
+            return {"text":content,"blocks":deepcopy(members)} if len(content) <= min(max_chars,1200) else None
 
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,

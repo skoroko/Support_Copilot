@@ -33,7 +33,7 @@ def test_full_saved_evidence_survives_consistent_raw_compact_identity():
 
 
 @pytest.mark.parametrize(("field", "value"), [
-    ("chunk_id", "chunk-B"), ("document_id", "C:/private/data/other.pdf"),
+    ("chunk_id", "chunk-B"), ("source_id", "source-B"), ("source_hash", "hash-B"),
     ("file_name", "other.pdf"), ("source_locator", "manual.pdf#page=9"),
     ("page", 4), ("printed_page", "4-1"), ("product", "product-B"), ("version", "2024"),
     ("section", "other-section"), ("chm_member", "/different/member.htm"),
@@ -56,7 +56,8 @@ def test_model_source_projection_stays_compact_idempotent_and_does_not_mutate_ra
     compact = source_for_model(raw)
     assert source_for_model(compact) == compact
     assert raw == original
-    assert compact["document_key"] == hashlib.sha256(raw["document_id"].encode()).hexdigest()[:16]
+    binding = json.dumps(["corpus-v1", raw["source_id"], raw["source_hash"]], ensure_ascii=False)
+    assert compact["document_key"] == hashlib.sha256(binding.encode()).hexdigest()[:16]
     for dropped in ("document_id", "source_id", "source_hash", "location_id", "block_id",
                     "block_bbox", "text_sha256", "snippet", "figure_regions"):
         assert dropped not in compact
@@ -90,3 +91,26 @@ def test_document_id_only_legacy_distinction_is_preserved_without_portable_prove
         "citation_evidence": records, "messages": []})
     assert [record["text"] for record in restored] == [
         "Complete first legacy document.", "Complete second legacy document."]
+
+
+def test_direct_and_related_routes_share_identity_and_keep_unique_text():
+    from app.services.prepared_evidence import prepare_evidence
+    direct = source()
+    related = {**direct, "document_id": direct["chunk_id"], "origin": "related"}
+    assert evidence_identity(direct) == evidence_identity(related)
+    assert evidence_identity(source_for_model(direct)) == evidence_identity(related)
+    packet = prepare_evidence({"status": "ok", "sources": [direct, related],
+        "contexts": ["Exact definition.", "Exact definition."]}, query="definition")
+    assert len(packet["citation_evidence"]) == 1
+    assert packet["citation_evidence"][0]["text"] == "Exact definition."
+    restored = _saved_citation_evidence({"answer_evidence": [direct],
+        "citation_evidence": [_citation_record(related, "All exact evidence.", 1)], "messages": []})
+    assert restored[0]["text"] == "All exact evidence."
+
+
+@pytest.mark.parametrize("missing", ["source_id", "source_hash"])
+def test_partial_corpus_binding_keeps_legacy_document_distinction(missing):
+    first = source()
+    first.pop(missing)
+    second = {**first, "document_id": "other-document"}
+    assert evidence_identity(first) != evidence_identity(second)
