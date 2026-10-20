@@ -70,6 +70,20 @@ def test_character_page_and_source_caps_are_explicit_and_metadata_is_server_only
     assert resolver.navigation(seeds, max_sources=0) == {"items": [], "truncated": True}
 
 
+def test_long_manual_starts_near_verified_seeds_instead_of_page_one(tmp_path):
+    resolver, seeds, catalog, _, _ = fixture(tmp_path, pages=130)
+    seeds = []
+    for page in (117, 120):
+        location = catalog['locations'][page - 1]
+        block = next(row for row in catalog['blocks'] if row['block_id'] == f'sourcebody{page}')
+        seeds.append({'metadata': {**location, 'block_id': block['block_id']}, 'text': block['text']})
+    nav = resolver.navigation(seeds, max_chars=1200)
+    pages = [row['page'] for row in nav['items']]
+    assert pages[:2] == [117, 120]
+    assert any(page in pages for page in (116, 118, 119, 121))
+    assert nav['truncated'] and nav == resolver.navigation(seeds, max_chars=1200)
+
+
 @pytest.mark.parametrize("change", ["id", "hash", "location", "product", "version", "page", "filename", "path", "not_citable"])
 def test_read_rejects_tampered_binding_instead_of_following_arbitrary_paths(tmp_path, change):
     resolver, seeds, _, _, _ = fixture(tmp_path)
@@ -94,7 +108,7 @@ def test_changed_source_and_catalog_disable_stale_manifest_reads(tmp_path):
 
 def test_ambiguous_page_is_not_listed_or_read_and_invalid_seeds_do_not_unlock(tmp_path):
     resolver, seeds, catalog, path, _ = fixture(tmp_path)
-    item = resolver.navigation(seeds)["items"][0]
+    item = next(row for row in resolver.navigation(seeds)["items"] if row['page'] == 1)
     catalog["locations"].append({**catalog["locations"][0], "location_id": "duplicate"})
     path.write_text(json.dumps(catalog), encoding="utf-8")
     assert 1 not in [row["page"] for row in resolver.navigation(seeds)["items"]]
@@ -109,7 +123,7 @@ def test_ambiguous_page_is_not_listed_or_read_and_invalid_seeds_do_not_unlock(tm
 
 def test_no_chm_guesses_or_oversized_page_prefix_fallback(tmp_path):
     resolver, seeds, catalog, path, source = fixture(tmp_path)
-    item = resolver.navigation(seeds)["items"][0]
+    item = next(row for row in resolver.navigation(seeds)["items"] if row['page'] == 1)
     catalog["blocks"][1]["text"] += "x" * 6000
     path.write_text(json.dumps(catalog), encoding="utf-8")
     assert resolver.read_navigation(item) is None

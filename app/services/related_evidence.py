@@ -13,7 +13,7 @@ import re
 from collections.abc import Mapping
 from contextvars import ContextVar
 from copy import deepcopy
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from threading import RLock
 from typing import Any
 
@@ -274,9 +274,15 @@ class RelatedEvidenceIndex:
 
     def inventory_table(self, queries: list[str], *, product_versions: set[tuple[str, str]],
                         max_chars: int, diagnostics: dict[str, Any],
-                        anchor_queries: list[str] | None = None) -> dict[str, Any] | None:
+                        anchor_queries: list[str] | None = None,
+                        semantic_selector: Any | None = None,
+                        question: str = "") -> dict[str, Any] | None:
         """Find one exact table outside ordinary chunk top-k; never certify coverage."""
         from app.services import lexical
+        from app.services.table_navigation import (
+            TableNavigationInputError,
+            build_table_candidates,
+        )
 
         diagnostics.update(origin="catalog_inventory", selected_blocks=0, omitted=[], bounded=False)
         with self._lock:
@@ -328,9 +334,39 @@ class RelatedEvidenceIndex:
                 diagnostics["selected_blocks"] = len(group["metadata"]["block_ids"])
                 # The cached BM25 view and provenance must never receive query
                 # annotations or mutation from one request's citation merge.
-                from copy import deepcopy
                 return deepcopy(group)
-            return None
+            if anchored or semantic_selector is None:
+                return None
+            # Semantic choice is navigation among literal validated tables,
+            # never an assertion that they answer the question. Scope, source
+            # bytes and whole-table budget are enforced before and after HTTP.
+            eligible_groups = []
+            for identity in sorted(allowed, key=lambda key: (-scores.get(key, 0.), key)):
+                group = self._table_groups[identity]
+                if len(group["text"]) > max_chars or not self._valid_source(group["metadata"]["source_id"]):
+                    continue
+                eligible_groups.append(group)
+            try:
+                candidates, navigation_report = build_table_candidates(question or queries[0], eligible_groups)
+            except TableNavigationInputError as error:
+                diagnostics['semantic_selection'] = {'status': 'input_unavailable', 'reason': str(error)}
+                return None
+            diagnostics['table_navigation'] = navigation_report
+            catalog_stamp = self._catalog_stamp
+        report: dict[str, Any] = {}
+        selected = semantic_selector.select(question or queries[0], candidates, diagnostics=report)
+        diagnostics["semantic_selection"] = report
+        with self._lock:
+            if not self._load() or self._catalog_stamp != catalog_stamp:
+                diagnostics["omitted"].append({"reason": "catalog_changed_during_selection"})
+                return None
+            if selected not in {candidate["id"] for candidate in candidates}:
+                return None
+            group = self._table_groups.get(selected)
+            if not group or not self._valid_source(group["metadata"]["source_id"]) or len(group["text"]) > max_chars:
+                return None
+            diagnostics["selected_blocks"] = len(group["metadata"]["block_ids"])
+            return deepcopy(group)
 
     def physical_contexts(
         self, seeds: list[dict[str, Any]], *, max_chars: int = 6_000,
@@ -548,20 +584,32 @@ class RelatedEvidenceIndex:
             return output
 
     @staticmethod
-    def _navigation_id(binding: Mapping[str, Any], page: int) -> str:
+    def _navigation_id(binding: Mapping[str, Any], locator: int | str) -> str:
         from app.services.corpus import stable_id
 
         return stable_id("physical-navigation-v1", *(str(binding[key]) for key in
-                         ("source_id", "source_hash", "location_id", "product", "version")), str(page))
+                         ("source_id", "source_hash", "location_id", "product", "version")), str(locator))
+
+    @staticmethod
+    def _member_parent(member: Any) -> str | None:
+        if not isinstance(member, str) or not member.startswith("/") or "\\" in member:
+            return None
+        path = PurePosixPath(member)
+        if ".." in path.parts or path.suffix.lower() not in {".htm", ".html", ".xhtml"} or str(path) != member:
+            return None
+        return str(path.parent)
 
     def navigation(
         self, seeds: list[dict[str, Any]], *, max_chars: int = 10_000, max_sources: int = 2,
     ) -> dict[str, Any]:
-        """Non-citable PDF page hints, enabled only by two verified seed pages.
+        """Non-citable navigation unlocked by two distinct verified locations.
 
         max_chars bounds the compact JSON list of model-visible fields; raw
         binding metadata stays on the server. Hints are literal first prose,
         excluding exact paragraphs repeated on at least three physical pages.
+        CHM navigation lists literal titles and bounded prose previews within
+        the exact common member directory. Titles take precedence over previews.
+        A shared directory never establishes a semantic relation.
         Neither the manifest nor a page hint establishes engineering facts.
         """
         result: dict[str, Any] = {"items": [], "truncated": False}
@@ -571,7 +619,7 @@ class RelatedEvidenceIndex:
         with self._lock:
             if not self._load():
                 return result
-            scopes: dict[tuple[str, str, str, str], set[str]] = {}
+            scopes: dict[tuple[str, str, str, str, str, str], list[str]] = {}
             for seed in seeds:
                 if not isinstance(seed, dict) or not isinstance(seed.get("metadata"), Mapping):
                     continue
@@ -580,36 +628,110 @@ class RelatedEvidenceIndex:
                     continue
                 sid, lid = str(metadata["source_id"]), str(metadata["location_id"])
                 location, source = self._locations[lid], self._sources[sid]
-                page = location.get("page")
-                if (Path(str(source["relative_path"])).suffix.lower() != ".pdf"
-                        or type(page) is not int or page < 1 or self._pdf_pages.get((sid, page)) != lid
-                        or any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                page, member = location.get("page"), location.get("chm_member")
+                suffix = Path(str(source["relative_path"])).suffix.lower()
+                parent = self._member_parent(member)
+                if (any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
                                for key in ("product", "version"))):
                     continue
+                if suffix == ".pdf" and type(page) is int and page > 0 and self._pdf_pages.get((sid, page)) == lid:
+                    kind, directory = "pdf", ""
+                elif suffix == ".chm" and parent is not None and metadata.get("chm_member") == member:
+                    if sum(loc.get("source_id") == sid and loc.get("chm_member") == member
+                           for loc in self._locations.values()) != 1:
+                        continue
+                    kind, directory = "chm", parent
+                else:
+                    continue
                 scope = (sid, str(source["source_hash"]), str(location.get("product", "unknown")),
-                         str(location.get("version", "unknown")))
-                scopes.setdefault(scope, set()).add(lid)
+                         str(location.get("version", "unknown")), kind, directory)
+                if lid not in scopes.setdefault(scope, []):
+                    scopes[scope].append(lid)
             # A single PDF source cannot silently combine conflicting seed scopes.
-            scope_counts: dict[str, int] = {}
+            scope_counts: dict[str, set[tuple[str, str, str]]] = {}
             for scope in scopes:
-                scope_counts[scope[0]] = scope_counts.get(scope[0], 0) + 1
+                scope_counts.setdefault(scope[0], set()).add(scope[1:4])
             eligible = [scope for scope, locations in scopes.items()
-                        if len(locations) >= 2 and scope_counts[scope[0]] == 1]
+                        if len(locations) >= 2 and len(scope_counts[scope[0]]) == 1]
             if len(eligible) > min(max_sources, 2):
                 result["truncated"] = True
             visible: list[dict[str, Any]] = []
             considered = 0
-            for sid, digest, product, version in eligible[:min(max_sources, 2)]:
+            # One long document must not hide a second eligible directory or
+            # document. Hints share the existing budget; no evidence is evicted.
+            scope_budget = max_chars // max(1, min(len(eligible), max_sources, 2))
+            for sid, digest, product, version, kind, directory in eligible[:min(max_sources, 2)]:
                 source = self._sources[sid]
+                scope_visible: list[dict[str, Any]] = []
+                if kind == "chm":
+                    chm_items = []
+                    members: dict[str, list[dict[str, Any]]] = {}
+                    member_counts: dict[str, int] = {}
+                    for location in self._locations.values():
+                        member = location.get("chm_member")
+                        if location.get("source_id") == sid and isinstance(member, str):
+                            member_counts[member] = member_counts.get(member, 0) + 1
+                        if (location.get("source_id") == sid and location.get("source_hash") == digest
+                                and str(location.get("product", "unknown")) == product
+                                and str(location.get("version", "unknown")) == version
+                                and self._member_parent(member) == directory):
+                            members.setdefault(member, []).append(location)
+                    for member, matches in sorted(members.items()):
+                        if len(matches) != 1 or member_counts[member] != 1:
+                            continue
+                        location = matches[0]
+                        hint = str(location.get("title") or "").strip()[:160]
+                        if not hint:
+                            continue
+                        binding = {"source_id": sid, "source_hash": digest, "location_id": location["location_id"],
+                                   "product": product, "version": version}
+                        item = {"id": self._navigation_id(binding, member), "metadata": binding,
+                                "chm_member": member, "file_name": Path(source["relative_path"]).name,
+                                "hint": hint, "not_citable": True}
+                        projection = {key: value for key, value in item.items() if key != "metadata"}
+                        if (considered >= 100 or len(json.dumps([*scope_visible, projection], ensure_ascii=False)) > scope_budget):
+                            result["truncated"] = True
+                            continue
+                        considered += 1
+                        scope_visible.append(projection)
+                        chm_items.append(item)
+                    # Reserve every fitting title before sharing the spare
+                    # JSON budget across literal previews. A long first page
+                    # must not displace later member names.
+                    spare = scope_budget - len(json.dumps(scope_visible, ensure_ascii=False))
+                    preview_limit = min(160, max(0, spare // max(1, len(chm_items)) - 14))
+                    for index, item in enumerate(chm_items):
+                        prose = next((str(row.get("text") or "").strip()
+                            for row in self._by_location.get(item["metadata"]["location_id"], [])
+                            if row.get("source_id") == sid and row.get("kind") == "paragraph"
+                            and len(str(row.get("text") or "").strip()) >= 80
+                            and str(row.get("text") or "").count(" > ") < 2
+                            and (row.get("attributes") or {}).get("review_status") not in {"pending_review", "rejected"}), "")
+                        if prose and preview_limit:
+                            enriched = {**scope_visible[index], "preview": prose[:preview_limit]}
+                            trial = [*scope_visible[:index], enriched, *scope_visible[index + 1:]]
+                            if len(json.dumps(trial, ensure_ascii=False)) <= scope_budget:
+                                item["preview"] = prose[:preview_limit]
+                                scope_visible[index] = enriched
+                    visible.extend(scope_visible)
+                    result["items"].extend(chm_items)
+                    continue
                 pages = sorted((page, lid) for (source_id, page), lid in self._pdf_pages.items()
                                if source_id == sid and lid is not None
                                and self._locations[lid].get("source_hash") == digest
                                and str(self._locations[lid].get("product", "unknown")) == product
                                and str(self._locations[lid].get("version", "unknown")) == version)
-                if len(pages) > 100 - considered:
+                if len(pages) > 100:
                     result["truncated"] = True
-                pages = pages[:max(0, 100 - considered)]
-                considered += len(pages)
+                # A prefix of a long manual hides the section that actually
+                # matched. Show verified seed pages and their closest physical
+                # neighbours first, with deterministic ties; no semantic link
+                # or engineering meaning is inferred from this ordering.
+                scope = (sid, digest, product, version, kind, directory)
+                seed_pages = [self._locations[lid]["page"] for lid in scopes[scope]]
+                pages.sort(key=lambda pair: min((abs(pair[0] - seed_page), index, pair[0])
+                                               for index, seed_page in enumerate(seed_pages)))
+                pages = pages[:100]
                 paragraphs: dict[str, list[str]] = {}
                 occurrences: dict[str, set[str]] = {}
                 for _page, lid in pages:
@@ -631,10 +753,12 @@ class RelatedEvidenceIndex:
                             "page": page, "file_name": Path(source["relative_path"]).name,
                             "hint": hint, "not_citable": True}
                     projection = {key: value for key, value in item.items() if key != "metadata"}
-                    if len(json.dumps([*visible, projection], ensure_ascii=False, separators=(",", ":"))) > max_chars:
+                    if (considered >= 100 or len(json.dumps([*scope_visible, projection], ensure_ascii=False)) > scope_budget):
                         result["truncated"] = True
                         continue
+                    scope_visible.append(projection)
                     visible.append(projection)
+                    considered += 1
                     result["items"].append(item)
             return result
 
@@ -655,16 +779,23 @@ class RelatedEvidenceIndex:
             source, location = self._sources.get(sid), self._locations.get(lid)
             if not source or not location:
                 return None
-            page = location.get("page")
+            page, member = location.get("page"), location.get("chm_member")
+            suffix = Path(str(source["relative_path"])).suffix.lower()
+            valid_locator = (suffix == ".pdf" and type(page) is int and page > 0
+                             and self._pdf_pages.get((sid, page)) == lid and item.get("page") == page)
+            locator = page
+            if suffix == ".chm" and self._member_parent(member) is not None:
+                valid_locator = (item.get("chm_member") == member and item.get("page") is None
+                                 and sum(loc.get("source_id") == sid and loc.get("chm_member") == member
+                                         for loc in self._locations.values()) == 1)
+                locator = member
             canonical = {"source_id": sid, "source_hash": source.get("source_hash"), "location_id": lid,
                          "product": str(location.get("product", "unknown")),
                          "version": str(location.get("version", "unknown"))}
             if (dict(binding) != canonical or location.get("source_id") != sid
                     or location.get("source_hash") != source.get("source_hash")
-                    or Path(str(source["relative_path"])).suffix.lower() != ".pdf"
-                    or type(page) is not int or page < 1 or self._pdf_pages.get((sid, page)) != lid
-                    or item.get("page") != page or item.get("file_name") != Path(source["relative_path"]).name
-                    or item.get("id") != self._navigation_id(canonical, page) or not self._valid_source(sid)):
+                    or not valid_locator or item.get("file_name") != Path(source["relative_path"]).name
+                    or item.get("id") != self._navigation_id(canonical, locator) or not self._valid_source(sid)):
                 return None
             anchor = next((row for row in self._by_location.get(lid, []) if str(row.get("text") or "").strip()), None)
             if anchor is None:

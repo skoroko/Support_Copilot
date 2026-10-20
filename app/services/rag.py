@@ -413,6 +413,10 @@ class RAGConfig:
     docstore_path: Path | None = None
     evidence_catalog_path: Path | None = None
     catalog_inventory_enabled: bool = False
+    location_context_enabled: bool = False
+    table_selection: str = "off"
+    table_selection_model: str = "gpt-6-luna"
+    table_selection_timeout: float = 5.
     visual_transcriptions_path: Path | None = None
     retrieval_concurrency: int = 2
     rebuild_on_start: bool = False
@@ -430,6 +434,8 @@ class RAGConfig:
     def __post_init__(self) -> None:
         if not 1 <= self.retrieval_concurrency <= 4:
             raise ValueError("retrieval_concurrency must be between 1 and 4")
+        if self.table_selection not in {"off", "responses", "decisions"} or not 0 < self.table_selection_timeout <= 5:
+            raise ValueError("Invalid bounded table selection configuration")
         if self.planner_effort not in {"none", "low"} or not 0 < self.planner_timeout <= 15:
             raise ValueError("Invalid bounded retrieval planner configuration")
         if self.chunk_overlap >= self.chunk_size:
@@ -515,6 +521,10 @@ class RAGConfig:
             translate_llm_enabled=bool(getattr(settings, "rag_translate_llm_enabled", True)),
             planner_enabled=bool(getattr(settings, "rag_planner_enabled", False)),
             catalog_inventory_enabled=bool(getattr(settings, "rag_catalog_inventory_enabled", False)),
+            location_context_enabled=bool(getattr(settings, "rag_location_context_enabled", False)),
+            table_selection=str(getattr(settings, "rag_table_selection", "off")),
+            table_selection_model=str(getattr(settings, "rag_table_selection_model", "gpt-6-luna")),
+            table_selection_timeout=float(getattr(settings, "rag_table_selection_timeout", 5.)),
             planner_model=str(getattr(settings, "rag_planner_model", "")),
             planner_effort=str(getattr(settings, "rag_planner_effort", "none")),
             planner_timeout=float(getattr(settings, "rag_planner_timeout", 5.)),
@@ -556,6 +566,7 @@ class RAGService:
         own_translate_hook: bool = False,
         ingestion_service: Any | None = None,
         retrieval_planner: Any | None = None,
+        table_selector: Any | None = None,
     ) -> None:
         self.config = config
         self.client = client
@@ -570,6 +581,14 @@ class RAGService:
         self._own_translate_hook = own_translate_hook
         self._ingestion_service = ingestion_service
         self._retrieval_planner = retrieval_planner
+        self._table_selector = table_selector
+        self._owns_table_selector = table_selector is None
+        if table_selector is None and config.table_selection != "off" and config.allow_external_data_transfer:
+            from app.services.table_selection import TableSelectionService
+
+            self._table_selector = TableSelectionService(mode=config.table_selection,
+                model=config.table_selection_model, base_url=config.openai_base_url or "https://api.openai.com/v1",
+                api_key=config.openai_api_key or "", timeout_seconds=config.table_selection_timeout)
         self._index: Any | None = None
         self._retriever: Any | None = None
         self._lexical_available = False
@@ -838,6 +857,7 @@ class RAGService:
         translated_question: str | None = None,
         preserve_full_context: bool = False,
         inventory_budget: int | None = None,
+        known_atomic_units: frozenset[str] = frozenset(),
     ) -> _PreparedAnswer:
         """Run the guarded retrieval pipeline shared by all answer paths."""
         if not question.strip():
@@ -994,6 +1014,7 @@ class RAGService:
             preserve_full_context=preserve_full_context,
             query_rankings=product_rankings[:len(plan.queries)] if plan.mode == "planned" else (),
             inventory_budget=inventory_budget,
+            known_atomic_units=known_atomic_units,
         )
         selection_seconds = time.perf_counter() - selection_started_at
         product_scope = "all" if self._scope_all_products() else "primary"
@@ -1024,6 +1045,7 @@ class RAGService:
                 preserve_full_context=preserve_full_context,
                 query_rankings=retrieved_by_query[:len(plan.queries)] if plan.mode == "planned" else (),
                 inventory_budget=inventory_budget,
+                known_atomic_units=known_atomic_units,
             )
             selection_seconds += time.perf_counter() - selection_started_at
             product_scope = "fallback_all"
@@ -1129,6 +1151,7 @@ class RAGService:
         translated_question: str | None = None,
         timeout_seconds: float | None = None,
         max_context_chars: int = 12_000,
+        known_atomic_units: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         """Return guarded manual evidence without generating a support answer.
 
@@ -1148,6 +1171,7 @@ class RAGService:
             translated_question=translated_question,
             preserve_full_context=True,
             inventory_budget=max_context_chars,
+            known_atomic_units=known_atomic_units,
         )
         if time.perf_counter() >= deadline:
             raise TimeoutError("Retrieval budget exhausted")
@@ -1156,10 +1180,15 @@ class RAGService:
         contexts: list[str] = []
         # A complete table is atomic. Reserve its bounded share first, then
         # distribute the remaining existing budget across ordinary evidence.
+        bonus_indices = [i for i, source in enumerate(selection.sources)
+                         if source.get("origin") in {"physical_location", "physical_neighbor"}]
         group_indices = [i for i, source in enumerate(selection.sources) if source.get("origin") == "catalog_inventory"]
-        ordinary_indices = [i for i in range(len(selection.sources)) if i not in group_indices]
+        ordinary_indices = [i for i in range(len(selection.sources)) if i not in group_indices and i not in bonus_indices]
         allocations = [0] * len(selection.sources)
-        remaining = max_context_chars
+        # Preserve the exact ordinary 12K packet, then append whole local
+        # units within a separate quota. Expansion cannot evict old facts.
+        base_budget = min(max_context_chars, 12_000) if self.config.location_context_enabled else max_context_chars
+        remaining = base_budget
         for index in group_indices:
             size = len(selection.retrieved_contexts[index])
             if size <= remaining:
@@ -1168,6 +1197,12 @@ class RAGService:
         for index, allocation in zip(ordinary_indices, self._context_allocations(
                 [selection.retrieved_contexts[i] for i in ordinary_indices], remaining), strict=True):
             allocations[index] = allocation
+        bonus_remaining = min(12_000, max_context_chars - base_budget)
+        for index in bonus_indices:
+            size = len(selection.retrieved_contexts[index])
+            if size <= bonus_remaining:
+                allocations[index] = size
+                bonus_remaining -= size
         if selection.has_evidence:
             for source, context, allocation in zip(
                 selection.sources, selection.retrieved_contexts, allocations, strict=True
@@ -1201,7 +1236,34 @@ class RAGService:
             "sources": sources,
             "contexts": contexts,
             "telemetry": telemetry,
+            **(self._navigation_packet(selection) if self.config.location_context_enabled else {}),
         }
+
+    def _navigation_packet(self, selection: _ContextSelection) -> dict[str, Any]:
+        if not selection.has_evidence:
+            return {}
+        navigation = self._related_evidence.navigation([
+            {'metadata': item.node.metadata, 'text': self._node_text(item)} for item in selection.ranked])
+        return {'_navigation': navigation['items'], 'navigation_truncated': navigation['truncated']}
+
+    def read_navigation(self, items: list[dict[str, Any]], *, max_context_chars: int = 6_000) -> dict[str, Any]:
+        """Read only server-authorized navigation bindings, with no new search."""
+        if not 1 <= len(items) <= 3 or max_context_chars <= 0:
+            raise ValueError('Invalid navigation read bounds')
+        sources, contexts = [], []
+        remaining = max_context_chars
+        for item in items:
+            group = self._related_evidence.read_navigation(item)
+            if group is None or len(group['text']) > remaining:
+                continue
+            node = NodeWithScore(node=TextNode(id_=group['block_id'], text=group['text'], metadata=group['metadata']), score=0.)
+            source = self._source_from_node(node, include_snippet=False, presented_context=group['text'])
+            sources.append({**source, 'snippet': group['text'][:MAX_SOURCE_SNIPPET_CHARS]})
+            contexts.append(group['text'])
+            remaining -= len(group['text'])
+        return {'status': 'ok' if sources else 'no_evidence', 'sources': sources, 'contexts': contexts,
+                'telemetry': {'navigation_read': True, 'returned_context_chars': sum(map(len, contexts)),
+                              'context_truncated': len(contexts) != len(items)}}
 
     @staticmethod
     def _context_allocations(contexts: Sequence[str], budget: int) -> list[int]:
@@ -1248,6 +1310,8 @@ class RAGService:
         )
 
     def close(self) -> None:
+        if self._owns_table_selector and self._table_selector is not None:
+            self._table_selector.close()
         if self.client is not None:
             self.client.close()
         from app.services.runtime_model import ResponsesTextLLM
@@ -1541,6 +1605,7 @@ class RAGService:
         preserve_full_context: bool = False,
         query_rankings: Sequence[Sequence[Any]] = (),
         inventory_budget: int | None = None,
+        known_atomic_units: frozenset[str] = frozenset(),
     ) -> _ContextSelection:
         """Fuse, rank and gate one candidate pool into an answer context.
 
@@ -1644,14 +1709,16 @@ class RAGService:
         group_block_ids: set[str] = set()
         if (self.config.catalog_inventory_enabled and inventory_budget is not None
                 and context_limit >= 2 and lexical.is_inventory_question(question)
-                and has_evidence and top_score >= self.config.min_score):
+                and has_evidence):
             scopes = {(self._candidate_product(item), str(item.node.metadata.get("version") or "unknown"))
-                      for item in ranked[:context_limit - 1] if float(item.score or 0.) >= self.config.min_score}
+                      for item in ranked[:context_limit - 1]
+                      if float(item.score or 0.) >= self.config.min_score or self._node_identity(item) in lexical_ids}
             diagnostics: dict[str, Any] = {}
             group = self._related_evidence.inventory_table(
                 [plan.ranking_question, *plan.queries, translated_question or ""],
                 product_versions=scopes, max_chars=min(COMPANION_CONTEXT_BUDGET, inventory_budget // 2),
-                diagnostics=diagnostics, anchor_queries=[question, translated_question or ""])
+                diagnostics=diagnostics, anchor_queries=[question, translated_question or ""],
+                semantic_selector=self._table_selector, question=question)
             related_diagnostics.append(diagnostics)
             if group:
                 node = NodeWithScore(node=TextNode(id_=group["id"], text=group["text"], metadata=group["metadata"]), score=0.)
@@ -1660,6 +1727,7 @@ class RAGService:
                 # The table is selected before the final seed limit. Existing
                 # ordinary evidence remains and alone establishes confidence.
                 ranked = [node, *ranked[:context_limit - 1]]
+        structural_seeds = list(ranked)
         # Structural companions add exact independently cited material; they
         # cannot raise the seed score or convert weak recall into an answer.
         if has_evidence:
@@ -1712,7 +1780,7 @@ class RAGService:
                 related_diagnostics.append(companion_report)
             # Already retrieved complements take precedence within the same
             # shared budget; table/link expansion must not starve their text.
-            for item in ranked:
+            for item in structural_seeds:
                 if item.node.metadata.get("origin") == "catalog_inventory":
                     continue
                 diagnostics: dict[str, Any] = {}
@@ -1785,6 +1853,56 @@ class RAGService:
             if other_location_report["selected_blocks"] or other_location_report["bounded"]:
                 related_diagnostics.append(other_location_report)
             ranked = [*ranked, *companions]
+        if self.config.location_context_enabled and has_evidence and (inventory_budget or 0) > 12_000:
+            # Local recall supplements the already selected evidence. Physical
+            # adjacency supplies independent locators, never semantic links.
+            groups: dict[str, Any] = {}
+            baseline_by_location: dict[str, str] = {}
+            for item in ranked:
+                lid = str(item.node.metadata.get("location_id") or "")
+                baseline_by_location[lid] = baseline_by_location.get(lid, "") + "\n" + presented_text[self._node_identity(item)]
+            physical_batches = self._related_evidence.physical_contexts([
+                {"metadata": item.node.metadata, "text": self._node_text(item)} for item in complete_ranked],
+                max_chars=6_000)
+            for batch in physical_batches:
+                related_diagnostics.extend(batch["diagnostics"])
+                for group in batch["groups"]:
+                    text, metadata = group["text"], group["metadata"]
+                    baseline = " ".join(baseline_by_location.get(str(metadata["location_id"]), "").split())
+                    if all(" ".join(line.split()) in baseline for line in text.splitlines() if line.strip()):
+                        continue
+                    node = NodeWithScore(node=TextNode(id_=group["block_id"], text=text, metadata=metadata), score=0.)
+                    groups[group["block_id"]] = node
+            remaining = min(12_000, inventory_budget - 12_000)
+            # Expanded packets may contain many short sections. Keep the same
+            # character ceiling without exhausting the count after six small
+            # locations while useful whole sections still fit. The default
+            # six-thousand-character supplement retains its prior count cap.
+            location_limit = 3 if remaining <= 6_000 else 12
+            selected_locations = set()
+            bonus_report: dict[str, Any] = {"origin": "physical_packing", "budget_chars": remaining,
+                                             "selected": [], "omitted": []}
+            from app.services.prepared_evidence import atomic_unit_fingerprint
+
+            for node in self._rank_by_lexical_evidence(plan.ranking_question, list(groups.values()),
+                    extra_questions=(translated_question,) if translated_question else ()):
+                text, metadata = self._node_text(node), node.node.metadata
+                lid = str(metadata["location_id"])
+                detail = {"location_id": lid, "source_locator": metadata.get("source_locator"), "chars": len(text)}
+                if atomic_unit_fingerprint(metadata, text) in known_atomic_units:
+                    bonus_report['omitted'].append({**detail, 'reason': 'already_visible'})
+                    continue
+                if lid in selected_locations or len(selected_locations) >= location_limit or len(text) > remaining:
+                    bonus_report["omitted"].append({**detail, "reason": "duplicate_location" if lid in selected_locations
+                        else "location_limit" if len(selected_locations) >= location_limit else "character_budget"})
+                    continue
+                ranked.append(node)
+                presented_text[self._node_identity(node)] = text
+                remaining -= len(text)
+                selected_locations.add(lid)
+                bonus_report["selected"].append(detail)
+            bonus_report["remaining_chars"] = remaining
+            related_diagnostics.append(bonus_report)
         with evidence_session(self.config.data_dir) if self.config.evidence_scope_enabled else nullcontext():
             sources = [
                 {**self._source_from_node(item, include_snippet=False,

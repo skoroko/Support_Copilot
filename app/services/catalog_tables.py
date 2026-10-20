@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -87,12 +89,23 @@ def validated_table_group(table: dict[str, Any], members: list[dict[str, Any]], 
         identity = stable_id("catalog-table-v1", sid, source["source_hash"], tid,
                              hashlib.sha256(text.encode()).hexdigest())
         path = str(source["relative_path"])
+        count_lines = []
+        for column in range(width):
+            counts = Counter(row['attributes']['resolved_cells'][column]['text'] for row in rows)
+            if len(counts) > 8:
+                continue
+            line = json.dumps({'column': column + 1, 'counts': dict(counts)}, ensure_ascii=False)
+            if len('\n'.join([*count_lines, line])) <= 1600:
+                count_lines.append(line)
         metadata = {
             "source_id": sid, "source_hash": source["source_hash"], "location_id": lid,
             "block_id": tid, "block_ids": [row["block_id"] for row in rows],
             "block_type": "table_group", "block_attributes": {
                 "structure": "html_dom", "header_inference": attributes.get("header_inference"),
-                "group_row_count": len(rows)},
+                "group_row_count": len(rows),
+                # Mechanical counts include row zero and imply no header or
+                # engineering meaning. Only complete validated columns count.
+                "literal_column_counts": '\n'.join(count_lines)},
             "doc_id": identity, "file_name": Path(path).name,
             "page": location.get("page"), "chm_member": location.get("chm_member"),
             "product": location.get("product", "unknown"), "version": location.get("version") or "unknown",

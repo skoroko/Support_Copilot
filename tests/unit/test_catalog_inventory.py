@@ -12,7 +12,7 @@ from llama_index.core.schema import NodeWithScore, TextNode
 from app.services.catalog_tables import validated_table_group
 from app.services.corpus_html import parse_html
 from app.services.lexical import is_inventory_question
-from app.services.prepared_evidence import prepare_evidence
+from app.services.prepared_evidence import prepare_evidence, source_for_model
 from app.services.rag import RAGConfig, RAGService
 from app.services.related_evidence import RelatedEvidenceIndex
 
@@ -74,6 +74,11 @@ def test_full_dom_group_keeps_row_zero_symbols_rowspan_and_identity(tmp_path):
     assert group['text'].endswith('Column 2=Option 29 | Column 3=O')
     assert len(group['metadata']['block_ids']) == 31
     assert group['metadata']['atomic_evidence'] is True
+    projected = source_for_model(group['metadata'])['block_attributes']
+    assert projected['group_row_count'] == 31 and projected['structure'] == 'html_dom'
+    counts = [json.loads(line) for line in projected['literal_column_counts'].splitlines()]
+    assert next(row['counts'] for row in counts if row['column'] == 3) == {'Applicability': 1, 'O': 29, 'X': 1}
+    assert len(projected['literal_column_counts']) <= 1600
     assert all(b['kind'] != 'table_header' for b in catalog['blocks'])
     assert choose(resolver)[0]['id'] == group['id']
     group['metadata']['block_ids'].clear()
@@ -85,6 +90,45 @@ def test_heading_gate_rejects_incidental_row_value_and_product_only(tmp_path):
     assert choose(resolver, 'List nonlinear algorithms in CIVIL')[0] is None
     assert choose(resolver, 'List CIVIL options')[0] is None
     assert choose(resolver, 'List widget assembly options')[0]
+
+
+def test_semantic_navigation_can_bridge_languages_without_raising_evidence_score(tmp_path):
+    _, resolver, _, _ = catalog_fixture(tmp_path)
+    class Selector:
+        def select(self, question, candidates, diagnostics):
+            assert question == 'Перечисли способы сборки виджетов'
+            assert 'Widget name' in candidates[0]['description']
+            diagnostics['mode'] = 'fake'
+            return candidates[0]['id']
+    group, report = choose(resolver, 'List construction choices', semantic_selector=Selector(),
+                           question='Перечисли способы сборки виджетов')
+    assert report['anchored_candidates'] == 0
+    assert group['metadata']['atomic_evidence']
+    assert report['selected_blocks'] == 31
+    assert report['semantic_selection']['mode'] == 'fake'
+
+
+@pytest.mark.parametrize('mutation', ['source', 'catalog', 'choice'])
+def test_semantic_navigation_revalidates_bytes_catalog_and_choice(tmp_path, mutation):
+    _, resolver, path, source = catalog_fixture(tmp_path)
+    class Selector:
+        def select(self, question, candidates, diagnostics):
+            if mutation == 'source':
+                source.write_bytes(b'changed')
+            if mutation == 'catalog':
+                path.write_text('{}', encoding='utf-8')
+            return 'invented' if mutation == 'choice' else candidates[0]['id']
+    assert choose(resolver, 'List construction choices', semantic_selector=Selector())[0] is None
+
+
+def test_semantic_navigation_never_receives_other_scope_or_overbudget_tables(tmp_path):
+    _, resolver, _, _ = catalog_fixture(tmp_path)
+    class Selector:
+        def select(self, question, candidates, diagnostics):
+            assert candidates == []
+    assert choose(resolver, 'List construction choices', semantic_selector=Selector(), max_chars=10)[0] is None
+    assert choose(resolver, 'List construction choices', semantic_selector=Selector(),
+                  product_versions={('gts_nx', 'unknown')})[0] is None
 
 
 @pytest.mark.parametrize('mutate', [

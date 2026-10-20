@@ -117,6 +117,13 @@ class AgentModel:
         if self._http_async_client is not None:
             await self._http_async_client.aclose()
 
+    async def audit_answer(self, payload: str, *, mode: str) -> dict:
+        from app.services.answer_audit import EvidenceAuditor
+
+        if self._http_async_client is None:
+            self._http_async_client = httpx.AsyncClient()
+        return await EvidenceAuditor(self.settings, self._http_async_client).evaluate(payload, mode=mode)
+
     def output_budget(self, answer_tokens: int, *, expanded: bool = False) -> int:
         effort = self.expanded_effort if expanded else self.effort
         reserve = (

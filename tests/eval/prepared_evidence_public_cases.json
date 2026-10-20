@@ -1,0 +1,37 @@
+{
+  "scope": "Public fixed regression cohort; no Telegram data or sealed holdout",
+  "items": [
+    {
+      "id": "inventory-ru",
+      "question": "Какие модели грунтов доступны в GTS NX?"
+    },
+    {
+      "id": "inventory-en",
+      "question": "Which soil material models are available in GTS NX?"
+    },
+    {
+      "id": "inventory-variant",
+      "question": "Расскажи, какие конститутивные модели можно использовать для грунта в GTS NX."
+    },
+    {
+      "id": "golden-01",
+      "question": "Какие шесть степеней свободы используются в конструкционном расчёте и как они соответствуют направлениям r, θ, z?"
+    },
+    {
+      "id": "golden-07",
+      "question": "Для чего применяются интерфейсные элементы и как они моделируют контакт грунта с конструкцией?"
+    },
+    {
+      "id": "golden-10",
+      "question": "Расскажи мне про модель Мора-Кулона"
+    },
+    {
+      "id": "golden-16",
+      "question": "Какие итерационные алгоритмы доступны для общего нелинейного расчёта?"
+    },
+    {
+      "id": "golden-32",
+      "question": "Расскажи про граничные условия в GTS NX"
+    }
+  ]
+}

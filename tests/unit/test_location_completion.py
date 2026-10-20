@@ -192,6 +192,24 @@ def test_neighbors_share_location_safety_and_each_whole_size_limit(tmp_path):
     assert len(groups) == 2 and sum(len(g["text"]) for g in groups) <= 60
     assert all("Invented" not in g["text"] and "Unsafe" not in g["text"] for g in groups)
     assert groups[0]["metadata"]["block_attributes"]["untranscribed_visual_regions_present"]
+    from types import SimpleNamespace
+
+    from llama_index.core.schema import NodeWithScore, TextNode
+
+    from app.services.prepared_evidence import prepare_evidence
+    from app.services.rag import RAGConfig, RAGService
+
+    group = groups[0]
+    node = NodeWithScore(node=TextNode(id_=group['block_id'], text=group['text'], metadata=group['metadata']), score=0.)
+    config = RAGConfig(data_dir=tmp_path, qdrant_url='http://unused.invalid', qdrant_api_key=None,
+        collection_name='unit', baremetal_collection_name='bare', llm_model='test',
+        embedding_model='test', embedding_dimensions=3)
+    service = RAGService(config, client=SimpleNamespace(), llm=SimpleNamespace())
+    service._related_evidence = resolver
+    source = service._source_from_node(node, include_snippet=False, presented_context=group['text'])
+    prepared = prepare_evidence({'status': 'ok', 'sources': [source], 'contexts': [group['text']]}, query='Question')
+    assert prepared['citation_evidence'][0]['source']['untranscribed_visual_regions_present']
+    assert 'visual_regions_not_transcribed' in prepared['packet']['limitations']
     report = {}
     groups = resolver.nearby_contexts(seed, "Exact introduction.", max_chars=25, diagnostics=report)
     assert [g["metadata"]["page"] for g in groups] == [1]
