@@ -11,6 +11,7 @@ import heapq
 import json
 import re
 from collections.abc import Mapping
+from contextvars import ContextVar
 from copy import deepcopy
 from pathlib import Path
 from threading import RLock
@@ -21,6 +22,7 @@ from app.services.reviewed_visual_regions import valid_literal_render_relation
 
 _RELATIONS = frozenset({"parent_section", "parent_table", "table_header", "table_note_for", "table_caption_for", "defines", "continued_table", "literal_render_of"})
 _FORMATS = frozenset({".pdf", ".chm", ".html", ".htm", ".docx", ".md", ".txt"})
+_PHYSICAL_BATCH: ContextVar[dict[str, Any] | None] = ContextVar("physical_evidence_batch", default=None)
 
 
 def _stamp(path: Path) -> tuple[int, int, int, int]:
@@ -48,17 +50,21 @@ class RelatedEvidenceIndex:
         self.catalog_path = catalog_path
         self._lock = RLock()
         self._catalog_stamp: tuple[int, int, int, int] | None = None
+        self._catalog_resolved: Path | None = None
         self._sources: dict[str, dict[str, Any]] = {}
         self._locations: dict[str, dict[str, Any]] = {}
         self._blocks: dict[str, dict[str, Any]] = {}
         self._by_location: dict[str, list[dict[str, Any]]] = {}
         self._pdf_pages: dict[tuple[str, int], str | None] = {}
         self._incoming: dict[str, list[tuple[str, str]]] = {}
-        self._source_checks: dict[str, tuple[tuple[int, int, int, int], bool]] = {}
+        self._source_checks: dict[str, tuple[tuple[Path, tuple[int, int, int, int]], bool]] = {}
         self._table_view: Any = None
         self._table_groups: dict[str, dict[str, Any]] = {}
 
     def _load(self) -> bool:
+        batch = _PHYSICAL_BATCH.get()
+        if batch is not None and batch["owner"] is self:
+            return True
         try:
             stamp = _stamp(self.catalog_path)
             if stamp == self._catalog_stamp:
@@ -121,6 +127,7 @@ class RelatedEvidenceIndex:
             self._by_location = by_location
             self._incoming = incoming
             self._catalog_stamp = stamp
+            self._catalog_resolved = self.catalog_path.resolve()
             self._source_checks.clear()
             self._table_view = None
             self._table_groups = {}
@@ -131,25 +138,40 @@ class RelatedEvidenceIndex:
             self._catalog_stamp = None
             return False
 
-    def _valid_source(self, source_id: str) -> bool:
+    def _source_binding(self, source_id: str) -> tuple[Path, tuple[int, int, int, int]] | None:
+        """Check the current resolved path as well as the file stamp."""
         source = self._sources.get(source_id)
         if not source:
-            return False
+            return None
         try:
             relative = Path(str(source["relative_path"]))
             path = (self.data_root / relative).resolve()
             if relative.is_absolute() or not path.is_relative_to(self.data_root) or path.suffix.lower() not in _FORMATS:
-                return False
-            stamp = _stamp(path)
-            previous = self._source_checks.get(source_id)
-            if previous is not None and previous[0] == stamp:
-                return previous[1]
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            valid = digest == source.get("source_hash")
-            self._source_checks[source_id] = (stamp, valid)
-            return valid
+                return None
+            return path, _stamp(path)
         except (OSError, ValueError, KeyError):
-            return False
+            return None
+
+    def _valid_source(self, source_id: str) -> bool:
+        batch = _PHYSICAL_BATCH.get()
+        active = batch is not None and batch["owner"] is self
+        if active and source_id in batch["sources"]:
+            return batch["sources"][source_id][1]
+        binding = self._source_binding(source_id)
+        valid = False
+        if binding is not None:
+            previous = self._source_checks.get(source_id)
+            if previous is not None and previous[0] == binding:
+                valid = previous[1]
+            else:
+                try:
+                    valid = hashlib.sha256(binding[0].read_bytes()).hexdigest() == self._sources[source_id].get("source_hash")
+                    self._source_checks[source_id] = (binding, valid)
+                except (OSError, ValueError, KeyError):
+                    pass
+        if active:
+            batch["sources"][source_id] = (binding, valid)
+        return valid
 
     def source_relative_path(self, metadata: Mapping[str, Any]) -> str | None:
         """Resolve a portable locator through the exact current source hash.
@@ -309,6 +331,62 @@ class RelatedEvidenceIndex:
                 from copy import deepcopy
                 return deepcopy(group)
             return None
+
+    def physical_contexts(
+        self, seeds: list[dict[str, Any]], *, max_chars: int = 6_000,
+    ) -> list[dict[str, Any]]:
+        """Build aligned physical groups under one checked local snapshot.
+
+        Catalog/source validity is reused only inside this synchronous locked
+        batch. Every touched source and the catalog must retain their resolved
+        path and stamp at exit, or all output is discarded. No network work is
+        performed here. Standalone location/neighbor calls keep fresh checks.
+        """
+        def invalidated(reason: str) -> list[dict[str, Any]]:
+            return [{"groups": [], "diagnostics": [
+                {"origin": "physical_location", "selected_blocks": 0, "omitted": [],
+                 "bounded": False, "invalidated": True, "reason": reason},
+                {"origin": "physical_neighbor", "selected_locations": 0, "omitted": [],
+                 "bounded": False, "invalidated": True, "reason": reason},
+            ]} for _ in seeds]
+
+        with self._lock:
+            outer = _PHYSICAL_BATCH.get()
+            if outer is not None and outer["owner"] is self:
+                raise RuntimeError("Nested physical evidence batch")
+            try:
+                catalog_path = self.catalog_path.resolve()
+                if catalog_path != self._catalog_resolved:
+                    self._catalog_stamp = None
+                if not self._load():
+                    return invalidated("unverified_catalog")
+                catalog_binding = (catalog_path, self._catalog_stamp)
+            except (OSError, ValueError):
+                return invalidated("unverified_catalog")
+            batch: dict[str, Any] = {"owner": self, "sources": {}}
+            token = _PHYSICAL_BATCH.set(batch)
+            try:
+                output = []
+                for seed in seeds:
+                    local_report: dict[str, Any] = {}
+                    neighbor_report: dict[str, Any] = {}
+                    group = self.location_context(seed["metadata"], seed["text"],
+                                                  max_chars=max_chars, diagnostics=local_report)
+                    groups = [group] if group else []
+                    groups.extend(self.nearby_contexts(seed["metadata"], seed["text"],
+                                                      max_chars=max_chars, diagnostics=neighbor_report))
+                    output.append({"groups": groups, "diagnostics": [local_report, neighbor_report]})
+            finally:
+                _PHYSICAL_BATCH.reset(token)
+            try:
+                changed = catalog_binding != (self.catalog_path.resolve(), _stamp(self.catalog_path))
+                # Do not short-circuit: every touched source gets an exit check.
+                for sid, (binding, _valid) in batch["sources"].items():
+                    if self._source_binding(sid) != binding:
+                        changed = True
+            except (OSError, ValueError):
+                changed = True
+            return invalidated("batch_changed") if changed else output
 
     def location_context(
         self, metadata: Mapping[str, Any], text: str, *, max_chars: int = 6_000,
