@@ -4,9 +4,13 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from contextvars import copy_context
+from contextvars import ContextVar, copy_context
 from dataclasses import dataclass
+from threading import BoundedSemaphore
 from typing import Any
+
+# Shared only by concurrent searches in one turn, never by unrelated chats.
+recall_slots: ContextVar[BoundedSemaphore | None] = ContextVar("turn_recall_slots", default=None)
 
 
 @dataclass(frozen=True)
@@ -57,6 +61,34 @@ def search_while_translating(search: Callable[[], Any], translate: Callable[[], 
         original = executor.submit(copy_context().run, search)
         try:
             translated = translate()
-        except Exception:  # Translation failures must retain original recall.
+        except Exception:  # noqa: BLE001 - translation is auxiliary to original recall
             translated = None
         return original.result(), translated
+
+
+def bilingual_searches(
+    queries: Sequence[str], search: Callable[[str], Sequence[Any]],
+    translate: Callable[[], str | None], *, concurrency: int = 2,
+    deadline: float | None = None, query_limit: int | None = None,
+) -> tuple[list[SearchOutcome], str | None, bool]:
+    """Submit English recall as soon as translation is ready in the same pool.
+
+    Joining follows query order, independent of completion order. Translation
+    cannot consume an extra search slot or discard successful original recall.
+    """
+    def one(query: str) -> SearchOutcome:
+        return independent_searches([query], search, concurrency=1, deadline=deadline)[0]
+
+    workers = min(max(1, concurrency), 4)
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="bilingual-recall") as executor:
+        futures = [executor.submit(copy_context().run, one, query) for query in queries]
+        try:
+            translated = translate()
+        except Exception:  # noqa: BLE001 - translation is auxiliary to original recall
+            translated = None
+        translated = translated.strip() if translated else None
+        omitted = bool(translated and translated not in queries
+                       and query_limit is not None and len(queries) >= query_limit)
+        if translated and translated not in queries and not omitted:
+            futures.append(executor.submit(copy_context().run, one, translated))
+        return [future.result() for future in futures], translated, omitted

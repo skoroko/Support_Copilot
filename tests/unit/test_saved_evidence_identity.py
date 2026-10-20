@@ -33,7 +33,7 @@ def test_full_saved_evidence_survives_consistent_raw_compact_identity():
 
 
 @pytest.mark.parametrize(("field", "value"), [
-    ("chunk_id", "chunk-B"), ("document_id", "C:/private/data/other.pdf"),
+    ("chunk_id", "chunk-B"), ("source_id", "source-B"), ("source_hash", "hash-B"),
     ("file_name", "other.pdf"), ("source_locator", "manual.pdf#page=9"),
     ("page", 4), ("printed_page", "4-1"), ("product", "product-B"), ("version", "2024"),
     ("section", "other-section"), ("chm_member", "/different/member.htm"),
@@ -56,7 +56,8 @@ def test_model_source_projection_stays_compact_idempotent_and_does_not_mutate_ra
     compact = source_for_model(raw)
     assert source_for_model(compact) == compact
     assert raw == original
-    assert compact["document_key"] == hashlib.sha256(raw["document_id"].encode()).hexdigest()[:16]
+    binding = json.dumps(["corpus-v1", raw["source_id"], raw["source_hash"]], ensure_ascii=False)
+    assert compact["document_key"] == hashlib.sha256(binding.encode()).hexdigest()[:16]
     for dropped in ("document_id", "source_id", "source_hash", "location_id", "block_id",
                     "block_bbox", "text_sha256", "snippet", "figure_regions"):
         assert dropped not in compact
@@ -90,3 +91,64 @@ def test_document_id_only_legacy_distinction_is_preserved_without_portable_prove
         "citation_evidence": records, "messages": []})
     assert [record["text"] for record in restored] == [
         "Complete first legacy document.", "Complete second legacy document."]
+
+
+def test_direct_and_related_routes_share_identity_and_keep_unique_text():
+    from app.services.prepared_evidence import prepare_evidence
+    direct = source()
+    related = {**direct, "document_id": direct["chunk_id"], "origin": "related"}
+    assert evidence_identity(direct) == evidence_identity(related)
+    assert evidence_identity(source_for_model(direct)) == evidence_identity(related)
+    packet = prepare_evidence({"status": "ok", "sources": [direct, related],
+        "contexts": ["Exact definition.", "Exact definition."]}, query="definition")
+    assert len(packet["citation_evidence"]) == 1
+    assert packet["citation_evidence"][0]["text"] == "Exact definition."
+    restored = _saved_citation_evidence({"answer_evidence": [direct],
+        "citation_evidence": [_citation_record(related, "All exact evidence.", 1)], "messages": []})
+    assert restored[0]["text"] == "All exact evidence."
+
+
+@pytest.mark.parametrize("missing", ["source_id", "source_hash"])
+def test_partial_corpus_binding_keeps_legacy_document_distinction(missing):
+    first = source()
+    first.pop(missing)
+    second = {**first, "document_id": "other-document"}
+    assert evidence_identity(first) != evidence_identity(second)
+
+
+def old_compact(raw):
+    # Explicit pre-deploy representation: do not construct its key with the
+    # new implementation under test.
+    compact = source_for_model(raw)
+    compact["document_key"] = hashlib.sha256(raw["document_id"].encode("utf8")).hexdigest()[:16]
+    return compact
+
+
+@pytest.mark.parametrize("tool_only", [False, True])
+def test_predeploy_compact_checkpoint_recovers_full_text(tool_only):
+    raw = source()
+    record = {"source": old_compact(raw), "text": "FULL EXACT EVIDENCE WITH CONDITIONS"}
+    state = {"answer_evidence": [raw], "citation_evidence": [] if tool_only else [record],
+             "messages": [ToolMessage(name="search_knowledge_base", tool_call_id="old",
+                                       content=json.dumps({"evidence": [record]}))] if tool_only else []}
+    assert _saved_citation_evidence(state)[0]["text"] == record["text"]
+
+
+@pytest.mark.parametrize("field", ["chunk_id", "file_name", "page", "product", "version", "source_locator"])
+def test_predeploy_alias_requires_every_other_identity_field(field):
+    raw = source()
+    compact = old_compact(raw)
+    compact[field] = "different"
+    state = {"answer_evidence": [raw], "citation_evidence": [{"source": compact, "text": "WRONG"}]}
+    assert _saved_citation_evidence(state)[0]["text"] == raw["snippet"]
+
+
+def test_predeploy_alias_does_not_choose_between_ambiguous_revisions_or_override_current():
+    raw = source()
+    old = {"source": old_compact(raw), "text": "Old full text"}
+    other_revision = {**raw, "source_hash": "other-revision"}
+    assert [r["text"] for r in _saved_citation_evidence({
+        "answer_evidence": [raw, other_revision], "citation_evidence": [old]})] == [raw["snippet"]] * 2
+    current = _citation_record(raw, "Current full text", 1)
+    for records in ([old, current], [current, old]):
+        assert _saved_citation_evidence({"answer_evidence": [raw], "citation_evidence": records})[0]["text"] == "Current full text"

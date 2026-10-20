@@ -9,7 +9,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
-from threading import Lock
+from threading import BoundedSemaphore, Lock
 from typing import Any
 
 from llama_index.core import VectorStoreIndex
@@ -46,7 +46,7 @@ from app.services.ingestion import (
     infer_product,
     ingest_exclude_dir_names,
 )
-from app.services.parallel_retrieval import independent_searches, search_while_translating
+from app.services.parallel_retrieval import bilingual_searches, independent_searches, recall_slots
 from app.services.related_evidence import RelatedEvidenceIndex
 from app.services.retrieval_embedding import OpenAIEmbedding
 from app.services.retrieval_translation import (
@@ -551,15 +551,21 @@ class RAGService:
         llm: Any | None = None,
         reranker: Any | None = None,
         translate_hook: TranslateHook | None = None,
+        own_translate_hook: bool = False,
         ingestion_service: Any | None = None,
         retrieval_planner: Any | None = None,
     ) -> None:
         self.config = config
         self.client = client
         self._embed_model = embed_model
+        self._owns_embed_model = embed_model is None
+        self._embedding_model_lock = Lock()
         self._llm = llm
+        self._owns_llm = llm is None
+        self._language_model_lock = Lock()
         self._reranker = reranker
         self._translate_hook = translate_hook
+        self._own_translate_hook = own_translate_hook
         self._ingestion_service = ingestion_service
         self._retrieval_planner = retrieval_planner
         self._index: Any | None = None
@@ -842,15 +848,24 @@ class RAGService:
         dense_query_count = 0
         dense_errors: list[str] = []
 
-        def retrieve_many(queries: Sequence[str]) -> list[list[Any]]:
+        concurrency = min(2, self.config.retrieval_concurrency) if self.config.planner_enabled else self.config.retrieval_concurrency
+        dense_slots = recall_slots.get() or BoundedSemaphore(max(1, min(4, concurrency)))
+
+        def dense_search(query: str) -> list[Any]:
+            # All simultaneous tool batches share the same provider cap.
+            wait = None if deadline is None else max(0.0, deadline - time.perf_counter())
+            if not dense_slots.acquire(timeout=wait):
+                raise TimeoutError("Retrieval budget exhausted")
+            try:
+                if deadline is not None and time.perf_counter() >= deadline:
+                    raise TimeoutError("Retrieval budget exhausted")
+                return list(self._retriever.retrieve(query))[: self._raw_candidate_limit()]
+            finally:
+                dense_slots.release()
+
+        def record_outcomes(outcomes, started):
             nonlocal dense_seconds, dense_work_ms, dense_query_count
-            dense_started_at = time.perf_counter()
-            outcomes = independent_searches(
-                queries, lambda query: list(self._retriever.retrieve(query))[: self._raw_candidate_limit()],
-                concurrency=min(2, self.config.retrieval_concurrency) if self.config.planner_enabled else self.config.retrieval_concurrency,
-                deadline=deadline,
-            )
-            dense_seconds += time.perf_counter() - dense_started_at
+            dense_seconds += time.perf_counter() - started
             dense_work_ms += sum(outcome.elapsed_ms for outcome in outcomes)
             dense_query_count += len(outcomes)
             dense_errors.extend(outcome.error_type for outcome in outcomes if outcome.error_type)
@@ -858,24 +873,35 @@ class RAGService:
                 raise TimeoutError("Retrieval budget exhausted")
             return [outcome.items for outcome in outcomes]
 
+        def retrieve_many(queries: Sequence[str]) -> list[list[Any]]:
+            started = time.perf_counter()
+            outcomes = independent_searches(queries, dense_search, concurrency=concurrency, deadline=deadline)
+            return record_outcomes(outcomes, started)
+
         initial_queries = list(plan.queries)
         translated_added = False
-        retrieved_by_query = None
         if translated_question is None and self._translate_hook is not None:
-            retrieved_by_query, translated_question = search_while_translating(
-                lambda: retrieve_many(initial_queries),
+            started = time.perf_counter()
+            outcomes, translated_question, omitted = bilingual_searches(
+                initial_queries, dense_search,
                 lambda: self._translate_for_retrieval(plan.ranking_question),
+                concurrency=concurrency, deadline=deadline,
+                query_limit=4 if self.config.planner_enabled else None,
             )
-        if translated_question and translated_question.strip() not in plan.queries:
-            if not self.config.planner_enabled or len(initial_queries) < 4:
-                initial_queries.append(translated_question.strip())
-                translated_added = True
-            else:
+            if omitted:
                 planning_telemetry["translated_query_omitted"] = "dense_query_budget"
-        if retrieved_by_query is None:
+            translated_added = len(outcomes) > len(initial_queries)
+            if translated_added:
+                initial_queries.append(translated_question)
+            retrieved_by_query = record_outcomes(outcomes, started)
+        else:
+            if translated_question and translated_question.strip() not in plan.queries:
+                if not self.config.planner_enabled or len(initial_queries) < 4:
+                    initial_queries.append(translated_question.strip())
+                    translated_added = True
+                else:
+                    planning_telemetry["translated_query_omitted"] = "dense_query_budget"
             retrieved_by_query = retrieve_many(initial_queries)
-        elif translated_added:
-            retrieved_by_query.extend(retrieve_many([initial_queries[-1]]))
         translated_ranking = retrieved_by_query[-1] if translated_added else []
         product_rankings = [
             self._product_scoped(ranking)
@@ -1201,8 +1227,14 @@ class RAGService:
             self.client.close()
         from app.services.runtime_model import ResponsesTextLLM
 
-        if isinstance(self._llm, ResponsesTextLLM):
+        if self._owns_llm and isinstance(self._llm, ResponsesTextLLM):
             self._llm.close()
+        if self._owns_embed_model and isinstance(self._embed_model, OpenAIEmbedding):
+            self._embed_model.close()
+        if self._own_translate_hook:
+            close = getattr(self._translate_hook, "close", None)
+            if close is not None:
+                close()
 
     def _validate_corpus(self) -> None:
         if not self.config.data_dir.is_dir():
@@ -1341,15 +1373,16 @@ class RAGService:
         return self._ingestion_service
 
     def _embedding_model(self) -> Any:
-        if self._embed_model is None:
-            self._embed_model = OpenAIEmbedding(
-                model=self.config.embedding_model, dimensions=self.config.embedding_dimensions,
-                api_key=self.config.openai_api_key, api_base=self.config.openai_base_url,
-                timeout=self.config.request_timeout,
-                # The caller already owns the retrieval deadline. Ten default
-                # embedding retries otherwise outlive a timed-out search worker.
-                max_retries=0,
-            )
+        with self._embedding_model_lock:
+            if self._embed_model is None:
+                self._embed_model = OpenAIEmbedding(
+                    model=self.config.embedding_model, dimensions=self.config.embedding_dimensions,
+                    api_key=self.config.openai_api_key, api_base=self.config.openai_base_url,
+                    timeout=self.config.request_timeout,
+                    # The caller already owns the retrieval deadline. Ten default
+                    # embedding retries otherwise outlive a timed-out search worker.
+                    max_retries=0,
+                )
         return self._embed_model
 
     def _require_external_transfer_allowed(self, action: str) -> None:
@@ -1363,20 +1396,21 @@ class RAGService:
             )
 
     def _language_model(self) -> Any:
-        if self._llm is None:
-            if self.config.llm_model.startswith("gpt-6"):
-                from app.services.runtime_model import ResponsesTextLLM
+        with self._language_model_lock:
+            if self._llm is None:
+                if self.config.llm_model.startswith("gpt-6"):
+                    from app.services.runtime_model import ResponsesTextLLM
 
-                self._llm = ResponsesTextLLM(model=self.config.llm_model,
-                    api_key=self.config.openai_api_key, base_url=self.config.openai_base_url,
-                    timeout=self.config.generation_timeout, effort=self.config.reasoning_effort,
-                    max_output_tokens=10240, system_prompt=RAG_SYSTEM_PROMPT)
-                return self._llm
-            self._llm = LlamaOpenAI(
-                model=self.config.llm_model, api_key=self.config.openai_api_key,
-                api_base=self.config.openai_base_url, timeout=self.config.generation_timeout,
-                temperature=0, system_prompt=RAG_SYSTEM_PROMPT,
-            )
+                    self._llm = ResponsesTextLLM(model=self.config.llm_model,
+                        api_key=self.config.openai_api_key, base_url=self.config.openai_base_url,
+                        timeout=self.config.generation_timeout, effort=self.config.reasoning_effort,
+                        max_output_tokens=10240, system_prompt=RAG_SYSTEM_PROMPT)
+                    return self._llm
+                self._llm = LlamaOpenAI(
+                    model=self.config.llm_model, api_key=self.config.openai_api_key,
+                    api_base=self.config.openai_base_url, timeout=self.config.generation_timeout,
+                    temperature=0, system_prompt=RAG_SYSTEM_PROMPT,
+                )
         return self._llm
 
     def _rerank(self, question: str, source_nodes: list[Any]) -> list[Any]:
@@ -1836,7 +1870,8 @@ class RAGService:
             # Keep the dense-comparable ``0.0`` score: BM25's absolute scale
             # is unrelated to cosine similarity, so the ranked order itself
             # carries relevance through the merge.
-            return [NodeWithScore(node=node, score=0.0) for node, _ in ranked]
+            # Ranking annotations belong to one query, never the shared index.
+            return [NodeWithScore(node=node.model_copy(deep=True), score=0.0) for node, _ in ranked]
         if not self._lexical_available:
             return []
         return self._scroll_lexical_candidates(query)

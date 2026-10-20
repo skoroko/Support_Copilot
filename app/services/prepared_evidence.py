@@ -84,6 +84,12 @@ def _document_key(source: dict[str, Any]) -> str | None:
     key = source.get("document_key")
     if isinstance(key, str) and key:
         return key
+    # Direct/related routes can carry different legacy parents for one block.
+    # Bind raw and projected identities to the actual corpus source revision.
+    source_id, source_hash = source.get("source_id"), source.get("source_hash")
+    if all(isinstance(value, str) and value.strip() for value in (source_id, source_hash)):
+        binding = json.dumps(["corpus-v1", source_id, source_hash], ensure_ascii=False)
+        return hashlib.sha256(binding.encode("utf-8")).hexdigest()[:16]
     document_id = source.get("document_id")
     if not document_id:
         return None

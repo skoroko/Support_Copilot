@@ -23,7 +23,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from threading import Thread
+from threading import BoundedSemaphore, Thread
 from typing import Annotated, Any, Literal, NotRequired, TypedDict
 from uuid import uuid4
 
@@ -39,12 +39,14 @@ from app.core.config import PROJECT_ROOT, get_settings
 from app.observability.logging import get_logger
 from app.services.agent_history import _model_history as _model_history
 from app.services.agent_naive_tools import get_current_time as _get_current_time
+from app.services.agent_retrieval import fetch_knowledge
 from app.services.answer_quality import (
     ANSWER_QUALITY_UNAVAILABLE,
     compact_answer,
     incomplete_notice,
 )
 from app.services.notifier import notify_user
+from app.services.parallel_retrieval import recall_slots
 from app.services.prepared_evidence import (
     bounded_evidence,
     evidence_identity,
@@ -55,7 +57,6 @@ from app.services.prepared_evidence import (
 )
 from app.services.rag import NO_ANSWER, RAGService
 from app.services.runtime_model import AgentModel, normalize_response
-from app.services.turn_budget import remaining_seconds
 
 logger = get_logger("persistent-agent")
 
@@ -186,9 +187,34 @@ def _saved_citation_evidence(state: PersistentState) -> list[dict[str, Any]]:
     """Recover old checkpoints by chunk identity, never by compact answer indices."""
 
     sources = list(state.get("answer_evidence") or [])
+    legacy_aliases: dict[str, set[str]] = {}
+    for source in sources:
+        if (source.get("document_id") and not source.get("document_key")
+                and all(isinstance(source.get(k), str) and source[k].strip()
+                        for k in ("source_id", "source_hash"))):
+            old_key = hashlib.sha256(str(source["document_id"]).encode("utf-8")).hexdigest()[:16]
+            alias = _source_identity({**source, "document_key": old_key})
+            legacy_aliases.setdefault(alias, set()).add(_source_identity(source))
+
+    def saved_identity(source):
+        identity = _source_identity(source)
+        matches = legacy_aliases.get(identity, set())
+        # Only the saved raw sources establish this migration binding. Ambiguous
+        # revisions cannot borrow text, and live retrieval never uses aliases.
+        if (source.get("model_metadata_projection") == "compact-v1"
+                and not source.get("source_id") and not source.get("source_hash")
+                and len(matches) == 1):
+            return next(iter(matches))
+        return identity
+
     texts: dict[str, str] = {}
     for record in state.get("citation_evidence") or []:
-        texts[_source_identity(record["source"])] = str(record.get("text") or "")
+        identity = saved_identity(record["source"])
+        text = str(record.get("text") or "")
+        if identity != _source_identity(record["source"]):
+            texts.setdefault(identity, text)
+        else:
+            texts[identity] = text
     current_identities = set(texts)
     # Legacy checkpoints retained complete contexts in search ToolMessages even
     # though answer_evidence held only short display snippets. Reconstruct only
@@ -207,7 +233,7 @@ def _saved_citation_evidence(state: PersistentState) -> list[dict[str, Any]]:
         pairs = [(record.get("source", {}), record.get("text", "")) for record in records]
         pairs.extend(zip(payload.get("sources") or [], payload.get("contexts") or []))
         for source, text in pairs:
-            identity = _source_identity(source)
+            identity = saved_identity(source)
             if identity not in current_identities and isinstance(text, str) and text:
                 texts[identity] = text
     return [
@@ -553,6 +579,7 @@ def build_agent(
             kwargs["tool_choice"] = "none"
         if isinstance(resolved_model, AgentModel):
             kwargs["expanded"] = expanded
+            kwargs["allow_backup"] = bool(configurable.get("allow_generation_backup", False))
         model_started_at = time.perf_counter()
         response = await resolved_model.ainvoke(messages, **kwargs)
         model_ms = round((time.perf_counter() - model_started_at) * 1000, 2)
@@ -601,8 +628,26 @@ def build_agent(
             return PREPARE_NODE
         return "execute_safe_tool"
 
+    async def fetch_search(call, state, *, batch_slots=None):
+        rag = rag_provider()
+        token = None
+        if batch_slots is not None:
+            cfg = getattr(rag, "config", None)
+            cap = max(1, min(4, int(getattr(cfg, "retrieval_concurrency", 2))))
+            if getattr(cfg, "planner_enabled", False):
+                cap = min(2, cap)
+            shared = batch_slots.setdefault(id(rag), BoundedSemaphore(cap))
+            token = recall_slots.set(shared)
+        try:
+            return await fetch_knowledge(call["args"], list(state.get("messages", [])), rag,
+                max_context_chars=_PREPARED_CONTEXT_CHARS, unavailable_message=KNOWLEDGE_UNAVAILABLE,
+                track_worker=retrieval_worker_tracker.get())
+        finally:
+            if token is not None:
+                recall_slots.reset(token)
+
     async def execute_one_safe_call(
-        call: dict[str, Any], state: PersistentState
+        call: dict[str, Any], state: PersistentState, *, fetched: dict | None = None
     ) -> tuple[ToolMessage, dict[str, Any], dict[str, Any]]:
         name = str(call.get("name", ""))
         args = call.get("args")
@@ -610,78 +655,7 @@ def build_agent(
         evidence: dict[str, Any] = {}
         if name == "search_knowledge_base" and isinstance(args, dict):
             query = args.get("query")
-            rag = rag_provider()
-            result: dict[str, Any] = {
-                "status": "unavailable",
-                "sources": [],
-                "contexts": [],
-                "message": KNOWLEDGE_UNAVAILABLE,
-            }
-            if isinstance(query, str) and query.strip() and rag is not None:
-                english = args.get("english_query")
-                retrieval_options = {}
-                if isinstance(english, str) and english.strip():
-                    # The model already supplied a standalone translation;
-                    # a second condense call can discard half of the query.
-                    retrieval_options["standalone_question"] = query
-                    retrieval_options["translated_question"] = english.strip()
-                history = [
-                    {
-                        "role": "user" if item.type == "human" else "assistant",
-                        "content": item.content,
-                    }
-                    for item in state.get("messages", [])
-                    if item.type in {"human", "ai"}
-                    and not getattr(item, "tool_calls", [])
-                ]
-                # The current query is not earlier dialogue. Passing it as a
-                # one-message "history" makes an independent first turn pay
-                # for a redundant condense call. A different targeted query
-                # may still need the current human question as its anchor.
-                if (history and history[-1]["role"] == "user"
-                        and isinstance(history[-1]["content"], str)
-                        and history[-1]["content"].strip() == query.strip()):
-                    history.pop()
-                history = history[-10:]
-                try:
-                    timeout = remaining_seconds(min(
-                        float(
-                            getattr(getattr(rag, "config", None), "request_timeout", 60)
-                        ),
-                        60.0,
-                    ))
-                    worker = asyncio.create_task(
-                        asyncio.to_thread(
-                            rag.retrieve,
-                            query,
-                            history=history,
-                            timeout_seconds=timeout,
-                            max_context_chars=_PREPARED_CONTEXT_CHARS,
-                            **retrieval_options,
-                        )
-                    )
-                    tracker = retrieval_worker_tracker.get()
-                    if tracker is not None:
-                        tracker(worker)
-                    worker.add_done_callback(
-                        lambda task: task.exception() if not task.cancelled() else None
-                    )
-                    result = await asyncio.wait_for(
-                        asyncio.shield(worker),
-                        timeout=timeout,
-                    )
-                except Exception as exc:  # noqa: BLE001 - safe provider boundary
-                    # Do not leak provider exceptions, request text, or credentials.
-                    logger.warning(
-                        "agent_retrieval_unavailable", error_type=type(exc).__name__
-                    )
-            elif not isinstance(query, str) or not query.strip():
-                result = {
-                    "status": "error",
-                    "sources": [],
-                    "contexts": [],
-                    "message": "Нужен непустой query.",
-                }
+            result = fetched if fetched is not None else await fetch_search(call, state)
             sources = list(state.get("sources") or [])
             fresh_sources = list(result.get("sources") or [])
             contexts = list(result.get("contexts") or [])
@@ -791,10 +765,24 @@ def build_agent(
         calls = _latest_tool_calls(state)
         if not calls:
             return {"messages": [], "tool_results": []}
+        # Only read-only knowledge I/O is concurrent. Effects/handlers and
+        # citation merges retain their original order and approval policy.
+        slots = asyncio.Semaphore(2)
+        batch_slots = {}
+
+        async def prefetch(call):
+            if call.get("name") != "search_knowledge_base" or not isinstance(call.get("args"), dict):
+                return None
+            async with slots:
+                return await fetch_search(call, state, batch_slots=batch_slots)
+
+        only_searches = all(call.get("name") == "search_knowledge_base" for call in calls)
+        fetched = (await asyncio.gather(*(prefetch(call) for call in calls))
+                   if only_searches else [None] * len(calls))
         outcomes = []
         working = dict(state)
-        for call in calls:
-            outcome = await execute_one_safe_call(call, working)
+        for call, result in zip(calls, fetched, strict=True):
+            outcome = await execute_one_safe_call(call, working, fetched=result)
             outcomes.append(outcome)
             working.update(outcome[2])
         return {

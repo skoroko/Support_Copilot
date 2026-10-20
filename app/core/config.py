@@ -62,6 +62,8 @@ class _SettingsFields(BaseModel):
     openai_base_url: str | None = Field(default=None, validation_alias=AliasChoices("OPENAI_BASE_URL"))
     agent_llm_api: Literal["auto", "chat_completions", "responses"] = Field(
         default="auto", validation_alias=AliasChoices("AGENT_LLM_API"))
+    agent_service_tier: Literal["auto", "default", "priority", "fast"] | None = Field(
+        default=None, validation_alias=AliasChoices("AGENT_SERVICE_TIER"))
     agent_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = Field(
         default=None, validation_alias=AliasChoices("AGENT_REASONING_EFFORT"))
     agent_expanded_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = Field(
@@ -72,6 +74,12 @@ class _SettingsFields(BaseModel):
         default=60.0, gt=0, validation_alias=AliasChoices("AGENT_GENERATION_TIMEOUT"))
     agent_turn_timeout: float = Field(
         default=90.0, gt=0, le=120, validation_alias=AliasChoices("AGENT_TURN_TIMEOUT"))
+    agent_generation_backup_after: float = Field(
+        default=0.0, ge=0, le=30,
+        validation_alias=AliasChoices("AGENT_GENERATION_BACKUP_AFTER"))
+    agent_generation_backup_limit: int = Field(
+        default=1, ge=1, le=2,
+        validation_alias=AliasChoices("AGENT_GENERATION_BACKUP_LIMIT"))
     agent_prepared_evidence_enabled: bool = Field(
         default=True, validation_alias=AliasChoices("AGENT_PREPARED_EVIDENCE_ENABLED"))
     agent_verified_overview_enabled: bool = Field(
@@ -376,7 +384,7 @@ class _SettingsFields(BaseModel):
             raise ValueError("OPENAI_API_KEY is required for app.main:app startup")
         return value
 
-    @field_validator("agent_reasoning_effort", "agent_expanded_reasoning_effort", mode="before")
+    @field_validator("agent_reasoning_effort", "agent_expanded_reasoning_effort", "agent_service_tier", mode="before")
     @classmethod
     def inherit_blank_reasoning(cls, value: Any) -> Any:
         return None if isinstance(value, str) and not value.strip() else value
@@ -445,11 +453,14 @@ def get_settings() -> Settings:
         llm_max_retries=int(os.getenv("LLM_MAX_RETRIES") or 2),
         openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
         agent_llm_api=os.getenv("AGENT_LLM_API") or "auto",
+        agent_service_tier=os.getenv("AGENT_SERVICE_TIER") or None,
         agent_reasoning_effort=os.getenv("AGENT_REASONING_EFFORT") or None,
         agent_expanded_reasoning_effort=os.getenv("AGENT_EXPANDED_REASONING_EFFORT") or None,
         agent_reasoning_token_reserve=int(os.getenv("AGENT_REASONING_TOKEN_RESERVE") or 8192),
         agent_generation_timeout=float(os.getenv("AGENT_GENERATION_TIMEOUT") or 60),
         agent_turn_timeout=float(os.getenv("AGENT_TURN_TIMEOUT") or 90),
+        agent_generation_backup_after=float(os.getenv("AGENT_GENERATION_BACKUP_AFTER") or 0),
+        agent_generation_backup_limit=int(os.getenv("AGENT_GENERATION_BACKUP_LIMIT") or 1),
         agent_prepared_evidence_enabled=(os.getenv("AGENT_PREPARED_EVIDENCE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}),
         agent_verified_overview_enabled=(os.getenv("AGENT_VERIFIED_OVERVIEW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",

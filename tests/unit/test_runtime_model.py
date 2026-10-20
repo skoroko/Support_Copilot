@@ -75,6 +75,28 @@ async def test_expansion_can_use_different_effort_and_disable_tools():
     }
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tier", [None, "default", "priority", "fast"])
+async def test_provider_tier_changes_only_service_routing(tier):
+    client = SimpleNamespace(ainvoke=AsyncMock(return_value=AIMessage(content="Ответ.")))
+    model = AgentModel(settings(agent_service_tier=tier, agent_reasoning_effort="medium"), [], client=client)
+    await model.ainvoke([], max_tokens=800, expanded=True, tool_choice="none")
+    kwargs = client.ainvoke.call_args.kwargs
+    expected = {"max_tokens": 8992, "reasoning": {"effort": "medium"}, "tool_choice": "none"}
+    if tier:
+        expected["service_tier"] = tier
+    assert kwargs == expected
+
+
+def test_service_tier_defaults_and_invalid_values():
+    from pydantic import ValidationError
+
+    from app.core.config import Settings
+    assert Settings(_env_file=None, agent_service_tier=" ").agent_service_tier is None
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, agent_service_tier="unknown-tier")
+
+
 def test_constructor_explicitly_selects_responses_and_disables_storage(monkeypatch):
     factory = Mock()
     monkeypatch.setattr("app.services.runtime_model.ChatOpenAI", factory)
@@ -223,8 +245,9 @@ def test_rag_llm_retries_transient_provider_errors(configured, monkeypatch):
 
 
 def test_llm_max_retries_defaults_to_two_when_unset():
-    from app.core.config import Settings
     from pydantic import SecretStr
+
+    from app.core.config import Settings
 
     config = Settings(_env_file=None, openai_api_key=SecretStr("test-only"))
     assert config.llm_max_retries == 2
