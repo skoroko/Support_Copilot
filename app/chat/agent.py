@@ -45,6 +45,9 @@ class ChatAgent:
                 not expanded and float(getattr(self.settings, "agent_generation_backup_after", 0)) > 0)
             config["configurable"]["prepared_evidence_enabled"] = bool(
                 getattr(self.settings, "agent_prepared_evidence_enabled", True))
+            config["configurable"]["answer_audit"] = getattr(self.settings, "agent_answer_audit", "off")
+            config["configurable"]["prepared_context_chars"] = getattr(self.settings, "agent_prepared_context_chars", 12000)
+            config["configurable"]["search_context_chars"] = getattr(self.settings, "agent_search_context_chars", 6000)
             reasoning_reserve = 0
             if self.settings is not None:
                 model = getattr(self.settings, "default_model", "")
@@ -195,6 +198,6 @@ class ChatAgent:
         )
         mode = state.get("answer_mode", "brief")
         return {"answer": answer, "sources": sources, "approval": pending,
-                "answer_info": {"mode": mode, "incomplete": bool(state.get("answer_incomplete")),
+                "answer_info": {"mode": mode, "incomplete": bool(state.get("answer_incomplete") or state.get('audit_unresolved')),
                                 "expandable": mode == "brief" and bool(state.get("answer_evidence"))
                                 and state.get("knowledge_status") == "ok" and pending is None}}

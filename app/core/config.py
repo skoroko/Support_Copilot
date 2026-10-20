@@ -82,6 +82,10 @@ class _SettingsFields(BaseModel):
         validation_alias=AliasChoices("AGENT_GENERATION_BACKUP_LIMIT"))
     agent_prepared_evidence_enabled: bool = Field(
         default=True, validation_alias=AliasChoices("AGENT_PREPARED_EVIDENCE_ENABLED"))
+    agent_answer_audit: Literal["off", "responses", "decisions"] = Field(
+        default="off", validation_alias=AliasChoices("AGENT_ANSWER_AUDIT"))
+    agent_audit_model: str = Field(default="gpt-6-luna", validation_alias=AliasChoices("AGENT_AUDIT_MODEL"))
+    agent_audit_timeout: float = Field(default=10., gt=0, le=30, validation_alias=AliasChoices("AGENT_AUDIT_TIMEOUT"))
     agent_verified_overview_enabled: bool = Field(
         default=False, validation_alias=AliasChoices("AGENT_VERIFIED_OVERVIEW_ENABLED"))
     redis_url: str = Field(
@@ -200,6 +204,22 @@ class _SettingsFields(BaseModel):
     rag_evidence_catalog_path: Path | None = Field(
         default=None, validation_alias=AliasChoices("RAG_EVIDENCE_CATALOG_PATH"),
     )
+    rag_catalog_inventory_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("RAG_CATALOG_INVENTORY_ENABLED"),
+    )
+    rag_location_context_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("RAG_LOCATION_CONTEXT_ENABLED"),
+    )
+    rag_table_selection: Literal["off", "responses", "decisions"] = Field(
+        default="off", validation_alias=AliasChoices("RAG_TABLE_SELECTION"))
+    rag_table_selection_model: str = Field(
+        default="gpt-6-luna", min_length=1, validation_alias=AliasChoices("RAG_TABLE_SELECTION_MODEL"))
+    rag_table_selection_timeout: float = Field(
+        default=5., gt=0, le=5, validation_alias=AliasChoices("RAG_TABLE_SELECTION_TIMEOUT"))
+    agent_prepared_context_chars: int = Field(
+        default=12000, ge=4000, le=32000, validation_alias=AliasChoices("AGENT_PREPARED_CONTEXT_CHARS"))
+    agent_search_context_chars: int = Field(
+        default=6000, ge=2000, le=32000, validation_alias=AliasChoices("AGENT_SEARCH_CONTEXT_CHARS"))
     rag_visual_transcriptions_path: Path | None = Field(
         default=None, validation_alias=AliasChoices("RAG_VISUAL_TRANSCRIPTIONS_PATH"),
     )
@@ -462,6 +482,9 @@ def get_settings() -> Settings:
         agent_generation_backup_after=float(os.getenv("AGENT_GENERATION_BACKUP_AFTER") or 0),
         agent_generation_backup_limit=int(os.getenv("AGENT_GENERATION_BACKUP_LIMIT") or 1),
         agent_prepared_evidence_enabled=(os.getenv("AGENT_PREPARED_EVIDENCE_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}),
+        agent_answer_audit=os.getenv("AGENT_ANSWER_AUDIT") or "off",
+        agent_audit_model=os.getenv("AGENT_AUDIT_MODEL") or "gpt-6-luna",
+        agent_audit_timeout=float(os.getenv("AGENT_AUDIT_TIMEOUT") or 10),
         agent_verified_overview_enabled=(os.getenv("AGENT_VERIFIED_OVERVIEW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}),
         redis_url=os.getenv("APP_REDIS_URL") or os.getenv("REDIS_URL") or "redis://localhost:6379/0",
         cache_ttl_seconds=int(os.getenv("APP_CACHE_TTL_SECONDS") or os.getenv("LLM_CACHE_TTL_SECONDS") or 3600),
@@ -522,6 +545,13 @@ def get_settings() -> Settings:
         ),
         rag_evidence_catalog_path=(Path(os.environ["RAG_EVIDENCE_CATALOG_PATH"])
                                    if os.getenv("RAG_EVIDENCE_CATALOG_PATH") else None),
+        rag_catalog_inventory_enabled=os.getenv("RAG_CATALOG_INVENTORY_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
+        rag_location_context_enabled=os.getenv("RAG_LOCATION_CONTEXT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"},
+        rag_table_selection=os.getenv("RAG_TABLE_SELECTION", "off"),
+        rag_table_selection_model=os.getenv("RAG_TABLE_SELECTION_MODEL", "gpt-6-luna"),
+        rag_table_selection_timeout=float(os.getenv("RAG_TABLE_SELECTION_TIMEOUT", "5")),
+        agent_prepared_context_chars=int(os.getenv("AGENT_PREPARED_CONTEXT_CHARS") or 12000),
+        agent_search_context_chars=int(os.getenv("AGENT_SEARCH_CONTEXT_CHARS") or 6000),
         rag_visual_transcriptions_path=(Path(os.environ["RAG_VISUAL_TRANSCRIPTIONS_PATH"])
                                        if os.getenv("RAG_VISUAL_TRANSCRIPTIONS_PATH") else None),
         rag_retrieval_concurrency=int(os.getenv("RAG_RETRIEVAL_CONCURRENCY") or 2),

@@ -16,7 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     "app/services/agent_persistent.py", "app/services/rag.py",
-    "app/services/related_evidence.py",
+    "app/services/related_evidence.py", "app/services/catalog_tables.py",
+    "app/services/lexical.py",
     "app/services/evidence_text.py", "app/services/evidence_scope.py",
     "app/services/overview_evidence.py", "app/services/verified_overview.py",
     "app/services/runtime_model.py", "app/chat/agent.py", "app/core/config.py",
@@ -24,6 +25,9 @@ FILES = (
     "app/services/agent_retrieval.py",
     "app/services/provider_race.py",
     "app/services/prepared_evidence.py",
+    "app/services/answer_audit.py",
+    "app/services/table_selection.py",
+    "app/services/table_navigation.py",
     "app/services/retrieval_embedding.py", "app/services/retrieval_translation.py",
     "app/services/retrieval_planner.py",
     "app/services/parallel_retrieval.py", "app/chat/routes.py", "app/main.py",

@@ -12,7 +12,8 @@ logger = get_logger("agent-retrieval")
 
 async def fetch_knowledge(args: dict, messages: list[Any], rag: Any, *,
                           max_context_chars: int, unavailable_message: str,
-                          track_worker: Any = None) -> dict:
+                          track_worker: Any = None, navigation_items: list[dict] | None = None,
+                          known_atomic_units: frozenset[str] = frozenset()) -> dict:
     query = args.get("query")
     result: dict[str, Any] = {
         "status": "unavailable",
@@ -23,6 +24,8 @@ async def fetch_knowledge(args: dict, messages: list[Any], rag: Any, *,
     if isinstance(query, str) and query.strip() and rag is not None:
         english = args.get("english_query")
         retrieval_options = {}
+        if known_atomic_units and getattr(rag, 'supports_prepared_evidence', False):
+            retrieval_options['known_atomic_units'] = known_atomic_units
         if isinstance(english, str) and english.strip():
             # The model already supplied a standalone translation;
             # a second condense call can discard half of the query.
@@ -53,16 +56,20 @@ async def fetch_knowledge(args: dict, messages: list[Any], rag: Any, *,
                 ),
                 60.0,
             ))
-            worker = asyncio.create_task(
-                asyncio.to_thread(
-                    rag.retrieve,
-                    query,
-                    history=history,
-                    timeout_seconds=timeout,
-                    max_context_chars=max_context_chars,
-                    **retrieval_options,
+            if navigation_items is not None:
+                worker = asyncio.create_task(asyncio.to_thread(
+                    rag.read_navigation, navigation_items, max_context_chars=max_context_chars))
+            else:
+                worker = asyncio.create_task(
+                    asyncio.to_thread(
+                        rag.retrieve,
+                        query,
+                        history=history,
+                        timeout_seconds=timeout,
+                        max_context_chars=max_context_chars,
+                        **retrieval_options,
+                    )
                 )
-            )
             tracker = track_worker
             if tracker is not None:
                 tracker(worker)

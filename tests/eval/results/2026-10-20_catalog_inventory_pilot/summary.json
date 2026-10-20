@@ -1,0 +1,295 @@
+{
+  "date": "2026-10-20",
+  "scope": "public development pilot; fresh in-memory graphs; no Telegram/history/index writes",
+  "base": "df9694191224929a1c37fe854bed0ec784b338b5",
+  "production_enabled": false,
+  "verdict": "FAIL; do not merge or deploy candidate",
+  "cohorts": {
+    "baseline_quiet": [
+      {
+        "id": "inventory-ru",
+        "seconds": 24.314,
+        "error_type": null,
+        "model_calls": 3,
+        "retrievals": 3,
+        "answer_chars": 1119,
+        "source_count": 8,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-en",
+        "seconds": 26.698,
+        "error_type": null,
+        "model_calls": 4,
+        "retrievals": 4,
+        "answer_chars": 705,
+        "source_count": 10,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-variant",
+        "seconds": 55.775,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 2154,
+        "source_count": 10,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-01",
+        "seconds": 36.985,
+        "error_type": null,
+        "model_calls": 5,
+        "retrievals": 5,
+        "answer_chars": 488,
+        "source_count": 4,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-07",
+        "seconds": 6.355,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 813,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-10",
+        "seconds": 8.567,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 1192,
+        "source_count": 2,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-16",
+        "seconds": 20.945,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 1279,
+        "source_count": 7,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-32",
+        "seconds": 28.728,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 3,
+        "answer_chars": 3673,
+        "source_count": 6,
+        "citations_resolve": true
+      }
+    ],
+    "candidate": [
+      {
+        "id": "inventory-ru",
+        "seconds": 22.201,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 965,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-en",
+        "seconds": 22.483,
+        "error_type": null,
+        "model_calls": 4,
+        "retrievals": 4,
+        "answer_chars": 1089,
+        "source_count": 4,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-variant",
+        "seconds": 21.691,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 1570,
+        "source_count": 5,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-01",
+        "seconds": 16.074,
+        "error_type": null,
+        "model_calls": 3,
+        "retrievals": 3,
+        "answer_chars": 702,
+        "source_count": 4,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-07",
+        "seconds": 11.424,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 886,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-10",
+        "seconds": 7.154,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 865,
+        "source_count": 2,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-16",
+        "seconds": 11.709,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 1127,
+        "source_count": 5,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-32",
+        "seconds": 21.102,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 3371,
+        "source_count": 8,
+        "citations_resolve": true
+      }
+    ],
+    "candidate_v2": [
+      {
+        "id": "inventory-ru",
+        "seconds": 55.381,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 853,
+        "source_count": 1,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-en",
+        "seconds": 7.159,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 877,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "inventory-variant",
+        "seconds": 19.127,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 1281,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-01",
+        "seconds": 18.586,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 492,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-07",
+        "seconds": 9.166,
+        "error_type": null,
+        "model_calls": 1,
+        "retrievals": 1,
+        "answer_chars": 960,
+        "source_count": 3,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-10",
+        "seconds": 39.539,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 1229,
+        "source_count": 4,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-16",
+        "seconds": 47.548,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 1390,
+        "source_count": 7,
+        "citations_resolve": true
+      },
+      {
+        "id": "golden-32",
+        "seconds": 24.286,
+        "error_type": null,
+        "model_calls": 2,
+        "retrievals": 2,
+        "answer_chars": 2592,
+        "source_count": 9,
+        "citations_resolve": true
+      }
+    ]
+  },
+  "failures": {
+    "candidate": [
+      "inventory-en infers 2021 from filename despite unknown version",
+      "golden-01 loses literal DOF5/6 mapping",
+      "golden-16 loses documented method-selection caveat and over-relaxation"
+    ],
+    "candidate_v2": [
+      "golden-01 still loses baseline DOF5/6 mapping",
+      "inventory-ru omits separately available SCLAY1S evidence",
+      "inventory latency still reaches55.381s"
+    ]
+  },
+  "limitations": [
+    "sequential cohorts, variable generated translations and tool queries",
+    "failed and misconfigured harness artifacts retained separately",
+    "citation resolution is not semantic validation",
+    "same-query controls did not receive identical initial evidence"
+  ],
+  "verification": {
+    "full_suite": {
+      "passed": 1513,
+      "skipped": 12,
+      "failed": 1,
+      "failure": "60ms waiting-status timer race; unchanged bot source"
+    },
+    "agent_subset": {
+      "passed": 32,
+      "failed": 1,
+      "failure": "same waiting-status race"
+    },
+    "streaming_after_event_fix": {
+      "passed": 39,
+      "seconds": 35.31
+    },
+    "catalog_tests": {
+      "passed": 41,
+      "seconds": 58.07
+    },
+    "independent_static_review": "no blockers; runtime gate remains mandatory"
+  }
+}

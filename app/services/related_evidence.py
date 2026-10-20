@@ -11,7 +11,9 @@ import heapq
 import json
 import re
 from collections.abc import Mapping
-from pathlib import Path
+from contextvars import ContextVar
+from copy import deepcopy
+from pathlib import Path, PurePosixPath
 from threading import RLock
 from typing import Any
 
@@ -20,6 +22,7 @@ from app.services.reviewed_visual_regions import valid_literal_render_relation
 
 _RELATIONS = frozenset({"parent_section", "parent_table", "table_header", "table_note_for", "table_caption_for", "defines", "continued_table", "literal_render_of"})
 _FORMATS = frozenset({".pdf", ".chm", ".html", ".htm", ".docx", ".md", ".txt"})
+_PHYSICAL_BATCH: ContextVar[dict[str, Any] | None] = ContextVar("physical_evidence_batch", default=None)
 
 
 def _stamp(path: Path) -> tuple[int, int, int, int]:
@@ -47,14 +50,21 @@ class RelatedEvidenceIndex:
         self.catalog_path = catalog_path
         self._lock = RLock()
         self._catalog_stamp: tuple[int, int, int, int] | None = None
+        self._catalog_resolved: Path | None = None
         self._sources: dict[str, dict[str, Any]] = {}
         self._locations: dict[str, dict[str, Any]] = {}
         self._blocks: dict[str, dict[str, Any]] = {}
         self._by_location: dict[str, list[dict[str, Any]]] = {}
+        self._pdf_pages: dict[tuple[str, int], str | None] = {}
         self._incoming: dict[str, list[tuple[str, str]]] = {}
-        self._source_checks: dict[str, tuple[tuple[int, int, int, int], bool]] = {}
+        self._source_checks: dict[str, tuple[tuple[Path, tuple[int, int, int, int]], bool]] = {}
+        self._table_view: Any = None
+        self._table_groups: dict[str, dict[str, Any]] = {}
 
     def _load(self) -> bool:
+        batch = _PHYSICAL_BATCH.get()
+        if batch is not None and batch["owner"] is self:
+            return True
         try:
             stamp = _stamp(self.catalog_path)
             if stamp == self._catalog_stamp:
@@ -105,11 +115,22 @@ class RelatedEvidenceIndex:
                             (str(block["block_id"]), "inverse_" + str(relation["kind"])))
             for batch in by_location.values():
                 batch.sort(key=lambda row: (int(row.get("ordinal", 0)), row["block_id"]))
+            pdf_pages: dict[tuple[str, int], str | None] = {}
+            for identity, location in locations.items():
+                sid, page = str(location.get("source_id")), location.get("page")
+                if (type(page) is int and page > 0
+                        and Path(str(sources.get(sid, {}).get("relative_path", ""))).suffix.lower() == ".pdf"):
+                    key = (sid, page)
+                    pdf_pages[key] = None if key in pdf_pages else identity
             self._sources, self._locations, self._blocks = sources, locations, blocks
+            self._pdf_pages = pdf_pages
             self._by_location = by_location
             self._incoming = incoming
             self._catalog_stamp = stamp
+            self._catalog_resolved = self.catalog_path.resolve()
             self._source_checks.clear()
+            self._table_view = None
+            self._table_groups = {}
             return True
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             # A corrupt or missing catalog leaves ordinary retrieved evidence
@@ -117,25 +138,40 @@ class RelatedEvidenceIndex:
             self._catalog_stamp = None
             return False
 
-    def _valid_source(self, source_id: str) -> bool:
+    def _source_binding(self, source_id: str) -> tuple[Path, tuple[int, int, int, int]] | None:
+        """Check the current resolved path as well as the file stamp."""
         source = self._sources.get(source_id)
         if not source:
-            return False
+            return None
         try:
             relative = Path(str(source["relative_path"]))
             path = (self.data_root / relative).resolve()
             if relative.is_absolute() or not path.is_relative_to(self.data_root) or path.suffix.lower() not in _FORMATS:
-                return False
-            stamp = _stamp(path)
-            previous = self._source_checks.get(source_id)
-            if previous is not None and previous[0] == stamp:
-                return previous[1]
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            valid = digest == source.get("source_hash")
-            self._source_checks[source_id] = (stamp, valid)
-            return valid
+                return None
+            return path, _stamp(path)
         except (OSError, ValueError, KeyError):
-            return False
+            return None
+
+    def _valid_source(self, source_id: str) -> bool:
+        batch = _PHYSICAL_BATCH.get()
+        active = batch is not None and batch["owner"] is self
+        if active and source_id in batch["sources"]:
+            return batch["sources"][source_id][1]
+        binding = self._source_binding(source_id)
+        valid = False
+        if binding is not None:
+            previous = self._source_checks.get(source_id)
+            if previous is not None and previous[0] == binding:
+                valid = previous[1]
+            else:
+                try:
+                    valid = hashlib.sha256(binding[0].read_bytes()).hexdigest() == self._sources[source_id].get("source_hash")
+                    self._source_checks[source_id] = (binding, valid)
+                except (OSError, ValueError, KeyError):
+                    pass
+        if active:
+            batch["sources"][source_id] = (binding, valid)
+        return valid
 
     def source_relative_path(self, metadata: Mapping[str, Any]) -> str | None:
         """Resolve a portable locator through the exact current source hash.
@@ -154,7 +190,7 @@ class RelatedEvidenceIndex:
                 return None
             return str(source["relative_path"])
 
-    def warmup(self) -> dict[str, Any]:
+    def warmup(self, *, inventory: bool = False) -> dict[str, Any]:
         """Prepare the same validated cache used by requests, before readiness.
 
         File stamps are still checked on every lookup. Preloading is never
@@ -164,6 +200,8 @@ class RelatedEvidenceIndex:
         with self._lock:
             loaded = self._load()
             valid = sum(self._valid_source(sid) for sid in self._sources) if loaded else 0
+            if loaded and inventory:
+                self._prepare_table_view()
             return {"catalog_loaded": loaded, "valid_sources": valid,
                     "invalid_sources": len(self._sources) - valid if loaded else 0}
 
@@ -203,6 +241,566 @@ class RelatedEvidenceIndex:
         # reach this fallback. Only uniquely attributable new spans qualify.
         matches = [row for row in candidates if normalized in _normalized(str(row.get("text") or ""))]
         return matches if len(matches) == 1 else []
+
+    def _prepare_table_view(self) -> None:
+        """Build once per catalog snapshot, under the shared resolver lock."""
+        from llama_index.core.schema import TextNode
+
+        from app.services import lexical
+        from app.services.catalog_tables import validated_table_group
+
+        if self._table_view is not None:
+            return
+        members: dict[str, list[dict[str, Any]]] = {}
+        for block in self._blocks.values():
+            parents = {str(rel.get("to_id")) for rel in block.get("relations", [])
+                       if rel.get("kind") == "parent_table"}
+            if table_id := (block.get("attributes") or {}).get("table_id"):
+                parents.add(str(table_id))
+            for parent in parents:
+                members.setdefault(parent, []).append(block)
+        groups = {}
+        for table_id, rows in members.items():
+            table = self._blocks.get(table_id, {})
+            group = validated_table_group(table, rows,
+                source=self._sources.get(str(table.get("source_id")), {}),
+                location=self._locations.get(str(table.get("location_id")), {}))
+            if group:
+                groups[group["id"]] = group
+        self._table_groups = groups
+        self._table_view = lexical.LexicalBM25Index.build_nodes([
+            TextNode(id_=key, text=group["ranking_text"]) for key, group in groups.items()
+        ], lexical.lexical_terms)
+
+    def inventory_table(self, queries: list[str], *, product_versions: set[tuple[str, str]],
+                        max_chars: int, diagnostics: dict[str, Any],
+                        anchor_queries: list[str] | None = None,
+                        semantic_selector: Any | None = None,
+                        question: str = "") -> dict[str, Any] | None:
+        """Find one exact table outside ordinary chunk top-k; never certify coverage."""
+        from app.services import lexical
+        from app.services.table_navigation import (
+            TableNavigationInputError,
+            build_table_candidates,
+        )
+
+        diagnostics.update(origin="catalog_inventory", selected_blocks=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load():
+                diagnostics["catalog_status"] = "unavailable"
+                return None
+            diagnostics["catalog_status"] = "loaded"
+            self._prepare_table_view()
+            allowed = {key for key, group in self._table_groups.items()
+                       if group["metadata"]["product"] not in {None, "", "unknown", "unresolved", "all"}
+                       and (group["metadata"]["product"], group["metadata"]["version"]) in product_versions}
+            # Query only matching product/version partitions, before the bounded
+            # top-k, so another product's many tables cannot starve this one.
+            scores: dict[str, float] = {}
+            for query in list(dict.fromkeys(queries))[:5]:
+                for node, score in self._table_view.query(lexical.inventory_subject_terms(query), 8, allowed_ids=allowed):
+                    scores[node.node_id] = max(score, scores.get(node.node_id, 0.))
+            diagnostics["candidate_count"] = len(scores)
+            anchored = []
+            for identity, score in scores.items():
+                group = self._table_groups[identity]
+                metadata = group["metadata"]
+                # Product names and operation words cannot establish a topic.
+                excluded = set(lexical.lexical_terms("midas " + metadata["product"].replace("_", " ")
+                                                     + " " + metadata["version"]))
+                heading = set(lexical.inventory_subject_terms(group["anchor_text"])) - excluded
+                coverage = max((len(subject & heading) / len(subject)
+                    if len(subject & heading) >= 2 else 0.
+                    for query in (anchor_queries if anchor_queries is not None else queries)
+                    if (subject := set(lexical.inventory_subject_terms(query)) - excluded)), default=0.)
+                if coverage >= .5:
+                    anchored.append((coverage, score, identity))
+            anchored.sort(reverse=True)
+            diagnostics["anchored_candidates"] = len(anchored)
+            if (len(anchored) > 1 and anchored[0][0] == anchored[1][0]
+                    and anchored[1][1] >= anchored[0][1] * .95
+                    and self._table_groups[anchored[0][2]]["text"] != self._table_groups[anchored[1][2]]["text"]):
+                diagnostics["omitted"].append({"reason": "ambiguous_table_anchor"})
+                return None
+            for _, _, identity in anchored:
+                group = self._table_groups[identity]
+                if not self._valid_source(group["metadata"]["source_id"]):
+                    diagnostics["omitted"].append({"table_id": group["metadata"]["block_id"], "reason": "stale_source"})
+                    continue
+                if len(group["text"]) > max_chars:
+                    diagnostics["bounded"] = True
+                    diagnostics["omitted"].append({"table_id": group["metadata"]["block_id"], "reason": "atomic_table_budget"})
+                    continue
+                diagnostics["selected_blocks"] = len(group["metadata"]["block_ids"])
+                # The cached BM25 view and provenance must never receive query
+                # annotations or mutation from one request's citation merge.
+                return deepcopy(group)
+            if anchored or semantic_selector is None:
+                return None
+            # Semantic choice is navigation among literal validated tables,
+            # never an assertion that they answer the question. Scope, source
+            # bytes and whole-table budget are enforced before and after HTTP.
+            eligible_groups = []
+            for identity in sorted(allowed, key=lambda key: (-scores.get(key, 0.), key)):
+                group = self._table_groups[identity]
+                if len(group["text"]) > max_chars or not self._valid_source(group["metadata"]["source_id"]):
+                    continue
+                eligible_groups.append(group)
+            try:
+                candidates, navigation_report = build_table_candidates(question or queries[0], eligible_groups)
+            except TableNavigationInputError as error:
+                diagnostics['semantic_selection'] = {'status': 'input_unavailable', 'reason': str(error)}
+                return None
+            diagnostics['table_navigation'] = navigation_report
+            catalog_stamp = self._catalog_stamp
+        report: dict[str, Any] = {}
+        selected = semantic_selector.select(question or queries[0], candidates, diagnostics=report)
+        diagnostics["semantic_selection"] = report
+        with self._lock:
+            if not self._load() or self._catalog_stamp != catalog_stamp:
+                diagnostics["omitted"].append({"reason": "catalog_changed_during_selection"})
+                return None
+            if selected not in {candidate["id"] for candidate in candidates}:
+                return None
+            group = self._table_groups.get(selected)
+            if not group or not self._valid_source(group["metadata"]["source_id"]) or len(group["text"]) > max_chars:
+                return None
+            diagnostics["selected_blocks"] = len(group["metadata"]["block_ids"])
+            return deepcopy(group)
+
+    def physical_contexts(
+        self, seeds: list[dict[str, Any]], *, max_chars: int = 6_000,
+    ) -> list[dict[str, Any]]:
+        """Build aligned physical groups under one checked local snapshot.
+
+        Catalog/source validity is reused only inside this synchronous locked
+        batch. Every touched source and the catalog must retain their resolved
+        path and stamp at exit, or all output is discarded. No network work is
+        performed here. Standalone location/neighbor calls keep fresh checks.
+        """
+        def invalidated(reason: str) -> list[dict[str, Any]]:
+            return [{"groups": [], "diagnostics": [
+                {"origin": "physical_location", "selected_blocks": 0, "omitted": [],
+                 "bounded": False, "invalidated": True, "reason": reason},
+                {"origin": "physical_neighbor", "selected_locations": 0, "omitted": [],
+                 "bounded": False, "invalidated": True, "reason": reason},
+            ]} for _ in seeds]
+
+        with self._lock:
+            outer = _PHYSICAL_BATCH.get()
+            if outer is not None and outer["owner"] is self:
+                raise RuntimeError("Nested physical evidence batch")
+            try:
+                catalog_path = self.catalog_path.resolve()
+                if catalog_path != self._catalog_resolved:
+                    self._catalog_stamp = None
+                if not self._load():
+                    return invalidated("unverified_catalog")
+                catalog_binding = (catalog_path, self._catalog_stamp)
+            except (OSError, ValueError):
+                return invalidated("unverified_catalog")
+            batch: dict[str, Any] = {"owner": self, "sources": {}}
+            token = _PHYSICAL_BATCH.set(batch)
+            try:
+                output = []
+                for seed in seeds:
+                    local_report: dict[str, Any] = {}
+                    neighbor_report: dict[str, Any] = {}
+                    group = self.location_context(seed["metadata"], seed["text"],
+                                                  max_chars=max_chars, diagnostics=local_report)
+                    groups = [group] if group else []
+                    groups.extend(self.nearby_contexts(seed["metadata"], seed["text"],
+                                                      max_chars=max_chars, diagnostics=neighbor_report))
+                    output.append({"groups": groups, "diagnostics": [local_report, neighbor_report]})
+            finally:
+                _PHYSICAL_BATCH.reset(token)
+            try:
+                changed = catalog_binding != (self.catalog_path.resolve(), _stamp(self.catalog_path))
+                # Do not short-circuit: every touched source gets an exit check.
+                for sid, (binding, _valid) in batch["sources"].items():
+                    if self._source_binding(sid) != binding:
+                        changed = True
+            except (OSError, ValueError):
+                changed = True
+            return invalidated("batch_changed") if changed else output
+
+    def location_context(
+        self, metadata: Mapping[str, Any], text: str, *, max_chars: int = 6_000,
+        diagnostics: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Complete one verified physical location, without asserting relations.
+
+        Only usable extracted text is complete: omitted visuals/unsafe grids are
+        recorded explicitly. Large locations have no arbitrary prefix fallback.
+        """
+        from app.services.catalog_tables import validated_table_group
+        from app.services.corpus import stable_id
+
+        report = diagnostics if diagnostics is not None else {}
+        report.update(origin="physical_location", selected_blocks=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load() or not self._seed_blocks(metadata, text):
+                report["reason"] = "unverified_location"
+                return None
+            lid, sid = str(metadata["location_id"]), str(metadata["source_id"])
+            location, source = self._locations[lid], self._sources[sid]
+            if any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                   for key in ("product", "version")):
+                report["reason"] = "scope_mismatch"
+                return None
+            rows = self._by_location.get(lid, [])
+            if any(row.get("source_id") != sid for row in rows):
+                report["reason"] = "invalid_location_membership"
+                return None
+            # Only mechanically validated DOM grids may expose their row text.
+            # Parent containers are never repeated alongside their children.
+            members: dict[str, list[dict[str, Any]]] = {}
+            for row in rows:
+                if row.get("kind") in {"table_row", "table_header"}:
+                    members.setdefault(str((row.get("attributes") or {}).get("table_id")), []).append(row)
+            safe_rows: set[str] = set()
+            for row in rows:
+                if row.get("kind") == "table":
+                    group = validated_table_group(row, members.get(str(row["block_id"]), []),
+                                                  source=source, location=location)
+                    if group:
+                        safe_rows.update(group["metadata"]["block_ids"])
+            selected = []
+            for row in rows:
+                kind, attrs = row.get("kind"), row.get("attributes") or {}
+                content = str(row.get("text") or "")
+                reason = None
+                if kind in {"table", "section"}:
+                    reason = "structural_container"
+                elif kind in {"image", "visual_unextracted", "figure"}:
+                    reason = "untranscribed_visual"
+                elif attrs.get("review_status") in {"pending_review", "rejected"}:
+                    reason = "unreviewed_text"
+                elif kind in {"table_row", "table_header"} and row["block_id"] not in safe_rows:
+                    reason = "unsafe_grid"
+                elif not content.strip():
+                    reason = "empty_text"
+                if reason:
+                    report["omitted"].append({"block_id": row["block_id"], "reason": reason})
+                else:
+                    selected.append(row)
+            content = "\n".join(row["text"] for row in selected)
+            if not content or len(selected) > 64 or len(content) > max_chars:
+                report.update(reason=("no_usable_text" if not content else "block_budget"
+                                      if len(selected) > 64 else "character_budget"), bounded=bool(content),
+                              required_chars=len(content), required_blocks=len(selected))
+                return None
+            ids = [str(row["block_id"]) for row in selected]
+            digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            identity = stable_id("physical-location-v1", sid, source["source_hash"], lid, *ids, digest)
+            path = str(source["relative_path"])
+            locator = path + (f"#page={location['page']}" if location.get("page") is not None
+                              else "::" + str(location["chm_member"]) if location.get("chm_member") else "")
+            report.update(selected_blocks=len(selected), required_chars=len(content))
+            return {"block_id": identity, "text": content, "metadata": {
+                "source_id": sid, "source_hash": source["source_hash"], "location_id": lid,
+                "block_id": identity, "block_ids": ids, "doc_id": identity,
+                "file_name": Path(path).name, "file_path": str(self.data_root / path),
+                "source_locator": locator, "page": location.get("page"),
+                "chm_member": location.get("chm_member"), "title": location.get("title"),
+                "product": location.get("product", "unknown"), "version": location.get("version") or "unknown",
+                "language": location.get("language") or "unknown", "section_path": [],
+                "figure_regions": deepcopy(location.get("figure_regions") or []),
+                "warnings": list(location.get("warnings") or []),
+                "extraction_status": location.get("extraction_status"),
+                "block_type": "location_text_group", "block_attributes": {
+                    "complete_text_location": True, "extraction_only": True,
+                    "omitted_block_count": len(report["omitted"]),
+                    "visual_review_required": any((row.get("attributes") or {}).get("visual_review_required")
+                                                  for row in rows),
+                    "visual_region_count": len(location.get("figure_regions") or []),
+                    "untranscribed_visual_regions_present": bool(location.get("figure_regions")) or any(
+                        row["reason"] == "untranscribed_visual" for row in report["omitted"])},
+                "atomic_evidence": True, "extraction_version": "corpus-location-group-v1",
+                "origin": "physical_location", "text_sha256": digest,
+            }}
+
+    def nearby_contexts(
+        self, metadata: Mapping[str, Any], text: str, *, max_chars: int = 6_000,
+        diagnostics: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return whole physical PDF pages ±1, never semantic continuations.
+
+        Each independently attributed page passes location_context's rendering
+        and source-byte checks. Ambiguous page numbers never select an alias.
+        The caller separately allocates the request's shared context budget.
+        """
+        report = diagnostics if diagnostics is not None else {}
+        report.update(origin="physical_neighbor", selected_locations=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load() or not self._seed_blocks(metadata, text):
+                report["reason"] = "unverified_seed"
+                return []
+            sid, lid = str(metadata["source_id"]), str(metadata["location_id"])
+            location, source = self._locations[lid], self._sources[sid]
+            page = location.get("page")
+            if (Path(str(source["relative_path"])).suffix.lower() != ".pdf"
+                    or type(page) is not int or page < 1):
+                report["reason"] = "unsupported_source"
+                return []
+            if any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                   for key in ("product", "version")):
+                report["reason"] = "scope_mismatch"
+                return []
+            if self._pdf_pages.get((sid, page)) != lid:
+                report["reason"] = "ambiguous_seed_page"
+                return []
+            output = []
+            for neighbor_page in (page - 1, page + 1):
+                key = (sid, neighbor_page)
+                if key not in self._pdf_pages:
+                    continue
+                neighbor_id = self._pdf_pages[key]
+                if neighbor_id is None:
+                    report["omitted"].append({"page": neighbor_page, "reason": "ambiguous_page"})
+                    continue
+                neighbor = self._locations[neighbor_id]
+                if (neighbor.get("source_hash") != location.get("source_hash")
+                        or any(neighbor.get(key, "unknown") != location.get(key, "unknown")
+                               for key in ("product", "version"))):
+                    report["omitted"].append({"page": neighbor_page, "reason": "scope_mismatch"})
+                    continue
+                rows = self._by_location.get(neighbor_id, [])
+                anchor = next((row for row in rows if str(row.get("text") or "").strip()), None)
+                if anchor is None:
+                    report["omitted"].append({"page": neighbor_page, "reason": "no_usable_text"})
+                    continue
+                local_report: dict[str, Any] = {}
+                group = self.location_context({**neighbor, "block_id": anchor["block_id"]},
+                                              anchor["text"], max_chars=max_chars, diagnostics=local_report)
+                if group is None:
+                    report["bounded"] |= bool(local_report.get("bounded"))
+                    report["omitted"].append({"page": neighbor_page,
+                                              "reason": local_report.get("reason", "unverified_location")})
+                    continue
+                group["metadata"].update(origin="physical_neighbor", related_to=[])
+                output.append(group)
+            report["selected_locations"] = len(output)
+            return output
+
+    @staticmethod
+    def _navigation_id(binding: Mapping[str, Any], locator: int | str) -> str:
+        from app.services.corpus import stable_id
+
+        return stable_id("physical-navigation-v1", *(str(binding[key]) for key in
+                         ("source_id", "source_hash", "location_id", "product", "version")), str(locator))
+
+    @staticmethod
+    def _member_parent(member: Any) -> str | None:
+        if not isinstance(member, str) or not member.startswith("/") or "\\" in member:
+            return None
+        path = PurePosixPath(member)
+        if ".." in path.parts or path.suffix.lower() not in {".htm", ".html", ".xhtml"} or str(path) != member:
+            return None
+        return str(path.parent)
+
+    def navigation(
+        self, seeds: list[dict[str, Any]], *, max_chars: int = 10_000, max_sources: int = 2,
+    ) -> dict[str, Any]:
+        """Non-citable navigation unlocked by two distinct verified locations.
+
+        max_chars bounds the compact JSON list of model-visible fields; raw
+        binding metadata stays on the server. Hints are literal first prose,
+        excluding exact paragraphs repeated on at least three physical pages.
+        CHM navigation lists literal titles and bounded prose previews within
+        the exact common member directory. Titles take precedence over previews.
+        A shared directory never establishes a semantic relation.
+        Neither the manifest nor a page hint establishes engineering facts.
+        """
+        result: dict[str, Any] = {"items": [], "truncated": False}
+        if max_chars < 2 or max_sources < 1:
+            result["truncated"] = bool(seeds)
+            return result
+        with self._lock:
+            if not self._load():
+                return result
+            scopes: dict[tuple[str, str, str, str, str, str], list[str]] = {}
+            for seed in seeds:
+                if not isinstance(seed, dict) or not isinstance(seed.get("metadata"), Mapping):
+                    continue
+                metadata, text = seed["metadata"], seed.get("text")
+                if not isinstance(text, str) or not self._seed_blocks(metadata, text):
+                    continue
+                sid, lid = str(metadata["source_id"]), str(metadata["location_id"])
+                location, source = self._locations[lid], self._sources[sid]
+                page, member = location.get("page"), location.get("chm_member")
+                suffix = Path(str(source["relative_path"])).suffix.lower()
+                parent = self._member_parent(member)
+                if (any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                               for key in ("product", "version"))):
+                    continue
+                if suffix == ".pdf" and type(page) is int and page > 0 and self._pdf_pages.get((sid, page)) == lid:
+                    kind, directory = "pdf", ""
+                elif suffix == ".chm" and parent is not None and metadata.get("chm_member") == member:
+                    if sum(loc.get("source_id") == sid and loc.get("chm_member") == member
+                           for loc in self._locations.values()) != 1:
+                        continue
+                    kind, directory = "chm", parent
+                else:
+                    continue
+                scope = (sid, str(source["source_hash"]), str(location.get("product", "unknown")),
+                         str(location.get("version", "unknown")), kind, directory)
+                if lid not in scopes.setdefault(scope, []):
+                    scopes[scope].append(lid)
+            # A single PDF source cannot silently combine conflicting seed scopes.
+            scope_counts: dict[str, set[tuple[str, str, str]]] = {}
+            for scope in scopes:
+                scope_counts.setdefault(scope[0], set()).add(scope[1:4])
+            eligible = [scope for scope, locations in scopes.items()
+                        if len(locations) >= 2 and len(scope_counts[scope[0]]) == 1]
+            if len(eligible) > min(max_sources, 2):
+                result["truncated"] = True
+            visible: list[dict[str, Any]] = []
+            considered = 0
+            # One long document must not hide a second eligible directory or
+            # document. Hints share the existing budget; no evidence is evicted.
+            scope_budget = max_chars // max(1, min(len(eligible), max_sources, 2))
+            for sid, digest, product, version, kind, directory in eligible[:min(max_sources, 2)]:
+                source = self._sources[sid]
+                scope_visible: list[dict[str, Any]] = []
+                if kind == "chm":
+                    chm_items = []
+                    members: dict[str, list[dict[str, Any]]] = {}
+                    member_counts: dict[str, int] = {}
+                    for location in self._locations.values():
+                        member = location.get("chm_member")
+                        if location.get("source_id") == sid and isinstance(member, str):
+                            member_counts[member] = member_counts.get(member, 0) + 1
+                        if (location.get("source_id") == sid and location.get("source_hash") == digest
+                                and str(location.get("product", "unknown")) == product
+                                and str(location.get("version", "unknown")) == version
+                                and self._member_parent(member) == directory):
+                            members.setdefault(member, []).append(location)
+                    for member, matches in sorted(members.items()):
+                        if len(matches) != 1 or member_counts[member] != 1:
+                            continue
+                        location = matches[0]
+                        hint = str(location.get("title") or "").strip()[:160]
+                        if not hint:
+                            continue
+                        binding = {"source_id": sid, "source_hash": digest, "location_id": location["location_id"],
+                                   "product": product, "version": version}
+                        item = {"id": self._navigation_id(binding, member), "metadata": binding,
+                                "chm_member": member, "file_name": Path(source["relative_path"]).name,
+                                "hint": hint, "not_citable": True}
+                        projection = {key: value for key, value in item.items() if key != "metadata"}
+                        if (considered >= 100 or len(json.dumps([*scope_visible, projection], ensure_ascii=False)) > scope_budget):
+                            result["truncated"] = True
+                            continue
+                        considered += 1
+                        scope_visible.append(projection)
+                        chm_items.append(item)
+                    # Reserve every fitting title before sharing the spare
+                    # JSON budget across literal previews. A long first page
+                    # must not displace later member names.
+                    spare = scope_budget - len(json.dumps(scope_visible, ensure_ascii=False))
+                    preview_limit = min(160, max(0, spare // max(1, len(chm_items)) - 14))
+                    for index, item in enumerate(chm_items):
+                        prose = next((str(row.get("text") or "").strip()
+                            for row in self._by_location.get(item["metadata"]["location_id"], [])
+                            if row.get("source_id") == sid and row.get("kind") == "paragraph"
+                            and len(str(row.get("text") or "").strip()) >= 80
+                            and str(row.get("text") or "").count(" > ") < 2
+                            and (row.get("attributes") or {}).get("review_status") not in {"pending_review", "rejected"}), "")
+                        if prose and preview_limit:
+                            enriched = {**scope_visible[index], "preview": prose[:preview_limit]}
+                            trial = [*scope_visible[:index], enriched, *scope_visible[index + 1:]]
+                            if len(json.dumps(trial, ensure_ascii=False)) <= scope_budget:
+                                item["preview"] = prose[:preview_limit]
+                                scope_visible[index] = enriched
+                    visible.extend(scope_visible)
+                    result["items"].extend(chm_items)
+                    continue
+                pages = sorted((page, lid) for (source_id, page), lid in self._pdf_pages.items()
+                               if source_id == sid and lid is not None
+                               and self._locations[lid].get("source_hash") == digest
+                               and str(self._locations[lid].get("product", "unknown")) == product
+                               and str(self._locations[lid].get("version", "unknown")) == version)
+                if len(pages) > 100:
+                    result["truncated"] = True
+                # A prefix of a long manual hides the section that actually
+                # matched. Show verified seed pages and their closest physical
+                # neighbours first, with deterministic ties; no semantic link
+                # or engineering meaning is inferred from this ordering.
+                scope = (sid, digest, product, version, kind, directory)
+                seed_pages = [self._locations[lid]["page"] for lid in scopes[scope]]
+                pages.sort(key=lambda pair: min((abs(pair[0] - seed_page), index, pair[0])
+                                               for index, seed_page in enumerate(seed_pages)))
+                pages = pages[:100]
+                paragraphs: dict[str, list[str]] = {}
+                occurrences: dict[str, set[str]] = {}
+                for _page, lid in pages:
+                    prose = [row["text"] for row in self._by_location.get(lid, [])
+                             if row.get("source_id") == sid and row.get("kind") == "paragraph"
+                             and str(row.get("text") or "").strip()
+                             and (row.get("attributes") or {}).get("review_status") not in {"pending_review", "rejected"}]
+                    paragraphs[lid] = prose
+                    for paragraph in prose:
+                        occurrences.setdefault(paragraph, set()).add(lid)
+                for page, lid in pages:
+                    hint = next((paragraph[:160] for paragraph in paragraphs[lid]
+                                 if len(occurrences[paragraph]) < 3), "")
+                    if not hint:
+                        continue
+                    binding = {"source_id": sid, "source_hash": digest, "location_id": lid,
+                               "product": product, "version": version}
+                    item = {"id": self._navigation_id(binding, page), "metadata": binding,
+                            "page": page, "file_name": Path(source["relative_path"]).name,
+                            "hint": hint, "not_citable": True}
+                    projection = {key: value for key, value in item.items() if key != "metadata"}
+                    if (considered >= 100 or len(json.dumps([*scope_visible, projection], ensure_ascii=False)) > scope_budget):
+                        result["truncated"] = True
+                        continue
+                    scope_visible.append(projection)
+                    visible.append(projection)
+                    considered += 1
+                    result["items"].append(item)
+            return result
+
+    def read_navigation(self, item: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Read one exact manifest binding; callers enforce manifest membership.
+
+        The ID is a stable provenance binding, not an authorization token.
+        Source bytes, scopes, page uniqueness and rendering are revalidated.
+        """
+        with self._lock:
+            if not self._load() or not isinstance(item, Mapping) or item.get("not_citable") is not True:
+                return None
+            binding = item.get("metadata")
+            if (not isinstance(binding, Mapping)
+                    or set(binding) != {"source_id", "source_hash", "location_id", "product", "version"}):
+                return None
+            sid, lid = str(binding["source_id"]), str(binding["location_id"])
+            source, location = self._sources.get(sid), self._locations.get(lid)
+            if not source or not location:
+                return None
+            page, member = location.get("page"), location.get("chm_member")
+            suffix = Path(str(source["relative_path"])).suffix.lower()
+            valid_locator = (suffix == ".pdf" and type(page) is int and page > 0
+                             and self._pdf_pages.get((sid, page)) == lid and item.get("page") == page)
+            locator = page
+            if suffix == ".chm" and self._member_parent(member) is not None:
+                valid_locator = (item.get("chm_member") == member and item.get("page") is None
+                                 and sum(loc.get("source_id") == sid and loc.get("chm_member") == member
+                                         for loc in self._locations.values()) == 1)
+                locator = member
+            canonical = {"source_id": sid, "source_hash": source.get("source_hash"), "location_id": lid,
+                         "product": str(location.get("product", "unknown")),
+                         "version": str(location.get("version", "unknown"))}
+            if (dict(binding) != canonical or location.get("source_id") != sid
+                    or location.get("source_hash") != source.get("source_hash")
+                    or not valid_locator or item.get("file_name") != Path(source["relative_path"]).name
+                    or item.get("id") != self._navigation_id(canonical, locator) or not self._valid_source(sid)):
+                return None
+            anchor = next((row for row in self._by_location.get(lid, []) if str(row.get("text") or "").strip()), None)
+            if anchor is None:
+                return None
+            return self.location_context({**location, "block_id": anchor["block_id"]}, anchor["text"], max_chars=6_000)
 
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,

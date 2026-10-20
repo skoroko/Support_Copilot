@@ -586,7 +586,13 @@ async def test_unchanged_answer_edits_never_send_duplicate_content(case, monkeyp
 @pytest.mark.asyncio
 async def test_waiting_status_rotates_while_backend_stream_is_silent(monkeypatch):
     monkeypatch.setattr("bot.handlers._common.STATUS_ROTATE_SECONDS", 0.01)
-    placeholder = SimpleNamespace(edit_text=AsyncMock(), delete=AsyncMock())
+    formulated = asyncio.Event()
+
+    async def status_edited(text, **_kwargs):
+        if text == "Формулирую ответ…":
+            formulated.set()
+
+    placeholder = SimpleNamespace(edit_text=AsyncMock(side_effect=status_edited), delete=AsyncMock())
     answer = SimpleNamespace(edit_text=AsyncMock())
     sends: list[str] = []
 
@@ -601,7 +607,9 @@ async def test_waiting_status_rotates_while_backend_stream_is_silent(monkeypatch
     )
 
     async def tokens():
-        await asyncio.sleep(0.06)
+        # Wait for the state we assert, rather than racing three timer ticks
+        # against a 60ms sleep on a loaded/low-resolution event loop.
+        await asyncio.wait_for(formulated.wait(), timeout=2)
         yield "Ответ."
 
     assert await stream_to_chat(message, tokens()) == "Ответ."

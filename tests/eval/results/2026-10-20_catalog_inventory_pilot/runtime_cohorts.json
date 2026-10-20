@@ -1,0 +1,2624 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "scope": "Public development fixed-eight runtime experiments; numerical metadata and independent human findings only; no private text",
+  "fixed_case_order": [
+    "inventory-ru",
+    "inventory-en",
+    "inventory-variant",
+    "golden-01",
+    "golden-07",
+    "golden-10",
+    "golden-16",
+    "golden-32"
+  ],
+  "original_gate": {
+    "inventory": "All26 literal Ground O names, separately grounded NorSand/SCLAY1S, literal O/X/behavior and unknown version. No invented exhaustiveness or source relationships.",
+    "controls": {
+      "golden-01": "All6 DOF mappings",
+      "golden-07": "Purpose, Kn/Kt, Coulomb; no unsupported formula",
+      "golden-10": "Assumptions, parameters, limits and source/translation ambiguity",
+      "golden-16": "Initial/NR/Modified/BFGS, implementation caveat, LineSearch, Overrelaxation",
+      "golden-32": "Review purpose; Draining; NodalHead Total/Pressure/time; Transmitting frequency representation; constraints coverage"
+    },
+    "no_waiver": "Fast timing, resolved citations or passed unit tests do not waive semantic omissions. References mechanically grounded pending expert acceptance.",
+    "population": "Eight development questions, not a52-case evaluation or sealed holdout."
+  },
+  "legacy_preservation": {
+    "summary_path": "summary.json",
+    "sha256_before": "f9718ec9a6bd19cb732e27024fccc16c538cb819b7114f4ccd4f26d3e3da5cc3",
+    "unchanged": true,
+    "historical_report": "../../../../docs/catalog_inventory_2026-10-20.md",
+    "v1_v2_failures_retained": true
+  },
+  "cohorts": [
+    {
+      "id": "baseline_quiet",
+      "source": "summary.json",
+      "source_sha256": "f9718ec9a6bd19cb732e27024fccc16c538cb819b7114f4ccd4f26d3e3da5cc3",
+      "source_scope": "Immutable existing v1/v2 historical summary; original untouched",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record and historical report; raw rows do not export model_id/reasoning"
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 24.314,
+          "model_calls": 3,
+          "retrievals": 3,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 26.698,
+          "model_calls": 4,
+          "retrievals": 4,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 55.775,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-01",
+          "seconds": 36.985,
+          "model_calls": 5,
+          "retrievals": 5,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-07",
+          "seconds": 6.355,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-10",
+          "seconds": 8.567,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-16",
+          "seconds": 20.945,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-32",
+          "seconds": 28.728,
+          "model_calls": 2,
+          "retrievals": 3,
+          "error_type": null,
+          "citations_resolve": true
+        }
+      ],
+      "human_quality": {
+        "status": "reference_controls_only",
+        "pass_ids": null,
+        "unknown_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "known_failure_notes": [],
+        "note": "No complete independent eight-case PASS-ID reconstruction in preserved historical summary; do not infer unlisted passes."
+      },
+      "timing_seconds": {
+        "min": 6.355,
+        "median": 25.506,
+        "max": 55.775,
+        "under_10": 2,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v1",
+      "source": "summary.json",
+      "source_sha256": "f9718ec9a6bd19cb732e27024fccc16c538cb819b7114f4ccd4f26d3e3da5cc3",
+      "source_scope": "Immutable existing v1/v2 historical summary; original untouched",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record and historical report; raw rows do not export model_id/reasoning"
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 22.201,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 22.483,
+          "model_calls": 4,
+          "retrievals": 4,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 21.691,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-01",
+          "seconds": 16.074,
+          "model_calls": 3,
+          "retrievals": 3,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-07",
+          "seconds": 11.424,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-10",
+          "seconds": 7.154,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-16",
+          "seconds": 11.709,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-32",
+          "seconds": 21.102,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": null,
+        "unknown_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "known_failure_notes": [
+          "inventory-en infers 2021 from filename despite unknown version",
+          "golden-01 loses literal DOF5/6 mapping",
+          "golden-16 loses documented method-selection caveat and over-relaxation"
+        ],
+        "note": "No complete independent eight-case PASS-ID reconstruction in preserved historical summary; do not infer unlisted passes."
+      },
+      "timing_seconds": {
+        "min": 7.154,
+        "median": 18.588,
+        "max": 22.483,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v2",
+      "source": "summary.json",
+      "source_sha256": "f9718ec9a6bd19cb732e27024fccc16c538cb819b7114f4ccd4f26d3e3da5cc3",
+      "source_scope": "Immutable existing v1/v2 historical summary; original untouched",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record and historical report; raw rows do not export model_id/reasoning"
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 55.381,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 7.159,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 19.127,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-01",
+          "seconds": 18.586,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-07",
+          "seconds": 9.166,
+          "model_calls": 1,
+          "retrievals": 1,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-10",
+          "seconds": 39.539,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-16",
+          "seconds": 47.548,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        },
+        {
+          "id": "golden-32",
+          "seconds": 24.286,
+          "model_calls": 2,
+          "retrievals": 2,
+          "error_type": null,
+          "citations_resolve": true
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": null,
+        "unknown_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "known_failure_notes": [
+          "golden-01 still loses baseline DOF5/6 mapping",
+          "inventory-ru omits separately available SCLAY1S evidence",
+          "inventory latency still reaches55.381s"
+        ],
+        "note": "No complete independent eight-case PASS-ID reconstruction in preserved historical summary; do not infer unlisted passes."
+      },
+      "timing_seconds": {
+        "min": 7.159,
+        "median": 21.7065,
+        "max": 55.381,
+        "under_10": 2,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v3_off",
+      "source": "candidate_v3_off.json",
+      "source_sha256": "ec5cf4b3b1543be4c9796afa1a68ee16e42af02e7a34779c351a7c879d50fb42",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 10.349,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 6.103,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 7.906,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 8.639,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 6.788,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 14.727,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 9.487,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 10.4,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 2,
+        "fail_count": 6,
+        "findings": "EN: утверждение версии; variant: неверное поведение Hyperbolic; 01: DOF5/6; 07: Kn/Kt; 16: алгоритмы; 32: Draining.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 6.103,
+        "median": 9.062999999999999,
+        "max": 14.727,
+        "under_10": 5,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v4_decisions_audit",
+      "source": "candidate_v4_decisions.json",
+      "source_sha256": "4d657a933dd7467febcbd7216985df7b4911cb65f9745e1762a9b23d1bce1a74",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "decisions",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 22.316,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 13.251,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 22.567,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-01",
+          "seconds": 23.623,
+          "model_calls": 5,
+          "reported_retrievals": 4,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-07",
+          "seconds": 12.434,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-10",
+          "seconds": 13.422,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-16",
+          "seconds": 15.543,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-32",
+          "seconds": 20.058,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-07",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "golden-01",
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 5,
+        "fail_count": 3,
+        "findings": "01: DOF5/6; 16: BFGS/Overrelaxation/оговорка реализации; 32: Review/Head.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "answer_audit_observations": {
+        "statuses": {
+          "completed": 16
+        },
+        "first_draft_rejected_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "two_audit_round_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "repair_rounds_observed": 8,
+        "repair_count_caveat": "Counts completed re-audited revisions; model calls/retrievals are not synonymous with repair count.",
+        "final_audit_rejects_human_pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-07",
+          "golden-10"
+        ],
+        "final_audit_accepts_human_fail_ids": []
+      },
+      "timing_seconds": {
+        "min": 12.434,
+        "median": 17.8005,
+        "max": 23.623,
+        "under_10": 0,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v4_responses_audit",
+      "source": "candidate_v4_responses.json",
+      "source_sha256": "5611f4703c174d3eb86b33f09adc950212efb76c7aeb30b5435745ae31a6ae22",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "responses",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 27.602,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 10.731,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 1
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 33.418,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-01",
+          "seconds": 22.23,
+          "model_calls": 6,
+          "reported_retrievals": 5,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 1
+        },
+        {
+          "id": "golden-07",
+          "seconds": 9.264,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 1
+        },
+        {
+          "id": "golden-10",
+          "seconds": 24.444,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-16",
+          "seconds": 33.986,
+          "model_calls": 5,
+          "reported_retrievals": 4,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        },
+        {
+          "id": "golden-32",
+          "seconds": 50.59,
+          "model_calls": 6,
+          "reported_retrievals": 13,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 2
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "golden-16"
+        ],
+        "fail_ids": [
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 3,
+        "fail_count": 5,
+        "findings": "Variant: Hyperbolic/пропуск; 01: max-iteration handoff; 07: Kn/Kt; 10: source/переводная неоднозначность; 32: Review/Draining.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "answer_audit_observations": {
+        "statuses": {
+          "completed": 13
+        },
+        "first_draft_rejected_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-01",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "two_audit_round_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "repair_rounds_observed": 5,
+        "repair_count_caveat": "Counts completed re-audited revisions; model calls/retrievals are not synonymous with repair count.",
+        "final_audit_rejects_human_pass_ids": [
+          "golden-16"
+        ],
+        "final_audit_accepts_human_fail_ids": [
+          "golden-07",
+          "golden-10"
+        ]
+      },
+      "timing_seconds": {
+        "min": 9.264,
+        "median": 26.023,
+        "max": 50.59,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v5_luna_off",
+      "source": "candidate_v5_off.json",
+      "source_sha256": "dc5fbcaec0430a30ed6b83903e0072f40f2942f012cc69034d84888dc58ecf81",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 10.0,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 8.814,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 17.346,
+          "model_calls": 3,
+          "reported_retrievals": 3,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 4.125,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 21.262,
+          "model_calls": 4,
+          "reported_retrievals": 4,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 15.222,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 19.836,
+          "model_calls": 5,
+          "reported_retrievals": 5,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 16.773,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-en",
+          "golden-01",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-07",
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 3,
+        "fail_count": 5,
+        "findings": "RU: дополнительные модели; variant: четыре anisotropic/equivalent; 07: отрицание Kt; 16: методы; 32: Review/Head.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 4.125,
+        "median": 15.997499999999999,
+        "max": 21.262,
+        "under_10": 2,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v5_sol_off",
+      "source": "candidate_v5_sol.json",
+      "source_sha256": "c8eac0f332bceaa0e8c4e1a056c3f2097bd7b48ccdcdda602398d73a9a2a0537",
+      "configuration": {
+        "answer_model": "gpt-6.1-sol",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 14.788,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 7.55,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 15.539,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 4.833,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 13.374,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 19.285,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 11.436,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 25.564,
+          "model_calls": 3,
+          "reported_retrievals": 3,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 6,
+        "fail_count": 2,
+        "findings": "16: Line Search/Overrelaxation; 32: Review/частотная зависимость.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 4.833,
+        "median": 14.081,
+        "max": 25.564,
+        "under_10": 2,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v6_sol_off",
+      "source": "candidate_v6_sol.json",
+      "source_sha256": "2c8709d2c7bfc906e12f432a1b65cc742a7834b60bd0378e9589d8c67e010a2b",
+      "configuration": {
+        "answer_model": "gpt-6.1-sol",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 49.551,
+          "model_calls": 6,
+          "reported_retrievals": 6,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 12.906,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 19.301,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 10.15,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 9.792,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 22.147,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 14.859,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 28.531,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-32"
+        ],
+        "fail_ids": [
+          "inventory-ru",
+          "golden-16"
+        ],
+        "unknown_ids": [],
+        "pass_count": 6,
+        "fail_count": 2,
+        "findings": "RU: полная таблица отсутствует в packet; 16: Overrelaxation.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 9.792,
+        "median": 17.08,
+        "max": 49.551,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v7_decisions_partial",
+      "source": "candidate_v7_decisions.json",
+      "source_sha256": "6463cbee88add2fc81ab1a4466ac591297e99135123a855e01e7d41b8522781f",
+      "configuration": {
+        "answer_model": null,
+        "reasoning": null,
+        "prepared_budget_chars": null,
+        "followup_budget_chars": null,
+        "answer_audit": "off",
+        "source_selector": "decisions",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": false,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 50.228,
+          "model_calls": 6,
+          "reported_retrievals": 6,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 12.222,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "unknown",
+        "pass_ids": null,
+        "fail_ids": null,
+        "unknown_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "pass_count": null,
+        "fail_count": null,
+        "findings": "Только 2/8; полного независимого fixed-eight verdict нет.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 12.222,
+        "median": 31.225,
+        "max": 50.228,
+        "under_10": 0,
+        "count": 2,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v8_luna_decisions_selection",
+      "source": "candidate_v8_luna_decisions.json",
+      "source_sha256": "104da57074f987137679926e6f513649e575cda83978c526ffbdd4a2efe373a3",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "high",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "decisions",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 38.826,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 56.169,
+          "model_calls": 6,
+          "reported_retrievals": 6,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 39.284,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 9.167,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 16.263,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 20.101,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 29.475,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 4,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 59.443,
+          "model_calls": 6,
+          "reported_retrievals": 7,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "inventory-en",
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 5,
+        "fail_count": 3,
+        "findings": "EN: четыре anisotropic/equivalent; 16: BFGS/принципы обновления; 32: Review.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 9.167,
+        "median": 34.1505,
+        "max": 59.443,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v9_sol_decisions_selection",
+      "source": "candidate_v9_sol_decisions.json",
+      "source_sha256": "37b25331200e7766f4937b9479c726e7ce895be57fa12323a9481d201735ab45",
+      "configuration": {
+        "answer_model": "gpt-6.1-sol",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "decisions",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 17.373,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 21.61,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 46.712,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 18.746,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 16.05,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 21.953,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 24.126,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 31.913,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16"
+        ],
+        "fail_ids": [
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 7,
+        "fail_count": 1,
+        "findings": "32: Review.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 16.05,
+        "median": 21.7815,
+        "max": 46.712,
+        "under_10": 0,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v10_luna_off",
+      "source": "candidate_v10/var/prepared_evidence_benchmark/v10_luna_off.json",
+      "source_sha256": "2f520c03084ae9a3aac83038b84bab47049072688ee6bdfdb63849b8024ecc34",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 30.865,
+          "model_calls": 5,
+          "reported_retrievals": 4,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 28.408,
+          "model_calls": 5,
+          "reported_retrievals": 5,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 19.199,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 6.677,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 17.471,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 13.058,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 19.846,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 16.574,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16"
+        ],
+        "fail_ids": [
+          "inventory-variant",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 6,
+        "fail_count": 2,
+        "findings": "Variant: Hyperbolic назван нелинейно-упругим вопреки буквальной таблице; 32: Review/Head.",
+        "provenance": "Saved independent review",
+        "review_artifact": {
+          "file": "v10_luna_off_review.json",
+          "sha256": "91de345e67abd597aed163c058c8ad44dccd994e54fa01c6b493f76c452c7ad5"
+        }
+      },
+      "timing_seconds": {
+        "min": 6.677,
+        "median": 18.335,
+        "max": 30.865,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v11_sol_off",
+      "source": "candidate_v11/var/prepared_evidence_benchmark/v11_sol_off.json",
+      "source_sha256": "6df615eb5f4490475d2615f9be06acf6536b8a9f6987407c845fb4c8d2f56dc8",
+      "configuration": {
+        "answer_model": "gpt-6.1-sol",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 20.181,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 14.124,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 34.137,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 12.072,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 17.897,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 26.375,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 16.753,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 38.562,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10"
+        ],
+        "fail_ids": [
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 6,
+        "fail_count": 2,
+        "findings": "16: Overrelaxation/оговорка реализации; 32: Review.",
+        "provenance": "Saved independent review",
+        "review_artifact": {
+          "file": "v11_sol_off_review.json",
+          "sha256": "ba0d3a3f0463df6dd25458c50c5a541a30aa937a29eca5d33a7f7747e6d905ee"
+        }
+      },
+      "timing_seconds": {
+        "min": 12.072,
+        "median": 19.039,
+        "max": 38.562,
+        "under_10": 0,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v11_luna_off",
+      "source": "candidate_v11/var/prepared_evidence_benchmark/v11_luna_off.json",
+      "source_sha256": "ee5492fed321f5f1115d9f75c9526855ac1954095fdc9ee7518c07c04f0c22c6",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 39.102,
+          "model_calls": 5,
+          "reported_retrievals": 5,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 12.874,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 20.123,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 7.005,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 18.051,
+          "model_calls": 2,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 14.3,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 29.18,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 43.338,
+          "model_calls": 5,
+          "reported_retrievals": 4,
+          "exact_navigation_attempts": 4,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16"
+        ],
+        "fail_ids": [
+          "inventory-en",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 6,
+        "fail_count": 2,
+        "findings": "EN: четыре anisotropic/equivalent; 32: Review и Constraint Basic/Advanced/Auto/all6.",
+        "provenance": "Saved independent review",
+        "review_artifact": {
+          "file": "v11_luna_off_review.json",
+          "sha256": "31db2966f809245513e9ccd1163ea90aab3f92f5803b9152ec300e5009de0005"
+        }
+      },
+      "timing_seconds": {
+        "min": 7.005,
+        "median": 19.087,
+        "max": 43.338,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v11_luna_decisions_failed",
+      "source": "candidate_v11/var/prepared_evidence_benchmark/v11_luna_decisions.json",
+      "source_sha256": "051cfc1c7e0c5d1f2c87a60ce384c624851a8639fb11b23609c3b366f522b495",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 12000,
+        "followup_budget_chars": 6000,
+        "answer_audit": "off",
+        "source_selector": "decisions",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "None"
+        ]
+      },
+      "complete_fixed8": false,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 16.926,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": "OpenAIConnectionError",
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "unknown",
+        "pass_ids": null,
+        "fail_ids": null,
+        "unknown_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "pass_count": null,
+        "fail_count": null,
+        "findings": "Одна error row OpenAIConnectionError, затем остановлен; это не полный source-selector A/B и не ответный quality verdict.",
+        "provenance": "Independent reviewer turn record; no newly invented retrospective verdict"
+      },
+      "timing_seconds": {
+        "min": 16.926,
+        "median": 16.926,
+        "max": 16.926,
+        "under_10": 0,
+        "count": 1,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v13_luna_off",
+      "source": "candidate_v13/var/prepared_evidence_benchmark/v13_luna_off.json",
+      "source_sha256": "73ed20adfbce2c48d8dbeb15ea3a5dd81ce7ef332ac33f7e26aad6e9bc6e29ae",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 24000,
+        "followup_budget_chars": 18000,
+        "answer_audit": "off",
+        "source_selector": "off",
+        "provenance": "Parent execution record; only service_tier exported in raw model metrics. Unrecorded v7 fields remain null.",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 15.917,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 19.643,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 27.424,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 7.089,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 16.193,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 12.514,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 19.119,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 31.209,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "golden-01",
+          "golden-07",
+          "golden-16"
+        ],
+        "fail_ids": [
+          "inventory-variant",
+          "golden-10",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 5,
+        "fail_count": 3,
+        "findings": "Variant: число25 при26 имёнах; 10: source/переводная неоднозначность; 32: Review/частотная зависимость/значения Total-Pressure. Отдельно EN нарушает русский контракт.",
+        "provenance": "Saved independent review",
+        "review_artifact": {
+          "file": "v13_luna_off_review.json",
+          "sha256": "dae9342b9771f5613e0666b1cff6a28962d64bbbb2a57370f770dc7078719f07"
+        },
+        "language_contract": {
+          "scored_separately": true,
+          "fail_ids": [
+            "inventory-en"
+          ],
+          "combined_pass_ids": [
+            "inventory-ru",
+            "golden-01",
+            "golden-07",
+            "golden-16"
+          ],
+          "combined_pass_count": 4,
+          "transparency": "Original fixed-eight semantic gate did not explicitly score output language. Project Russian-output contract applied uniformly to all eight here; prior scores not retroactively altered."
+        }
+      },
+      "timing_seconds": {
+        "min": 7.089,
+        "median": 17.656,
+        "max": 31.209,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Observed rows only; partial/error cohorts are not successful fixed-eight timing cohorts."
+      }
+    },
+    {
+      "id": "v14_luna_off",
+      "source": "candidate_v14b/var/prepared_evidence_benchmark/v14_luna_off.json",
+      "source_sha256": "e3824746e25d15b4ceb55dedc395955248bc11b071b42fdc0e5ea44e67340a97",
+      "candidate_app_manifest_parent_provided": "dca11db25b0d5c4e62ec8b0eb677d48083a2e16bd5b295efd215a8cc89baa05c",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "answer_audit": "off",
+        "source_selector": "off",
+        "prepared_budget_chars": 24000,
+        "followup_budget_chars": 18000,
+        "provenance": "Parent execution record, raw rows export tier only",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 24.223,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 18.868,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 23.174,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 9.639,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 17.431,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 17.434,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 24.088,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 38.574,
+          "model_calls": 6,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 5,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-01",
+          "golden-07",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "fail_ids": [
+          "inventory-en"
+        ],
+        "unknown_ids": [],
+        "pass_count": 7,
+        "fail_count": 1,
+        "findings": "EN: отсутствует обязательная unknown-version оговорка. Все26+дополнения сохранены; ложной версии нет. 32/16/10/variant восстановлены.",
+        "provenance": "Saved independent review",
+        "review_artifact": {
+          "file": "v14_luna_off_review.json",
+          "sha256": "9faf61ab490306b5749c25cb21cf4eed11d50688ed1b01f02a01b2f468b3daaf"
+        },
+        "language_contract": {
+          "scored_separately": true,
+          "pass_count": 8,
+          "fail_ids": [],
+          "combined_pass_ids": [
+            "inventory-ru",
+            "inventory-variant",
+            "golden-01",
+            "golden-07",
+            "golden-10",
+            "golden-16",
+            "golden-32"
+          ],
+          "combined_pass_count": 7,
+          "transparency": "Same separate language assessment as v13; earlier semantic scores not retroactively changed."
+        }
+      },
+      "timing_seconds": {
+        "min": 9.639,
+        "median": 21.021,
+        "max": 38.574,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Complete public8; sequential cohort, not SLA/causal comparison"
+      }
+    },
+    {
+      "id": "v14_luna_decisions_selection",
+      "source": "candidate_v14b/var/prepared_evidence_benchmark/v14_luna_decisions.json",
+      "source_sha256": "03d4678462f13ba62fa92630f76fb295d0f88a6f20e5b0d1f2bdbc5c98c25cb3",
+      "candidate_app_manifest_parent_provided": "dca11db25b0d5c4e62ec8b0eb677d48083a2e16bd5b295efd215a8cc89baa05c",
+      "configuration": {
+        "answer_model": "gpt-6-luna",
+        "reasoning": "medium",
+        "prepared_budget_chars": 24000,
+        "followup_budget_chars": 18000,
+        "answer_audit": "off",
+        "source_selector": "decisions",
+        "provenance": "Parent execution record; exported service tier fast",
+        "observed_answer_tiers": [
+          "fast"
+        ]
+      },
+      "complete_fixed8": true,
+      "cases": [
+        {
+          "id": "inventory-ru",
+          "seconds": 53.334,
+          "model_calls": 3,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-en",
+          "seconds": 42.25,
+          "model_calls": 5,
+          "reported_retrievals": 3,
+          "exact_navigation_attempts": 3,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "inventory-variant",
+          "seconds": 34.919,
+          "model_calls": 4,
+          "reported_retrievals": 2,
+          "exact_navigation_attempts": 2,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-01",
+          "seconds": 8.406,
+          "model_calls": 1,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 0,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-07",
+          "seconds": 23.532,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-10",
+          "seconds": 15.671,
+          "model_calls": 2,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 1,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-16",
+          "seconds": 26.765,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 3,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        },
+        {
+          "id": "golden-32",
+          "seconds": 27.882,
+          "model_calls": 3,
+          "reported_retrievals": 1,
+          "exact_navigation_attempts": 4,
+          "error_type": null,
+          "citations_resolve": true,
+          "audit_count": 0
+        }
+      ],
+      "human_quality": {
+        "status": "FAIL",
+        "pass_ids": [
+          "inventory-en",
+          "inventory-variant",
+          "golden-01",
+          "golden-07"
+        ],
+        "fail_ids": [
+          "inventory-ru",
+          "golden-10",
+          "golden-16",
+          "golden-32"
+        ],
+        "unknown_ids": [],
+        "pass_count": 4,
+        "fail_count": 4,
+        "findings": "RU omits NorSand;10 does not disclose principal-stress translation ambiguity;16 wrongly extends implementation caveat to NR;32 loses Constraint/all6 and Total/Pressure meanings.",
+        "review_artifact": {
+          "file": "v14_luna_decisions_review.json",
+          "sha256": "348616ccc4de68862f9892e35de2d7fd323983361a794d03825536dc59106dd6"
+        },
+        "language_contract": {
+          "scored_separately": true,
+          "pass_count": 8,
+          "fail_ids": [],
+          "combined_pass_ids": [
+            "inventory-en",
+            "inventory-variant",
+            "golden-01",
+            "golden-07"
+          ],
+          "combined_pass_count": 4
+        }
+      },
+      "timing_seconds": {
+        "min": 8.406,
+        "median": 27.3235,
+        "max": 53.334,
+        "under_10": 1,
+        "count": 8,
+        "scope": "Complete freely generated8; CPU bootstrap overlap, not causal/SLA evidence"
+      },
+      "selector_api_invocations_observed": [
+        {
+          "case": "inventory-ru",
+          "retrieval": 1,
+          "origin": "catalog_inventory",
+          "candidate_count": 8,
+          "anchored_candidates": 0,
+          "error_type": null,
+          "duration_ms": 3626.581,
+          "input_sha256": "ec0eb332d7704fe22d20726588162dec6ad046b4fac92161521516a7b4f5436b",
+          "cache": "miss"
+        },
+        {
+          "case": "golden-16",
+          "retrieval": 1,
+          "origin": "catalog_inventory",
+          "candidate_count": 12,
+          "anchored_candidates": 0,
+          "error_type": null,
+          "duration_ms": 1319.376,
+          "input_sha256": "e027bd72ae89cd180c9454c7a1211575f8328b612e91132d4aa306d0b6410a33",
+          "cache": "miss"
+        }
+      ],
+      "selector_api_service_seconds_sum": 4.945957,
+      "CPU_confound": "Per root: pytest bootstrap briefly overlapped middle of cohort for about15s, interrupted before tests progressed; full suite restarted only after cohort completion."
+    }
+  ],
+  "v12_preparation_only": {
+    "source": "v12_preparation_probe.json",
+    "source_sha256": "bca9d427742601ff2846a32fe6e662caac2469369239f8b533a491b38dfa2804",
+    "ids": [
+      "golden-16",
+      "golden-32"
+    ],
+    "preparation_context_chars": 24000,
+    "generated_answers": false,
+    "quality_verdict": "not_evaluated",
+    "note": "Preparation probe not a completed fixed-eight answer cohort; no answer timings inferred."
+  },
+  "paired_answer_audit_v4": {
+    "source": "paired_audits_v4.json",
+    "source_sha256": "e2d3d225da787e05fe419848de95f5ea090fbda633343be4b4e6d66b1b7e34c5",
+    "purpose": "Assess same final answer/evidence packets, four generic predicates requested_parts/enumeration/grounding/scope; not source choice",
+    "same_input_hashes_verified": true,
+    "modes": [
+      {
+        "mode": "decisions",
+        "rows": 8,
+        "completed": 8,
+        "accepted": 0,
+        "human_good_rejected_ids": [
+          "inventory-ru",
+          "inventory-en",
+          "inventory-variant",
+          "golden-07",
+          "golden-10"
+        ],
+        "human_bad_accepted_ids": [],
+        "seconds": {
+          "min": 0.242,
+          "median": 0.4605,
+          "max": 1.499
+        }
+      },
+      {
+        "mode": "responses",
+        "rows": 8,
+        "completed": 8,
+        "accepted": 1,
+        "human_good_rejected_ids": [
+          "inventory-ru",
+          "inventory-variant",
+          "golden-07",
+          "golden-10"
+        ],
+        "human_bad_accepted_ids": [],
+        "seconds": {
+          "min": 3.383,
+          "median": 4.5735,
+          "max": 8.352
+        }
+      }
+    ],
+    "limitation": "Thresholds/probabilities not validated engineering quality; false rejections relative to recorded human gate. This additional same-packet audit is distinct from freely generated graph cohorts."
+  },
+  "paired_source_choice": {
+    "source": "paired_routing_results.json",
+    "source_sha256": "a45c9117e1ab241e04918359a61f25f608e4d4ea11dfe8004d19c490734baeee",
+    "fixture_sha256": "c8232beddeb1df734814b94c29c5362e46c03ffa694adaee33c8951db50a3dc1",
+    "model": "gpt-6-luna",
+    "timeout_seconds": 5.0,
+    "scope": {
+      "validated_sources": 10,
+      "catalog_groups": 97,
+      "budget_eligible_candidates": 96,
+      "table_char_budget": 6000,
+      "product": "gts_nx",
+      "version": "unknown",
+      "prompts": 8,
+      "repeats": 2,
+      "real_pairs": 14,
+      "lexical_EN_skip_rows_per_endpoint": 2
+    },
+    "protocol": "Actual TableSelectionService, identical validated literal descriptions/question bytes; counterbalanced order and fresh clients; expected identity grounded in literal table",
+    "modes": [
+      {
+        "mode": "lexical",
+        "rows": 16,
+        "correct_including_skips": 4,
+        "real_provider_calls": 0,
+        "correct_real_provider_calls": 0,
+        "errors": 0,
+        "service_seconds": null
+      },
+      {
+        "mode": "off",
+        "rows": 16,
+        "correct_including_skips": 4,
+        "real_provider_calls": 0,
+        "correct_real_provider_calls": 0,
+        "errors": 0,
+        "service_seconds": null
+      },
+      {
+        "mode": "decisions",
+        "rows": 16,
+        "correct_including_skips": 14,
+        "real_provider_calls": 14,
+        "correct_real_provider_calls": 12,
+        "errors": 0,
+        "service_seconds": {
+          "min": 0.653583,
+          "median": 0.913098,
+          "max": 1.616627
+        }
+      },
+      {
+        "mode": "responses",
+        "rows": 16,
+        "correct_including_skips": 16,
+        "real_provider_calls": 14,
+        "correct_real_provider_calls": 14,
+        "errors": 0,
+        "service_seconds": {
+          "min": 2.1402979999999996,
+          "median": 2.6203795,
+          "max": 3.616002
+        }
+      }
+    ],
+    "human_failure": {
+      "id": "paraphrase-ru-2",
+      "decisions_wrong_repeats": 2,
+      "selected": "Property table with element types rather than requested constitutive-material inventory",
+      "scope": "Real relevance failure: source revalidation proves source identity, not ability to answer requested inventory. No invented table facts claimed."
+    },
+    "limitations": [
+      "Seven semantic prompts reuse one target and two repeats; this is not a broad routing accuracy estimate or independent 16-question cohort.",
+      "The local baseline uses only the original question and does not reproduce actual RAG bilingual translation/planning; 4/16 is not full production RAG recall or answer accuracy.",
+      "The fixed-en rows are lexical skips: 16/16 Responses includes two rows with no Responses call; the genuine endpoint result is 14/14.",
+      "Only source choice is evaluated. No generated answers, sufficiency audit, hallucination rate, end-to-end speedup, provider cost, P95 or SLA is established.",
+      "Decisions and Responses use their actual production service protocols; their shared question/candidate bytes match, while endpoint request structures differ.",
+      "Warm catalog/source validation is excluded from row timing; total client-call timing is separately retained. The unusually high first off construction time is client setup, not local lexical retrieval latency.",
+      "Wrong choice is a scoped, source-validated literal table, not invented source content. Revalidation does not establish semantic relevance or completeness."
+    ],
+    "v9_causal_distinction": {
+      "case_id": "inventory-ru",
+      "paired_fixture_original_question_only_anchors": 0,
+      "v9_first_retrieval_translated_query_count": 1,
+      "v9_first_retrieval_catalog_anchors": 1,
+      "v9_first_retrieval_selected_literal_rows": 31,
+      "v9_first_retrieval_semantic_selection_report_present": false,
+      "finding": "The isolated original-Russian-query fixture reaches semantic fallback. The recorded v9 initial RAG query set included translation and selected the table lexically. This paired result cannot be credited with the v9 table-selection success or used to assert that Decisions ran there."
+    },
+    "prospective_v2": "Not run/completed; must declare gates before provider calls. No substitution for answer-quality fixed-eight or broader gate."
+  },
+  "confounds": [
+    "Sequential freely generated answer cohorts vary translations, retrieval packets, provider latency, model sampling and code snapshots. No causal API/model gain inferred.",
+    "Some v4 runtime overlapped full tests; CPU load can affect local and provider-wait scheduling. Final quiet runs are separate observations, not matched randomized controls.",
+    "Original430.547s baseline outlier retained in historical report. Synchronous verbose stdout blocking is a harness hypothesis supported by tiny model/retrieval sums; not assigned to provider latency or proven production behavior. Quiet rerun32=28.728s.",
+    "Provider wall includes scheduling/network/backends. Model metrics exclude providers used within RAG; reported retrieval counts omit exact-navigation reads. Neither residual nor retrieval wall is CPU time.",
+    "Cache/warmup/configuration changed across versions.12K+6K versus24K+18K is a material intervention, not a speed-only change.",
+    "No P95/SLA,52-case success, end-to-end cost or production release is established. Wrong-path startup and connection failures remain failures/incomplete evidence.",
+    "Per root: pytest bootstrap briefly overlapped middle of cohort for about15s, interrupted before tests progressed; full suite restarted only after cohort completion."
+  ],
+  "v13_specific": {
+    "content_pass": 5,
+    "combined_Russian_contract_pass": 4,
+    "language_transparency": "EN semantic PASS but Russian contract FAIL. Language was not explicit in previous fixed-eight scoring; no retroactive score rewrite.",
+    "boundary32": "Review relevant non-citable preview was visible but never selected for exact read; full Transmitting frequency paragraph present/cited but omitted. Final packet reconstructed from frozen code/export, not outbound raw capture.",
+    "source_ambiguity07": "Perpendicular-to-normal wording copied exact cited English source; technically suspect source awaits expert adjudication, not declared newly invented physics."
+  },
+  "status": "No completed reviewed cohort through v14 OFF/Decisions here meets original8/8. No merge/deploy quality claim; broader gate and prospective paired-source v2 remain open.",
+  "v14": {
+    "source": "candidate_v14b/var/prepared_evidence_benchmark/v14_luna_off.json",
+    "content_pass": 7,
+    "combined_pass": 7,
+    "language_pass": 8,
+    "known_failure": "EN unknown-version qualification omitted; no explicit false version",
+    "recoveries": [
+      "Variant26 and literal Hyperbolic",
+      "10 translation discrepancy correctly attributed",
+      "16 complete algorithm coverage",
+      "32Review/Head/Transmittingfrequency/constraints"
+    ],
+    "no_app_edits_during_cohort": "Per parent execution record",
+    "quality_gate": "FAIL; original8/8 not achieved",
+    "decisions_selection_comparison": {
+      "content_pass": 4,
+      "combined_pass": 4,
+      "language_pass": 8,
+      "selector_api_calls_observed": 2,
+      "selector_service_seconds_sum": 4.945957,
+      "causality": "Same frozen app and configured answer model/budgets, but unpaired query/answer realizations and brief bootstrap overlap. No claim Decisions caused all timing/quality differences."
+    }
+  }
+}
