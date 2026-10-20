@@ -81,3 +81,18 @@ selection 13,90 с. Эти фазы не следует суммировать �
 Модель, Fast processing, reasoning, evidence budgets, grounding, тайм-ауты и
 fallback не меняются. Отсутствие потери качества полного контура и доставка
 всех ответов за 10–15 с остаются открытыми критериями S0-005.
+
+## Развёртывание
+
+PR51: https://github.com/skoroko/Support_Copilot/pull/51. Код `18b4177`.
+Docker build и existing-stack rollout выполнены без переиндексации. В реальном
+startup событие `rag_evidence_cache_prepared` подтвердило 10 валидных источников,
+0 невалидных и 8514,98 мс подготовки. Отличие от offline-пробы31,25с отражает
+другую нагрузку/порядок чтения; результаты не объединяются в обещание latency.
+App `/ready`200, bot OpenAPI200; Redis/Postgres/Qdrant healthy. Все24 whitelist
+source files совпали с working tree в app и bot. Telegram sends не выполнялись.
+
+Image: `sha256:0b7bdfdf8623b380dc27148bcc5bdb63761fe9f2aa1293ba0839c782df371b95`.
+Config: `sha256:c094894d659dff831c4b96e12d8283973358721209d2a7752ad34e9798624954`.
+Предыдущий образ сохранён как `llm-service:rollback-pre-warmup-20261020`:
+`sha256:88d741452c94a20881e08406b20193dba48d01344be357a8902caaecab680720`.
