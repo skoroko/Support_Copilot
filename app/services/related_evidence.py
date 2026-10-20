@@ -469,6 +469,130 @@ class RelatedEvidenceIndex:
             report["selected_locations"] = len(output)
             return output
 
+    @staticmethod
+    def _navigation_id(binding: Mapping[str, Any], page: int) -> str:
+        from app.services.corpus import stable_id
+
+        return stable_id("physical-navigation-v1", *(str(binding[key]) for key in
+                         ("source_id", "source_hash", "location_id", "product", "version")), str(page))
+
+    def navigation(
+        self, seeds: list[dict[str, Any]], *, max_chars: int = 10_000, max_sources: int = 2,
+    ) -> dict[str, Any]:
+        """Non-citable PDF page hints, enabled only by two verified seed pages.
+
+        max_chars bounds the compact JSON list of model-visible fields; raw
+        binding metadata stays on the server. Hints are literal first prose,
+        excluding exact paragraphs repeated on at least three physical pages.
+        Neither the manifest nor a page hint establishes engineering facts.
+        """
+        result: dict[str, Any] = {"items": [], "truncated": False}
+        if max_chars < 2 or max_sources < 1:
+            result["truncated"] = bool(seeds)
+            return result
+        with self._lock:
+            if not self._load():
+                return result
+            scopes: dict[tuple[str, str, str, str], set[str]] = {}
+            for seed in seeds:
+                if not isinstance(seed, dict) or not isinstance(seed.get("metadata"), Mapping):
+                    continue
+                metadata, text = seed["metadata"], seed.get("text")
+                if not isinstance(text, str) or not self._seed_blocks(metadata, text):
+                    continue
+                sid, lid = str(metadata["source_id"]), str(metadata["location_id"])
+                location, source = self._locations[lid], self._sources[sid]
+                page = location.get("page")
+                if (Path(str(source["relative_path"])).suffix.lower() != ".pdf"
+                        or type(page) is not int or page < 1 or self._pdf_pages.get((sid, page)) != lid
+                        or any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                               for key in ("product", "version"))):
+                    continue
+                scope = (sid, str(source["source_hash"]), str(location.get("product", "unknown")),
+                         str(location.get("version", "unknown")))
+                scopes.setdefault(scope, set()).add(lid)
+            # A single PDF source cannot silently combine conflicting seed scopes.
+            scope_counts: dict[str, int] = {}
+            for scope in scopes:
+                scope_counts[scope[0]] = scope_counts.get(scope[0], 0) + 1
+            eligible = [scope for scope, locations in scopes.items()
+                        if len(locations) >= 2 and scope_counts[scope[0]] == 1]
+            if len(eligible) > min(max_sources, 2):
+                result["truncated"] = True
+            visible: list[dict[str, Any]] = []
+            considered = 0
+            for sid, digest, product, version in eligible[:min(max_sources, 2)]:
+                source = self._sources[sid]
+                pages = sorted((page, lid) for (source_id, page), lid in self._pdf_pages.items()
+                               if source_id == sid and lid is not None
+                               and self._locations[lid].get("source_hash") == digest
+                               and str(self._locations[lid].get("product", "unknown")) == product
+                               and str(self._locations[lid].get("version", "unknown")) == version)
+                if len(pages) > 100 - considered:
+                    result["truncated"] = True
+                pages = pages[:max(0, 100 - considered)]
+                considered += len(pages)
+                paragraphs: dict[str, list[str]] = {}
+                occurrences: dict[str, set[str]] = {}
+                for _page, lid in pages:
+                    prose = [row["text"] for row in self._by_location.get(lid, [])
+                             if row.get("source_id") == sid and row.get("kind") == "paragraph"
+                             and str(row.get("text") or "").strip()
+                             and (row.get("attributes") or {}).get("review_status") not in {"pending_review", "rejected"}]
+                    paragraphs[lid] = prose
+                    for paragraph in prose:
+                        occurrences.setdefault(paragraph, set()).add(lid)
+                for page, lid in pages:
+                    hint = next((paragraph[:160] for paragraph in paragraphs[lid]
+                                 if len(occurrences[paragraph]) < 3), "")
+                    if not hint:
+                        continue
+                    binding = {"source_id": sid, "source_hash": digest, "location_id": lid,
+                               "product": product, "version": version}
+                    item = {"id": self._navigation_id(binding, page), "metadata": binding,
+                            "page": page, "file_name": Path(source["relative_path"]).name,
+                            "hint": hint, "not_citable": True}
+                    projection = {key: value for key, value in item.items() if key != "metadata"}
+                    if len(json.dumps([*visible, projection], ensure_ascii=False, separators=(",", ":"))) > max_chars:
+                        result["truncated"] = True
+                        continue
+                    visible.append(projection)
+                    result["items"].append(item)
+            return result
+
+    def read_navigation(self, item: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Read one exact manifest binding; callers enforce manifest membership.
+
+        The ID is a stable provenance binding, not an authorization token.
+        Source bytes, scopes, page uniqueness and rendering are revalidated.
+        """
+        with self._lock:
+            if not self._load() or not isinstance(item, Mapping) or item.get("not_citable") is not True:
+                return None
+            binding = item.get("metadata")
+            if (not isinstance(binding, Mapping)
+                    or set(binding) != {"source_id", "source_hash", "location_id", "product", "version"}):
+                return None
+            sid, lid = str(binding["source_id"]), str(binding["location_id"])
+            source, location = self._sources.get(sid), self._locations.get(lid)
+            if not source or not location:
+                return None
+            page = location.get("page")
+            canonical = {"source_id": sid, "source_hash": source.get("source_hash"), "location_id": lid,
+                         "product": str(location.get("product", "unknown")),
+                         "version": str(location.get("version", "unknown"))}
+            if (dict(binding) != canonical or location.get("source_id") != sid
+                    or location.get("source_hash") != source.get("source_hash")
+                    or Path(str(source["relative_path"])).suffix.lower() != ".pdf"
+                    or type(page) is not int or page < 1 or self._pdf_pages.get((sid, page)) != lid
+                    or item.get("page") != page or item.get("file_name") != Path(source["relative_path"]).name
+                    or item.get("id") != self._navigation_id(canonical, page) or not self._valid_source(sid)):
+                return None
+            anchor = next((row for row in self._by_location.get(lid, []) if str(row.get("text") or "").strip()), None)
+            if anchor is None:
+                return None
+            return self.location_context({**location, "block_id": anchor["block_id"]}, anchor["text"], max_chars=6_000)
+
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,
         max_blocks: int = 8, max_chars: int = 12_000,
