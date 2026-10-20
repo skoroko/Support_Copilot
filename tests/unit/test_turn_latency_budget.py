@@ -248,4 +248,6 @@ async def test_non_responses_translation_passes_residual_timeout(monkeypatch):
     hook = build_llm_translate_hook(config)
     async with turn_budget(.2):
         assert await asyncio.to_thread(hook, 'Русский вопрос') == 'English question'
-    assert 0 < factory.return_value.complete.call_args.kwargs['timeout'] <= .2
+    timeout = factory.return_value.complete.call_args.kwargs['timeout']
+    assert 0 < timeout.read <= .2
+    assert timeout.connect <= timeout.read

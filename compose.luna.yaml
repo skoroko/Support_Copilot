@@ -7,10 +7,15 @@ services:
       APP_ALLOWED_MODELS: '["gpt-6-luna","gpt-5.4-mini"]'
       AGENT_LLM_API: responses
       AGENT_REASONING_EFFORT: medium
+      # Same model/reasoning; Fast token rates are 2x Standard (user approved 2026-10-20).
+      AGENT_SERVICE_TIER: priority
       AGENT_EXPANDED_REASONING_EFFORT: medium
       AGENT_REASONING_TOKEN_RESERVE: "8192"
       AGENT_GENERATION_TIMEOUT: "60"
       AGENT_TURN_TIMEOUT: "90"
+      # Identical backups remain an opt-in experiment; semantic gate is not passed.
+      AGENT_GENERATION_BACKUP_AFTER: "0"
+      AGENT_PREPARED_EVIDENCE_ENABLED: "true"
       # This override updates an existing stack with an accepted populated index.
       # Corpus ingestion remains an explicit job; app restarts only load it.
       RAG_INGEST_ON_START: "false"

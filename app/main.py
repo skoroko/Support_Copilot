@@ -80,7 +80,7 @@ def _initialize_rag(settings: Settings) -> tuple[RAGService | None, str | None]:
         if getattr(config, "translate_llm_enabled", True)
         else None
     )
-    service = RAGService(config, translate_hook=translate_hook)
+    service = RAGService(config, translate_hook=translate_hook, own_translate_hook=True)
     try:
         service.build()
     except Exception as exc:

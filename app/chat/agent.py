@@ -41,6 +41,8 @@ class ChatAgent:
             config = self.config(chat)
             response_tokens = getattr(self.settings, "chat_expanded_response_tokens", 1500) if expanded else getattr(self.settings, "chat_response_tokens", 500)
             config["configurable"].update(response_tokens=response_tokens, expanded_mode=expanded)
+            config["configurable"]["allow_generation_backup"] = (
+                not expanded and float(getattr(self.settings, "agent_generation_backup_after", 0)) > 0)
             config["configurable"]["prepared_evidence_enabled"] = bool(
                 getattr(self.settings, "agent_prepared_evidence_enabled", True))
             reasoning_reserve = 0
@@ -69,7 +71,8 @@ class ChatAgent:
             started = time.perf_counter()
             outcome = "completed"
             try:
-                async with turn_budget(getattr(self.settings, "agent_turn_timeout", 90.0)):
+                async with turn_budget(getattr(self.settings, "agent_turn_timeout", 90.0),
+                                       max_backups=getattr(self.settings, "agent_generation_backup_limit", 1)):
                     return await self.graph.ainvoke(value, config)
             except BaseException:
                 outcome = "interrupted"

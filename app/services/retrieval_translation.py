@@ -7,6 +7,7 @@ from collections.abc import Callable
 from threading import Lock
 from typing import TYPE_CHECKING, Any
 
+import httpx
 from llama_index.llms.openai import OpenAI as LlamaOpenAI
 
 from app.observability.logging import get_logger
@@ -75,7 +76,52 @@ def build_llm_translate_hook(config: RAGConfig, *, llm: Any | None = None) -> Tr
     opt-in, matching the embedding guard.
     """
 
-    state: dict[str, Any] = {"llm": llm, "cache": OrderedDict(), "lock": Lock()}
+    state: dict[str, Any] = {"llm": llm, "cache": OrderedDict(), "lock": Lock(),
+        "init_lock": Lock(), "http_client": None}
+
+    def get_llm() -> Any | None:
+        # Initialization is serialized, provider calls are not. Concurrent
+        # distinct queries share one pool rather than racing to replace it.
+        with state["init_lock"]:
+            if state["llm"] is not None:
+                return state["llm"]
+            if not config.allow_external_data_transfer:
+                logger.warning("rag_translate_failed", error_type="ExternalDataTransferNotAllowed")
+                return None
+            if config.llm_model.startswith("gpt-6"):
+                from app.services.runtime_model import ResponsesTextLLM
+
+                state["llm"] = ResponsesTextLLM(model=config.llm_model,
+                    api_key=config.openai_api_key, base_url=config.openai_base_url,
+                    timeout=min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS),
+                    effort="none", max_output_tokens=512, max_retries=0)
+            else:
+                http_client = httpx.Client(follow_redirects=True, limits=httpx.Limits(
+                    max_connections=1000, max_keepalive_connections=100, keepalive_expiry=60.0,
+                ))
+                try:
+                    translate_llm = LlamaOpenAI(
+                        model=config.llm_model, api_key=config.openai_api_key,
+                        api_base=config.openai_base_url,
+                        timeout=min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS),
+                        temperature=0, max_retries=0, http_client=http_client,
+                    )
+                    translate_llm._get_client()
+                except Exception:
+                    http_client.close()
+                    raise
+                state["http_client"] = http_client
+                state["llm"] = translate_llm
+            return state["llm"]
+
+    def close() -> None:
+        if llm is not None:
+            return
+        with state["init_lock"]:
+            if state["http_client"] is not None:
+                state["http_client"].close()
+            elif state["llm"] is not None:
+                state["llm"].close()
 
     def translate(question: str) -> str | None:
         try:
@@ -90,32 +136,15 @@ def build_llm_translate_hook(config: RAGConfig, *, llm: Any | None = None) -> Tr
             if cached is not None:
                 state["cache"].move_to_end(key)
                 return str(cached) if cached else None
-        translate_llm = state["llm"]
-        if translate_llm is None:
-            if not config.allow_external_data_transfer:
-                logger.warning("rag_translate_failed", error_type="ExternalDataTransferNotAllowed")
-                return None
-            if config.llm_model.startswith("gpt-6"):
-                from app.services.runtime_model import ResponsesTextLLM
-
-                translate_llm = state["llm"] = ResponsesTextLLM(model=config.llm_model,
-                    api_key=config.openai_api_key, base_url=config.openai_base_url,
-                    timeout=min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS),
-                    effort="none", max_output_tokens=512, max_retries=0)
-            else:
-                translate_llm = state["llm"] = LlamaOpenAI(
-                    model=config.llm_model,
-                    api_key=config.openai_api_key,
-                    api_base=config.openai_base_url,
-                    timeout=min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS),
-                    temperature=0,
-                    max_retries=0,
-                )
         prompt = f"{LLM_TRANSLATE_PROMPT}\n\nQuestion: {key}\n\nEnglish question:"
         try:
+            translate_llm = get_llm()
+            if translate_llm is None:
+                return None
             if llm is None and not config.llm_model.startswith("gpt-6"):
-                response = translate_llm.complete(prompt, timeout=remaining_seconds(
-                    min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS)))
+                residual = remaining_seconds(min(float(config.generation_timeout), LLM_TRANSLATE_TIMEOUT_SECONDS))
+                response = translate_llm.complete(prompt, timeout=httpx.Timeout(
+                    residual, connect=min(10.0, residual), pool=min(5.0, residual)))
             else:
                 response = translate_llm.complete(prompt)
         except Exception as exc:  # noqa: BLE001 - optional recall must survive provider failures
@@ -131,4 +160,7 @@ def build_llm_translate_hook(config: RAGConfig, *, llm: Any | None = None) -> Tr
                 state["cache"].popitem(last=False)
         return translated
 
+    # Callable hooks keep their existing injection contract while the
+    # composition root can explicitly transfer lifecycle ownership to RAG.
+    translate.close = close
     return translate

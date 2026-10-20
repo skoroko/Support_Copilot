@@ -9,7 +9,7 @@ class FakeRAGService:
     instances: list["FakeRAGService"] = []
     build_error: Exception | None = None
 
-    def __init__(self, config: object, translate_hook: object = None) -> None:
+    def __init__(self, config: object, translate_hook: object = None, own_translate_hook: bool = False) -> None:
         self.config = config
         self.translate_hook = translate_hook
         self.closed = False
