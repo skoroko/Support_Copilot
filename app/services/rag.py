@@ -609,7 +609,8 @@ class RAGService:
             self._ingest_incrementally()
         else:
             # Keep the ingestion service available for later document uploads,
-            # but do not read the corpus or make embedding requests at startup.
+            # without ingestion or embedding requests at startup. The evidence
+            # cache below only validates existing source bytes.
             self._ensure_ingestion_service()
         vector_store = QdrantVectorStore(client=self.client, collection_name=self.config.collection_name)
         self._validate_collection(self.config.collection_name)
@@ -624,6 +625,10 @@ class RAGService:
         # Build the immutable lexical view before /ready accepts the first
         # question. Cold docstore parsing is startup work, not user latency.
         self._lexical_bm25_index()
+        evidence_started = time.perf_counter()
+        cache_status = self._related_evidence.warmup()
+        logger.info("rag_evidence_cache_prepared", **cache_status,
+                    preparation_ms=round((time.perf_counter() - evidence_started) * 1000, 2))
         return self
 
     def answer(

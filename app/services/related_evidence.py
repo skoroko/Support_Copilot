@@ -154,6 +154,19 @@ class RelatedEvidenceIndex:
                 return None
             return str(source["relative_path"])
 
+    def warmup(self) -> dict[str, Any]:
+        """Prepare the same validated cache used by requests, before readiness.
+
+        File stamps are still checked on every lookup. Preloading is never
+        permission to use evidence after its catalog or source bytes change.
+        Missing optional catalogs retain the ordinary retrieval fallback.
+        """
+        with self._lock:
+            loaded = self._load()
+            valid = sum(self._valid_source(sid) for sid in self._sources) if loaded else 0
+            return {"catalog_loaded": loaded, "valid_sources": valid,
+                    "invalid_sources": len(self._sources) - valid if loaded else 0}
+
     def _seed_blocks(self, metadata: Mapping[str, Any], text: str) -> list[dict[str, Any]]:
         location_id = str(metadata.get("location_id") or "")
         source_id = str(metadata.get("source_id") or "")
