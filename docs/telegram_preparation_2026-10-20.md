@@ -104,7 +104,20 @@ frozen pilot и ограничения. Первый v12 прерван ради
 - Экспериментальный snapshot отдельно прошёл1483/12; это не число тестов выпуска.
 - Независимый Astra review: найденный compatibility blocker исправлен,
   повторное review блокеров не выявило. Runtime-параметры/semantic limits описаны выше.
-- Проверяются Ruff, git diff --check, Docker build, readiness и точные source
-  hashes API/бота. Состояние rollout фиксируется в commit report.
+- Ruff: новых диагностик в16 изменённых tracked Python files нет; выбранные
+  новые helpers/tests проверены отдельно. Git diff --check и Compose config PASS.
+- Docker build и rollout API/бота PASS. `/ready` и bot OpenAPI — HTTP200;
+  API, Redis, Postgres, Qdrant healthy; бот running.
+- Все23 проверяемых исходных файла совпали побайтово в API и боте.
+  Deployed image: `sha256:88d741452c94a20881e08406b20193dba48d01344be357a8902caaecab680720`;
+  image config: `sha256:4e975bf96dfc289c75d4f4ffffa75dda26b4616181f1373dd0a0d885b8d9d031`.
+  Сверка runtime подтверждает прежние model/reasoning/budgets, Fast=priority,
+  prepared=true, backup=0, ingestion=false. Telegram sends не выполнялись.
+
+Изменения выпуска: commit `f72ccedf5ca7c8a7901aa67bbdc20c72fed368cd`,
+[PR50](https://github.com/skoroko/Support_Copilot/pull/50).
+Сохранён старый rollback tag `llm-service:rollback-latency-20261019`; точный
+предыдущий running image c6431c9 не доступен как локальный image для нового
+tag. Это ограничивает побайтовый откат к непосредственно предыдущему образу.
 
 Общий release gate S0-005 остаётся открытым; эти пять вопросов не заменяют holdout.
