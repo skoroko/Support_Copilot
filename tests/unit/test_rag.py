@@ -2396,7 +2396,7 @@ def test_llamaindex_build_runs_end_to_end_without_network(tmp_path: Path) -> Non
     service.close()
 
 
-def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(tmp_path: Path) -> None:
+def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(tmp_path: Path, monkeypatch) -> None:
     tmp_path = tmp_path / "MIDAS" / "PROJECTS" / "corpus"
     tmp_path.mkdir(parents=True)
     for index in range(30):
@@ -2442,9 +2442,20 @@ def test_llamaindex_build_reuses_existing_collection_without_startup_ingestion(t
         embed_model=MockEmbedding(embed_dim=8),
         llm=FakeLLM("Ответ [1], [2], [3], [4], [5]."),
         ingestion_service=existing_ingestion,
-    ).build()
+    )
+    warmups = []
+    original_warmup = reused._related_evidence.warmup
 
+    def warmup():
+        warmups.append(True)
+        return original_warmup()
+
+    monkeypatch.setattr(reused._related_evidence, "warmup", warmup)
+    assert reused.build() is reused
+    assert warmups == [True]
     assert len(reused.answer("mesh")["sources"]) == 5
+    assert reused.build() is reused
+    assert warmups == [True]
     assert reused.ingestion_service is existing_ingestion
     reused.close()
 

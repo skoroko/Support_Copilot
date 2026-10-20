@@ -134,3 +134,55 @@ def test_malformed_attributes_disable_optional_catalog(tmp_path):
     catalog["blocks"][1]["attributes"] = ["malformed"]
     path.write_text(json.dumps(catalog), encoding="utf-8")
     assert resolver.resolve(seed, "Exact retrieved fact.", question="Value?") == []
+
+
+def test_startup_warmup_reuses_cache_and_keeps_source_invalidation(tmp_path, monkeypatch):
+    resolver, seed, _, source = fixture(tmp_path)
+    assert resolver.warmup() == {"catalog_loaded": True, "valid_sources": 1, "invalid_sources": 0}
+    cached_blocks = resolver._blocks
+    cached_checks = dict(resolver._source_checks)
+    original_read = type(source).read_bytes
+
+    def deny_repeat_read(path):
+        if path == source:
+            raise AssertionError("Unchanged source must reuse the startup hash")
+        return original_read(path)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(type(source), "read_bytes", deny_repeat_read)
+        assert resolver.resolve(seed, "Exact retrieved fact.", question="Обзор")
+        assert resolver._blocks is cached_blocks
+        assert resolver._source_checks == cached_checks
+    source.write_bytes(b"changed after warmup")
+    assert resolver.resolve(seed, "Exact retrieved fact.", question="Обзор") == []
+    assert resolver.warmup()["invalid_sources"] == 1
+
+
+def test_startup_warmup_does_not_reuse_replaced_catalog(tmp_path):
+    resolver, seed, catalog_path, _ = fixture(tmp_path)
+    assert resolver.warmup()["catalog_loaded"] is True
+    catalog_path.write_text("invalid", encoding="utf-8")
+    assert resolver.warmup() == {"catalog_loaded": False, "valid_sources": 0, "invalid_sources": 0}
+    assert resolver.resolve(seed, "Exact retrieved fact.", question="Обзор") == []
+
+
+def test_startup_warmup_missing_optional_catalog_is_nonfatal(tmp_path):
+    resolver = RelatedEvidenceIndex(tmp_path, tmp_path / "missing.json")
+    assert resolver.warmup() == {"catalog_loaded": False, "valid_sources": 0, "invalid_sources": 0}
+
+
+def test_startup_warmup_refreshes_replaced_valid_catalog(tmp_path):
+    resolver, seed, catalog_path, source = fixture(tmp_path)
+    assert resolver.warmup()["valid_sources"] == 1
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    source.write_bytes(b"updated source with new evidence")
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    catalog["sources"][0]["source_hash"] = digest
+    for location in catalog["locations"]:
+        location["source_hash"] = digest
+    catalog["blocks"][0]["text"] = "Updated retrieved fact."
+    catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+
+    assert resolver.warmup() == {"catalog_loaded": True, "valid_sources": 1, "invalid_sources": 0}
+    assert resolver.resolve(seed, "Exact retrieved fact.", question="Обзор") == []
+    assert resolver.resolve({**seed, "source_hash": digest}, "Updated retrieved fact.", question="Обзор")

@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     "app/services/agent_persistent.py", "app/services/rag.py",
+    "app/services/related_evidence.py",
     "app/services/evidence_text.py", "app/services/evidence_scope.py",
     "app/services/overview_evidence.py", "app/services/verified_overview.py",
     "app/services/runtime_model.py", "app/chat/agent.py", "app/core/config.py",
