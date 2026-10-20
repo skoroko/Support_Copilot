@@ -52,6 +52,7 @@ class RelatedEvidenceIndex:
         self._locations: dict[str, dict[str, Any]] = {}
         self._blocks: dict[str, dict[str, Any]] = {}
         self._by_location: dict[str, list[dict[str, Any]]] = {}
+        self._pdf_pages: dict[tuple[str, int], str | None] = {}
         self._incoming: dict[str, list[tuple[str, str]]] = {}
         self._source_checks: dict[str, tuple[tuple[int, int, int, int], bool]] = {}
         self._table_view: Any = None
@@ -108,7 +109,15 @@ class RelatedEvidenceIndex:
                             (str(block["block_id"]), "inverse_" + str(relation["kind"])))
             for batch in by_location.values():
                 batch.sort(key=lambda row: (int(row.get("ordinal", 0)), row["block_id"]))
+            pdf_pages: dict[tuple[str, int], str | None] = {}
+            for identity, location in locations.items():
+                sid, page = str(location.get("source_id")), location.get("page")
+                if (type(page) is int and page > 0
+                        and Path(str(sources.get(sid, {}).get("relative_path", ""))).suffix.lower() == ".pdf"):
+                    key = (sid, page)
+                    pdf_pages[key] = None if key in pdf_pages else identity
             self._sources, self._locations, self._blocks = sources, locations, blocks
+            self._pdf_pages = pdf_pages
             self._by_location = by_location
             self._incoming = incoming
             self._catalog_stamp = stamp
@@ -396,6 +405,69 @@ class RelatedEvidenceIndex:
                 "atomic_evidence": True, "extraction_version": "corpus-location-group-v1",
                 "origin": "physical_location", "text_sha256": digest,
             }}
+
+    def nearby_contexts(
+        self, metadata: Mapping[str, Any], text: str, *, max_chars: int = 6_000,
+        diagnostics: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return whole physical PDF pages ±1, never semantic continuations.
+
+        Each independently attributed page passes location_context's rendering
+        and source-byte checks. Ambiguous page numbers never select an alias.
+        The caller separately allocates the request's shared context budget.
+        """
+        report = diagnostics if diagnostics is not None else {}
+        report.update(origin="physical_neighbor", selected_locations=0, omitted=[], bounded=False)
+        with self._lock:
+            if not self._load() or not self._seed_blocks(metadata, text):
+                report["reason"] = "unverified_seed"
+                return []
+            sid, lid = str(metadata["source_id"]), str(metadata["location_id"])
+            location, source = self._locations[lid], self._sources[sid]
+            page = location.get("page")
+            if (Path(str(source["relative_path"])).suffix.lower() != ".pdf"
+                    or type(page) is not int or page < 1):
+                report["reason"] = "unsupported_source"
+                return []
+            if any(metadata.get(key) and metadata[key] != location.get(key, "unknown")
+                   for key in ("product", "version")):
+                report["reason"] = "scope_mismatch"
+                return []
+            if self._pdf_pages.get((sid, page)) != lid:
+                report["reason"] = "ambiguous_seed_page"
+                return []
+            output = []
+            for neighbor_page in (page - 1, page + 1):
+                key = (sid, neighbor_page)
+                if key not in self._pdf_pages:
+                    continue
+                neighbor_id = self._pdf_pages[key]
+                if neighbor_id is None:
+                    report["omitted"].append({"page": neighbor_page, "reason": "ambiguous_page"})
+                    continue
+                neighbor = self._locations[neighbor_id]
+                if (neighbor.get("source_hash") != location.get("source_hash")
+                        or any(neighbor.get(key, "unknown") != location.get(key, "unknown")
+                               for key in ("product", "version"))):
+                    report["omitted"].append({"page": neighbor_page, "reason": "scope_mismatch"})
+                    continue
+                rows = self._by_location.get(neighbor_id, [])
+                anchor = next((row for row in rows if str(row.get("text") or "").strip()), None)
+                if anchor is None:
+                    report["omitted"].append({"page": neighbor_page, "reason": "no_usable_text"})
+                    continue
+                local_report: dict[str, Any] = {}
+                group = self.location_context({**neighbor, "block_id": anchor["block_id"]},
+                                              anchor["text"], max_chars=max_chars, diagnostics=local_report)
+                if group is None:
+                    report["bounded"] |= bool(local_report.get("bounded"))
+                    report["omitted"].append({"page": neighbor_page,
+                                              "reason": local_report.get("reason", "unverified_location")})
+                    continue
+                group["metadata"].update(origin="physical_neighbor", related_to=[])
+                output.append(group)
+            report["selected_locations"] = len(output)
+            return output
 
     def resolve(
         self, metadata: Mapping[str, Any], text: str, *, question: str,

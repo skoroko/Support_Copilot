@@ -149,3 +149,105 @@ def test_dom_rows_are_allowed_only_after_span_and_parent_validation(tmp_path):
     path.write_text(json.dumps(catalog), encoding="utf-8")
     group = resolver.location_context(seed, row["text"])
     assert group is None or "Column 1=" not in group["text"]
+
+
+def neighbor_fixture(tmp_path):
+    resolver, seed, source, path, catalog = fixture(tmp_path)
+    catalog["locations"][0]["page"] = 2
+    catalog["locations"][1]["page"] = 3
+    seed["page"] = 2
+    catalog["locations"] += [{**catalog["locations"][0], "location_id": "previous", "page": 1},
+                             {**catalog["locations"][0], "location_id": "far", "page": 4}]
+    catalog["blocks"] += [{"source_id": "s", "location_id": "previous", "block_id": "prev", "kind": "paragraph",
+                            "ordinal": 1, "text": "Previous physical page."},
+                           {"source_id": "s", "location_id": "far", "block_id": "far", "kind": "paragraph",
+                            "ordinal": 1, "text": "Far page must never be selected."}]
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+    return resolver, seed, source, path, catalog
+
+
+def test_neighbors_are_two_separately_citable_pdf_locations_not_semantic_continuations(tmp_path):
+    resolver, seed, _, _, _ = neighbor_fixture(tmp_path)
+    groups = resolver.nearby_contexts(seed, "Exact introduction.")
+    assert [g["metadata"]["page"] for g in groups] == [1, 3]
+    assert [g["metadata"]["source_locator"] for g in groups] == ["guide.pdf#page=1", "guide.pdf#page=3"]
+    assert len({g["block_id"] for g in groups}) == 2
+    assert groups == resolver.nearby_contexts(seed, "Exact introduction.")
+    for group in groups:
+        meta = group["metadata"]
+        assert meta["origin"] == "physical_neighbor" and meta["related_to"] == []
+        assert "relation" not in meta and meta["atomic_evidence"]
+        assert meta["product"] == seed["product"] and meta["source_hash"] == seed["source_hash"]
+        assert "Far page" not in group["text"]
+
+
+def test_neighbors_share_location_safety_and_each_whole_size_limit(tmp_path):
+    resolver, seed, _, path, catalog = neighbor_fixture(tmp_path)
+    catalog["blocks"] += [{"source_id": "s", "location_id": "previous", "block_id": "image", "kind": "image",
+                            "ordinal": 2, "text": "Invented label must not be textual evidence."},
+                           {"source_id": "s", "location_id": "previous", "block_id": "badrow", "kind": "table_row",
+                            "ordinal": 3, "text": "Unsafe unverified grid."}]
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+    groups = resolver.nearby_contexts(seed, "Exact introduction.", max_chars=30)
+    assert len(groups) == 2 and sum(len(g["text"]) for g in groups) <= 60
+    assert all("Invented" not in g["text"] and "Unsafe" not in g["text"] for g in groups)
+    assert groups[0]["metadata"]["block_attributes"]["untranscribed_visual_regions_present"]
+    report = {}
+    groups = resolver.nearby_contexts(seed, "Exact introduction.", max_chars=25, diagnostics=report)
+    assert [g["metadata"]["page"] for g in groups] == [1]
+    assert report["bounded"] and report["omitted"] == [{"page": 3, "reason": "character_budget"}]
+
+
+@pytest.mark.parametrize("change", ["product", "version", "hash", "duplicate", "duplicate_seed"])
+def test_neighbor_scope_and_ambiguous_pages_fail_closed(tmp_path, change):
+    resolver, seed, _, path, catalog = neighbor_fixture(tmp_path)
+    if change in {"duplicate", "duplicate_seed"}:
+        original = catalog["locations"][1 if change == "duplicate" else 0]
+        catalog["locations"].append({**original, "location_id": "duplicate"})
+    else:
+        catalog["locations"][1][{"hash": "source_hash"}.get(change, change)] = "different"
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+    groups = resolver.nearby_contexts(seed, "Exact introduction.")
+    assert [g["metadata"]["page"] for g in groups] == ([] if change == "duplicate_seed" else [1])
+
+
+@pytest.mark.parametrize("change", ["bytes", "text", "seed_scope", "chm", "missing_catalog"])
+def test_neighbors_require_valid_original_seed_and_never_guess_chm_order(tmp_path, change):
+    resolver, seed, source, path, catalog = neighbor_fixture(tmp_path)
+    assert resolver.nearby_contexts(seed, "Exact introduction.")
+    text = "Exact introduction."
+    if change == "bytes":
+        source.write_bytes(b"changed")
+    elif change == "text":
+        text = "Invented seed"
+    elif change == "seed_scope":
+        seed["version"] = "other"
+    elif change == "missing_catalog":
+        path.unlink()
+    else:
+        source.rename(source.with_suffix(".chm"))
+        catalog["sources"][0].update(relative_path="guide.chm", format="chm")
+        path.write_text(json.dumps(catalog), encoding="utf-8")
+    assert resolver.nearby_contexts(seed, text) == []
+
+
+def test_neighbor_page_index_reloads_after_catalog_change(tmp_path):
+    resolver, seed, _, path, catalog = neighbor_fixture(tmp_path)
+    assert len(resolver.nearby_contexts(seed, "Exact introduction.")) == 2
+    catalog["locations"][1]["page"] = 10
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+    assert [g["metadata"]["page"] for g in resolver.nearby_contexts(seed, "Exact introduction.")] == [1]
+
+
+def test_neighbor_page_numbers_are_partitioned_by_source_id(tmp_path):
+    resolver, seed, source, path, catalog = neighbor_fixture(tmp_path)
+    other = tmp_path / "other.pdf"
+    other.write_bytes(source.read_bytes())
+    catalog["sources"].append({**catalog["sources"][0], "source_id": "other", "relative_path": other.name})
+    catalog["locations"].append({**catalog["locations"][0], "source_id": "other", "location_id": "alien", "page": 3})
+    catalog["blocks"].append({"source_id": "other", "location_id": "alien", "block_id": "alien",
+                              "kind": "paragraph", "ordinal": 1, "text": "Different document."})
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+    groups = resolver.nearby_contexts(seed, "Exact introduction.")
+    assert [g["metadata"]["page"] for g in groups] == [1, 3]
+    assert all(g["metadata"]["source_id"] == "s" and "Different document" not in g["text"] for g in groups)
