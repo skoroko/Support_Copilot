@@ -1,5 +1,12 @@
 # Переключение RAG на GPT-6 Luna, 15.10.2026
 
+Исторический отчёт. Пути `../var/` ниже — локальные raw-артефакты,
+они ignored и не входят в Git/ZIP для сдачи. Сохранённые таблицы этого
+отчёта входят в репозиторий; переносимые доказательства принятой версии —
+в [протоколе 21.10](final_acceptance.md). Локальные raw не объявляются
+доступными проверяющему и не экспортируются вместе с переписками.
+
+
 По запросу пользователя локальный RAG backend переключён на **GPT-6 Luna
 medium**. Вспомогательное переформулирование вопроса по истории использует
 ту же модель с reasoning **none**. Значения обновлены в локальном `.env` и
@@ -69,11 +76,11 @@ Runtime image остаётся
 
 ## Артефакты
 
-- [Конфигурация до переключения](../var/rag_luna_rollout/2026-10-15_medium/runtime_before.json).
-- [Конфигурация после переключения](../var/rag_luna_rollout/2026-10-15_medium/runtime_after.json).
-- [Итоговые семь HTTP/SSE-проверок](../var/rag_luna_rollout/2026-10-15_medium/http_smoke_final.json).
-- [Результат unit-тестов](../var/rag_luna_rollout/2026-10-15_medium/unit_verification.json).
-- [Итог переключения и готовность backend](../var/rag_luna_rollout/2026-10-15_medium/deployment.json).
+- Конфигурация до переключения — `../var/rag_luna_rollout/2026-10-15_medium/runtime_before.json`.
+- Конфигурация после переключения — `../var/rag_luna_rollout/2026-10-15_medium/runtime_after.json`.
+- Итоговые семь HTTP/SSE-проверок — `../var/rag_luna_rollout/2026-10-15_medium/http_smoke_final.json`.
+- Результат unit-тестов — `../var/rag_luna_rollout/2026-10-15_medium/unit_verification.json`.
+- Итог переключения и готовность backend — `../var/rag_luna_rollout/2026-10-15_medium/deployment.json`.
 
 Полные артефакты хранятся локально в ignored `var`. Закрытая копия предыдущего
 `.env` сохранена для отката; остальные настройки и секреты при обновлении

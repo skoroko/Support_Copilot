@@ -1,5 +1,12 @@
 # Переключение бота на GPT-6 Luna, 15.10.2026
 
+Исторический отчёт. Пути `../var/` ниже — локальные raw-артефакты,
+они ignored и не входят в Git/ZIP для сдачи. Сохранённые таблицы этого
+отчёта входят в репозиторий; переносимые доказательства принятой версии —
+в [протоколе 21.10](final_acceptance.md). Локальные raw не объявляются
+доступными проверяющему и не экспортируются вместе с переписками.
+
+
 По запросу пользователя локальный backend бота переключён с GPT-5.4 mini
 на **GPT-6 Luna medium** для обычных и расширенных ответов. Проверка выполнена
 через настоящий HTTP backend, OpenAI API, Qdrant и PostgreSQL.
@@ -71,12 +78,12 @@ HTTP-контракты и архитектура не изменены, обн�
 
 ## Артефакты
 
-- [Действующая конфигурация и fingerprints](../var/luna_rollout/2026-10-15_medium/runtime.json).
-- [Запросы, ответы, история и проверки расширения](../var/luna_rollout/2026-10-15_medium/run.json).
-- [Проверки цитат и сохранения](../var/luna_rollout/2026-10-15_medium/contract_checks.json).
-- [Метаданные моделей из checkpoints](../var/luna_rollout/2026-10-15_medium/checkpoint_metadata.json).
-- [Продолжение старого диалога](../var/luna_rollout/2026-10-15_medium/existing_dialog.json).
-- [Связность бота](../var/luna_rollout/2026-10-15_medium/bot_connectivity.json).
+- Действующая конфигурация и fingerprints — `../var/luna_rollout/2026-10-15_medium/runtime.json`.
+- Запросы, ответы, история и проверки расширения — `../var/luna_rollout/2026-10-15_medium/run.json`.
+- Проверки цитат и сохранения — `../var/luna_rollout/2026-10-15_medium/contract_checks.json`.
+- Метаданные моделей из checkpoints — `../var/luna_rollout/2026-10-15_medium/checkpoint_metadata.json`.
+- Продолжение старого диалога — `../var/luna_rollout/2026-10-15_medium/existing_dialog.json`.
+- Связность бота — `../var/luna_rollout/2026-10-15_medium/bot_connectivity.json`.
 
 Полные артефакты находятся в ignored `var`, без публикации. Предыдущий образ
 и закрытая копия локальной конфигурации сохранены для отката.

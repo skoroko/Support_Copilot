@@ -16,7 +16,7 @@
 
 Multi-agent вариант — ручной `StateGraph`/`Command`: `supervisor -> researcher -> supervisor -> writer`; budget равен трём явным переходам. `researcher` и `writer` созданы через `langchain.agents.create_agent`, у writer `tools=[]`; `InMemorySaver` и `thread_id="exp-langgraph"` включены в коде, а progress выводится через `app.stream(..., stream_mode="updates")`. Схема, сгенерированная `draw_mermaid()`, находится в [architecture-multi-agent.md](architecture-multi-agent.md).
 
-Вместо зависимости `langgraph-supervisor` выбран manual supervisor: сам официальный README пакета рекомендует tool-based/manual pattern для большинства новых случаев, поскольку он даёт больше контроля над контекстом. Это также делает handoff budget наблюдаемым и удерживает структуру учебного графа видимой. [LangGraph Supervisor README](https://github.com/langchain-ai/langgraph-supervisor-py)
+Выбран ручной supervisor: переходы и передаваемый контекст заданы явно в нашем графе. Это позволяет наблюдать handoff budget, ограничивать число переходов и отделять детерминированную маршрутизацию от оплачиваемых model calls. Дополнительный supervisor-пакет для этого последовательного опыта не требуется.
 
 ## Замеры
 
@@ -36,11 +36,9 @@ Live-прогон выполнил ровно пять запусков кажд
 
 На пяти одинаковых запросах multi-agent не дал измеримого выигрыша: качество снизилось с 5.0 до 3.0 при росте tokens на 33.63% и p50 latency на 77.36%. Его дополнительный model turn и три передачи контекста объясняют +1 LLM call и +3 handoff на запрос, но не добавили независимого направления поиска. Наиболее заметный функциональный сбой — ошибочный out-of-base fallback на case 01 и case 04, хотя оба вопроса должны покрываться mock-KB. Поэтому в этом narrow, shared-context support scenario single-agent с тем же tool оказался и дешевле, и качественнее.
 
-## Сопоставление с Anthropic
+## Границы нашего эксперимента
 
-В ориентире Anthropic multi-agent Research превзошёл single-agent на 90,2% во внутреннем breadth-first research eval, однако их multi-agent системы обычно расходовали около 15× токенов chat. Наш фактический multiplier равен `1470.2 / 1100.2 = 1.336×`: он существенно ниже 15×, но это не сопоставимые знаменатели — у Anthropic сравнение с chat и параллельное breadth-first research, а здесь один общий KB tool и последовательный workflow. Anthropic отдельно отмечает слабое соответствие multi-agent задачам с общим контекстом и многочисленными зависимостями; именно этот риск проявился в двух fallback-ответах. [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system)
-
-Рекомендация «начинать с самого простого решения и добавлять агентную сложность лишь при измеримом выигрыше» согласуется с правилами выбора multi-agent в LangChain: дополнительные агенты имеют смысл при разделении контекста, специализации или параллелизме, но добавляют model calls и tokens. [Building Effective AI Agents](https://www.anthropic.com/engineering/building-effective-agents), [LangChain multi-agent guide](https://docs.langchain.com/oss/python/langchain/multi-agent)
+Измерены пять вопросов с одним общим mock-KB tool и последовательной передачей контекста. Варианты не исследуют независимые источники параллельно. Набор мал, оценку давал один модельный судья; причины его оценок не сохранены. Поэтому вывод относится к этому сценарию и не устанавливает превосходство single-agent для любых задач. Для дипломного runtime выбран более простой общий model/tool loop; архитектура и реальные источники текущего агента описаны в [финальном графе](final_agent_graph.md).
 
 ## Решение
 
