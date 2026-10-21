@@ -2,8 +2,8 @@
   "checked_on": "2026-10-21",
   "task": "S0-010",
   "status": "PASS",
-  "scope_documents": 13,
-  "relative_links_checked": 301,
+  "scope_documents": 14,
+  "relative_links_checked": 312,
   "documents": [
     "README.md",
     "docs/INDEX.md",
@@ -17,7 +17,8 @@
     "docs/data_inventory.md",
     "docs/documentation_evidence.md",
     "docs/final_acceptance.md",
-    "docs/diploma_completion_plan_2026-10-21.md"
+    "docs/diploma_completion_plan_2026-10-21.md",
+    "docs/publication_2026-10-21.md"
   ],
   "links_check": "local path existence and portability; fragment anchors and external URLs not checked",
   "link_issues": [],
