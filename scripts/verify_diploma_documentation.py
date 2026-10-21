@@ -236,7 +236,7 @@ result = {
         "Inline/fenced code examples are excluded from Markdown link parsing.",
         "Non-Markdown artifacts inventoried; no fresh PDF/HTML/image rendering or benchmark.",
         "Runtime/evidence integrity and graph checks are recorded separately in documentation_check_2026-10-21.json.",
-        "Clean-copy startup, slide deck and demonstration video remain subsequent tasks.",
+        "Clean-copy startup and demonstration video remain subsequent tasks; slide render QA is recorded separately for S0-011.",
     ],
 }
 out = ROOT / "docs/evidence/diploma_document_audit_2026-10-21.json"
