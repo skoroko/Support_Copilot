@@ -271,59 +271,16 @@ fallback reason. Состояние Circuit Breaker стоит показыва�
 Перед production-выбором модели нужно проверить актуальную документацию
 провайдера и обновить `.env.example`, а не бизнес-логику.
 
-## LiteLLM
+## Исторический вариант gateway
 
-LiteLLM рассматривается как кандидат на LLM gateway, но не является обязательной
-runtime-зависимостью для текущего CLI. По официальной документации LiteLLM Proxy
-настраивается через `config.yaml`, может читать секреты из environment
-variables, предоставляет OpenAI-compatible API и поддерживает routing strategies,
-retries, fallbacks, timeouts и cooldowns.
+Для учебного CLI сохранён пример [конфигурации proxy](litellm/config.yaml).
+Он не используется текущим Telegram-контуром и не является доказательством
+развёрнутого LiteLLM. В CLI собственный клиент делает retry, fallback,
+кеширование и учёт usage явно; в принятом агенте внешний API инкапсулирован
+в [AgentModel](../app/services/runtime_model.py). Это позволяет проверять
+контракты в offline-тестах и не вводить отдельный proxy для одного приложения.
 
-Подготовленный конфиг:
-
-```text
-docs/litellm/config.yaml
-```
-
-Команды для локального эксперимента:
-
-```powershell
-python -m pip install "litellm[proxy]"
-litellm --config docs/litellm/config.yaml --detailed_debug
-```
-
-Пример запроса:
-
-```powershell
-Invoke-RestMethod `
-  -Uri "http://localhost:4000/v1/chat/completions" `
-  -Method Post `
-  -Headers @{ Authorization = "Bearer $env:LITELLM_MASTER_KEY" } `
-  -ContentType "application/json" `
-  -Body '{"model":"support-copilot-primary","messages":[{"role":"user","content":"Как исправить ошибку лицензии?"}]}'
-```
-
-Симуляция отказа primary provider:
-
-```powershell
-$env:OPENAI_API_KEY = "invalid-key-for-fallback-test"
-litellm --config docs/litellm/config.yaml --detailed_debug
-```
-
-После этого нужно отправить тот же запрос и проверить, что proxy пытается пройти
-по fallback chain. Для полноценного успешного fallback-теста secondary provider
-или local Ollama должны быть настроены валидными credentials/runtime.
-
-Решение для текущего MVP: **пишем и оставляем собственный lightweight
-OpenAI-compatible client** в `support_copilot/infrastructure`, а CLI пока не
-проводим через LiteLLM. Причина: задания курса требуют явной локальной
-реализации retry, fallback, cache, usage tracking и Function Calling. LiteLLM
-становится полезным, когда проект переходит от одного CLI к общему API gateway
-для нескольких клиентов, команд, провайдеров, virtual keys, budgets и admin
-observability.
-
-Источники для раздела LiteLLM:
-
-- https://docs.litellm.ai/docs/proxy/configs
-- https://docs.litellm.ai/docs/routing
-- https://github.com/BerriAI/litellm
+Текущие решения и их ограничения изложены в
+[архитектурных приёмах](architecture_patterns.md), а роли библиотек —
+в [каталоге технологий](technology_stack.md). Старые цели latency, cache hit
+и fallback выше относятся к историческому CLI-плану, а не к измерениям сдачи.

@@ -53,14 +53,14 @@ Re-ranker в этом прогоне отключён флагом `--skip-reran
 
 Офлайн lexical-hash embedding нужен для воспроизводимой проверки pipeline и не заменяет финальный прогон с выбранной embedding-моделью. Числа latency включают локальный in-memory Qdrant и не являются production benchmark.
 
-## Референсы
+## Реализация в проекте
 
-- [LlamaIndex Node Parsers](https://docs.llamaindex.ai/en/stable/module_guides/loading/node_parsers/)
-- [LlamaIndex Retrieval Evaluation](https://docs.llamaindex.ai/en/stable/examples/evaluation/retrieval/retriever_eval/)
-- [BAAI/bge-reranker-v2-m3](https://huggingface.co/BAAI/bge-reranker-v2-m3)
-- [Qdrant Collections](https://qdrant.tech/documentation/concepts/collections/)
-- [Pinecone Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/)
-- [Cohere Reranking](https://docs.cohere.com/docs/reranking)
+В [chunking.py](../app/services/chunking.py) реализованы сравниваемые стратегии,
+в [evaluate_chunking.py](../scripts/evaluate_chunking.py) — запуск опыта и
+сбор метрик. Таблицы выше относятся к датированному offline-эксперименту.
+Текущий структурный splitter и ограничения PDF/CHM описаны в
+[архитектурных приёмах](architecture_patterns.md); semantic-разбиение не
+объявляется default принятого индекса.
 
 ## Воспроизведение
 

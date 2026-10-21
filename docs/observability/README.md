@@ -1,9 +1,12 @@
 # Observability trace notes
 
-Скриншот Phoenix UI для ДЗ 3.6 нужно положить в эту папку после запуска:
+Исторический скриншот для ДЗ 3.6 уже сохранён ниже. Он подтверждает учебный
+trace, а не новую трассировку принятого Telegram-запроса. Phoenix опционален;
+для отдельного запуска профиля наблюдаемости с установленным tracing extra:
 
 ```powershell
-docker compose up -d --build
+$env:TRACING_ENABLED='true'
+docker compose --profile observability up -d --build
 curl http://localhost:6006
 ```
 
