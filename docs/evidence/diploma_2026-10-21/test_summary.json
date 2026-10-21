@@ -1,0 +1,30 @@
+{
+  "suite": "tests",
+  "python": "3.13.15",
+  "tests": 1534,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 12,
+  "passed": 1522,
+  "seconds": 139.33,
+  "warning_count": 59,
+  "offline_defaults": {
+    "RAG_ENABLED": false,
+    "RAG_INGEST_ON_START": false,
+    "CHAT_REPOSITORY": "json",
+    "AGENT_CHECKPOINTER": "memory",
+    "per_test_overrides_preserved": true
+  },
+  "skip_reasons": {
+    "Set CHAT_TEST_DATABASE_URL to run Postgres repository contract tests": 11,
+    "Creating symlinks requires Windows developer mode": 1
+  },
+  "postgres_contract": {
+    "exit_code": 0,
+    "seconds": 11.24,
+    "summary": [
+      "25 passed in 7.11s"
+    ],
+    "isolated_database": true
+  }
+}

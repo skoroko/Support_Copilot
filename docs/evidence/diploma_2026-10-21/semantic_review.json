@@ -1,0 +1,347 @@
+{
+  "run_id": "d4cd162ca324431481b866dee81704ea",
+  "method": "Independent manual review of saved responses against original PDF/CHM; correctness/completeness and grounding scored separately 0/0.5/1.",
+  "results": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Верно названы 3 поступательные и 3 вращательные DOF и r/theta/z. Но нет требуемого DOF1..6 и есть избыточная оговорка о невозможности подтвердить соответствие: исходная цитируемая глава2 PDF p3 (печатная10) содержит текстом DOF1=r,2=theta,3=z,4=поворот r,5=поворот theta,6=поворот z. Это пропуск доступной информации, а не неподтверждённая инженерная рекомендация."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "mostly_repetition",
+      "notes": "Добавлены верные DX/DY/DZ/RX/RY/RZ по Analysis Method PDF p34 и ссылка на узловую СК p32, но это декартова таблица вместо ответа о r/theta/z. Expansion отзывает правильное соответствие из brief как якобы неподтверждаемое, хотя глава2 p3 прямо его перечисляет. Запрошенная детализация не получена."
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Объяснение pressure DOF и связанного расчёта согласуется с главой3 p104/p108. Однако на прямой вопрос о независимости от СК дан осторожный вывод вместо ясного ответа. Глава2 p1 последним абзацем прямо говорит: поровое давление не имеет направления и определяется безотносительно узловой СК. Наличие этого текста проверено по исходному PDF."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Типы прямоугольная/цилиндрическая названы верно; NDCS подтверждается главой2 p4. Вторая половина вопроса фактически отклонена. Радиальное/окружное/осевое соответствие можно подтвердить соседней исходной p3 с таблицей DOF; это неполнота retrieval/ответа, а не выдумка."
+    },
+    {
+      "id": "golden-04",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Глава2 p5 подтверждает DOF4–6 как компоненты вектора theta, ось e=theta/||theta||, угол ||theta|| в радианах, некоммутативность последовательных поворотов и использование умножения кватернионов. Ответ содержательно точен."
+    },
+    {
+      "id": "golden-05",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Исходная глава3 p24, раздел6.1, прямо содержит tetra/penta/hexa, пентаэдр-пирамиду/призму и список4/5/6/8/10/13/15/20узлов. Auto-Solid корректно отделён от полного перечня solid-элементов."
+    },
+    {
+      "id": "golden-06",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Глава3 p1 подтверждает 1D truss/embedded truss/beam/embedded beam/pile и scalar pile tip. User Manual Mesh p343 подтверждает embedded beam form PILE, отсутствие необходимости узловых связей с соседним грунтом и назначение PILE TIP. Ответ отвечает основному вопросу."
+    },
+    {
+      "id": "golden-07",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Mesh PDF p336 подтверждает slip/isolation и large relative stiffness difference; p93 — Coulomb friction и примеры контактов; p94 — Kn/Kt, испытания и Wizard сtv/R. Основные механизмы и способ задания раскрыты без выдуманных параметров."
+    },
+    {
+      "id": "golden-08",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Глава3 p11 подтверждает geometric mapping infinite shape. Mesh PDF p348 подтверждает сокращение области, ограничения нагрузок/смежных элементов, исключение динамики и free-field для динамики. Ответ физически и документально согласован."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "c/phi, упругопластичность, ограниченный диапазон confining pressure и tension cutoff подтверждены исходным CHM Mohr-Coulmb. Но фраза о среднем главном напряжении воспроизводит неоднозначный русский перевод: английский Mesh PDF p10 говорит intermediate principal stress, то есть промежуточное главное, а не mean stress. Поэтому полноценно правильным инженерное объяснение назвать нельзя, хотя оно следует процитированному русскому источнику."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Основной обзор и c/phi верны по исходному CHM. То же ограничение терминологии: русское 'среднее главное' может быть прочитано как mean principal stress; английский Mesh p10 содержит intermediate. В brief расхождение не оговорено. Модифицированная модель корректно отделена."
+    },
+    {
+      "id": "golden-10",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "В основном повторяет brief, но добавляет существенное исправление: явно сопоставляет intermediate principal stress в английском Mesh p10 и 'среднее главное' в русском CHM, не сливая их в уверенное утверждение. Также добавлено double stiffening именно модифицированной модели, что подтверждено оригинальным CHM Modified_Mohr-Coulomb. Практических новых параметров/порядка настройки мало."
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Обзор c/phi и зависимости точности от confining pressure верен; расхождение stress terminology честно оговорено по English Mesh p10/Russian CHM. Однако reference ожидает дополнительную возможность изменения сцепления/модуля по глубине, а ответ уходит к modified model; хотя исходный CHM содержит отдельный раздел Increment of Cohesion Reference Height. Неполный ответ, без опасной рекомендации."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Опечатка запроса корректно понята, упругопластичность и intermediate principal stress/linear envelope/pressure range подтверждены English Mesh p10. Однако обзор не раскрывает изменение параметров по глубине из reference и вместо него добавляет отдельную modified model. Оценка снижена за полноту относительно ожидаемого содержания, не за термин intermediate, который физически точнее русского перевода."
+    },
+    {
+      "id": "golden-13",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Оригинальный CHM Modified_Mohr-Coulomb прочитан: nonlinear-elastic+elastoplastic, silt/sand, double stiffening, hyperbolic-like strains, dilatancy/cap и разные loading/unloading stiffness подтверждаются. Промежуточное principal stress физически соответствует English Mesh p10; русский CHM использует неоднозначный перевод 'среднее главное'. Отмечаем переводческое расхождение, но основное сравнение верно."
+    },
+    {
+      "id": "golden-14",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Материалы PDF p87 прямо подтверждает sand dynamic loading, pore-pressure generation/liquefaction и effective-stress plasticity; English Mesh p76 подтверждает liquidfaction/effective stress. Краткий ответ полностью покрывает вопрос."
+    },
+    {
+      "id": "golden-15",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Закон Дарси и diagonal permeability matrix соответствуют Materials p113; характеристики ненасыщенной среды —p114–116. Формулаtheta=Vw/V=nS проверена визуально на исходной p115 (4.4.8); она верна несмотря на обратный словесный порядок объёмов в соседнем русском тексте. Полный явный списокkx/ky/kz не приведён, но диагональные компоненты и основные зависимости раскрыты."
+    },
+    {
+      "id": "golden-16",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Исходные Algorithms p24/p25/p27 прочитаны: методы различаются моментом пересчёта tangent stiffness, Quasi-Newton использует преимущества secant/BFGS, initial/modified не представлены отдельными явными методами. Ответ сохраняет эту важную оговорку, p30 подтверждает over-relaxation. Опасного обещания отдельной кнопки метода нет."
+    },
+    {
+      "id": "golden-17",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Algorithms p23/p26/p29 подтверждают критерии силы/перемещения/энергии, user-defined limits и single/group comparison. Ответ достаточно полон для заданного вопроса/reference; конкретных numerical tolerances не выдумывает."
+    },
+    {
+      "id": "golden-16",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": "substantive_details",
+      "notes": "Добавлены содержательные сведения сверх brief: условия automatic stiffness recalculation (Algorithms p25), BFGS/recurrent step solution и удаление вектора после сходимости (p27), коэффициент over-relaxation1.2 по умолчанию и максимум2.0 (p30), отличие linear equation solver (p1) и узкая область arc-length для unstable equilibrium (p29). Исходные страницы прочитаны; перечисленные значения и ограничения подтверждены. Это реальное расширение, а не только перефразирование."
+    },
+    {
+      "id": "golden-18",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Бисекция, причины запуска и предел числа уровней подтверждены оригиналом PDF алгоритмы p26 и CHM ERROR2103."
+    },
+    {
+      "id": "golden-19",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Оба решателя, Lanczos/Sturm, отсутствие пропуска и ограничение размера dense подтверждены PDF алгоритмы p5."
+    },
+    {
+      "id": "golden-20",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Модальные координаты, отсечение высших форм и условная независимость при диагональном damping подтверждены PDF алгоритмы pp8–10."
+    },
+    {
+      "id": "golden-21",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Два вида сетки и состав hybrid подтверждены оригиналами PDF Mesh p236 и точным CHM Auto-Solid."
+    },
+    {
+      "id": "golden-22",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Перечень Loop/Grid/Delaunay подтверждён PDF Mesh p230; ответ на вопрос полон. Оговорка об отсутствии описания Delaunay относится к доступному фрагменту; полный оригинал краткое описание содержит."
+    },
+    {
+      "id": "golden-23",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Связность узлов, риск ошибок и рекомендация checked подтверждены PDF Mesh p237."
+    },
+    {
+      "id": "golden-24",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Накопительная история и исходное естественное напряжённое состояние/собственный вес подтверждены PDF Analysis Method p8 и точным CHM Construction Stage Analysis."
+    },
+    {
+      "id": "golden-25",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Четыре запрошенные группы названы; дополнительные связанные типы подтверждены PDF Analysis Method p16 и CHM Construction Stage Analysis. Перечень не объявлен исчерпывающим."
+    },
+    {
+      "id": "golden-26",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "K0/собственный вес, первый этап, оговорка об уклоне подтверждены двумя точными CHM Material Properties; Sekiguchi-Ohta K0 подтвержден PDF Mesh p55."
+    },
+    {
+      "id": "golden-27",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Fuse/Cut/Common/Embed и Sew для ошибок формы подтверждены оригиналом PDF Geometry pp64–67."
+    },
+    {
+      "id": "golden-28",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Именованная выборка и регистрация bedding planes/column sections подтверждены CHM Loft/Revolve/Rotate и PDF Geometry p63."
+    },
+    {
+      "id": "golden-29",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Влияние единиц на размер CAD/DXF подтверждено точными оригинальными CHM Import/Analysis Setting."
+    },
+    {
+      "id": "golden-30",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Фиксированная GCS и смена перспективы Two-point Isometric View подтверждены CHM Modeling Guide Toolbar/View Toolbar."
+    },
+    {
+      "id": "golden-31",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Определение упругости, линейные/нелинейные типы и перечисленные варианты подтверждены PDF Материалы pp1,11–13. Не восстанавливает ненадёжное табличное соответствие элементов."
+    },
+    {
+      "id": "golden-32",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Обзор DOF/seepage/equivalent-linear и все численные примеры подтверждены PDF Analysis Method pp32,37,50,64 и точными CHM. Автоматические закрепления воспроизводят буквальную схему руководства; ответ не объявляет её универсальной."
+    },
+    {
+      "id": "golden-33",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректный отказ от неподтверждённой цены, сумма не выдумана."
+    },
+    {
+      "id": "golden-34",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Две поступательные DOF по x,y именно ECS подтверждены PDF Элементы p32."
+    },
+    {
+      "id": "golden-24",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": true,
+      "notes": "Есть полезное расширение: пример тоннеля, initial stress активированного элемента и отличие Clear Displacement от сброса напряжений подтверждены CHM Construction Stage и PDF Analysis Method pp8,23."
+    },
+    {
+      "id": "golden-32",
+      "mode": "expanded",
+      "correctness": 1,
+      "grounding": 1,
+      "detail_gain": true,
+      "notes": "Есть полезное расширение: шесть DOF, фиксированная/роликовая опора, произведение функции напора, таблица dynamic boundary и Auto подтверждены PDF Analysis Method pp32,37,50,64,66,53 и точными CHM. Наличие детали о nodal flux в полном p53 не превращается в ошибочную инструкцию в ответе."
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Верно называет три перемещения и три поворота, но ложно заявляет, что точный порядок DOF в тексте не сохранился. В его собственном цитируемом оригинале PDF гл2 p3 явно напечатано DOF1=r,2=theta,3=z,4=rotation-r,5=rotation-theta,6=rotation-z. Неполный ответ и необоснованный отказ по подтверждаемой части."
+    },
+    {
+      "id": "followup-01-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Разрешает контекст follow-up; x/y ECS и отличие от цилиндрического r/theta/z подтверждены PDF Элементы pp31–32."
+    },
+    {
+      "id": "followup-10-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "MC, c/phi и ограничения подтверждены точным CHM Mohr-Coulmb. Фраза «среднее главное» буквально есть в русском оригинале; термин неоднозначен и предпочтительно уточнять промежуточное sigma2, но ответ не заменяет его средним гидростатическим."
+    },
+    {
+      "id": "followup-10-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Контекст MC сохранён; линейность и диапазон обжатия, tension cutoff, отсутствие compression cap у обычного MC подтверждены CHM Mohr-Coulmb/Modified Mohr-Coulomb. Та же терминологическая оговорка про «среднее главное»."
+    },
+    {
+      "id": "followup-16-seed",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Алгоритмы и существенная оговорка об отсутствии явно отдельных stiffness/modified Newton настроек подтверждены PDF алгоритмы pp23–29; BFGS и область arc length описаны верно."
+    },
+    {
+      "id": "followup-16-question",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": 1,
+      "notes": "Force/displacement/energy, удовлетворение всех выбранных условий и penalty limitation подтверждены PDF алгоритмы p25 и точным CHM Analysis Control."
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Запрашивает уточнение, но затем до получения контекста предлагает нерелевантные конкретные модели и Width Factor >104. Это нарушает ожидаемое ask-before-specific-parameters и перегружает ответ. Число104 буквально содержится в исходном CHM Free_Field raw HTML без sup-разметки; текущая потеря экспоненты не доказана, числовая hallucination не заявляется. Все приведённые детали имеют оригинальные источники."
+    },
+    {
+      "id": "refusal-discount",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректно отказывается выдумывать цену и гарантированную скидку."
+    },
+    {
+      "id": "refusal-sla",
+      "mode": "brief",
+      "correctness": 1,
+      "grounding": null,
+      "notes": "Корректно отказывается устанавливать договорный SLA/срок исправления без договора и просит его релевантный раздел. Прикреплены нерелевантные технические источники ERROR2113/USSR, что шумно; они не выдаются за договор и не подтверждают выдуманный срок. Grounding null для явного отказа."
+    }
+  ]
+}

@@ -1,56 +1,76 @@
 # Техническая документация Support Copilot
 
-Актуальный комплект для итоговой сдачи, 16 октября 2026 года.
-Основной продукт — Telegram-ассистент с одним persistent LangGraph-агентом,
-поиском по мануалам и подтверждением внешних действий.
+Срез для сдачи — **21 октября 2026 года**. Пользовательская проверка Telegram
+принята. Рабочая основа — PR51 / `df96941` и проверенные изменения; точные
+идентификаторы кода/образа/индекса находятся в протоколе. PR52 не включён.
 
 ## Порядок чтения
 
-| Шаг | Материал | Что в нём искать |
+| Шаг | Материал | Содержание |
 |---:|---|---|
-| 1 | [README готового продукта](../README.md) | Пользовательский сценарий, запуск, конфигурация и проверки |
-| 2 | [Окончательное техническое описание](final_technical_documentation.md) | Компоненты системы и семь решений в формате «выбор → альтернативы → причина выбора» |
-| 3 | [Финальный агентный граф](final_agent_graph.md) | Реальные узлы, переходы, interrupt/resume и путь «Подробнее» |
-| 4 | [Объединённая система](unified_agent.md) | Подробные контракты интеграции, ограничения и датированные результаты проверок |
+| 1 | [README](../README.md) | Сценарий инженера, подготовка конфигурации, одна команда запуска, проверки |
+| 2 | [Техническое описание](final_technical_documentation.md) | Компоненты, принятый профиль и семь решений: выбор → альтернативы → причина |
+| 3 | [Покрытие всех 34 ДЗ](homework_coverage.md) | Обязательное/дополнительное, доказательства, даты, режимы и оставленные пробелы |
+| 4 | [Финальный граф](final_agent_graph.md), [SVG](final-agent-graph.svg), [Mermaid](final-agent-graph.mmd) | Семь исполняемых узлов, retrieval-first, уточнение, approval и Подробнее |
+| 5 | [Протокол приёмки](final_acceptance.md) | Tests, качество, источники, restart, ограничения и пользовательское решение |
 
-Схема доступна отдельно как [SVG](final-agent-graph.svg) и
-[Mermaid, полученный из исполняемого графа](final-agent-graph.mmd).
-Эти файлы описывают `app/services/agent_persistent.py`, используемый Telegram,
-а не ранние учебные графы.
+Материалы выше самодостаточны внутри проекта: внешний workspace `tasks/`,
+исходные задания `TEMP/` и private checkpoints для их чтения не требуются.
+Презентация, демонстрация 5–7 минут и чистый комплект — следующие задачи;
+готовых ссылок на них пока нет.
 
-## Справочник по темам
+[Проверка документации S0-010](evidence/documentation_check_2026-10-21.json):
+локальные пути в 13 основных документах, 34 строки ДЗ, хэши доказательств,
+байты исторического FSM и совпадение Mermaid/SVG. Внешние URL и доступность
+будущего комплекта этой проверкой не подтверждаются.
 
-| Тема | Документ | Область и статус |
+## Текущая система
+
+| Тема | Документ | Граница |
 |---|---|---|
-| Telegram | [telegram_bot.md](telegram_bot.md) | Текущие меню, команды, feedback, approval и renderer |
-| Retrieval и ingestion | [rag.md](rag.md) | Текущий поиск по мануалам, provenance, ограничения и эксплуатация |
-| Общая обработка документации | [documentation_evidence.md](documentation_evidence.md) | Новый каталог PDF/CHM/HTML, общий retrieval-first путь, 120 новых eval-сценариев; release gate ещё не пройден |
-| Проверка пакета 19 октября | [Отчёт перед merge](../tasks/commits/sprint-0/2026-10-19_corpus-evidence-pipeline_0b5f071.md) | Итоговые изменения, замеры до/после, проверки и ограничения; S0-005 остаётся открытой |
-| Корпус | [data_inventory.md](data_inventory.md) | Состав документов и отложенное пополнение |
-| История диалогов | [chat.md](chat.md) | Repository, API и исходный sliding-window контракт; Telegram теперь использует graph adapter, см. `unified_agent.md` |
-| Checkpoints и отправка | [agent-persistent-report.md](agent-persistent-report.md) | Устройство saver/HIL; Docker transcript относится к учебному снимку |
-| Наблюдаемость | [observability/README.md](observability/README.md) | Логи, метрики и tracing |
-| Качество финального агента | [telegram_agent_evaluation.md](telegram_agent_evaluation.md), [48 оценок текущего прогона](../tests/eval/results/2026-10-15_telegram_agent_self_weight_repeat/semantic_review.json) | Прогон 15.10.2026 на обновлённых Docker: собственный вес №24, №31, источники/страницы, уточнения, expanded, отказы, время и сбой №9 |
-| Промежуточные попытки 15 октября | [Пропуск собственного веса](../tests/eval/results/2026-10-15_telegram_agent_semantic_fix/acceptance.json), [сбои API/лимит итераций](../tests/eval/results/2026-10-15_telegram_agent_self_weight_fix/acceptance.json) | Ответы, checkpoint и PDF-аудиты сохранены для сравнения; общие оценки качества этим попыткам не назначались |
-| Предыдущая оценка после смысловых исправлений | [Исторический отчёт 14.10.2026](telegram_agent_evaluation_semantic_fix_2026-10-14.md) | №24 brief/expanded пропускали собственный вес; дополнительные ходы остановлены квотой API |
-| Baseline перед смысловыми исправлениями | [telegram_agent_evaluation_citation_fix_2026-10-14.md](telegram_agent_evaluation_citation_fix_2026-10-14.md), [результаты](../tests/eval/results/2026-10-14_telegram_agent_citation_fix_verified/summary.json) | Предыдущая оценка с ошибками №24/31 сохранена без перезаписи |
-| Baseline до исправления цитат | [telegram_agent_evaluation_baseline_2026-10-14.md](telegram_agent_evaluation_baseline_2026-10-14.md), [исходные результаты](../tests/eval/results/2026-10-14_telegram_agent/summary.json) | Первоначальный прогон сохранён без перезаписи JSON/CSV; не оценка исправленной версии |
-| История качества RAG | [rag_evaluation.md](rag_evaluation.md), [golden dataset](../tests/eval/golden_dataset.json) | Эксперименты 12.09.2026, 34 вопроса; не оценка финального Telegram-агента |
-| Выбор модели | [Сравнение двух облачных моделей](../homework_1_1/results/comparison_report.md), [локальная/облачная модель](../homework_1_4/results/benchmark_summary.json) | Ранние учебные замеры; границы приведены в итоговом описании |
-| Runtime Luna и reasoning | [luna_runtime_evaluation.md](luna_runtime_evaluation.md) | 384 ответа 15.10.2026, mini против Luna none/low/medium/high/xhigh; выбран medium |
-| Переключение бота на Luna | [luna_runtime_rollout.md](luna_runtime_rollout.md) | Локальный backend переключён 15.10.2026; 7 обычных ответов и 2 расширения, проверена история mini |
-| Переключение RAG на Luna | [rag_luna_rollout.md](rag_luna_rollout.md) | Ответы medium, переформулирование none; проверка API, SSE и сохранения истории |
-| Выбор embeddings | [ДЗ 5.1](../homework_5_1/README.md) | Обоснование large/1024; цены и внешние характеристики датированы |
-| Выбор chunking | [chunking_experiment.md](chunking_experiment.md), [rag_evaluation.md](rag_evaluation.md) | Offline выбор 512/64, затем облачный эксперимент и переход на 1024/64 |
-| Выбор vector DB | [vector_store.md](vector_store.md) | Qdrant и альтернативы; коллекция `documents` и HNSW-параметры учебного адаптера не являются настройками production RAG |
-| Single-agent / multi-agent | [multi-agent-report.md](multi-agent-report.md) | Сравнение на пяти mock-KB вопросах и решение оставить single-agent |
+| Telegram | [telegram_bot.md](telegram_bot.md) | Команды, меню, renderer, feedback и согласие |
+| Архитектура | [architecture.md](architecture.md), [unified_agent.md](unified_agent.md) | Текущий контур и контракты; нижние датированные разделы сохраняют историю |
+| RAG | [rag.md](rag.md) | Ingestion, retrieval, metadata/provenance, эксплуатация |
+| Корпус | [data_inventory.md](data_inventory.md) | 10 канонических источников, 60 исключённых зеркал, страницы/topics и пробелы |
+| Общий контур evidence | [documentation_evidence.md](documentation_evidence.md) | Развёрнутые компоненты PR51 и отдельно незакрытые research gates S0-005 |
+| Chat storage | [chat.md](chat.md) | Repository и API; graph adapter описан в unified_agent |
+| Checkpoint / interrupt | [agent-persistent-report.md](agent-persistent-report.md) | Saver и учебный снимок HIL; текущий restart подтверждён в приёмке |
+| Observability | [observability/README.md](observability/README.md) | Логи/метрики/tracing, optional Phoenix |
+| Ограничения зависимостей | [dependency-risk-acceptance.md](dependency-risk-acceptance.md) | Известные риски и срок пересмотра; не новый полный audit |
 
-## Исторические материалы
+## Проверяемые результаты 21.10
 
-| Артефакт | Как использовать |
+| Артефакт | Что подтверждает |
 |---|---|
-| [architecture.md](architecture.md) | Первый раздел актуален; четыре слоя и ADR ниже — исторический CLI-дизайн |
-| [architecture-historical-cli.pdf](architecture-historical-cli.pdf) | **Исторический PDF архитектуры CLI.** Сохранён без переработки; не схема финальной системы |
-| [agent-graph-report.md](agent-graph-report.md), [custom](agent-graph-custom.mmd), [prebuilt](agent-graph-prebuilt.mmd) | Учебные графы Б6.3, до объединения Telegram/RAG и persistent approval |
-| [architecture-multi-agent.md](architecture-multi-agent.md) | Схема экспериментального supervisor, не выбранного для основного сценария |
-| `homework_*`, ранние traces и benchmark-ответы | История накопительного проекта и доказательства конкретных экспериментов |
+| [Ответы](evidence/diploma_2026-10-21/evaluated_answers.json), [сводка](evidence/diploma_2026-10-21/acceptance_summary.json), [rubric](evidence/diploma_2026-10-21/semantic_review.json) | 43 сценария + 5 expanded до узкой коррекции уточнения; 27 полных / 7 частичных из 34 |
+| [Sources audit](evidence/diploma_2026-10-21/source_audit.json), [ручная сверка](evidence/diploma_2026-10-21/manual_source_review.json) | 154 использования источников; отдельно от смысловой полноты ответов |
+| [Tests](evidence/diploma_2026-10-21/test_summary.json) | 1522 PASS / 12 skip; отдельно 25 PostgreSQL PASS |
+| [Runtime](evidence/diploma_2026-10-21/post_restart_runtime_manifest.json), [code manifest](evidence/diploma_2026-10-21/final_code_manifest.json), [source match](evidence/diploma_2026-10-21/post_restart_source_identity.json) | Проверенный образ, настройки и совпадение исходников app/bot |
+| [Индекс](evidence/diploma_2026-10-21/post_restart_index_audit.json), [restart](evidence/diploma_2026-10-21/restart_index_comparison.json), [история](evidence/diploma_2026-10-21/history_after.json) | Согласованность источников/docstore/Qdrant и сохранение 40 учебных чатов |
+
+В исходном code manifest `pending` относится к моменту freeze до ручного
+пользовательского прогона. Последующее решение зафиксировано в протоколе;
+измерения не перезаписывались. [Пользовательская приёмка](evidence/diploma_2026-10-21/user_acceptance.json)
+зафиксирована отдельно.
+
+## Исторические эксперименты и обоснование выбора
+
+| Тема | Датированные материалы | Как читать |
+|---|---|---|
+| Runtime Luna/reasoning | [eval 15.10](luna_runtime_evaluation.md), [rollout бота](luna_runtime_rollout.md), [rollout RAG](rag_luna_rollout.md) | 384 ответа; выбор medium, не новый score принятой версии |
+| Подготовка и Fast | [19.10 latency](telegram_latency_fix_2026-10-19.md), [20.10 preparation](telegram_preparation_2026-10-20.md), [warmup](evidence_warmup_2026-10-20.md) | Принятые инфраструктурные улучшения и неудачные варианты |
+| Быстрые облачные модели | [manual_model_comparison_2026-10-19.md](manual_model_comparison_2026-10-19.md), [JSON](manual_model_comparison_2026-10-19.json) | 20 вопросов × 2 повтора × 5 моделей, fixed evidence; runtime не менялся |
+| Предыдущие Telegram-оценки | [15.10](telegram_agent_evaluation.md), [semantic 14.10](telegram_agent_evaluation_semantic_fix_2026-10-14.md), [citation baseline](telegram_agent_evaluation_citation_fix_2026-10-14.md), [первый baseline](telegram_agent_evaluation_baseline_2026-10-14.md) | Сохранены ошибки/неуспехи и прежние версии; актуальный протокол выше |
+| Early cloud/local | [две cloud-модели](../homework_1_1/results/comparison_report.md), [local/cloud](../homework_1_4/results/benchmark_summary.json) | Учебные результаты и их незакрытые условия — в матрице ДЗ |
+| Embeddings | [ДЗ 5.1](../homework_5_1/README.md) | Выбор large/1024; датированные цены, live comparison не заявлен |
+| Qdrant | [vector_store.md](vector_store.md), [реальные фрагменты 5.2](../homework_5_2/REAL_INDEX_2026-10-21.md) | Учебные коллекции отделены от production |
+| RAG 5.3 | [исторический отчёт](../homework_5_3/historical/2026-09-09_rag_6514f10.md) | Восстановленный снимок Git, приложение не откатано |
+| Chunking | [ранний опыт](chunking_experiment.md), [исторический BGE](../homework_5_4/historical/2026-09-09_chunking_fb594ad.md), [RAGAS 12.09](rag_evaluation.md) | От offline 512/64 к large/1024; не текущая оценка агента |
+| Citation judge | [5.6, 21.10](../homework_5_6/CITATION_JUDGE_2026-10-21.md) | 34 сохранённых ответа; false positive не скрыт |
+| Учебные графы | [6.3 report](agent-graph-report.md), [45 попыток](../homework_6_3/BENCHMARK_2026-10-21.md), [custom](agent-graph-custom.mmd), [prebuilt](agent-graph-prebuilt.mmd) | 44 complete / 1 timeout, учебная KB и Telegram stub |
+| Single / multi-agent | [отчёт](multi-agent-report.md), [схема эксперимента](architecture-multi-agent.md) | Пять mock-KB случаев × два варианта; обоснование single-agent |
+| Ранняя архитектура | [CLI PDF](architecture-historical-cli.pdf) | Исторический учебный эскиз; не схема финальной системы |
+
+Некоторые исторические отчёты ссылаются на private raw в ignored `var/` или
+старые локальные UI. Такие ссылки не объявляются частью переносимого комплекта;
+доказательства, необходимые проверяющему, указаны в матрице и текущем протоколе.

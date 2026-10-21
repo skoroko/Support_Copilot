@@ -1,0 +1,377 @@
+{
+  "models": {
+    "gpt-6-luna": {
+      "n": 40,
+      "completed": 40,
+      "assessed": 40,
+      "incomplete": 0,
+      "unknown_cost_attempts": 0,
+      "unknown_cost_reservations_usd": 0,
+      "median_s": 5.5542965499917045,
+      "p95_s": 23.50102640001569,
+      "ttft_median_s": 3.036199599999236,
+      "cost_usd": 0.01357676,
+      "uncached_cost_usd": 0.0170917,
+      "quality": 0.9625,
+      "grounding": 0.975,
+      "grounding_n": 40,
+      "critical": 2,
+      "citation_errors": 2,
+      "fully_correct": 37,
+      "unusable": 0,
+      "invalid_citation_numbers": 0,
+      "visible_output_tokens": 7216,
+      "usage": {
+        "input": 108272,
+        "output": 12529,
+        "reasoning": 5313,
+        "cache_read": 54076,
+        "cache_write": 54076
+      }
+    },
+    "gpt-4.1-mini": {
+      "n": 40,
+      "completed": 39,
+      "assessed": 40,
+      "incomplete": 0,
+      "unknown_cost_attempts": 1,
+      "unknown_cost_reservations_usd": 0.008623200000000001,
+      "median_s": 6.0835162999574095,
+      "p95_s": 47.93766209995374,
+      "ttft_median_s": 1.1955343000008725,
+      "cost_usd": 0.06314840000000001,
+      "uncached_cost_usd": 0.06314840000000001,
+      "quality": 0.6875,
+      "grounding": 0.6538461538461539,
+      "grounding_n": 39,
+      "critical": 11,
+      "citation_errors": 26,
+      "fully_correct": 16,
+      "unusable": 1,
+      "invalid_citation_numbers": 0,
+      "visible_output_tokens": 13060,
+      "usage": {
+        "input": 105631,
+        "output": 13060,
+        "reasoning": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    "gpt-4o-mini": {
+      "n": 40,
+      "completed": 40,
+      "assessed": 40,
+      "incomplete": 0,
+      "unknown_cost_attempts": 0,
+      "unknown_cost_reservations_usd": 0,
+      "median_s": 3.8671922000066843,
+      "p95_s": 39.412822899990715,
+      "ttft_median_s": 0.9248885000124574,
+      "cost_usd": 0.020381999999999997,
+      "uncached_cost_usd": 0.020381999999999997,
+      "quality": 0.6875,
+      "grounding": 0.6375,
+      "grounding_n": 40,
+      "critical": 14,
+      "citation_errors": 25,
+      "fully_correct": 15,
+      "unusable": 0,
+      "invalid_citation_numbers": 0,
+      "visible_output_tokens": 6892,
+      "usage": {
+        "input": 108312,
+        "output": 6892,
+        "reasoning": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    "gpt-5.4-nano": {
+      "n": 40,
+      "completed": 40,
+      "assessed": 40,
+      "incomplete": 0,
+      "unknown_cost_attempts": 0,
+      "unknown_cost_reservations_usd": 0,
+      "median_s": 5.850544000015361,
+      "p95_s": 20.50324679998448,
+      "ttft_median_s": 0.9848141499969643,
+      "cost_usd": 0.0337519,
+      "uncached_cost_usd": 0.0337519,
+      "quality": 0.875,
+      "grounding": 0.2375,
+      "grounding_n": 40,
+      "critical": 4,
+      "citation_errors": 34,
+      "fully_correct": 30,
+      "unusable": 0,
+      "invalid_citation_numbers": 0,
+      "visible_output_tokens": 9678,
+      "usage": {
+        "input": 108272,
+        "output": 9678,
+        "reasoning": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    "gpt-5.4-mini": {
+      "n": 40,
+      "completed": 40,
+      "assessed": 40,
+      "incomplete": 0,
+      "unknown_cost_attempts": 0,
+      "unknown_cost_reservations_usd": 0,
+      "median_s": 4.21816355001647,
+      "p95_s": 27.349916199978907,
+      "ttft_median_s": 1.0467422000074293,
+      "cost_usd": 0.0860172,
+      "uncached_cost_usd": 0.121614,
+      "quality": 0.925,
+      "grounding": 0.9625,
+      "grounding_n": 40,
+      "critical": 1,
+      "citation_errors": 3,
+      "fully_correct": 34,
+      "unusable": 0,
+      "invalid_citation_numbers": 0,
+      "visible_output_tokens": 8980,
+      "usage": {
+        "input": 108272,
+        "output": 8980,
+        "reasoning": 0,
+        "cache_read": 52736,
+        "cache_write": 0
+      }
+    }
+  },
+  "judge_cost_usd": 0.931047,
+  "prior_unknown_reserve_usd": 0.021156,
+  "judge_unknown_cost_reservations_usd": 0.45360999999999996,
+  "samples": 200,
+  "scheduled": 200,
+  "reviewed_questions": 20,
+  "settings_unchanged": true,
+  "limitations": [
+    "Fixed previously retrieved excerpts; measures final synthesis, not retrieval/tool planning.",
+    "No HTTP/Telegram delivery, no real user chats, no bot settings changes.",
+    "20 existing development questions, two repeats; not a sealed holdout or human expert certification.",
+    "Provider prompt caching is observed, not forcibly equalized; uncached cost also reported.",
+    "Luna medium versus non-reasoning/none alternatives; not an equal-compute comparison.",
+    "LLM judge scores are rubric estimates, not probabilities of correctness."
+  ],
+  "paired_vs_luna": {
+    "gpt-4.1-mini": {
+      "quality": {
+        "mean_delta": -0.275,
+        "ci95_low": -0.3875,
+        "ci95_high": -0.1625,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      },
+      "latency_s": {
+        "mean_delta": 4.818539694726688,
+        "ci95_low": 0.24403256841469556,
+        "ci95_high": 9.566669842098092,
+        "unit": "question mean across repeats",
+        "n_questions": 19
+      }
+    },
+    "gpt-4o-mini": {
+      "quality": {
+        "mean_delta": -0.275,
+        "ci95_low": -0.3625,
+        "ci95_high": -0.1875,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      },
+      "latency_s": {
+        "mean_delta": 2.4722447874955833,
+        "ci95_low": -3.3385917175008215,
+        "ci95_high": 10.738462144994992,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      }
+    },
+    "gpt-5.4-nano": {
+      "quality": {
+        "mean_delta": -0.0875,
+        "ci95_low": -0.1625,
+        "ci95_high": -0.025,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      },
+      "latency_s": {
+        "mean_delta": -1.1696512600057758,
+        "ci95_low": -4.484484082508425,
+        "ci95_high": 1.7089096149953549,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      }
+    },
+    "gpt-5.4-mini": {
+      "quality": {
+        "mean_delta": -0.0375,
+        "ci95_low": -0.1125,
+        "ci95_high": 0.025,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      },
+      "latency_s": {
+        "mean_delta": -1.345974777507945,
+        "ci95_low": -4.51125244001305,
+        "ci95_high": 1.808492152497638,
+        "unit": "question mean across repeats",
+        "n_questions": 20
+      }
+    }
+  },
+  "manifest_sha256": "c3357ff7656cf70c7ccc5b880692807f1b094799d26693e7656868a01047020d",
+  "source_sha256": "7aa50431c0e1a9a2e4398cb9cdd22726b6b8dcc353ab1144f4872f9768a6fd0b",
+  "protocol_amendments": [
+    {
+      "created_at": "2026-10-19T16:52:46.632689+00:00",
+      "reason": "Keepalive stream exceeded SDK read timeout; enforce whole-call deadline via async cancellation",
+      "previous_runner_sha256": "4d9cbd4e871ed2e1e0f8807a7f274e7cb539aa09c315253b11d2ddf98dccb959",
+      "completed_slots_before_change": 83,
+      "explicit_recovery_slot": 83,
+      "receipt": "var\\manual_model_benchmark\\2026-10-19-api\\interrupted\\083_before_deadline_fix.json",
+      "request_semantics_unchanged": true
+    },
+    {
+      "at": "2026-10-19T17:08:33.911026+00:00",
+      "reason": "Analysis-only: preserve failed attempts in utility and unknown cost; exclude empty answers from paid judge",
+      "previous_runner_sha256": "f8254c4d901a86c1ec57999e0cabf1abc8f846d36582ee0677009dd5d6f7d5ea",
+      "generation_finished": true,
+      "completed_answers": 199,
+      "failed_slots": [
+        131
+      ],
+      "generation_replays": 0,
+      "quality_rule": "empty answer correctness=0 and grounding=null, deterministic",
+      "latency_rule": "successful answers only; completed/attempts shown; paired latency requires both completed repeats"
+    },
+    {
+      "at": "2026-10-19T17:22:56.645600+00:00",
+      "reason": "Judge-only streaming transport after APITimeoutError without usage; explicit recovery golden-14",
+      "previous_runner_sha256": "a8da0904ace0e2840f7867ef92b180b9d8a0c8386545d40ba9e5870962f8194d",
+      "completed_reviews_before_change": 7,
+      "archived_receipt": "interrupted/judge_golden-14_before_streaming.json",
+      "unknown_cost_reserve_usd": 0.2090175,
+      "judge_model_effort_rubric_inputs_schema_unchanged": true,
+      "generation_replays": 0
+    },
+    {
+      "at": "2026-10-19T17:36:54.742863+00:00",
+      "reason": "Judge-only: concurrent streaming with shared budget reservations after golden-20 timeout at240s",
+      "previous_runner_sha256": "c1e86e28a187caefab029075036457c08a3eede598f4dd01123d8225fe6680e6",
+      "completed_reviews_before_change": 12,
+      "archived_receipt": "interrupted/judge_golden-20_before_parallel.json",
+      "explicit_recovery_case": "golden-20",
+      "additional_unknown_cost_reserve_usd": 0.2445925,
+      "judge_model_effort_rubric_inputs_schema_unchanged": true,
+      "generation_replays": 0,
+      "judge_concurrency": 2,
+      "judge_wall_deadline_s": 360
+    },
+    {
+      "at": "2026-10-19T17:44:48.733385+00:00",
+      "reason": "After all20completed: report non-completed saved judge receipts as unsuccessful CLI status, without replay",
+      "previous_runner_sha256": "60845bd4bd2b112f7826fd679287c724e7fa850ef574a7617714c3e95caf85d2",
+      "api_calls_after_change": 0,
+      "generation_or_scoring_requests_changed": false
+    }
+  ],
+  "rates_usd_per_million": {
+    "gpt-6-luna": [
+      0.1,
+      0.01,
+      0.125,
+      0.5
+    ],
+    "gpt-4.1-mini": [
+      0.4,
+      0.1,
+      0.4,
+      1.6
+    ],
+    "gpt-4o-mini": [
+      0.15,
+      0.075,
+      0.15,
+      0.6
+    ],
+    "gpt-5.4-nano": [
+      0.2,
+      0.02,
+      0.2,
+      1.25
+    ],
+    "gpt-5.4-mini": [
+      0.75,
+      0.075,
+      0.75,
+      4.5
+    ],
+    "gpt-6.1-sol": [
+      2.0,
+      0.1,
+      2.5,
+      10.0
+    ]
+  },
+  "reasoning_effort": {
+    "gpt-6-luna": "medium",
+    "gpt-4.1-mini": null,
+    "gpt-4o-mini": null,
+    "gpt-5.4-nano": "none",
+    "gpt-5.4-mini": "none"
+  },
+  "literal_citation_placeholders": {
+    "gpt-6-luna": 0,
+    "gpt-4.1-mini": 1,
+    "gpt-4o-mini": 0,
+    "gpt-5.4-nano": 34,
+    "gpt-5.4-mini": 0
+  },
+  "audit": "All scheduled attempt/input receipts, successful response tiers/usage/cost and blinded review bindings verified; unknown failed usage preserved",
+  "assessment_method": {
+    "judge_model": "gpt-6.1-sol",
+    "judge_reasoning": "high",
+    "judge_concurrency_final": 2,
+    "judge_deadline_s_final": 360,
+    "quality_scale": [
+      0,
+      0.5,
+      1
+    ],
+    "quality_denominator": "all scheduled attempts per model",
+    "empty_answer_rule": "correctness=0; grounding=null; not sent to paid judge",
+    "latency_denominator": "completed responses only; paired intervals require both repeats complete",
+    "critical_flags": "LLM assessment; no human engineering certification"
+  },
+  "excluded_preflight_unknown_reserve_usd": 0.038765375,
+  "all_unknown_cost_reserves_usd": 0.522154575,
+  "evidence_files": [
+    "012-gts-nx-analysis-analysis-case-analysis-control-option-htm.html",
+    "023-gts-nx-analysis-analysis-case-general-nonlinear-time-history-analysis-htm.html",
+    "024-gts-nx-analysis-analysis-case-general-nonlinear-time-history-analysis-srm-htm.html",
+    "026-gts-nx-analysis-analysis-case-general-seepage-analysis-htm.html",
+    "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+    "037-gts-nx-dynamic-analysis-boundary-boundary-condition-htm.html",
+    "039-gts-nx-dynamic-analysis-boundary-define-set-htm.html",
+    "03_User Manual_Chapter3_Geometry.pdf",
+    "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+    "04_User Manual_Chapter4_Mesh.pdf",
+    "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+    "05_User Manual_Chapter5_Analysis Method.pdf",
+    "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+    "GTS_NX 2021.chm"
+  ],
+  "conclusions": [
+    "На этой выборке минимальная стоимость — у `gpt-6-luna`, максимальная средняя полнота/правильность — у `gpt-6-luna`.",
+    "`gpt-5.4-mini` даёт медиану полного ответа на 24.1% меньше Luna и первый текст через 1.05 с вместо 3.04 с. За это расход по наблюдаемому usage выше в 6.3 раза. Интервалы парных различий качества и времени с Luna включают ноль; устойчивое превосходство не установлено.",
+    "Для текущего сценария рекомендовано сохранить Luna medium. 5.4-mini — кандидат при высоком приоритете TTFT и готовности платить больше; перед заменой нужен отдельный тест полного агентского цикла. 4o-mini выигрывает медиану, но теряет полноту и имеет длинный хвост задержек. 4.1-mini не дал выигрыша в цене/скорости и получил один таймаут. Nano часто оставляет буквальный [N] при этом общем prompt; его результат требует отдельной настройки цитирования."
+  ]
+}

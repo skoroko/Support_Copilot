@@ -1,0 +1,246 @@
+{
+  "phase": "before",
+  "run_id": "d4cd162ca324431481b866dee81704ea",
+  "chats": [
+    {
+      "chat_id": "7bc03e30-77c5-5755-bce4-56698c262502",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-01",
+      "messages": 4,
+      "history_sha256": "881a70251d93c2464be7e6e2a639eefda62b27e08f2d206bc319414deda8c9ea"
+    },
+    {
+      "chat_id": "2bf48f58-0c50-5568-89db-c8513b642e74",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-02",
+      "messages": 2,
+      "history_sha256": "ffe8f0d6327255d74ad4a6189366be1f3142214426ed2ffc8a7e6109612dca87"
+    },
+    {
+      "chat_id": "2fb48759-a828-514b-a016-f1548033da43",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-03",
+      "messages": 2,
+      "history_sha256": "03fb530ef499b2cb0b7dc366d29843061eb07508b8963e704e07594d281fbb1b"
+    },
+    {
+      "chat_id": "1a7733f7-5784-5336-8874-16758f757f8d",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-04",
+      "messages": 2,
+      "history_sha256": "6bb119b29b1d38a6dd3c9878123f1595cecf55947143b64e27e6c76acaedc544"
+    },
+    {
+      "chat_id": "de6c90a3-cb56-5b2d-bbc0-bef61a4d9440",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-05",
+      "messages": 2,
+      "history_sha256": "75ebaea156382baabbed794f9508a58255264cd2af9a62af5c199fedf64732df"
+    },
+    {
+      "chat_id": "b5c0ca54-f004-50c6-b172-576e3b89145d",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-06",
+      "messages": 2,
+      "history_sha256": "085e14884ce1353c1fb742133ff69286910c7cdff2f2a1e632ea1c37adf8bf6f"
+    },
+    {
+      "chat_id": "5e61abfc-be53-589d-891e-4077e47de9d5",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-07",
+      "messages": 2,
+      "history_sha256": "2116a38c4bde902d7fd7c27b62c7d841dc9d789f3044af50068498f8e100470c"
+    },
+    {
+      "chat_id": "a31a1e65-4fe1-5b5d-a44d-9f913b925914",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-08",
+      "messages": 2,
+      "history_sha256": "be5c8f3f6d4339a173bf2c51e7bfe7ec6c27cea355d6507b7ebe9a0dbeeb2a94"
+    },
+    {
+      "chat_id": "1aebe4b6-b800-5b55-a8b2-6bb91cb9bdef",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-09",
+      "messages": 2,
+      "history_sha256": "2eef3ffd79ac91defb83024e33c5bae6b533ce1360399027120e95bb050b35f7"
+    },
+    {
+      "chat_id": "9c545318-b322-5ef4-9663-85b1f9c8c03e",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-10",
+      "messages": 4,
+      "history_sha256": "067ae175f6e180e0d88884a3dff891e3104244ffbc2cc687d32ee54f18542d86"
+    },
+    {
+      "chat_id": "589f4128-7bea-528a-9b70-f12f1617c898",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-11",
+      "messages": 2,
+      "history_sha256": "35d4ce3d4c5c3a638681da184e217a59a3dd2b1e32e0a7a9835b09654a05054c"
+    },
+    {
+      "chat_id": "bd0f89b6-c1e6-5669-ac9c-0e429408a39b",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-12",
+      "messages": 2,
+      "history_sha256": "98b6810a767ffd8909c3b087fca4a507b82192971488fd9c4b308211a5fd9caf"
+    },
+    {
+      "chat_id": "d5b239aa-fa15-52a1-84c3-5fa5c34e2a17",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-13",
+      "messages": 2,
+      "history_sha256": "cdac69ac92f20e852b17820e21dc195678b66d3f52231236cbd552799c2333fe"
+    },
+    {
+      "chat_id": "15dca72b-a23a-5ba5-9e9c-d2062cd389eb",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-14",
+      "messages": 2,
+      "history_sha256": "7d73c3198afaf65a09c5b703bd816978c643d2d980ffd49390451883a69b0c28"
+    },
+    {
+      "chat_id": "a88406b2-c000-522e-a9c9-25878897cacc",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-15",
+      "messages": 2,
+      "history_sha256": "84df27658ec9d2cb55acc8124ca1265022743f260ae5d53181dbaae7ca9e9efb"
+    },
+    {
+      "chat_id": "0041182e-f438-5e59-9464-bdc7503ce506",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-16",
+      "messages": 4,
+      "history_sha256": "fc52317bb595d69bd08e8203ba109141190ecdc6bd8c6be05316441a35b7520b"
+    },
+    {
+      "chat_id": "5ff72672-b972-5072-a587-2bc06afddb61",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-17",
+      "messages": 2,
+      "history_sha256": "7a8123badd33a8f467b57c9d8e5fecc94c67bd9f747ede0803631365a5ec06d7"
+    },
+    {
+      "chat_id": "80b8c892-7e86-566d-82e6-9f6a30e942e5",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-18",
+      "messages": 2,
+      "history_sha256": "41b74b6a4f5a14f2b13b791017ce3b3558b3531cbeb18127fec9395f85e6400c"
+    },
+    {
+      "chat_id": "68f54f4b-4b58-556c-82bc-956544a256e7",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-19",
+      "messages": 2,
+      "history_sha256": "5948eae21925a7fadbfe9d79be17249b276824f17f6fc4ec31dc0a74a589b70f"
+    },
+    {
+      "chat_id": "96d29537-ade4-50f7-9e51-c992a176fd44",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-20",
+      "messages": 2,
+      "history_sha256": "b14167e4d962c096a5c34753167f7508e3acc27f51483bad1164ca98309cbe60"
+    },
+    {
+      "chat_id": "07bf6851-9b59-55bb-9c5f-4551d5185fb5",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-21",
+      "messages": 2,
+      "history_sha256": "3f3593ffff8b0e7f689e12b3017ab60a7d2f6a02845e3eb3b40cb3cb77a2cc57"
+    },
+    {
+      "chat_id": "85c36906-ef83-5e26-bcef-ded56b42d2b4",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-22",
+      "messages": 2,
+      "history_sha256": "4a5dd9e5b453ae1ab5755cd5e5b1a39eee1fe8cbbc19b51b5cda2c0902604bab"
+    },
+    {
+      "chat_id": "0d92bcae-de89-5936-92f1-73e25c287a2a",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-23",
+      "messages": 2,
+      "history_sha256": "fee4420a49922cec689379b11c85ec6ed98262d505db707b51645478479039d4"
+    },
+    {
+      "chat_id": "eed06dd0-7bfd-52fd-900f-8e4827861081",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-24",
+      "messages": 4,
+      "history_sha256": "e6828fff67e73aff0ddecc3171f3b6c76f248c7d694f37634a96043d5b5d169a"
+    },
+    {
+      "chat_id": "b6d12a09-ff9e-5ef4-9d30-8651e7c9f41b",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-25",
+      "messages": 2,
+      "history_sha256": "38f8ce75793b0d48b9ed3b9311a789a5c53cbb47c6b08e1365ef20a713d04b66"
+    },
+    {
+      "chat_id": "4f3608ce-6557-5099-abc4-347dfacdd630",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-26",
+      "messages": 2,
+      "history_sha256": "403d87afd7b9c24809b8c7cadc9349f396c5f20a26b1c7e914270b65cec72b8e"
+    },
+    {
+      "chat_id": "fadddf47-86ff-5d53-b2fd-813af921eb7b",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-27",
+      "messages": 2,
+      "history_sha256": "d6a0914e17a6e3d92fe735c0a4c2f3720d1fa2b35c0dfd0d487608a34d5bbe5a"
+    },
+    {
+      "chat_id": "a7feed7e-9628-550c-bbc3-8fa5441bd42f",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-28",
+      "messages": 2,
+      "history_sha256": "b19d53a57c59e3bc4018b826e9e270f522b1ba70f0ce9fed0f8231a8215f9dfd"
+    },
+    {
+      "chat_id": "4b4713ad-7950-5b7a-be61-fe8657f26dd3",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-29",
+      "messages": 2,
+      "history_sha256": "6b5d3b87dbcfbbfaac058f14a871d1b5de3dc0895d11a3929d84b7f3c8fcebc4"
+    },
+    {
+      "chat_id": "66baa249-b4ed-5f13-ac21-2bc21f5ee005",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-30",
+      "messages": 2,
+      "history_sha256": "11344452f01b6e78bef8dc68cc8e994b135fc326e5005696e74882121745d421"
+    },
+    {
+      "chat_id": "5776a2f3-311d-517d-9c58-f6a083e07759",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-31",
+      "messages": 2,
+      "history_sha256": "f4444d62c98f0e2b0ecb1a7065b49f71f6815bb9e9f41b4af7cc1f19f0316d6b"
+    },
+    {
+      "chat_id": "78fab440-b25d-50af-b8c5-c3c6ae34a12d",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-32",
+      "messages": 4,
+      "history_sha256": "18cf410858665e9f6f40ea05a212e3b86482bfbefe4b3c3e8e83c446b0845413"
+    },
+    {
+      "chat_id": "ee274326-144f-5013-a76f-3217b3ebd11a",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-33",
+      "messages": 2,
+      "history_sha256": "01d1d6bed3a1845a51ffb97d024ad4ce8b18b06c5a54f6b6f4fbb2e22cd0d973"
+    },
+    {
+      "chat_id": "3a5414ee-e22c-5e82-a73f-a78876829624",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-golden-34",
+      "messages": 2,
+      "history_sha256": "ac9adbb8decda13bd73061005a0fe9aebfe0c7640a579cc35820a71c63dfbebc"
+    },
+    {
+      "chat_id": "0cddccd6-70dd-5822-a428-d4ae9007f8a6",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-followup-01",
+      "messages": 4,
+      "history_sha256": "79afced7907e01308c60e5e54f725b8f35bcb739e9d8f3b13da5236bc0ffd5fc"
+    },
+    {
+      "chat_id": "0041ead3-f61e-5b27-ab8b-fd91b9507315",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-followup-10",
+      "messages": 4,
+      "history_sha256": "d19144dac11517a7b2809675db09c4d4460ef77afdc1c781c55e9102f8b90283"
+    },
+    {
+      "chat_id": "aa57b307-25ac-5f65-b60c-a1b5ddfaf434",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-followup-16",
+      "messages": 4,
+      "history_sha256": "72df4435586c470339791088784d3180c5d33aa19de1bdc3bac5f915c3a0768f"
+    },
+    {
+      "chat_id": "4a669a29-f68f-5316-aec1-ed1af7eee1a3",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-ambiguous-cold",
+      "messages": 2,
+      "history_sha256": "983759dc1d9326c6fc5c4c018b60f0994127391cd160c4879c8f5dcd21cac628"
+    },
+    {
+      "chat_id": "17274a4e-16fd-5cf5-aa41-bb9bbcca0c59",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-refusal-discount",
+      "messages": 2,
+      "history_sha256": "0a1639151260434d27b6b4718769e830f34c7e65dfa3126b1bb6c3f1a5d10e36"
+    },
+    {
+      "chat_id": "5e8924c9-401e-5468-8b8d-1634576409a5",
+      "owner": "eval-d4cd162ca324431481b866dee81704ea-refusal-sla",
+      "messages": 2,
+      "history_sha256": "98fb3a2f57ac58f307877d19ee44f9fdd0339c89632d4562933f7c469c60d652"
+    }
+  ]
+}

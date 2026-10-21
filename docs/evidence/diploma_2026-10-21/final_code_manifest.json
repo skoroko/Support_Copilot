@@ -1,0 +1,15 @@
+{
+  "captured_at": "2026-10-21T11:38:16.681218+00:00",
+  "base_commit": "df9694191224929a1c37fe854bed0ec784b338b5",
+  "state": "working tree with reviewed uncommitted changes; no new commit",
+  "runtime_changes_sha256": {
+    "app/services/agent_history.py": "70c168e6956bb6bb8cc93263fb5adb00b95de316d060c0cad2ee9c01edbd21f2",
+    "app/services/agent_persistent.py": "218d7549ca115c5fbd0c96cde89896f1f899639d3be0c06a28bf874bf512de6a",
+    "app/eval/metrics.py": "cdcaa96ab9278d98ae6dd267ae950bbfde3a4ab42291f95d45aa8958ac622ea7"
+  },
+  "deployed_image": "sha256:c26eb7336b31ac1535ac74ffdbe0cd1dc3b9c4b179e0db7a5975635d4355d0b2",
+  "rollback_image": "sha256:0b7bdfdf8623b380dc27148bcc5bdb63761fe9f2aa1293ba0839c782df371b95",
+  "build": "local baseline layer plus three source files; pull disabled, network disabled, no dependency changes",
+  "runtime_identity": "post_restart_source_identity.json checks 24 whitelisted app/bot files",
+  "user_acceptance": "pending Telegram verification; final documentation/slides/demo/package not started"
+}

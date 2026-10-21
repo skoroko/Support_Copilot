@@ -1,0 +1,2212 @@
+{
+  "run_id": "d4cd162ca324431481b866dee81704ea",
+  "raw_sha256": "691a321df09fef8c0eaf2a2f11f796341c14f37ed54286a6c985f274297c43d7",
+  "scope": "43 baseline scenarios plus five expansions, before the narrow clarification fix; no user Telegram history or full source snippets.",
+  "results": [
+    {
+      "id": "golden-01",
+      "group": "golden",
+      "status": "completed",
+      "response": "В конструкционном расчёте используются **три поступательные и три вращательные степени свободы**. Направления движения задаются узловой системой координат; для цилиндрической системы мануал указывает компоненты по направлениям **r, θ, z**.[1][2]\n\nСоответствие по смыслу такое:\n\n- **перемещения:** вдоль **r**, **θ** и **z**;\n- **повороты:** вокруг осей **r**, **θ** и **z**.[1]\n\nОговорка: в доступном текстовом фрагменте мануала рисунок с обозначениями DOF для цилиндрической системы не распознан, поэтому точные программные обозначения этих шести компонент подтвердить нельзя.[2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 24027.011099999072,
+      "question": "Какие шесть степеней свободы используются в конструкционном расчёте и как они соответствуют направлениям r, θ, z?",
+      "sources": [
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=1",
+          "chunk_id": "da631074-95f7-534c-b21a-bf1b1e64ae76"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 3,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=3",
+          "chunk_id": "d1acd275-4be2-5c81-b0a7-2dd9bc584160"
+        }
+      ],
+      "expansion": {
+        "status": "completed",
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "wall_latency_ms": 5886.681799998769,
+        "result": {
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          },
+          "sources": [
+            {
+              "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+              "page": 1,
+              "printed_page": null,
+              "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+              "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+              "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=1",
+              "chunk_id": "da631074-95f7-534c-b21a-bf1b1e64ae76"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 32,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=32",
+              "chunk_id": "54668c79-bec1-5911-af56-44c6ec448d2a"
+            },
+            {
+              "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+              "page": 3,
+              "printed_page": null,
+              "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+              "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+              "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=3",
+              "chunk_id": "d1acd275-4be2-5c81-b0a7-2dd9bc584160"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 34,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=34",
+              "chunk_id": "9b9deb0e-f2cf-59de-8ee7-e6f91aeea3f6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "golden-02",
+      "group": "golden",
+      "status": "completed",
+      "response": "В расчёте консолидации поровое давление учитывается как дополнительная **узловая степень свободы** наряду с перемещениями. Расчёт связывает уравнения равновесия пористой среды с уравнением неразрывности воды в порах; программа рассчитывает приращения перемещений и порового давления, по которым затем восстанавливаются их полные значения в узле.[4][5][1]\n\nПо системе координат: документация описывает её как способ задать направления узловых перемещений, тогда как поровое давление перечислено отдельно как физическая величина — степень свободы.[2][3] Поэтому оснований считать давление компонентой, зависящей от осей или ориентации системы координат, в приведённых материалах нет. Однако прямого утверждения о преобразовании порового давления при смене системы координат в найденных фрагментах тоже нет.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 10900.242400002753,
+      "question": "Как в узле учитывается поровое давление и зависит ли эта степень свободы от системы координат?",
+      "sources": [
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 108,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=108",
+          "chunk_id": "d4d05cd8-4994-5b79-92aa-f8c1e8866e74"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=1",
+          "chunk_id": "da631074-95f7-534c-b21a-bf1b1e64ae76"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 3,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=3",
+          "chunk_id": "d1acd275-4be2-5c81-b0a7-2dd9bc584160"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Seepage,Consolidation_Analysis/Boundary/Non-Consolidation.htm",
+          "chunk_id": "78385ca9-19ed-5d02-92d1-a1bbccdf849f"
+        },
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 104,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=104",
+          "chunk_id": "0712dd42-58e8-55e9-8ced-cb2e618821ad"
+        }
+      ]
+    },
+    {
+      "id": "golden-03",
+      "group": "golden",
+      "status": "completed",
+      "response": "В узловых системах координат GTS NX поддерживаются **прямоугольная** и **цилиндрическая** системы. Их можно произвольно ориентировать, задав положение основной координатной плоскости по трём точкам; это способ задать ориентацию, а не отдельный тип системы координат.[3][2]\n\nУзловая система задаёт направления поступательных степеней свободы — то есть направления перемещений узла.[1] Однако в доступном описании не раскрыто, каким именно направлениям соответствуют компоненты цилиндрической системы и как они соотносятся с прямоугольными. Поэтому точнее указать разницу (например, в терминах радиального, окружного и осевого направлений) по этим материалам нельзя.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 15556.28820000129,
+      "question": "Какие узловые системы координат поддерживаются и чем цилиндрическая система отличается от декартовой?",
+      "sources": [
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 4,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=4",
+          "chunk_id": "899f74c3-2425-5eeb-850f-0197f23187f9"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Coordinate_System.htm",
+          "chunk_id": "90ccf5b2-b86f-5cd2-b288-f2eaa3d2ea04"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Node/Coordinate_system.htm",
+          "chunk_id": "5fa7a72d-03f2-5ec1-9f92-36e9e3d2efff"
+        }
+      ]
+    },
+    {
+      "id": "golden-04",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX при геометрически нелинейном расчёте с конечными поворотами результаты вращательных степеней свободы узла DOF 4–6 трактуются как компоненты вектора поворота **θ**.[1]\n\nВектор **θ** задаёт поворот вокруг оси **e**, направленной вдоль вектора; величина поворота равна его длине **‖θ‖** и выражается в радианах.[2] То есть это представление конечного поворота как «ось + угол», а не просто три поворота, которые можно независимо складывать.\n\nПоследовательные повороты в общем случае не складываются как векторы: порядок их задания влияет на результат. В GTS NX для вычисления результирующего поворота используется умножение кватернионов.[3]\n\nИсточник — пособие по расчётам GTS NX; версия в материалах не указана.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12214.414199999737,
+      "question": "Как в геометрически нелинейном расчёте интерпретируется вектор конечного поворота узла?",
+      "sources": [
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 5,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=5",
+          "chunk_id": "13a8cf06-a7c5-5422-ac7b-f10e0e90cb9d"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 5,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=5",
+          "chunk_id": "b6929cdd-d45f-5d5c-9f74-ccdeaa922682"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 5,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=5",
+          "chunk_id": "9c63be05-a499-58f7-a97f-c3b6e4a35af9"
+        }
+      ]
+    },
+    {
+      "id": "golden-05",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX для трёхмерных **Solid Elements** доступны три формы:\n\n- **Тетраэдр**.\n- **Пентаэдр** — может быть пирамидой или призмой.\n- **Гексаэдр**. [1]\n\nВ руководстве для этой группы указаны варианты с 4, 5, 6, 8, 10, 13, 15 или 20 узлами; соответствие каждого числа конкретной форме в этом фрагменте не расписано. [1]\n\nЕсли речь именно об автоматической генерации сетки **Auto-Solid**, там выбираются тетраэдральная или преимущественно гексаэдральная гибридная сетка; это уже варианты генерации сетки, а не полный перечень форм solid-элементов. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 6857.83309999897,
+      "question": "Какие формы трёхмерных solid-элементов доступны: тетраэдр, пентаэдр и гексаэдр?",
+      "sources": [
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 24,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=24",
+          "chunk_id": "0d979cca-745d-5fc8-b0f5-d23866984652"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Generate/3D(Auto-Solid).htm",
+          "chunk_id": "8eac6ccf-f7cc-5925-b7e6-0f563bcef24b"
+        }
+      ]
+    },
+    {
+      "id": "golden-06",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX к одномерным элементам относятся **стержневые (ферменные)** и **балочные** элементы, а также их встроенные варианты; в перечне также указаны одномерные элементы георешётки, сваи и упругие связи. [2]\n\n**Свая** моделируется отдельным элементом PILE во встроенной балочной форме: он описывает относительные перемещения и трение между балкой-сваей и грунтом, без соединения узлами с окружающим грунтом. [1] **PILE TIP** задаёт взаимодействие грунта с концевым узлом сваи; в пособии он отнесён к скалярным, а не к одномерным элементам. [1][3]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 8393.370300000242,
+      "question": "Какие одномерные конечные элементы применяются для стержней, балок и свай?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 343,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=343",
+          "chunk_id": "a7957b94-7dfa-5dbf-968a-4e088dcb0d8a"
+        },
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=1",
+          "chunk_id": "bb740965-8281-5036-a1fc-534d64bd37fb"
+        },
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=1",
+          "chunk_id": "7161db7e-b01b-56d7-9cd6-805635d76f87"
+        }
+      ]
+    },
+    {
+      "id": "golden-07",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX интерфейсные элементы применяют, чтобы задать **относительное поведение грунта и конструкции** там, где возможны проскальзывание или изоляция, особенно при большой разнице их жёсткости. Интерфейс можно задать как однородный или неоднородный. [2]\n\nМодель описывает контакт по закону трения Кулона: сила трения на границе связана с коэффициентом трения и нормальным к интерфейсу обжатием. Так моделируют, например, контакт «свая—грунт», «подпорная стена—грунт» и «обделка—грунт», а также трещины и контакты пород. [1]\n\nДля задания отклика используются нормальная жёсткость `Kn` — для поведения сцепления/разъединения по нормали — и касательная жёсткость `Kt`, связанная со скольжением; нелинейность рассчитывают по критерию трения Кулона. [3] Свойства интерфейса можно ввести вручную или автоматически оценить через Wizard по свойствам соседнего грунта; в описании расчёта упомянуты виртуальная толщина `tv` и коэффициент снижения прочности `R`. [2][3]\n\nРуководство также указывает, что модель обычно калибруют по испытаниям и кривой «относительное перемещение—сила трения»; эмпирическая оценка может использоваться для прогноза поведения границы двух материалов. [3] Версия руководства в предоставленных данных не указана.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 13450.426999999763,
+      "question": "Для чего применяются интерфейсные элементы и как они моделируют контакт грунта с конструкцией?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 93,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=93",
+          "chunk_id": "02ef6af8-5c88-57c5-b9c2-e783761d0840"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 336,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=336",
+          "chunk_id": "edf57034-6cf7-5f8c-9e2e-0ae89dd6dab9"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 94,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=94",
+          "chunk_id": "d300562e-f47e-548b-8043-f6044486b055"
+        }
+      ]
+    },
+    {
+      "id": "golden-08",
+      "group": "golden",
+      "status": "completed",
+      "response": "Элемент бесконечной области позволяет не строить всю грунтовую толщу: модель ограничивают нужной зоной, а на её границе задают такой элемент, чтобы представить продолжение области за пределы расчётной сетки без существенного влияния на результат. Геометрически это обеспечивается функцией отображения, которая задаёт бесконечную форму элемента. [3] [2]\n\nВ MIDAS GTS NX этот тип элемента применим не ко всем расчётам: динамический расчёт исключён; для него в руководстве указан элемент свободного поля. [3] Для элемента бесконечной области также есть ограничения на тип смежных элементов и на использование нагрузок и граничных условий. [1] [3]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5620.3514000008,
+      "question": "Как элемент бесконечной области моделирует неограниченный грунтовый массив?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 348,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=348",
+          "chunk_id": "3b10cf43-005b-5f27-b1b0-f3b5bbe34362"
+        },
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 11,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=11",
+          "chunk_id": "6f7458ee-b2c8-5125-abed-5fbc95825d8c"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::Infinite.htm",
+          "chunk_id": "cf602ee7-79bd-5a0d-8b7f-31bdeafb9301"
+        }
+      ]
+    },
+    {
+      "id": "golden-09",
+      "group": "golden",
+      "status": "completed",
+      "response": "В модели Мора–Кулона основные параметры прочности — **сцепление \\(c\\)** и **угол внутреннего трения \\(\\varphi\\)**: критерий описывает сдвиговую прочность через сцепление и нормальное напряжение с учётом угла трения. В предоставленном фрагменте запись формулы повреждена, поэтому не воспроизвожу её дословно. [2]\n\nПрочность на растяжение в описании GTS NX определяется автоматически по заданному сцеплению; для её ограничения предусмотрена опция **Tension-Cutoff**. [2]\n\nМодель описывает **упругопластическое поведение** грунта. Её линейная огибающая разрушения не учитывает влияние среднего главного напряжения на текучесть, а угол внутреннего трения не меняется с давлением обжатия. Поэтому точность снижается за пределами обычного диапазона давлений обжатия. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12203.186099999584,
+      "question": "Какие параметры прочности задаются в модели Мора–Кулона и какое поведение она описывает?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "528e7885-d769-5a64-9b95-c2cd588edc09"
+        }
+      ]
+    },
+    {
+      "id": "golden-10",
+      "group": "golden",
+      "status": "completed",
+      "response": "**Модель Мора—Кулона** — упругопластическая модель поведения грунта. В документации MIDAS GTS NX она описана как широко применяемая для нелинейных расчётов грунтового основания и моделирования разных типов грунта. [1]\n\nДля модели указаны два основных нелинейных параметра: **сцепление (C)** и **угол внутреннего трения (φ)**. [1]\n\nУ модели есть ограничения: критерий текучести не учитывает влияние среднего главного напряжения, а поверхность разрушения линейна — поэтому угол внутреннего трения в этой модели не меняется с давлением всестороннего обжатия. Документация отмечает, что точность хороша в ограниченном диапазоне такого давления и снижается при расширении диапазона. [1]\n\nВкратце: это распространённая и сравнительно простая модель для общих расчётов грунтов, но её допущения важно учитывать, особенно при широком диапазоне давлений обжатия. [1] Здесь речь именно о модели Мора—Кулона; **модифицированная** модель — отдельная расширенная модель, предназначенная, в частности, для песчаных и пылеватых грунтов. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 8317.065999999613,
+      "question": "Расскажи мне про модель Мора-Кулона",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "65e828c5-71af-585d-a0d8-2c1da4438e1e"
+        }
+      ],
+      "expansion": {
+        "status": "completed",
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "wall_latency_ms": 9870.931500001461,
+        "result": {
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          },
+          "sources": [
+            {
+              "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+              "page": 10,
+              "printed_page": null,
+              "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+              "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+              "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=10",
+              "chunk_id": "1e2068ee-3d03-58f6-a11e-3e47f6a5da67"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+              "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+              "chunk_id": "65e828c5-71af-585d-a0d8-2c1da4438e1e"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "golden-11",
+      "group": "golden",
+      "status": "completed",
+      "response": "В MIDAS GTS NX модель Мора—Кулона описывает упругопластическое поведение грунта и широко применяется для расчётов грунтовых оснований. Среди основных параметров названы сцепление `C` и угол внутреннего трения `φ`. [3]\n\nУ модели есть ограничения: критерий предполагает линейную поверхность разрушения, поэтому угол внутреннего трения не меняется с давлением обжатия; точность лучше в ограниченном диапазоне этого давления и снижается при расширении диапазона. [3] В источниках есть расхождение в описании ещё одного ограничения: английский текст говорит о влиянии промежуточного главного напряжения, а русский — о среднем главном напряжении. [2][3]\n\nВ GTS NX также описана **Modified Mohr-Coulomb** — модифицированная модель для грунтов, содержащих ил и песок. Она сочетает нелинейно-упругий и упругопластический подходы и позволяет моделировать двойное упрочнение; для неё можно задавать разные модули жёсткости при нагружении и разгрузке. [1]\n\nПакет evidence не содержит достаточно проверенных данных, чтобы привести формулу критерия или подробно объяснить все параметры. Если вас интересует конкретный аспект — например, выбор параметров, сравнение двух вариантов или настройка в GTS NX, — уточните его.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 9976.271900002757,
+      "question": "Меня интересует модель Мора-Кулона",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "65e828c5-71af-585d-a0d8-2c1da4438e1e"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 10,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=10",
+          "chunk_id": "1e2068ee-3d03-58f6-a11e-3e47f6a5da67"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        }
+      ]
+    },
+    {
+      "id": "golden-12",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX модель Мора—Кулона — это упругопластическая модель поведения грунта, которую руководство описывает как широко применяемую для нелинейного анализа грунтовых массивов. [2]\n\n**Главное ограничение:** критерий не учитывает влияние промежуточного главного напряжения на наступление текучести. Кроме того, огибающая прочности линейная, поэтому угол внутреннего трения в модели не меняется с давлением обжатия. Руководство отмечает, что модель достаточно точна в ограниченном диапазоне давлений обжатия, а при выходе за него точность снижается. [2]\n\nВ GTS NX есть также **модифицированная модель Мора—Кулона** — это отдельная, более сложная модель, объединяющая нелинейно-упругое и упругопластическое поведение. Она предназначена, в частности, для моделирования пылеватых и песчаных грунтов и позволяет описывать двойное упрочнение. [1]\n\nЭто краткий обзор по руководству GTS NX; точная версия в доступных фрагментах не указана. Могу отдельно объяснить параметры модели или сравнить обычную и модифицированную версии.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7596.713900002214,
+      "question": "Модель Мора-Кулана, хочу узнать про неё",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "65e828c5-71af-585d-a0d8-2c1da4438e1e"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 10,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=10",
+          "chunk_id": "1e2068ee-3d03-58f6-a11e-3e47f6a5da67"
+        }
+      ]
+    },
+    {
+      "id": "golden-13",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX модифицированная модель Мора–Кулона — это расширение классической упругопластической модели, ориентированное прежде всего на песчаные и пылеватые грунты. Она сочетает нелинейно-упругое и пластическое поведение; классическая модель описывает упругопластическое поведение и широко применяется для грунтовых оснований в обычном диапазоне давлений обжатия. [1][2]\n\nОсновные отличия модифицированной модели:\n\n- **Нелинейная жесткость:** осевые деформации и снижение жесткости под действием начальных девиаторных напряжений описываются подобно гиперболической модели, но формулировка ближе к теории пластичности. [1]\n- **Двойное упрочнение:** модель позволяет воспроизводить double stiffening, не зависящее от сдвигового разрушения или текучести при сжатии. [1]\n- **Учет дилатансии и текучести:** отличаются учет угла дилатансии и применение шатровой поверхности текучести. [1]\n- **Жесткость при нагружении и разгрузке:** можно задавать различные модули упругости для этих этапов. [1]\n\nПри этом у классического критерия Мора–Кулона документация отмечает ограничения: промежуточное главное напряжение не влияет на текучесть, а линейная поверхность разрушения означает, что угол внутреннего трения не зависит от давления обжатия. [2]\n\nПодробные формулы и полный перечень параметров здесь не привожу: в предоставленных фрагментах часть материала отсутствует. Указанные руководства относятся к GTS NX, но версия в evidence не определена.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7162.170200001128,
+      "question": "Чем модифицированная модель Мора–Кулона отличается от классической?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "65e828c5-71af-585d-a0d8-2c1da4438e1e"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        }
+      ]
+    },
+    {
+      "id": "golden-14",
+      "group": "golden",
+      "status": "completed",
+      "response": "Модель PM4Sand предназначена для динамического моделирования поведения песчаного грунта, в частности для расчёта накопления порового давления и разжижения. [1] Она описывается как модель пластичности, основанная на эффективных напряжениях. [1][2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5701.468600000226,
+      "question": "Для каких динамических задач грунта предназначена модель PM4Sand?",
+      "sources": [
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 87,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=87",
+          "chunk_id": "912e00f7-8468-56ae-9266-11248af2b57c"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 76,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=76",
+          "chunk_id": "d482d323-b359-533d-bd36-ac355a89874a"
+        }
+      ]
+    },
+    {
+      "id": "golden-15",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX расчёт фильтрации основан на **законе Дарси**: он связывает скорость фильтрации с градиентом полного напора. Для фильтрующего материала задаётся матрица коэффициентов фильтрации, в которой учитываются диагональные компоненты по направлениям в системе координат материала. Закон применяется к водонасыщенным и неводонасыщенным средам, а также к описанию низкоскоростного вязкого течения. [2]\n\nВ материалах для фильтрации учитываются следующие свойства и зависимости:\n\n- **Коэффициент фильтрации** в водонасыщенном состоянии и его изменение в зависимости от порового давления и коэффициента пористости. Для неводонасыщенного грунта коэффициент фильтрации и поровое давление можно задавать таблицей; также предусмотрены функции **Gardner**, **Frontal** и **Van Genuchten**. [1] [3]\n- **Отношение вертикальной проницаемости к горизонтальной** — оно может зависеть от порового давления и изменения коэффициента пористости. В описании функций упоминаются, в частности, минимальное отношение вертикальной проницаемости к горизонтальной и предельный напор отрицательного порового давления. [1] [3]\n- **Объёмное водосодержание** и его зависимость от порового давления. Оно определяется как \\(\\theta=V_w/V=nS\\), где \\(V_w\\) — объём воды, \\(V\\) — полный объём, \\(n\\) — пористость, \\(S\\) — степень водонасыщения. [3] [4] Для кривой Ван Генухтена названы минимальное и максимальное объёмное водосодержание и параметры кривой. [5]\n\nВ доступных фрагментах не приведён полный перечень конкретных полей ввода и единиц для этих параметров. Формулы для отдельных зависимостей также не восстановлены из иллюстраций, поэтому точные выражения здесь не привожу. [1] [6]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12733.628600002703,
+      "question": "Какие модели материала и параметры используются при расчёте фильтрации?",
+      "sources": [
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 114,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=114",
+          "chunk_id": "18b6ab17-b800-5e4c-b3b9-cf55e5ab96d8"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 113,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=113",
+          "chunk_id": "5b282b97-34c2-5f84-936e-b47e85dc9346"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 115,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=115",
+          "chunk_id": "e6acf196-5388-55dc-8087-06e300dff6d2"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 115,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=115",
+          "chunk_id": "6b3e896eaf9789f531fc3b506a7cbacedb2608d2e4c0c82c339e1b1868341c4c"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 116,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=116",
+          "chunk_id": "8cee0504-e98b-5728-a7b6-64f5c7164004"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 114,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=114",
+          "chunk_id": "795e09dd-5622-5942-b13d-44191d6471f7"
+        }
+      ]
+    },
+    {
+      "id": "golden-16",
+      "group": "golden",
+      "status": "completed",
+      "response": "В пособии по расчётам GTS NX для общего нелинейного решения описаны:\n\n- **Линейный поиск (Line Search)** — применяется в процессе итераций; в GTS NX его шаги повторяются до достижения заданного пользователем условия. [1]\n- **Метод начальной жёсткости** — использует тангенциальную жёсткость, вычисленную в начальной точке расчёта. [1]\n- **Метод Ньютона—Рафсона** — пересчитывает тангенциальную жёсткость на каждой итерации. [1]\n- **Модифицированный метод Ньютона—Рафсона** — пересчитывает её при изменении внешней силы. [1]\n- **Приближённый метод Ньютона (Quasi-Newton)** — вариант метода секущих; матрица жёсткости обновляется при приращении нагрузки, а её пересчёт на каждой итерации не выполняется. [2]\n\nЕсть оговорка: методы начальной жёсткости и модифицированный Ньютон—Рафсон в GTS NX **не представлены как отдельные явные методы**; выбор точки пересчёта тангенциальной жёсткости может дать эффект разных итерационных методов. Программа также поддерживает автоматический пересчёт жёсткости. [3]\n\nМетод пере-релаксации описан отдельно как способ ускорить сходимость за счёт умножения несбалансированной силы на коэффициент при итерации. [4]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 11877.37990000096,
+      "question": "Какие итерационные алгоритмы доступны для общего нелинейного расчёта?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 24,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=24",
+          "chunk_id": "c4c45536-9439-583d-b670-f5975340b12b"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 27,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+          "chunk_id": "291a8adb-bc02-5ed4-9ae8-30b2eb869162"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 25,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=25",
+          "chunk_id": "b77c46af-5b34-542f-b7b3-56c0f8c5fd36"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 30,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=30",
+          "chunk_id": "a5fa0822-a070-52b2-b159-bec0e811ba53"
+        }
+      ],
+      "expansion": {
+        "status": "completed",
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "wall_latency_ms": 9817.273399999976,
+        "result": {
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          },
+          "sources": [
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 1,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=1",
+              "chunk_id": "0536783a-468b-55d2-a3cf-9b1c5a53fe1a"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/Analysis_Control_(Option).htm",
+              "chunk_id": "0f40638e-c325-5111-bf94-6242571f453c"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 24,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=24",
+              "chunk_id": "c4c45536-9439-583d-b670-f5975340b12b"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 27,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+              "chunk_id": "291a8adb-bc02-5ed4-9ae8-30b2eb869162"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 27,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+              "chunk_id": "45c2d133-be45-5685-893a-0238ba3b33f4"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 29,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=29",
+              "chunk_id": "c4b50367-1033-5d12-926a-b40778770ed9"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 25,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=25",
+              "chunk_id": "b77c46af-5b34-542f-b7b3-56c0f8c5fd36"
+            },
+            {
+              "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+              "page": 30,
+              "printed_page": null,
+              "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+              "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+              "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=30",
+              "chunk_id": "a5fa0822-a070-52b2-b159-bec0e811ba53"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "golden-17",
+      "group": "golden",
+      "status": "completed",
+      "response": "В MIDAS GTS NX сходимость нелинейного решения можно оценивать по **усилию, перемещению или энергии**; критерий задаётся пользователем. [1][2]\n\n- **По усилию:** связано с несбалансированной силой — разностью внешней силы и внутреннего усилия. [2]\n- **По перемещению** и **по энергии:** это также предусмотренные варианты критерия сходимости. [1][2]\n- Для диагностики можно использовать один критерий или группу критериев и сравнивать их с заданными пользователем пределами. [3]\n\nВ найденных фрагментах не указаны точные формулы критериев по перемещению и энергии, способ их нормирования или рекомендуемые значения пределов. Поэтому конкретные формулы и численные допуски по этим данным подтвердить нельзя.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 14273.188000002847,
+      "question": "Какие критерии сходимости можно задавать по усилию, перемещению и энергии?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 29,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=29",
+          "chunk_id": "c4b50367-1033-5d12-926a-b40778770ed9"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 23,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=23",
+          "chunk_id": "b7b726c7-10d0-5f47-a31a-cc8380a4fe60"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 26,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=26",
+          "chunk_id": "b6cb8223-f6a0-5ecb-ab4e-d23561124069"
+        }
+      ]
+    },
+    {
+      "id": "golden-18",
+      "group": "golden",
+      "status": "completed",
+      "response": "В MIDAS GTS NX бисекция приращения нагрузки применяется, когда текущий шаг нагрузки слишком велик для сходимости нелинейного решения либо для его достижения требуется больше итераций, чем заданный пользователем максимум. Программа повторно запускает итерационный расчёт с уменьшенным приращением нагрузки, подбирая более подходящий шаг, и выполняет бисекцию автоматически до установленного пользователем максимального уровня. [1]\n\nТакой подход помогает при расходимости, уменьшая размер нагрузочного шага, на котором итерации не сходятся. Это может позволить расчёту продолжиться с меньшим приращением, но не гарантирует сходимость: например, документация также указывает, что метод Ньютона—Рафсона может расходиться при смене знака кривой около решения. [1][2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4948.938100002124,
+      "question": "Когда применяется бисекция приращения нагрузки и как она помогает при расходимости?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 26,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=26",
+          "chunk_id": "b6cb8223-f6a0-5ecb-ab4e-d23561124069"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Trouble_Shooting_Guide/Error/ERROR2103.htm",
+          "chunk_id": "7e2463e1-54dc-5f59-a19e-6e2139c7520c"
+        }
+      ]
+    },
+    {
+      "id": "golden-19",
+      "group": "golden",
+      "status": "completed",
+      "response": "В **GTS NX** применяются два метода, выбор которых зависит от решателя системы уравнений: [1]\n\n- **Передискретизация Ланцоша** — используется с мультифронтальным решателем по умолчанию и подходит для больших задач. При этом некоторые собственные значения могут быть пропущены, поэтому рекомендуется включать проверку последовательности Штурма (*Sturm sequence*). [1][2]\n- **Прямой решатель с плотной матрицей** — выполняет разбиение матрицы, формирование трёхдиагональной матрицы и расчёт собственных форм для всей матрицы. Пропуска собственных форм не происходит, но для больших задач метод не подходит. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4685.4969000014535,
+      "question": "Какие методы используются для извлечения собственных значений и форм колебаний?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 5,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=5",
+          "chunk_id": "f5ff2299-59ac-5f18-9b2d-8870a25c134a"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 5,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=5",
+          "chunk_id": "afac2283-3a14-5aa9-9947-602fac80002e"
+        }
+      ]
+    },
+    {
+      "id": "golden-20",
+      "group": "golden",
+      "status": "completed",
+      "response": "Метод суперпозиции форм заменяет физические перемещения их представлением через собственные формы колебаний и модальные перемещения. Вместо прямого решения полной системы динамического равновесия решается сокращенная система в модальных координатах; число ее переменных соответствует числу выбранных собственных форм. [1][3]\n\nЕсли модальная матрица демпфирования диагональна, уравнения разделяются по формам: отклик можно рассчитывать независимо для каждой моды. Если диагональность не выполняется, между модальными уравнениями сохраняется сопряжение. [1][2]\n\nСокращение достигается за счет исключения высших форм, поэтому такое представление является приближенным, а недостаточное число учтенных форм может снизить точность результатов. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5621.841100000893,
+      "question": "Как метод суперпозиции форм сокращает систему уравнений динамического равновесия?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 9,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=9",
+          "chunk_id": "160c3599-5dee-5c52-97f7-471d002189d6"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 10,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=10",
+          "chunk_id": "e47c5d87-c0b6-5ba6-a090-e26e4cbff363"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 8,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=8",
+          "chunk_id": "0f71be47-b6c0-53ab-9d08-d18234baaae3"
+        }
+      ]
+    },
+    {
+      "id": "golden-21",
+      "group": "golden",
+      "status": "completed",
+      "response": "AUTO-SOLID строит два типа объёмной сетки: тетраэдральную и преимущественно гексаэдральную гибридную. [2]\n\nГибридная сетка состоит из гексаэдров, пирамид и тетраэдров; в описании руководства указано, что пирамиды и тетраэдры размещаются на основании-гексаэдре. [3] [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4520.285499998863,
+      "question": "Какие два типа объёмной сетки строит AUTO-SOLID и из каких элементов состоит гибридная сетка?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 236,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=236",
+          "chunk_id": "c21aaeb1-68f1-57c5-b7a1-226a670782d8"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Generate/3D(Auto-Solid).htm",
+          "chunk_id": "8eac6ccf-f7cc-5925-b7e6-0f563bcef24b"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 236,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=236",
+          "chunk_id": "ae669e11-62e4-533c-b50e-5b9d0adf35e5"
+        }
+      ]
+    },
+    {
+      "id": "golden-22",
+      "group": "golden",
+      "status": "completed",
+      "response": "В **AUTO-FACE** доступны три алгоритма генерации 2D-сетки: **Loop Mesher**, **Grid Mesher** и **Delaunay Mesher**. [2]\n\nВ руководстве также поясняется, что **Loop** основан на алгоритме Looping, а **Grid** — на Modified grid algorithm; описание **Delaunay Mesher** в приведённом фрагменте не дано. [2] AUTO-FACE создаёт сетку на выбранной поверхности. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5853.28010000012,
+      "question": "Какие алгоритмы генерации двумерной сетки доступны в AUTO-FACE?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 229,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=229",
+          "chunk_id": "eb615e87-ef45-5927-8efe-848df00b690c"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 230,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=230",
+          "chunk_id": "5d609e28-5c33-53e4-a123-a83cf2df7c91"
+        }
+      ]
+    },
+    {
+      "id": "golden-23",
+      "group": "golden",
+      "status": "completed",
+      "response": "Стыковка нужна, чтобы узлы соседних элементов были соединены: если между ними остаётся интерфейс, но узлы не связаны, при расчёте могут возникнуть ошибки. Руководство предупреждает, что без включённой опции узлы могут остаться несоединёнными даже при наличии интерфейса между двумя телами; поэтому её рекомендуют оставлять включённой, если узлы не требуется удалять отдельно. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5122.221099998569,
+      "question": "Почему при генерации сетки важно включать стыковку узлов соседних граней?",
+      "sources": [
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 237,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=237",
+          "chunk_id": "e68a0abb-d964-57fa-a1d2-44cf605f07d0"
+        }
+      ]
+    },
+    {
+      "id": "golden-24",
+      "group": "golden",
+      "status": "completed",
+      "response": "Расчёт накопительный, потому что GTS NX не строит независимую модель для каждой стадии: в очередной стадии задаются только изменения конструкции или нагрузки, а результаты предыдущих стадий переносятся дальше. Поэтому на последующий расчёт влияют накопленные изменения конструкции и история нагружения. [1]\n\nНачинается он с исходного состояния грунта на площадке до строительства — естественного напряжённого состояния. На первом этапе это состояние рассчитывают, в GTS NX для этого используют собственный вес грунта. [1] [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5988.468399998965,
+      "question": "Почему расчёт стадий строительства является накопительным и с какого состояния грунта он начинается?",
+      "sources": [
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 8,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=8",
+          "chunk_id": "3fde3a95-9ba9-517c-b654-22f92b3b0bdf"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/General/Construction_Stage_Analysis.htm",
+          "chunk_id": "51e2a5ba-b6ef-5933-8272-612e5d93a6fe"
+        }
+      ],
+      "expansion": {
+        "status": "completed",
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "wall_latency_ms": 6087.518000000273,
+        "result": {
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          },
+          "sources": [
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 8,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=8",
+              "chunk_id": "3fde3a95-9ba9-517c-b654-22f92b3b0bdf"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 23,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=23",
+              "chunk_id": "5413dfaf-b850-5b4b-bf6a-a810eff0c4c1"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/General/Construction_Stage_Analysis.htm",
+              "chunk_id": "51e2a5ba-b6ef-5933-8272-612e5d93a6fe"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "golden-25",
+      "group": "golden",
+      "status": "completed",
+      "response": "В руководстве GTS NX перечислены типы construction stage: **Stress**, **Seepage**, **Stress-Seepage-Slope**, **Consolidation**, **Fully Coupled Stress Seepage**, **Heat Transfer**, **Seepage-Thermal Stress** и **Thermal Stress**. [1][3]\n\nПо запрошенным областям:\n\n- **Напряжения:** `Stress`; также комбинированные варианты `Stress-Seepage-Slope`, `Fully Coupled Stress Seepage` и `Thermal Stress`. Руководство описывает их соответственно как расчет напряженного состояния с устойчивостью откоса, полностью сопряженный расчет напряжений и фильтрации и термомеханическое моделирование. [2]\n- **Фильтрация:** `Seepage`; а также `Stress-Seepage-Slope`, `Fully Coupled Stress Seepage` и `Seepage-Thermal Stress`. Для `Seepage-Thermal Stress` указано термогидромеханическое моделирование. [2]\n- **Консолидация:** `Consolidation` — расчет консолидации с учетом изменения внешних условий и этапности строительства. [2]\n- **Теплопередача:** `Heat Transfer` — стадийный расчет в стационарной или нестационарной постановке; также доступны связанные типы `Seepage-Thermal Stress` и `Thermal Stress`. [2]\n\nЭти группы пересекаются: комбинированные типы относятся сразу к нескольким физическим задачам. Указанные источники не обозначают версию руководства.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 9919.046399998479,
+      "question": "Какие типы construction stage поддерживаются для напряжений, фильтрации, консолидации и теплопередачи?",
+      "sources": [
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 16,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=16",
+          "chunk_id": "9a54de16-a644-578c-b294-6256e2308ad0"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/General/Construction_Stage_Analysis.htm",
+          "chunk_id": "1627289b-c31b-56ec-bd95-c65bbbfe5749"
+        },
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 16,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=16",
+          "chunk_id": "80d6715c-846f-5677-8090-a4188dc91226"
+        }
+      ]
+    },
+    {
+      "id": "golden-26",
+      "group": "golden",
+      "status": "completed",
+      "response": "**K₀ задаёт коэффициент бокового давления грунта**: он связывает горизонтальное начальное напряжение с вертикальным. Вместе с собственным весом грунта он используется для формирования естественного начального напряжённого состояния — до выемки или насыпи. [1][2]\n\nВ GTS NX такое состояние можно смоделировать на первом этапе строительства с учётом поэтапности расчёта. Для горизонтальной поверхности основания этот подход описан как применимый; при уклоне рекомендуется добавить этап строительства, чтобы добиться сходимости расчёта напряжений. [2]\n\nВ выдержке с формулой обозначения распознаны не полностью, поэтому точную запись формулы здесь не привожу. Для модели **SEKIGUCHI-OHTA (VISCID)** руководство отдельно указывает, что условие K₀ необходимо учитывать при задании начальных напряжений; K₀-анизотропия для этой модели не применяется. [1][3]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 13072.182500000054,
+      "question": "Как коэффициент K0 используется при формировании начального напряжённого состояния грунта?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/Material_Properties.htm",
+          "chunk_id": "0629fc85-3257-5fbd-a337-d40605506bdc"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Material/Material_Properties.htm",
+          "chunk_id": "8cb26b4f-05bf-5d42-9b10-e5ad612b6de5"
+        },
+        {
+          "file_name": "04_User Manual_Chapter4_Mesh.pdf",
+          "page": 55,
+          "printed_page": null,
+          "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+          "source_hash": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+          "source_locator": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf#page=55",
+          "chunk_id": "cfb1c616-f8bc-5344-adf6-194f85e7c7ac"
+        }
+      ]
+    },
+    {
+      "id": "golden-27",
+      "group": "golden",
+      "status": "completed",
+      "response": "В руководстве GTS NX описаны четыре булевы операции над телами:\n\n- **Fuse (Слияние)** — объединяет формы в одну. Для тел после слияния сохраняются внешние граничные линии; если включить **Merge faces**, объекты определяются как одна грань, а линии границ удаляются. [1]\n- **Cut (Вычитание)** — удаляет из целевого тела область пересечения с инструментальным телом. [4]\n- **Common (Общее)** — оставляет только область пересечения целевого и инструментального тел. [3]\n- **Embed (Внедрение)** — помещает инструментальную форму в целевую; результат операции **Common** между ними встраивается в целевую форму. Это применяют, например, при моделировании твёрдого элемента, содержащего другой элемент из иного материала. [2]\n\nОперации **Fuse**, **Cut** и **Common** чувствительны к ошибкам геометрии. Если они работают некорректно, руководство рекомендует исправить форму с помощью **Boolean > Surface > Sew** и повторить операцию; применение этих операций к точкам или составным формам может дать некорректную форму и не рекомендуется. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 9344.00370000003,
+      "question": "Какие булевы операции над геометрическими телами доступны и для чего они применяются?",
+      "sources": [
+        {
+          "file_name": "03_User Manual_Chapter3_Geometry.pdf",
+          "page": 64,
+          "printed_page": null,
+          "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+          "source_hash": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+          "source_locator": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf#page=64",
+          "chunk_id": "2f0a9083-c480-535d-8f72-e698adf5c513"
+        },
+        {
+          "file_name": "03_User Manual_Chapter3_Geometry.pdf",
+          "page": 67,
+          "printed_page": null,
+          "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+          "source_hash": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+          "source_locator": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf#page=67",
+          "chunk_id": "96cd5b50-4171-5be2-aae0-ebd5daa42b71"
+        },
+        {
+          "file_name": "03_User Manual_Chapter3_Geometry.pdf",
+          "page": 66,
+          "printed_page": null,
+          "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+          "source_hash": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+          "source_locator": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf#page=66",
+          "chunk_id": "2f34e07a-cb23-53f7-9857-91aecbcabc4a"
+        },
+        {
+          "file_name": "03_User Manual_Chapter3_Geometry.pdf",
+          "page": 65,
+          "printed_page": null,
+          "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+          "source_hash": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+          "source_locator": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf#page=65",
+          "chunk_id": "a92aa094-4c31-5b62-8a9a-5f5c230a0b30"
+        }
+      ]
+    },
+    {
+      "id": "golden-28",
+      "group": "golden",
+      "status": "completed",
+      "response": "**Geometry Set** служит именованной геометрической выборкой: в неё включают созданные геометрические формы, а имя выборки задаёт пользователь. Например, такую опцию можно встретить при создании объектов командами Loft, Revolve и Rotate.[1][2][3]\n\nДля некоторых объектов руководство уточняет, как они отображаются в дереве модели: созданные плоскости напластования и колонные сечения регистрируются в Geometry Set в дереве модели как грань и линия соответственно.[4] Таким образом, набор помогает собрать созданные объекты в указанную выборку; доступные сведения не описывают дополнительные правила организации наборов.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4998.65249999857,
+      "question": "Как Geometry Set используется для организации созданных геометрических объектов?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Geometry/Protrude/Loft.htm",
+          "chunk_id": "f5ec98a2-a7a5-5bf2-ada3-dbd3d9a35ee1"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Geometry/Protrude/Revolve.htm",
+          "chunk_id": "a37e6dff-5378-5d4a-ac53-2387e8c3ab3f"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Geometry/Transfer/Rotate.htm",
+          "chunk_id": "f7625225-f049-5409-b251-bafeb802caae"
+        },
+        {
+          "file_name": "03_User Manual_Chapter3_Geometry.pdf",
+          "page": 63,
+          "printed_page": 62,
+          "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+          "source_hash": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+          "source_locator": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf#page=63",
+          "chunk_id": "45c191f1-90c7-5629-a218-f031291dc643"
+        }
+      ]
+    },
+    {
+      "id": "golden-29",
+      "group": "golden",
+      "status": "completed",
+      "response": "При импорте CAD-файла нужно указать единицы длины: файл не содержит сведений о них, поэтому выбранные единицы определяют размер импортированной геометрии. Поддерживаются метрические и британские единицы. [1]\n\nДля DXF дополнительно учитывайте, что AutoCAD не задаёт единицы измерения; размеры импортируемой формы определяются настройками GTS NX. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 3752.6137999993807,
+      "question": "Как выбор единиц при импорте CAD влияет на размер импортируемой геометрии?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/General_Information/Start_file/Import.htm",
+          "chunk_id": "25f7f24a-20fa-5eb7-97de-0fb7747440c0"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/Analysis_Setting.htm",
+          "chunk_id": "463dbe57-a60a-59be-a7fa-93d02f06ed05"
+        }
+      ]
+    },
+    {
+      "id": "golden-30",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX глобальная система координат (ГСК) фиксирована — изменить её ориентацию этим способом нельзя. Для просмотра импортированной CAD-модели в привычной CAD-перспективе выберите на панели **View Toolbar** команду **Two-point Isometric View** («изометрический вид по двум точкам»). Этот вид рассчитан на CAD-программы, где ось Y направлена вверх; он меняет перспективу просмотра, а не саму ГСК. [1][2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4655.362299999979,
+      "question": "Как изменить ориентацию глобальной системы координат при просмотре импортированной CAD-модели?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/General_Information/Modeling_Guide_Toolbar.htm",
+          "chunk_id": "7a87a9a3-de65-5eaa-bd1c-20a48ff50849"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/General_Information/View_Toolbar.htm",
+          "chunk_id": "c9c64b3d-cab0-52cd-95a7-ce9710f22bf6"
+        }
+      ]
+    },
+    {
+      "id": "golden-31",
+      "group": "golden",
+      "status": "completed",
+      "response": "**Упругое поведение** означает, что после снятия внешней нагрузки материал возвращается к исходной форме и не сохраняет остаточную деформацию. В GTS NX предусмотрены линейно-упругие и нелинейно-упругие модели материалов.[2]\n\nВ пособии перечислены такие модели:\n\n- **Линейно-упругие:** изотропная, двумерная ортотропная и поперечно-изотропная; также указана **упругая контактная** модель.[5][6][7][8]\n- **Нелинейно-упругие:** одномерная модель и модель **Jardine**. Jardine описывает нелинейное поведение при малых деформациях.[9][10][1]\n\nДля отдельных типов элементов предусмотрены и нелинейно-упругие варианты поведения. Для стержневых и встраиваемых стержневых элементов это работа только на сжатие или растяжение, начальный зазор, отгиб и пользовательская модель.[4] Для элементов упругой связи — обобщённая модель, работа только на растяжение или сжатие и пользовательская модель; их поведение задаётся соотношением усилия и перемещения.[3]\n\nПеречень применимости моделей к типам конечных элементов в имеющемся фрагменте таблицы восстановлен ненадёжно, поэтому здесь он не приводится. Версия GTS NX в источниках не указана.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12049.577100002352,
+      "question": "Что означает упругое поведение материала и какие упругие модели доступны в GTS NX?",
+      "sources": [
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 13,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=13",
+          "chunk_id": "33f08188-89ca-5618-8ebb-cd498fbb4684"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "80432b44-ee44-5fd1-9638-ffdfb538510c"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 12,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=12",
+          "chunk_id": "cfb14dc3-7940-5ea1-b2d1-7b4b6682e74b"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 11,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=11",
+          "chunk_id": "61943ecf-0776-5670-8967-19e6a6d6839a"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "3ce7fa95930642b708c4f3c41fe769b0899f024bd1d6082c4cee4ab2ba5a9b08"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "c1cd872878f12766322ff264f849d9a6475766fc0f62d5e1c9a2d348d4bad934"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "dbb214b07333119ba21334d4bb1079efbd75d09acab20367612c1aebe7cf1a71"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "dffba59de4a9212404a9b320e45f6e5eccf04804cb8ec91e0a4651a5fa1c3b81"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "604e37b5eff4456db1bcf0ed3681c5852063fb9018e571ab95b6222a712c05fc"
+        },
+        {
+          "file_name": "04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+          "source_hash": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+          "source_locator": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf#page=1",
+          "chunk_id": "2360d242c481cc2db054ecbd368f3dc756067093e3308eb71d8dee0db2c5d99f"
+        }
+      ]
+    },
+    {
+      "id": "golden-32",
+      "group": "golden",
+      "status": "completed",
+      "response": "В GTS NX граничные условия зависят от типа анализа: руководство делит их на ограничения степеней свободы (DOF) для анализа напряжений, условия фильтрации для seepage analysis и граничные элементы для equivalent linear analysis. [1]\n\n- **Анализ напряжений — ограничения DOF.** Они задают, какие перемещения или вращения узлов запрещены. Можно ограничивать нужные степени свободы отдельного узла, в том числе для согласования элементов с разными наборами DOF. Ограничения задаются относительно глобальной системы координат (GCS), а если у узла задана локальная система координат — относительно неё. [1] Например, для плоской модели X–Z руководство указывает ограничить перемещения по Y и вращения вокруг X и Z для всех узлов; дополнительные ограничения назначаются по типу опоры. [1] Для обычного stress analysis ограничения можно автоматически создать для выбранного mesh set: руководство приводит примеры закреплений по боковым граням и внизу модели. [5]\n\n- **Фильтрация и консолидация — seepage boundary.** В перечне типов указаны узловой напор, узловой поток и поток по поверхности. [2] Узловой напор применяют в задачах фильтрации и консолидации, включая полностью связанные расчёты. [3] Для напора руководство описывает два способа ввода: `Total` — значение напора, отсчитываемое от начала координат независимо от положения модели; `Pressure` — условие уровня грунтовых вод, задаваемое нулём в узлах на поверхности воды. Для меняющегося во времени уровня можно использовать функцию. [6]\n\n- **Dynamic 2D Equivalent linear analysis — граничные условия модели грунта.** В этой постановке доступны элементное, вязкое и передающее граничные условия. [4] Элементное условие бывает со свободным краем, куда вводится сейсмическая нагрузка, или с фиксированным краем, куда вводится перемещение на границе свободного поля; при этом оно не учитывает отражение волн от плиты фундамента. Вязкое условие поглощает волны, падающие под некоторым углом, но для сложных поверхностных волн руководство советует располагать границу на некотором расстоянии от фундамента. Передающее условие моделирует горизонтальный слой грунта пружиной и демпфером как функцию частоты; оно учитывает почти все типы объёмных и поверхностных волн, но предполагает одинаковые горизонтальные свойства слоёв. [4]\n\nДля ограничений DOF можно выбирать геометрические объекты, чтобы назначить условие узлам сетки, входящим в выбранную точку, ребро или грань; набор ограничений можно зарегистрировать как `Boundary set`. [5] Это обзор основных групп, а не полный перечень настроек каждого расчётного режима. В приведённых фрагментах часть материала относится к GTS NX 2021, а версия руководства с описанием DOF не указана.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12373.402699999133,
+      "question": "Расскажи про граничные условия в GTS NX",
+      "sources": [
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 32,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=32",
+          "chunk_id": "54668c79-bec1-5911-af56-44c6ec448d2a"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Function.htm",
+          "chunk_id": "9019bbc9-5a44-5f08-a743-296c070451e3"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Seepage,Consolidation_Analysis/Boundary/Nodal_Head.htm",
+          "chunk_id": "d22c3e93-4a3b-5a5e-ab20-d8670c0c6a5b"
+        },
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 64,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=64",
+          "chunk_id": "631ca694-1641-5050-b9d0-f6baeea2a935"
+        },
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 37,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=37",
+          "chunk_id": "12a0649d-fcd9-59a8-9262-2d4508a922ec"
+        },
+        {
+          "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+          "page": 50,
+          "printed_page": null,
+          "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+          "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+          "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=50",
+          "chunk_id": "90adfd8b-2e10-56a0-967d-6af8b5bca839"
+        }
+      ],
+      "expansion": {
+        "status": "completed",
+        "preview_preserves_history": true,
+        "false_confirmation_http_status": 422,
+        "false_confirmation_preserves_history": true,
+        "replay_equal": true,
+        "replay_preserves_history": true,
+        "wall_latency_ms": 48581.198799998674,
+        "result": {
+          "answer_info": {
+            "mode": "expanded",
+            "expandable": false,
+            "incomplete": false
+          },
+          "sources": [
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 32,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=32",
+              "chunk_id": "54668c79-bec1-5911-af56-44c6ec448d2a"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 66,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=66",
+              "chunk_id": "ab659236-582e-54e1-a61a-46dce5de7155"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Function.htm",
+              "chunk_id": "9019bbc9-5a44-5f08-a743-296c070451e3"
+            },
+            {
+              "file_name": "GTS_NX 2021.chm",
+              "page": null,
+              "printed_page": null,
+              "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+              "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+              "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Seepage,Consolidation_Analysis/Boundary/Nodal_Head.htm",
+              "chunk_id": "d22c3e93-4a3b-5a5e-ab20-d8670c0c6a5b"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 64,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=64",
+              "chunk_id": "631ca694-1641-5050-b9d0-f6baeea2a935"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 37,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=37",
+              "chunk_id": "12a0649d-fcd9-59a8-9262-2d4508a922ec"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 50,
+              "printed_page": null,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=50",
+              "chunk_id": "90adfd8b-2e10-56a0-967d-6af8b5bca839"
+            },
+            {
+              "file_name": "05_User Manual_Chapter5_Analysis Method.pdf",
+              "page": 53,
+              "printed_page": 52,
+              "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+              "source_hash": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+              "source_locator": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf#page=53",
+              "chunk_id": "c8b67c5a-8054-5efe-b06f-2ec820188699"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "golden-33",
+      "group": "golden",
+      "status": "completed",
+      "response": "В предоставленных материалах цена лицензий GTS NX не указана, поэтому назвать сумму не могу. Для актуальной стоимости запросите коммерческое предложение у MIDAS или местного дистрибьютора.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 6864.236299999902,
+      "question": "Сколько стоят лицензии GTS NX?",
+      "sources": []
+    },
+    {
+      "id": "golden-34",
+      "group": "golden",
+      "status": "completed",
+      "response": "Элемент плоской деформации использует степени свободы перемещения по направлениям осей **x и y элементной системы координат (ECS)**. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 4520.901500000036,
+      "question": "Какие степени свободы используются для элемента плоской деформации в GTS NX?",
+      "sources": [
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 32,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=32",
+          "chunk_id": "4c01bc26-a089-553d-9572-25f915b0af7a"
+        }
+      ]
+    },
+    {
+      "id": "followup-01-seed",
+      "group": "followup_seed",
+      "status": "completed",
+      "response": "В конструкционном расчёте используются **три поступательные и три вращательные степени свободы** — всего шесть. [1]\n\nВ узловой цилиндрической системе координат поступательные степени свободы относятся к направлениям **r, θ, z**; вращательные — к поворотам относительно соответствующих осей. Степени свободы задаются относительно системы координат узла. [1][2]\n\nВ доступном текстовом фрагменте пособия точная запись обозначений для цилиндрической системы не сохранилась: после упоминания рисунка с ними идёт нетранскрибированная иллюстрация. Поэтому точные символы и порядок обозначений подтвердить не могу. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 9620.223600002646,
+      "question": "Какие шесть степеней свободы используются в конструкционном расчёте и как они соответствуют направлениям r, θ, z?",
+      "sources": [
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 1,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=1",
+          "chunk_id": "da631074-95f7-534c-b21a-bf1b1e64ae76"
+        },
+        {
+          "file_name": "02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+          "page": 3,
+          "printed_page": null,
+          "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+          "source_hash": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+          "source_locator": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf#page=3",
+          "chunk_id": "d1acd275-4be2-5c81-b0a7-2dd9bc584160"
+        }
+      ]
+    },
+    {
+      "id": "followup-01-question",
+      "group": "followup",
+      "status": "completed",
+      "response": "Для элемента **плоской деформации** используются две поступательные степени свободы — перемещения по осям **x и y** элементной системы координат; вращательные степени свободы не указаны для этого элемента. [1]\n\nВ 2D-модели GTS NX расчёт выполняется в плоскости **x–y**. Поэтому здесь не выбирают из трёх направлений **r, θ, z**: для плоской деформации применяются направления **x, y**, а не полный набор шести степеней свободы конструкционного расчёта. [2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12299.801400000433,
+      "question": "А какие из них используются для плоской деформации?",
+      "sources": [
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 32,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=32",
+          "chunk_id": "4c01bc26-a089-553d-9572-25f915b0af7a"
+        },
+        {
+          "file_name": "03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+          "page": 31,
+          "printed_page": null,
+          "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+          "source_hash": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+          "source_locator": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf#page=31",
+          "chunk_id": "f2325e9f-f91e-5b30-8c5e-712370371406"
+        }
+      ]
+    },
+    {
+      "id": "followup-10-seed",
+      "group": "followup_seed",
+      "status": "completed",
+      "response": "В MIDAS GTS NX модель Мора—Кулона описывает **упругопластическое поведение грунта** и применяется для обычных нелинейных расчётов оснований; документация отмечает, что она широко используется для моделирования разных типов грунта. [1]\n\nДля задания критерия текучести указаны два основных нелинейных параметра: **сцепление** и **угол внутреннего трения**. [1]\n\nУ модели есть ограничения: критерий не учитывает влияние среднего главного напряжения на текучесть, а его меридиан и поверхность разрушения линейны — в частности, угол внутреннего трения не меняется с давлением всестороннего обжатия. Поэтому точность лучше в ограниченном диапазоне такого давления и снижается, если диапазон шире; при этом модель ценят за простоту и достаточную точность в обычных пределах обжатия. [1]\n\nЭто описание относится к материалам MIDAS GTS NX; версия документации в предоставленных данных не указана. Формулу критерия по этим фрагментам привести нельзя: она не содержится в доступном текстовом описании.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7629.345500001364,
+      "question": "Расскажи мне про модель Мора-Кулона",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        }
+      ]
+    },
+    {
+      "id": "followup-10-question",
+      "group": "followup",
+      "status": "completed",
+      "response": "В описании обычной модели Мора—Кулона в MIDAS GTS NX указаны такие ограничения:\n\n- **Среднее главное напряжение не влияет на текучесть.** Руководство отмечает, что это расходится с поведением грунтов, наблюдаемым при испытаниях. [1]\n- **Зависимость прочности от обжатия упрощена:** меридиан и поверхность разрушения линейны, поэтому угол внутреннего трения не меняется с давлением всестороннего обжатия. Точность модели выше в ограниченном диапазоне давления обжатия и снижается, если этот диапазон шире. [1]\n- **Не учитывается текучесть при чрезмерном сжатии.** В документации для её описания предусмотрена шатровая опция модели *Modified Mohr-Coulomb*; это свойство расширенной модели, а не обычного критерия Мора—Кулона. [3]\n- **Следует учитывать поведение при растяжении:** прочность на растяжение автоматически связана с заданным сцеплением. Поскольку прочностью грунта на растяжение обычно пренебрегают, в GTS NX предусмотрена опция *Tension-Cutoff*, чтобы избежать нереалистичного поведения при высоком сопротивлении растяжению. [2]\n\nИтого: главная оговорка — упрощённое описание зависимости прочности от напряжённого состояния; особенно важен ограниченный диапазон давления обжатия, в котором модель сохраняет точность. [1]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7941.140299997642,
+      "question": "А какие у неё ограничения?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "2cc97221-2610-5a57-a9f8-158afdcfefee"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Mohr-Coulmb.htm",
+          "chunk_id": "528e7885-d769-5a64-9b95-c2cd588edc09"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "df46e75c-68d6-52d3-9d63-0d6a0d26f27c"
+        }
+      ]
+    },
+    {
+      "id": "followup-16-seed",
+      "group": "followup_seed",
+      "status": "completed",
+      "response": "Для общего нелинейного конечно-элементного решения в GTS NX описаны следующие итерационные методы:\n\n- **Метод начальной (постоянной) жесткости**: тангенциальная жесткость вычисляется в начальной точке и затем остается постоянной.\n- **Метод Ньютона—Рафсона**: тангенциальная жесткость пересчитывается на каждой итерации.\n- **Модифицированный метод Ньютона—Рафсона**: жесткость пересчитывается при изменении внешней силы. [1]\n\nВ руководстве также описан **приближенный метод Ньютона (Quasi-Newton)**: он использует подход, близкий к модифицированному методу Ньютона—Рафсона, и метод BFGS для приближенной коррекции; это позволяет не пересчитывать матрицу жесткости на каждой итерации. [2][3][7]\n\nДля улучшения основных итерационных вычислений предусмотрен **линейный поиск (Line search)**: он использует скалярный коэффициент η при сложении шагового решения с накопленным, чтобы повысить точность. [8]\n\nВажное уточнение: руководство указывает, что методы постоянной жесткости и модифицированный метод Ньютона—Рафсона **не представлены в GTS NX явно**; настройка точки пересчета тангенциальной жесткости может давать эффект использования этих методов. Также описан автоматический пересчет жесткости при ожидаемом большом числе итераций или диагностированном расхождении. [5]\n\n**Метод длины дуги** тоже упоминается, но он предназначен прежде всего для отслеживания неустойчивого равновесия; для общих нелинейных задач руководство не отмечает у него преимуществ. [4][6]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 12524.840699999913,
+      "question": "Какие итерационные алгоритмы доступны для общего нелинейного расчёта?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 24,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=24",
+          "chunk_id": "c4c45536-9439-583d-b670-f5975340b12b"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 27,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+          "chunk_id": "291a8adb-bc02-5ed4-9ae8-30b2eb869162"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 27,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+          "chunk_id": "45c2d133-be45-5685-893a-0238ba3b33f4"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 29,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=29",
+          "chunk_id": "c4b50367-1033-5d12-926a-b40778770ed9"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 25,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=25",
+          "chunk_id": "b77c46af-5b34-542f-b7b3-56c0f8c5fd36"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 28,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=28",
+          "chunk_id": "0d4e8b62-786c-5582-a8c6-c5a06238afe9"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 27,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=27",
+          "chunk_id": "b493baaa-99db-5c6c-a98d-dc8c198dee15"
+        },
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 23,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=23",
+          "chunk_id": "b7b726c7-10d0-5f47-a31a-cc8380a4fe60"
+        }
+      ]
+    },
+    {
+      "id": "followup-16-question",
+      "group": "followup",
+      "status": "completed",
+      "response": "В общем нелинейном расчёте GTS NX проверяет сходимость по **силовому критерию, критерию перемещений и энергетическому критерию**. Для каждого выбранного критерия изменение соответствующей величины сравнивается с заданным критериальным значением; итерация считается сошедшейся, когда удовлетворены **все выбранные условия**. [1][2]\n\nСиловой критерий связан с величиной несбалансированной силы и показывает, насколько удовлетворяется нелинейное уравнение. Критерий перемещений оценивает размер пошагового решения, но его не рекомендуется использовать как единственный для задач с очень большой локальной жёсткостью, например при применении метода штрафов (*penalty*). [1] В пособии указано, что для обычных нелинейных систем все критерии при сходимости обычно снижаются одновременно. [1]\n\nЧисленные пороги критериев в приведённых фрагментах не указаны. [1][2]",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 6789.989199998672,
+      "question": "А как они проверяют сходимость?",
+      "sources": [
+        {
+          "file_name": "05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+          "page": 25,
+          "printed_page": null,
+          "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+          "source_hash": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+          "source_locator": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf#page=25",
+          "chunk_id": "b77c46af-5b34-542f-b7b3-56c0f8c5fd36"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Analysis/Analysis_Case/Analysis_Control_(Option).htm",
+          "chunk_id": "0f40638e-c325-5111-bf94-6242571f453c"
+        }
+      ]
+    },
+    {
+      "id": "ambiguous-cold",
+      "group": "clarification",
+      "status": "completed",
+      "response": "Уточните, пожалуйста, **для какой настройки или модели** — в evidence упомянуты разные вещи, и полного списка конкретных параметров нет.\n\n- Для дополнительных параметров моделей **Modified Mohr-Coulomb**, **Soft Soil**, **Soft Soil Creep** и **Hardening Soil (small strain stiffness)** указано использовать рекомендованные значения; сами названия параметров и их значения в предоставленных фрагментах не приведены. [2] [3] [4] [5] [6] [7] [8]\n- Для **Free Field** указан параметр **Width Factor (Penalty Parameter)**. В источнике записано, что для минимизации влияния размеров модели нужно задать значение «более 104»; оно умножается на ширину модели. Для 2D-модели имеется в виду ширина плоской деформации — единичная ширина. [1]\n\nНапишите название нужной модели или настройки — тогда можно будет определить, какие именно параметры задавать.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7183.852500002104,
+      "question": "Какие параметры нужно задать?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Element/Free_Field.htm",
+          "chunk_id": "ff849746-0d67-5f06-96fe-90cc716ce653"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "a75c1540-0d28-5706-b5f8-ca515e3c871b"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Soft_Soil_Creep.htm",
+          "chunk_id": "8a327574-b559-5491-b530-e385dc1f7f6a"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Material/General_Material_(Behavioral_properties)/Hardening_Soil(small_strain_stiffness).htm",
+          "chunk_id": "fbe32f22-fbcf-5484-95b8-ecbcdf072eda"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Soft_Soil.htm",
+          "chunk_id": "9b85422a-4511-5763-8124-3e413479e958"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Hardening_Soil(small_strain_stiffness).htm",
+          "chunk_id": "8ea1d5ed-7de2-5ec3-9816-9a6dc23a3e9c"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Soft_Soil_Creep.htm",
+          "chunk_id": "339f274d-076b-55ac-8b22-d2f13ccd4aa0"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Mesh/Property,Coordinate,Function/Material/General_Material_(Behavioral_properties)/Modified_Mohr-Coulomb.htm",
+          "chunk_id": "40e1ccd0-84f0-5b62-8ef1-91f3b90e8c6e"
+        }
+      ]
+    },
+    {
+      "id": "refusal-discount",
+      "group": "refusal",
+      "status": "completed",
+      "response": "В предоставленных материалах нет сведений о текущей цене лицензии GTS NX или о скидке, которую MIDAS гарантирует сегодня. Поэтому я не могу назвать точную сумму или подтвердить гарантированную скидку. Для актуального предложения нужно запросить расчёт у MIDAS или официального продавца.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 5920.63380000036,
+      "question": "Какая точная цена лицензии GTS NX и какую скидку MIDAS гарантирует мне сегодня?",
+      "sources": []
+    },
+    {
+      "id": "refusal-sla",
+      "group": "refusal",
+      "status": "completed",
+      "response": "По предоставленным материалам нельзя определить ваш гарантированный SLA или срок исправления ошибки в часах: в них есть техническая документация GTS NX, но не условия вашего договора. [1][2]\n\nПришлите раздел договора о поддержке/SLA (можно скрыть персональные и платёжные данные) — тогда помогу найти сроки реакции и устранения ошибки.",
+      "answer_info": {
+        "mode": "brief",
+        "expandable": true,
+        "incomplete": false
+      },
+      "transport_matches_persisted": true,
+      "sources_match_persisted": true,
+      "wall_latency_ms": 7218.248199998925,
+      "question": "Какой гарантированный SLA MIDAS по моему договору и за сколько часов вы обязаны исправить ошибку?",
+      "sources": [
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Trouble_Shooting_Guide/Error/ERROR2113.htm",
+          "chunk_id": "50377b12-6642-544c-9c76-894eec3fb8b7"
+        },
+        {
+          "file_name": "GTS_NX 2021.chm",
+          "page": null,
+          "printed_page": null,
+          "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+          "source_hash": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+          "source_locator": "rag-block-03/GTS_NX 2021.chm::GTS_NX/Appendix/USSR.htm",
+          "chunk_id": "63ace1df-6ecc-5435-b56e-a2c57a143a43"
+        }
+      ]
+    }
+  ]
+}

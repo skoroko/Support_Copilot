@@ -64,17 +64,23 @@ The matching prebuilt topology is in
 
 ## 5. Benchmark table
 
-The benchmark has not been live-run because it makes exactly 45 agent
-executions (5 existing 6.2 cases × 3 implementations × 3 repeats); provider
-requests can be higher because an agent may take several turns.  Numbers below
-are deliberately pending rather than fabricated.  Run
-`python scripts/bench_agents.py --allow-external-api` only after a separate
-authorization; it writes raw rows to `docs/agent-graph-benchmark.json` and
-prints a Markdown table with latency, prompt/completion/total tokens and steps.
+The authorized run on 2026-10-21 recorded all 45 combinations (5 cases ×
+3 implementations × 3 repeats): 44 completed and one native ReAct iteration
+timeout. All variants used the already configured `gpt-6-luna` through
+Responses, reasoning `medium`, service tier `priority`. Telegram was a local
+stub; search used the historical educational lexical KB, not production RAG.
 
-| Cases | Implementations | Repeats | Required runs | latency/tokens/steps |
-|---:|---|---:|---:|---|
-| 5 | 6.2 manual ReAct, custom StateGraph, prebuilt `create_agent` | 3 | 45 | Pending explicit live authorization |
+| Implementation | Completed / attempts | Mean latency, seconds | Observed tokens |
+|---|---:|---:|---:|
+| Native ReAct 6.2 | 14/15 | 19.81 | 30,068 (lower bound) |
+| Custom StateGraph | 15/15 | 14.54 | 16,861 |
+| Prebuilt `create_agent` | 15/15 | 14.72 | 16,425 |
+
+Latency includes process startup and failed attempts. Native timeout usage is
+incomplete. Completion is not a correctness score: compositional cases 03/04
+show partial or irrelevant retrieval in all variants. See the
+[dated report](../homework_6_3/BENCHMARK_2026-10-21.md) for budgets, steps,
+case-level quality, raw artifact hash and the sanitized 45-row export.
 
 The custom invocation includes
 `{"configurable": {"thread_id": "bench-<case>-<repeat>"}}`; with no
@@ -85,9 +91,10 @@ checkpointer configured it is a harmless checkpoint-ready identifier.
 The custom graph exposes the router, its six-turn ceiling, the exact tool
 error policy and state reducers as reviewable application code.  The prebuilt
 agent has the smaller implementation surface and delegates its model/tool
-cycle to LangChain.  A numerical latency or token conclusion is intentionally
-deferred until the 45-run benchmark produces evidence; model/provider variance
-would otherwise make a qualitative claim misleading.
+cycle to LangChain. In the dated 45-run experiment custom/prebuilt used fewer
+observed tokens and had lower mean latency than native with its additional
+critic. Native was faster on the no-tool case. Three repeats, different turn
+budgets and incomplete native usage do not establish general superiority.
 
 ## 7. Real debugging bug
 

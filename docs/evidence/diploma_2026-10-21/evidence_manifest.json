@@ -1,0 +1,86 @@
+{
+  "captured_at": "2026-10-21T11:38:16.780523+00:00",
+  "files": {
+    "acceptance_summary.json": {
+      "bytes": 10618,
+      "sha256": "e2cc2f5e667ab7fa76bdac3af18c4bf7e009e184a1c98e60f70e618c08aabf62"
+    },
+    "baseline_manifest.json": {
+      "bytes": 1480,
+      "sha256": "91d28d2865914a3f8711685f57ee21d21af132a8b0e839841d5f1d5ea7c29e85"
+    },
+    "checkpoint_summary.json": {
+      "bytes": 701,
+      "sha256": "854f758b842d3e5471d30a1730e91227f4c8f2bfa67c8146567b097c940a9587"
+    },
+    "env_status.json": {
+      "bytes": 647,
+      "sha256": "8ebcb16343f76a9350570e6e856e4e7ba405808c7785700b84f109f240cd174f"
+    },
+    "evaluated_answers.json": {
+      "bytes": 172773,
+      "sha256": "8a2bc70fd740caa52a49cf94d781782400ca52439a210f5d68848e350a1dee12"
+    },
+    "final_code_manifest.json": {
+      "bytes": 1057,
+      "sha256": "0adeb1db535d3f7456f068c539f0641bbe8906f7e9ab46456b64c09c33cf59f1"
+    },
+    "history_after.json": {
+      "bytes": 11173,
+      "sha256": "0ce4feda64faf37c81b18871b8cf29d98c3a7fd43dc42a74c5b819c4d99b70b9"
+    },
+    "history_before.json": {
+      "bytes": 10275,
+      "sha256": "337f320754b39a69ba08248c15e1e6a1fdc02fd0f2a07d621ee7c5fdec194cfe"
+    },
+    "index_audit.json": {
+      "bytes": 2149,
+      "sha256": "42cb39ef6cf403cbb3e573e2053b23ac7d956ee550729e4731e2e9712be187bb"
+    },
+    "manual_source_review.json": {
+      "bytes": 9206,
+      "sha256": "1d35036e2433b2b93454e061e5f2991c2446903da3cbf142824e0bb580b79116"
+    },
+    "post_restart_index_audit.json": {
+      "bytes": 2149,
+      "sha256": "11e82dd88f190d5590c54fa24d039fd7830708c6c68edce1794b559396640b53"
+    },
+    "post_restart_runtime_manifest.json": {
+      "bytes": 5426,
+      "sha256": "e8122ca7c5e895c6fff9f7378efb367f01c1ea3e26939db7a7b6dc0ee93656d7"
+    },
+    "post_restart_source_identity.json": {
+      "bytes": 13970,
+      "sha256": "1239af4b0c0b4a5446d9ce431765dd77a703388d4a1847530c8b7e1a0f7c710d"
+    },
+    "restart_index_comparison.json": {
+      "bytes": 213,
+      "sha256": "cc8b18a312a5e066e6565803afd8743f54e5e8bfbdfeb2d99b1de374afa6afe7"
+    },
+    "runtime_manifest.json": {
+      "bytes": 5434,
+      "sha256": "912936a86ab0e45d40fac4fb6920f94e12c9a7356f8b2916a202a8002c6f60cd"
+    },
+    "semantic_review.json": {
+      "bytes": 24366,
+      "sha256": "78cb8ecdc336abf130a28a481e18b4b12fe64ca2f2e91dd29b0554fc42c1a22e"
+    },
+    "source_audit.json": {
+      "bytes": 185132,
+      "sha256": "08cd3d10ec23f2c8ada23d2f72045b33e1845799743443f17c21c3fe2c57a4a7"
+    },
+    "source_identity.json": {
+      "bytes": 13970,
+      "sha256": "0424dd0f2200f1a801a0513f9d0a95ab492bfd4daa8b41149bb414f050e5a8f0"
+    },
+    "test_summary.json": {
+      "bytes": 718,
+      "sha256": "fefb30e44691506804dc9aa372b164ccea1df075b3c26c1b83bee2771373c1fb"
+    },
+    "user_acceptance.json": {
+      "bytes": 530,
+      "sha256": "6604bb87c2d58cb79234472f6049d708ffd6a238d6de5265f9407919616be83a"
+    }
+  },
+  "updated_at": "2026-10-21T13:39:00.406557+00:00"
+}

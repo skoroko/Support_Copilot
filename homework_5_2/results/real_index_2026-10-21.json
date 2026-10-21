@@ -1,0 +1,188 @@
+{
+  "captured_at": "2026-10-21T10:56:19.989684+00:00",
+  "source_collection": "rag_eval_chunk_1024",
+  "source_points_before": 14139,
+  "embedding_model": "text-embedding-3-large",
+  "embedding_dimensions": 1024,
+  "embedding_requests": 5,
+  "embedding_usage": [
+    {
+      "case_id": "golden-01",
+      "prompt_tokens": 49,
+      "total_tokens": 49
+    },
+    {
+      "case_id": "golden-07",
+      "prompt_tokens": 38,
+      "total_tokens": 38
+    },
+    {
+      "case_id": "golden-10",
+      "prompt_tokens": 18,
+      "total_tokens": 18
+    },
+    {
+      "case_id": "golden-16",
+      "prompt_tokens": 31,
+      "total_tokens": 31
+    },
+    {
+      "case_id": "golden-32",
+      "prompt_tokens": 18,
+      "total_tokens": 18
+    }
+  ],
+  "chunks": 100,
+  "source_groups": 8,
+  "synthetic_data_used": false,
+  "reembedding_document_chunks": false,
+  "collections": {
+    "cosine": {
+      "name": "diploma_hw52_cosine_20261021",
+      "count_first": 100,
+      "count_repeat": 100,
+      "idempotent": true,
+      "payload_indexes": [
+        "page",
+        "product",
+        "source_id"
+      ],
+      "hnsw_m": 16,
+      "hnsw_ef_construct": 100
+    },
+    "dot": {
+      "name": "diploma_hw52_dot_20261021",
+      "count_first": 100,
+      "count_repeat": 100,
+      "idempotent": true,
+      "payload_indexes": [
+        "page",
+        "product",
+        "source_id"
+      ],
+      "hnsw_m": 16,
+      "hnsw_ef_construct": 100
+    }
+  },
+  "query_comparison": [
+    {
+      "case_id": "golden-01",
+      "top1_same": true,
+      "top5_same_set": true,
+      "cosine_scores": [
+        0.64730096,
+        0.6380252,
+        0.62405443,
+        0.58107245,
+        0.5745561
+      ],
+      "dot_scores": [
+        0.6474101,
+        0.6381327,
+        0.6241597,
+        0.5811704,
+        0.57465297
+      ]
+    },
+    {
+      "case_id": "golden-07",
+      "top1_same": true,
+      "top5_same_set": true,
+      "cosine_scores": [
+        0.6231372,
+        0.60361016,
+        0.60361016,
+        0.6022015,
+        0.60110927
+      ],
+      "dot_scores": [
+        0.62297803,
+        0.603456,
+        0.603456,
+        0.6020477,
+        0.6009557
+      ]
+    },
+    {
+      "case_id": "golden-10",
+      "top1_same": true,
+      "top5_same_set": true,
+      "cosine_scores": [
+        0.4938317,
+        0.48052123,
+        0.4676719,
+        0.45437926,
+        0.4517131
+      ],
+      "dot_scores": [
+        0.49394274,
+        0.48062927,
+        0.467777,
+        0.45448142,
+        0.45181465
+      ]
+    },
+    {
+      "case_id": "golden-16",
+      "top1_same": true,
+      "top5_same_set": true,
+      "cosine_scores": [
+        0.6365564,
+        0.62908393,
+        0.62889564,
+        0.627133,
+        0.6246439
+      ],
+      "dot_scores": [
+        0.63633734,
+        0.6288674,
+        0.62867916,
+        0.6269171,
+        0.6244289
+      ]
+    },
+    {
+      "case_id": "golden-32",
+      "top1_same": true,
+      "top5_same_set": true,
+      "cosine_scores": [
+        0.663718,
+        0.66368514,
+        0.65445036,
+        0.6491515,
+        0.6491515
+      ],
+      "dot_scores": [
+        0.6639395,
+        0.66390663,
+        0.65466875,
+        0.64936817,
+        0.64936817
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "kind": "product",
+      "expected_count": 80,
+      "actual_count": 80,
+      "exact_match": true
+    },
+    {
+      "kind": "source_id",
+      "expected_count": 20,
+      "actual_count": 20,
+      "exact_match": true
+    },
+    {
+      "kind": "page_range",
+      "expected_count": 47,
+      "actual_count": 47,
+      "exact_match": true
+    }
+  ],
+  "source_points_after": 14139,
+  "source_count_unchanged": true,
+  "all_checks_pass": true,
+  "scope": "100 existing real fragments; normalized existing vectors; five current configured embedding query requests. Metrics only, no raw fragments or vectors."
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "d4cd162ca324431481b866dee81704ea",
+  "threads": 40,
+  "missing": 0,
+  "raw_sha256": "6e4eb2a4a6e085ad8d2d17af31bf61a9a9d1d24708da4b9748480ddadaf331c3",
+  "unique_ai_messages_in_final_checkpoints": 69,
+  "ai_messages_with_usage": 69,
+  "observed_checkpoint_usage": {
+    "input_tokens": 675933,
+    "output_tokens": 34524,
+    "total_tokens": 710457
+  },
+  "limitations": "Final checkpoints are not a complete provider billing ledger: independent condense/translate/embedding calls and superseded messages may be absent. Stage retrieval/generation timing was not separately captured; HTTP wall latency is retained. Raw messages/checkpoints stay private in ignored var/."
+}

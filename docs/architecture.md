@@ -1,7 +1,9 @@
 # Архитектурный паспорт Support Copilot
 
 Статус: реализованный Telegram/agent/RAG-контур и исторические ADR.
-Последнее обновление: 2026-10-13.
+Последнее обновление текущего раздела: 2026-10-21. Пользовательская приёмка
+Telegram принята; [точный runtime и результаты](final_acceptance.md).
+Четыре слоя и ADR ниже текущего раздела — исторический CLI-дизайн.
 
 Окончательный комплект: [указатель](INDEX.md),
 [обоснование решений](final_technical_documentation.md),
@@ -30,7 +32,9 @@ flowchart LR
     Chat --> Service[ChatService: turn lock, output moderation, persistence]
     Service --> Adapter[ChatAgent: private owner + chat thread]
     Adapter --> Graph[Persistent graph: bounded context, ReAct tools]
-    Graph --> Search[search_knowledge_base: evidence only]
+    Graph --> Prepare[prepare_knowledge: initial retrieval / local clarification]
+    Prepare --> RAG
+    Graph --> Search[search_knowledge_base: targeted evidence]
     Search --> RAG[RAGService.retrieve: production retrieval gates]
     RAG --> Manuals[(Qdrant: production manual corpus)]
     Graph --> Saver[(SQLite or existing Postgres checkpoints)]

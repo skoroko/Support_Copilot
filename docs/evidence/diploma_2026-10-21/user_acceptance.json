@@ -1,0 +1,9 @@
+{
+  "recorded_at": "2026-10-21T13:39:00.387595+00:00",
+  "source": "Explicit human message in this Codex task after the six-step Telegram checklist",
+  "user_statement": "Проверил в Телеграме, всё устраивает. Давай переходить к следующему пункту",
+  "status": "accepted",
+  "next_task": "S0-010 documentation",
+  "scope": "User-reported manual acceptance, not an additional instrumented delivery or benchmark run",
+  "original_measurements_changed": false
+}
