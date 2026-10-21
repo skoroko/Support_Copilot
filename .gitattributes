@@ -15,3 +15,8 @@ homework_4_2/historical/** -text whitespace=blank-at-eol,blank-at-eof,space-befo
 app/services/agent_history.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/services/agent_persistent.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/eval/metrics.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Presentation exports must preserve bytes, including ASCII-encoded PDF streams.
+docs/presentation/*.pdf binary
+docs/presentation/*.pptx binary
+docs/presentation/assets/*.png binary

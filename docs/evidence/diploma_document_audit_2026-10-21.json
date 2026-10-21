@@ -3,7 +3,7 @@
   "task": "S0-010 documentation follow-up",
   "status": "PASS",
   "scope": "all portable docs files inventoried; all docs Markdown and homework Markdown plus subsystem guides checked for local linked paths",
-  "docs_files_count": 98,
+  "docs_files_count": 104,
   "docs_files": [
     "docs/INDEX.md",
     "docs/agent-comparison-results/01_simple_license.json",
@@ -79,6 +79,12 @@
     "docs/observability/phoenix_trace.png",
     "docs/optimized_model_ab.md",
     "docs/overview_prefetch.md",
+    "docs/presentation/README.md",
+    "docs/presentation/Support_Copilot_Diploma_2026-10-21_v3.pdf",
+    "docs/presentation/Support_Copilot_Diploma_2026-10-21_v3.pptx",
+    "docs/presentation/assets/README.md",
+    "docs/presentation/assets/engineering_cover.png",
+    "docs/presentation/speaker_notes.md",
     "docs/publication_2026-10-21.md",
     "docs/rag-context-audit.md",
     "docs/rag.md",
@@ -176,8 +182,8 @@
     "tests/eval/corpus_suite/README.md",
     "tests/eval/corpus_suite/review/README.md"
   ],
-  "markdown_documents_checked": 121,
-  "local_link_paths_checked": 649,
+  "markdown_documents_checked": 124,
+  "local_link_paths_checked": 710,
   "link_issues": [],
   "new_architecture_documents_external_urls": 0,
   "immutable_evidence_and_runtime_diff": [],
@@ -192,6 +198,6 @@
     "Inline/fenced code examples are excluded from Markdown link parsing.",
     "Non-Markdown artifacts inventoried; no fresh PDF/HTML/image rendering or benchmark.",
     "Runtime/evidence integrity and graph checks are recorded separately in documentation_check_2026-10-21.json.",
-    "Clean-copy startup, slide deck and demonstration video remain subsequent tasks."
+    "Clean-copy startup and demonstration video remain subsequent tasks; slide render QA is recorded separately for S0-011."
   ]
 }
