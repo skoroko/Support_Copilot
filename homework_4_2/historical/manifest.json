@@ -1,0 +1,19 @@
+{
+  "historical_date": "2026-09-04",
+  "removed_by": "b068dc78db68adc5043e865bcea88d46f2927654",
+  "removed_on": "2026-09-25",
+  "files": [
+    {
+      "commit": "1432e998dafea8ab0d7ae8b11f96563dd988537a",
+      "source_path": "bot/states.py",
+      "export": "homework_4_2/historical/states.py.txt",
+      "sha256": "9c7e2e1b941ae9a1953096e1b26945b087ebc1aa25cc7c0c0f3f0ed43c74aa18"
+    },
+    {
+      "commit": "1432e998dafea8ab0d7ae8b11f96563dd988537a",
+      "source_path": "bot/handlers/fsm.py",
+      "export": "homework_4_2/historical/fsm.py.txt",
+      "sha256": "64c50028d6b88af91e3c9e87134a12e76f6d73b5542bfbd59f57aabea51b3bf1"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "baseline_git_head": "df9694191224929a1c37fe854bed0ec784b338b5",
+  "baseline_branch": "main",
+  "candidate_pr52_included": false,
+  "deployed_services": [
+    {
+      "service": "app",
+      "status": "matches_working_tree",
+      "image_id": "sha256:0b7bdfdf8623b380dc27148bcc5bdb63761fe9f2aa1293ba0839c782df371b95"
+    },
+    {
+      "service": "bot",
+      "status": "matches_working_tree",
+      "image_id": "sha256:0b7bdfdf8623b380dc27148bcc5bdb63761fe9f2aa1293ba0839c782df371b95"
+    }
+  ],
+  "dirty_files_preserved": [
+    " M README.md",
+    " M docs/INDEX.md",
+    "?? docs/diploma_completion_plan_2026-10-21.md",
+    "?? docs/manual_model_comparison_2026-10-19.json",
+    "?? docs/manual_model_comparison_2026-10-19.md",
+    "?? scripts/analyze_manual_models.py",
+    "?? scripts/benchmark_manual_models.py",
+    "?? tests/unit/test_manual_model_benchmark.py"
+  ],
+  "runtime_source_changed": false,
+  "index_rebuilt": false,
+  "note": "Homework evidence and benchmark-only adapters are staged in an isolated worktree; they do not change the running service. No final documentation/package work before user acceptance.",
+  "files_sha256": {
+    "runtime_manifest.json": "912936a86ab0e45d40fac4fb6920f94e12c9a7356f8b2916a202a8002c6f60cd",
+    "index_audit.json": "42cb39ef6cf403cbb3e573e2053b23ac7d956ee550729e4731e2e9712be187bb",
+    "source_identity.json": "0424dd0f2200f1a801a0513f9d0a95ab492bfd4daa8b41149bb414f050e5a8f0"
+  }
+}

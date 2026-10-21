@@ -29,5 +29,15 @@ python scripts/evaluate_chunking.py --offline-smoke --reranker-local-files-only
 - BGE поднял MRR@10 до `0.839`, но на CPU увеличил среднюю latency до
   `18014.63` мс, поэтому оставлен опциональным этапом.
 
-Полная таблица и вывод находятся в `docs/chunking_experiment.md`, машинные
-результаты - в `results/chunking_experiment.json`.
+Полная таблица и вывод доступны в
+[историческом отчёте](historical/2026-09-09_chunking_fb594ad.md), машинные
+результаты — в [восстановленном JSON](historical/2026-09-09_chunking_fb594ad.json).
+
+## Исторические результаты
+
+[Отчёт от 9 сентября 2026 года](historical/2026-09-09_chunking_fb594ad.md) и
+[исходный JSON](historical/2026-09-09_chunking_fb594ad.json) восстановлены
+без изменений из `fb594ad` (`docs/chunking_experiment.md` и
+`homework_5_4/results/chunking_experiment.json`). Пути внутри снимка относятся
+к корню проекта того коммита. Это исторический lexical-hash эксперимент,
+включавший тогда локальный BGE; он не подтверждает наличие BGE сейчас.

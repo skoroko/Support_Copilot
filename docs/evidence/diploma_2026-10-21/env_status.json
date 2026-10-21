@@ -1,0 +1,20 @@
+{
+  "env_file_exists": true,
+  "variables": {
+    "OPENAI_API_KEY": "configured",
+    "OPENAI_BASE_URL": "configured",
+    "OPENAI_MODEL": "configured",
+    "OPENROUTER_API_KEY": "configured",
+    "OPENROUTER_BASE_URL": "configured",
+    "OPENROUTER_MODEL": "configured",
+    "OLLAMA_BASE_URL": "configured",
+    "OLLAMA_MODEL": "missing",
+    "BOT_TOKEN": "configured",
+    "BOT_ADMIN_IDS": "configured",
+    "BOT_ALLOWED_USER_IDS": "configured",
+    "BOT_ALLOWED_CHAT_IDS": "missing",
+    "INTERNAL_TOKEN": "configured",
+    "ADMIN_TOKEN": "configured"
+  },
+  "note": "Values are intentionally redacted and never printed."
+}

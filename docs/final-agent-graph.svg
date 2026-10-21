@@ -18,7 +18,7 @@
   </defs>
   <rect width="1600" height="1170" rx="24" fill="#f6f8fc"/>
   <text class="heading" x="70" y="65">Support Copilot · финальный агентный граф</text>
-  <text class="subtitle" x="70" y="101">Telegram → ChatAgent → build_agent() · 16.10.2026 · семь исполняемых узлов</text>
+  <text class="subtitle" x="70" y="101">Telegram → ChatAgent → build_agent() · 21.10.2026 · семь исполняемых узлов</text>
 
   <path class="edge" data-source="__start__" data-target="begin_turn" d="M770 180V220"/>
   <path class="edge" data-source="begin_turn" data-target="prepare_knowledge" d="M550 267H440"/>
@@ -40,12 +40,12 @@
 
   <rect class="node" data-node="prepare_knowledge" x="80" y="220" width="360" height="95" rx="16"/>
   <text class="name" x="260" y="257">prepare_knowledge</text>
-  <text class="body" x="260" y="289">Вопрос → поиск → evidence</text>
+  <text class="body" x="260" y="289">Поиск evidence / уточнение</text>
 
   <rect class="node" data-node="call_model" x="550" y="380" width="440" height="120" rx="16" style="fill:#eaf0ff;stroke:#7396da"/>
   <text class="name" x="770" y="418">call_model</text>
   <text class="body" x="770" y="451">Контекст + модель + tool calls</text>
-  <text class="body" x="770" y="480">Ceiling 800 · до 6 model turns</text>
+  <text class="body" x="770" y="480">Цель 800 · до 6 model turns</text>
 
   <rect class="node" data-node="execute_safe_tool" x="80" y="390" width="360" height="140" rx="16"/>
   <text class="name" x="260" y="429">execute_safe_tool</text>
@@ -78,5 +78,5 @@
   <text class="label" x="1255" y="960">Статус без нового model call</text>
 
   <text class="subtitle" x="70" y="1116">Пунктир — условная маршрутизация. Storage, Qdrant и chat facade находятся вне узлов графа.</text>
-  <text class="subtitle" x="70" y="1146">«Подробнее»: тот же START → begin_turn → call_model → finish → END; ceiling 1500, прежние evidence, tools отключены.</text>
+  <text class="subtitle" x="70" y="1146">«Подробнее»: тот же граф; prepare_knowledge пропускает поиск; 1500, прежние evidence, без tools.</text>
 </svg>

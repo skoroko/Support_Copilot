@@ -37,6 +37,10 @@ from langgraph.types import Command, interrupt
 
 from app.core.config import PROJECT_ROOT, get_settings
 from app.observability.logging import get_logger
+from app.services.agent_history import (
+    PARAMETER_CLARIFICATION,
+    needs_parameter_clarification,
+)
 from app.services.agent_history import _model_history as _model_history
 from app.services.agent_naive_tools import get_current_time as _get_current_time
 from app.services.agent_retrieval import fetch_knowledge
@@ -440,7 +444,12 @@ def build_agent(
 
     async def prepare_knowledge(state: PersistentState, config: RunnableConfig) -> dict[str, Any]:
         configurable = config.get("configurable") or {}
-        if configurable.get("expanded_mode") or not configurable.get("prepared_evidence_enabled", True):
+        if configurable.get("expanded_mode"):
+            return {}
+        if needs_parameter_clarification(list(state.get("messages", []))):
+            return {"messages": [AIMessage(content=PARAMETER_CLARIFICATION)],
+                    "evidence_route": "clarification"}
+        if not configurable.get("prepared_evidence_enabled", True):
             return {}
         question = next((m.content for m in reversed(state.get("messages", [])) if m.type == "human"), "")
         if not should_prepare_evidence(question):
@@ -475,6 +484,8 @@ def build_agent(
         # ``config`` is accepted as a LangGraph node argument so its
         # configurable contract remains available to model adapters later.
         nonlocal resolved_model
+        if state.get("evidence_route") == "clarification":
+            return {}
         if resolved_model is None:
             resolved_model = _default_model()
         messages = _model_history(list(state.get("messages", [])))

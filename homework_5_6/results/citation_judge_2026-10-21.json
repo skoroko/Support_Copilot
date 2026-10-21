@@ -1,0 +1,533 @@
+{
+  "started_at": "2026-10-21T11:07:49.533890+00:00",
+  "source_file": "2026-09-12_185629_baseline_batched.csv",
+  "source_sha256": "6cf65f091ad4c953f06bc2b2efb14fe805a119730bdb3dcd2ef60e186bc0cc31",
+  "scope": "Citation presence only; no source verification, grounding or correctness assessment",
+  "model": "gpt-6-luna",
+  "api": "responses",
+  "reasoning": "medium",
+  "service_tier": "priority",
+  "max_retries": 0,
+  "timeout_seconds": 180,
+  "raw_contexts_transferred": false,
+  "planned_answers": 34,
+  "rows": [
+    {
+      "row_number": 1,
+      "response_sha256": "52c093e5be75ca2f873ffd64424ca12f62270a792a93c1761df54cb87caad215",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 181,
+        "output_tokens": 51,
+        "total_tokens": 232
+      },
+      "latency_ms": 3879.18
+    },
+    {
+      "row_number": 2,
+      "response_sha256": "de8768a199d6b0072ddb93c5db21ab9770188ff3a088ba3ddf176f820c8699bc",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 266,
+        "output_tokens": 30,
+        "total_tokens": 296
+      },
+      "latency_ms": 823.76
+    },
+    {
+      "row_number": 3,
+      "response_sha256": "41acefb6dd28148a4e9bf0bef1abf729051ce94a4d2ce62a642aa9a89d201953",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 252,
+        "output_tokens": 50,
+        "total_tokens": 302
+      },
+      "latency_ms": 1272.22
+    },
+    {
+      "row_number": 4,
+      "response_sha256": "92d1c0e32a007883d098d1fb589e290d50a972448f4218fb5574a893b12f4afb",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 218,
+        "output_tokens": 27,
+        "total_tokens": 245
+      },
+      "latency_ms": 1186.59
+    },
+    {
+      "row_number": 5,
+      "response_sha256": "2b4da50becceb619264fcb0ffe29a5c9d36a9374720e5584f68770a0e50bca18",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 180,
+        "output_tokens": 48,
+        "total_tokens": 228
+      },
+      "latency_ms": 1021.55
+    },
+    {
+      "row_number": 6,
+      "response_sha256": "a358c4037e0281474cde71cb413dbd14e91573bb3f17dca8608e4361d2c52458",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 193,
+        "output_tokens": 62,
+        "total_tokens": 255
+      },
+      "latency_ms": 1154.14
+    },
+    {
+      "row_number": 7,
+      "response_sha256": "9145271f966525baa3c3918a6e27b1379fe42b765822f2d3df5f7fe3e50e8dd2",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 243,
+        "output_tokens": 50,
+        "total_tokens": 293
+      },
+      "latency_ms": 1128.75
+    },
+    {
+      "row_number": 8,
+      "response_sha256": "773b806ad57ab6a54d26d804995ed7a6923c055501a8ef3f5cc1fcf18e48ce4e",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 277,
+        "output_tokens": 38,
+        "total_tokens": 315
+      },
+      "latency_ms": 1450.75
+    },
+    {
+      "row_number": 9,
+      "response_sha256": "06f4576a45e282e04c135e7655e6063fc2209ff924a6f413fe095ef04cfac17a",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 259,
+        "output_tokens": 31,
+        "total_tokens": 290
+      },
+      "latency_ms": 955.99
+    },
+    {
+      "row_number": 10,
+      "response_sha256": "9ede75165e36af89fc67b026efedc08a1abbba367aa46c80ddfaa0e1ad9a0efb",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 280,
+        "output_tokens": 30,
+        "total_tokens": 310
+      },
+      "latency_ms": 1048.87
+    },
+    {
+      "row_number": 11,
+      "response_sha256": "fca2f838c1a9724124ddcc8b21070cf6823855ce84d2f1e56a9fa93b30b45732",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 295,
+        "output_tokens": 57,
+        "total_tokens": 352
+      },
+      "latency_ms": 1068.9
+    },
+    {
+      "row_number": 12,
+      "response_sha256": "6688d0b5f8e08127dd0a29c04bc6b5cc00384c1d72f1f909292df3d32429877d",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 273,
+        "output_tokens": 57,
+        "total_tokens": 330
+      },
+      "latency_ms": 1229.75
+    },
+    {
+      "row_number": 13,
+      "response_sha256": "b247dd0b0e63ecd2aaf5d68f63e406f684bafa143a89176df2243bd8ad5a6648",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 276,
+        "output_tokens": 55,
+        "total_tokens": 331
+      },
+      "latency_ms": 1113.47
+    },
+    {
+      "row_number": 14,
+      "response_sha256": "fcaecd065e34510d1923718b87e38c1f46ebf48b9cd0ef1329e8339c5b19e41c",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 298,
+        "output_tokens": 60,
+        "total_tokens": 358
+      },
+      "latency_ms": 1015.7
+    },
+    {
+      "row_number": 15,
+      "response_sha256": "a34c7cc94dd832264f9c00623a39edea60b99af4b36bab5814f1d8c9043d472c",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 191,
+        "output_tokens": 49,
+        "total_tokens": 240
+      },
+      "latency_ms": 1031.07
+    },
+    {
+      "row_number": 16,
+      "response_sha256": "b475ba7cacbd5ceb015c53c3738d2952ea156b6b3cb1c9132922b3822e08519b",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 223,
+        "output_tokens": 49,
+        "total_tokens": 272
+      },
+      "latency_ms": 1030.22
+    },
+    {
+      "row_number": 17,
+      "response_sha256": "7dc48204d63ed1b6b09574724f14e7b6dc2326db322287c9d06f471cc38dc733",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 213,
+        "output_tokens": 47,
+        "total_tokens": 260
+      },
+      "latency_ms": 1056.11
+    },
+    {
+      "row_number": 18,
+      "response_sha256": "220c67ff117b7be68436765fbfea7ddfd255540506d12743818b376b08aec491",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 46,
+        "total_tokens": 271
+      },
+      "latency_ms": 1049.24
+    },
+    {
+      "row_number": 19,
+      "response_sha256": "e39a6df266d65c27cc7557cf717f0cc84cdd4ea481126366f4c3c65a64afa2fb",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 230,
+        "output_tokens": 61,
+        "total_tokens": 291
+      },
+      "latency_ms": 1121.22
+    },
+    {
+      "row_number": 20,
+      "response_sha256": "912a85193542c9ee80fa7173ba3449aab08c61f4b1c5982556916c528e0da2e4",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 257,
+        "output_tokens": 34,
+        "total_tokens": 291
+      },
+      "latency_ms": 1119.12
+    },
+    {
+      "row_number": 21,
+      "response_sha256": "d846266c6a04f6b864307c107c80422b2d9533620b13e936aceb32417bfcf938",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 47,
+        "total_tokens": 272
+      },
+      "latency_ms": 920.4
+    },
+    {
+      "row_number": 22,
+      "response_sha256": "0005f14e3cfbb07af33c7267cf85a880a0fb5e82abb24fc304a40d9c94ddbc1e",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 176,
+        "output_tokens": 46,
+        "total_tokens": 222
+      },
+      "latency_ms": 1229.6
+    },
+    {
+      "row_number": 23,
+      "response_sha256": "e67e396f1d8b071073e04e945f376856b8c6c33520be08e7d8a6e7c46f1303f2",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 217,
+        "output_tokens": 54,
+        "total_tokens": 271
+      },
+      "latency_ms": 1176.53
+    },
+    {
+      "row_number": 24,
+      "response_sha256": "ce1320873a52f742788e1b06a4d40ee5f6ece6a7a769626dd665475a9be40259",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 264,
+        "output_tokens": 55,
+        "total_tokens": 319
+      },
+      "latency_ms": 1132.02
+    },
+    {
+      "row_number": 25,
+      "response_sha256": "8d4306809b67c87e03e3d9a9fc06aff42e180cfd99307b4b4797627d2d836b18",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 287,
+        "output_tokens": 47,
+        "total_tokens": 334
+      },
+      "latency_ms": 1526.45
+    },
+    {
+      "row_number": 26,
+      "response_sha256": "53bef6bae58761296914626500711e7f6bac3821badbfcc46b44b47509b90dff",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 233,
+        "output_tokens": 50,
+        "total_tokens": 283
+      },
+      "latency_ms": 978.65
+    },
+    {
+      "row_number": 27,
+      "response_sha256": "3aebb416c84de36ffd347a0b6163bf7a8af33e790e3e79cd612dc7c5657d05b9",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 357,
+        "output_tokens": 52,
+        "total_tokens": 409
+      },
+      "latency_ms": 1175.38
+    },
+    {
+      "row_number": 28,
+      "response_sha256": "8c23ffb16c2b1f160fa49c1fcda79e5921bb51ca7da13c1873a7107e9465741e",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 180,
+        "output_tokens": 51,
+        "total_tokens": 231
+      },
+      "latency_ms": 1397.24
+    },
+    {
+      "row_number": 29,
+      "response_sha256": "f6bba76da264ceb27db94a05ffb8f1aaa168cdb594b1ed4fb89d2abd1aa77731",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 224,
+        "output_tokens": 56,
+        "total_tokens": 280
+      },
+      "latency_ms": 1089.28
+    },
+    {
+      "row_number": 30,
+      "response_sha256": "5da2d072bea29cb8e6f5911c0d4248571b9fdd1605a27d5923b84d44bb4f4d05",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 197,
+        "output_tokens": 45,
+        "total_tokens": 242
+      },
+      "latency_ms": 1471.78
+    },
+    {
+      "row_number": 31,
+      "response_sha256": "3aae7cd202f2f50ad468e2651ad6625e87e945c42808884e5b912809f197a773",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 342,
+        "output_tokens": 55,
+        "total_tokens": 397
+      },
+      "latency_ms": 1225.47
+    },
+    {
+      "row_number": 32,
+      "response_sha256": "48aa412698f337677e2ab02bb30b5cee9932aee95fa7e41288db39783efdb81e",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 208,
+        "output_tokens": 48,
+        "total_tokens": 256
+      },
+      "latency_ms": 1368.56
+    },
+    {
+      "row_number": 33,
+      "response_sha256": "d845293b3a106082c6980d66c52a5d15da04e59b3f4704a19fa4da7840f9aaad",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "no",
+      "agreement": false,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 161,
+        "output_tokens": 139,
+        "total_tokens": 300
+      },
+      "latency_ms": 1755.22
+    },
+    {
+      "row_number": 34,
+      "response_sha256": "5ec4822fd4a98d1f57aa78b136a5b0d4cc2b0c2f3bf222989dbe22c27b368c3a",
+      "has_citation_judge": "yes",
+      "has_citation_regex": "yes",
+      "agreement": true,
+      "status": "completed",
+      "error": null,
+      "usage": {
+        "input_tokens": 175,
+        "output_tokens": 51,
+        "total_tokens": 226
+      },
+      "latency_ms": 1387.66
+    }
+  ],
+  "status": "finished",
+  "finished_at": "2026-10-21T11:08:38.237730+00:00",
+  "completed": 34,
+  "failed": 0,
+  "yes": 34,
+  "no": 0,
+  "agreements": 33
+}

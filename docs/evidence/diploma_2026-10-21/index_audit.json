@@ -1,0 +1,92 @@
+{
+  "catalog": {
+    "schema_version": 1,
+    "extraction_version": "corpus-v1",
+    "sources": 10,
+    "formats": {
+      "chm": 1,
+      "pdf": 9
+    },
+    "locations": 1936,
+    "location_statuses": {
+      "no_text": 2,
+      "text": 1934
+    },
+    "failed_sources": 0,
+    "partial_sources": 0,
+    "blocks": 53902,
+    "block_types": {
+      "anchor": 123,
+      "definition": 66,
+      "figure_transcription": 183,
+      "formula": 309,
+      "formula_candidate": 2419,
+      "heading": 2044,
+      "image": 3102,
+      "link": 2807,
+      "paragraph": 35479,
+      "table": 432,
+      "table_row": 2970,
+      "visual_unextracted": 3968
+    },
+    "relations": {
+      "defines": 5,
+      "explicit_link": 2517,
+      "literal_render_of": 7,
+      "next_page": 1431,
+      "parent_section": 1959,
+      "parent_table": 2970,
+      "previous_page": 1431,
+      "table_caption_for": 54,
+      "transcription_of": 555
+    },
+    "visual_reviews": 0,
+    "untranscribed_image_regions": 3414
+  },
+  "mode": "read_only",
+  "docstore": {
+    "documents": 1934,
+    "legacy_documents": 0,
+    "missing_provenance_ids": 0,
+    "source_hash_unverified_documents": 0,
+    "product_mismatch_documents": 0,
+    "stale_or_deleted_source_documents": 0,
+    "missing_text_locations": 0,
+    "unexpected_locations": 0,
+    "products": {
+      "civil": 398,
+      "gts_nx": 1536
+    },
+    "reindex_required": false
+  },
+  "qdrant": {
+    "points": 14139,
+    "snapshot_complete": true,
+    "ref_documents": 1934,
+    "text_locations": 1934,
+    "missing_provenance_ids": 0,
+    "product_mismatch_points": 0,
+    "formats": {
+      "chm": 6517,
+      "pdf": 7622
+    },
+    "products": {
+      "civil": 3464,
+      "gts_nx": 10675
+    },
+    "docstore_ids_missing_in_snapshot": 0,
+    "snapshot_ids_missing_in_docstore": 0,
+    "missing_text_locations": 0,
+    "conclusive": true,
+    "repair_applied": false
+  },
+  "sources": {
+    "indexable_current": 10,
+    "catalog_sources": 10,
+    "new_sources": 0,
+    "deleted_sources": 0,
+    "changed_sources": 0,
+    "intentional_mirror_exclusions": 60
+  },
+  "captured_at": "2026-10-21T10:52:05.736996+00:00"
+}

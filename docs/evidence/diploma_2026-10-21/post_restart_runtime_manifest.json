@@ -1,0 +1,141 @@
+{
+  "captured_at": "2026-10-21T11:35:28.837848+00:00",
+  "read_only": true,
+  "runtime": {
+    "default_model": "gpt-6-luna",
+    "agent_llm_api": "responses",
+    "agent_service_tier": null,
+    "agent_reasoning_effort": "low",
+    "agent_expanded_reasoning_effort": "medium",
+    "agent_generation_timeout": 120.0,
+    "agent_turn_timeout": 90.0,
+    "agent_generation_backup_after": 0.0,
+    "agent_prepared_evidence_enabled": true,
+    "rag_enabled": true,
+    "rag_ingest_on_start": false,
+    "rag_collection": "rag_eval_chunk_1024",
+    "rag_chunk_strategy": "recursive",
+    "rag_chunk_size": 1024,
+    "rag_chunk_overlap": 64,
+    "rag_top_k": 10,
+    "rag_product": "gts_nx",
+    "rag_product_scope": "fallback",
+    "rag_embedding_model": "text-embedding-3-large",
+    "rag_embedding_dimensions": 1024,
+    "rag_reranker_enabled": false,
+    "rag_condense_enabled": true,
+    "rag_translate_llm_enabled": true,
+    "rag_llm_model": "gpt-6-luna",
+    "rag_reasoning_effort": "medium",
+    "chat_repository": "postgres",
+    "tracing_enabled": null
+  },
+  "corpus": {
+    "permitted_files": 70,
+    "indexable_files": 10,
+    "excluded_mirror_files": 60,
+    "exclude_dirs": [
+      "gts_nx_help_html"
+    ],
+    "indexable_formats": {
+      ".pdf": 9,
+      ".chm": 1
+    },
+    "sources": [
+      {
+        "relative_path": "rag-block-03/02_User Manual_Chapter2_General Information.pdf",
+        "source_id": "9a7087c4b521b70f1627bb1f59a2bd91759898bd270d43e51a6477a9a0dff1f6",
+        "sha256": "6f928d566712886abb31b0dbd516a558a225aeadb735ff8a5e7a32f775a5d16d",
+        "bytes": 2320815
+      },
+      {
+        "relative_path": "rag-block-03/02_Пособие по расчетам_midas GTS NX_Глава 2. Узел_Степень свободы_Система координат.pdf",
+        "source_id": "3153d0328cb70b62680c0c5edd100f77792651237df750131b5707bc7ee99b8a",
+        "sha256": "7402313a5e32667c74c4ec99ce43260e0f7071f822da1d05f51390cbb0279e5f",
+        "bytes": 217719
+      },
+      {
+        "relative_path": "rag-block-03/03_User Manual_Chapter3_Geometry.pdf",
+        "source_id": "6dede400e352574cdc763f5ece73cf249691c23b4640ad66a90f7c660ef20c59",
+        "sha256": "5e4bc4f15abb7be61874a312ed26ea9812c8027cb0223ec1fda86df9d94dcbcf",
+        "bytes": 2968997
+      },
+      {
+        "relative_path": "rag-block-03/03_Пособие по расчетам_midas GTS NX_Глава 3. Элементы.pdf",
+        "source_id": "a75c31d914dddabb0f6617c26eb5af50258d08c0891718645f8e80613d8bda49",
+        "sha256": "1161994d0b24cd0e373d33d17a37f7dc6ba909af292f1ede360404685c261ed3",
+        "bytes": 2499606
+      },
+      {
+        "relative_path": "rag-block-03/04_User Manual_Chapter4_Mesh.pdf",
+        "source_id": "5c592506b5db204ab8b4f1c65801f0916554c459982f69410bae5e79a9ed28aa",
+        "sha256": "4e6129959eb55b27986db3df86bfcbfbf33ff114310bc347eaaa985f88fb5b76",
+        "bytes": 12944976
+      },
+      {
+        "relative_path": "rag-block-03/04_Пособие по расчетам_midas GTS NX_Глава 4. Материалы.pdf",
+        "source_id": "24cdfd434d64bd3238269aafa26a1a2b4c9346be9f2b7b2b193795327e123d1d",
+        "sha256": "c541dd47b0d5b186e59fe6c7fb2f77d49cc401584601a98e0a679e646b6d15f3",
+        "bytes": 4719598
+      },
+      {
+        "relative_path": "rag-block-03/05_User Manual_Chapter5_Analysis Method.pdf",
+        "source_id": "fcce3843ca38b6ed58cbbe68d06fc0bb31b48a316720a8319efd1f4ffea12e7b",
+        "sha256": "1171744f28ff77c08859d822485f97f603f68de4dd36c6ff05df33ab57da9291",
+        "bytes": 7606109
+      },
+      {
+        "relative_path": "rag-block-03/05_Пособие по расчетам_midas GTS NX_Глава 5. Алгоритмы.pdf",
+        "source_id": "7e1242815e99b1f8b33288fa8e4a97b0c0c31f575726354578339f8b25d082a4",
+        "sha256": "368a47e9a3d3ddcdc5aaf982631ac1c41bb00c2a3dd4c7ae26bc2dd87f0e1805",
+        "bytes": 2167977
+      },
+      {
+        "relative_path": "rag-block-03/GTS_NX 2021.chm",
+        "source_id": "ed847353ccbb4ab3272c13f65c1039698dee83e90e3da5bb69fc9b05bb1ad811",
+        "sha256": "1762865c579e5dbafb3f03e09d4de796e4a598c5b9413c6eefff7243561ca0bf",
+        "bytes": 38848660
+      },
+      {
+        "relative_path": "rag-block-03/Руководство по расчетам midas Civil 2020.pdf",
+        "source_id": "81d2d64e5d6b5136753b723651540fedb0472381d614b307f40445454d1c54af",
+        "sha256": "2f43f3a4ce895fb0d5321f2674a8d375a89958aed98383ff58fafcc0c226086b",
+        "bytes": 7436448
+      }
+    ]
+  },
+  "files": {
+    "docstore": {
+      "path": "/app/var/rag_eval_chunk_1024_docstore.json",
+      "sha256": "c94fb9e22f356d8b80e8420f1999fd8121fbdfd5c58dbf560f3d9c0c46eb3ad9",
+      "bytes": 86609136
+    },
+    "catalog": {
+      "path": "/app/var/rag_eval_chunk_1024_docstore.corpus.json",
+      "sha256": "de80adb4c4d321efcae331308301fc8765121558252dc2b46e733f7cc14a677c",
+      "bytes": 55579347
+    }
+  },
+  "qdrant": {
+    "collection": "rag_eval_chunk_1024",
+    "points_before": 14139,
+    "dimensions": 1024,
+    "distance": "Cosine",
+    "points_after": 14139,
+    "snapshot_sha256": "95027f11f3728bc886c6696876eb8b75f5a362b7e481c5c06eb08f9e1aaa61ff"
+  },
+  "health": {
+    "http_status": 200,
+    "payload": {
+      "status": "ok"
+    }
+  },
+  "ready": {
+    "http_status": 200,
+    "payload": {
+      "status": "ok",
+      "redis": "up",
+      "rag": "up"
+    }
+  }
+}

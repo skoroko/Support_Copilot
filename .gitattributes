@@ -5,3 +5,13 @@ tests/eval/corpus_suite/** -text
 
 # Historical reports also have hashes recorded in evaluation manifests.
 docs/telegram_agent_evaluation*_2026-10-14.md -text whitespace=-blank-at-eol,-blank-at-eof
+
+# Preserve original acceptance bytes and byte-exact historical exports.
+docs/evidence/diploma_2026-10-21/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+homework_4_2/historical/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# These deployed source bytes are identified by the acceptance manifest.
+# -text disables EOL conversion, while retaining ordinary text diffs.
+app/services/agent_history.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/services/agent_persistent.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/eval/metrics.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

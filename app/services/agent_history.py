@@ -5,6 +5,31 @@ import re
 
 from langchain_core.messages import AIMessage, AnyMessage, ToolMessage
 
+PARAMETER_CLARIFICATION = (
+    "Уточните, пожалуйста, о каком продукте MIDAS и какой задаче или операции идёт речь. "
+    "Какие параметры вы хотите задать? Если есть ошибка или название окна настроек, укажите их."
+)
+
+
+def needs_parameter_clarification(messages: list[AnyMessage]) -> bool:
+    """Recognize an object-free first question without guessing its subject.
+
+    Earlier user context and media may supply the missing object. Specific
+    questions fall through to normal retrieval, even without a product name.
+    """
+    humans = [message for message in messages if message.type == "human"]
+    if len(humans) != 1 or not isinstance(humans[0].content, str):
+        return False
+    text = " ".join(humans[0].content.casefold().replace("ё", "е").split()).strip(" .!?…")
+    return bool(re.fullmatch(
+        r"(?:какие (?:параметры|настройки)(?: (?:нужно|надо|следует))?"
+        r"(?: (?:задать|указать|выбрать|настроить|использовать))?"
+        r"|что (?:нужно|надо|следует) настроить"
+        r"|what (?:parameters|settings)(?: should i (?:set|use|choose))?)",
+        text,
+    ))
+
+
 _HISTORY_LITERAL = re.compile(
     r"```.*?(?:```|$)|`[^`\n]*`|\\\(.*?\\\)|\\\[.*?\\\]|\$\$.*?\$\$|\$[^$\n]*\$"
     r"|\b\w+(?:\[[^\]\n]*\])+"

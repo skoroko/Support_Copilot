@@ -1,9 +1,14 @@
 # Корпоративный RAG-ассистент Support Copilot
 
+Текущий срез для сдачи: 21.10.2026. Общий retrieval-first путь и структурный
+каталог развёрнуты в принятом PR51-контуре; PR52 не включён. Источники,
+docstore и 14139 точек индекса сверены до и после restart, reindex не требуется.
+Фактические параметры и границы качества: [приёмка](final_acceptance.md).
+
 ## Модель ответов и переформулирования
 
-С 15.10.2026 локальный RAG backend использует настройки из `.env`;
-те же значения приведены в `.env.example`:
+В принятом профиле RAG backend использует следующие публичные настройки
+локального `.env`. Они отличаются от консервативного `low` в `.env.example`:
 
 ```dotenv
 RAG_LLM_MODEL=gpt-6-luna
@@ -350,10 +355,11 @@ score, retrieval latency, outcome и число процитированных �
 
 ## Корпус и воспроизводимость
 
-Фактическая разбивка находится в `docs/data_inventory.md`. Корпус содержит 70
-исходных файлов: 9 PDF, 60 безопасных HTML-разделов, извлечённых из реальной
-CHM-справки, и исходный CHM. Общий размер индексируемых файлов — 82 110 308
-байт. Это превышает требования 30 документов и checkpoint 50+.
+Фактическая разбивка: [data_inventory.md](data_inventory.md). На диске 70
+файлов (9 PDF, 1 CHM и 60 производных HTML). В индекс идут 10 канонических
+источников, HTML-зеркала исключены. Рабочий каталог различает 1936 locations,
+из них 1934 текстовых документа; docstore — 1934, Qdrant — 14139 chunks.
+Число файлов, topics/pages, chunks и независимых руководств не смешивается.
 
 Офлайн-подготовка корпуса без сети:
 
@@ -367,7 +373,7 @@ python scripts/download_data.py --from-chm "data/rag-block-03/GTS_NX 2021.chm" -
 python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline --dimensions 64 --docstore-path var/homework_5_5_docstore.json --offline-qdrant-path var/homework_5_5_qdrant
 ```
 
-На первом прогоне 10 сентября 2026 года получено `1992 changed`, 3508 чанков,
+Исторически на первом прогоне 10 сентября 2026 года получено `1992 changed`, 3508 чанков,
 ошибок нет. Повторный запуск дал `0 changed, 1992 unchanged, 0 failed` и не
 создал новых чанков.
 
@@ -379,10 +385,14 @@ python scripts/ingest.py data/ --offline-smoke --collection homework_5_5_offline
 всего приложения. Такой запуск фиксируется как `rag_startup_failed` и виден в
 `/ready` как `"status": "degraded", "rag": "down", "rag_error": "<type>"`
 (endpoint остаётся 200, пока жив Redis: деградация RAG не должна перезапускать
-контейнер). В чате при включённом, но неподнявшемся RAG ответ идёт через
+контейнер). В прежнем tool-free chat-пути при включённом, но неподнявшемся RAG ответ идёт через
 fallback-LLM с дефолтным system prompt, а SSE-поток открывает событие
 `{"type": "notice", "code": "rag_unavailable"}` — бот показывает его как
 предупреждение под ответом.
+
+Текущий Telegram persistent agent не подменяет недоступный RAG синтетической
+KB: knowledge miss и outage имеют разные понятные статусы; подробности в
+[unified_agent.md](unified_agent.md).
 
 ## HTTP и Telegram
 
@@ -425,7 +435,11 @@ timeout_seconds=..., max_context_chars=...)` использует тот же `_
 что answer/stream_answer: follow-up condense, product scope, dense/lexical
 recall, reranking, coverage/score gate, deduplication и лимит context fragments.
 Метод не вызывает генерацию ответа. По умолчанию retrieval ограничен
-`request_timeout` и 24 000 символов context; agent запрашивает до 24 000 на поиск. Бюджет сначала выделяется каждому выбранному источнику, затем неиспользованный объём перераспределяется.
+`request_timeout` и 24 000 символов context в отдельном direct retrieval API.
+Принятый persistent agent передаёт 12 000 на поиск; объединённый prepared-пакет
+ограничен 12 000 символов исходного evidence и 6000 прицельных дополнений.
+Бюджет сначала выделяется каждому выбранному источнику, затем неиспользованный
+объём перераспределяется.
 Deadline проверяется между retrieval вызовами и перед возвратом; уже начатый
 синхронный сетевой вызов ограничивается таймаутом провайдера. Источник и snippet
 возвращаются только для выбранных context fragments. `no_evidence` означает
@@ -443,7 +457,7 @@ retrieval worker. Для Telegram факты генерирует agent посл
 ## Запуск
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 # заполнить OPENAI_API_KEY, TELEGRAM_BOT_TOKEN, INTERNAL_TOKEN,
 # QDRANT_API_KEY и после согласования включить RAG_ENABLED и transfer opt-in
 docker compose up -d --build
@@ -457,10 +471,16 @@ RAG_ENABLED=true
 RAG_INGEST_ON_START=false
 ```
 
-Тогда приложение подключится к существующей `RAG_COLLECTION` без чтения
-корпуса и без отправки фрагментов документов в embedding-провайдер на старте.
+Тогда приложение загрузит существующую `RAG_COLLECTION` без повторного
+embedding/upsert документов на старте. Локальные чтения исходников для
+SHA-проверок, lexical index и прогрева evidence-каталога сохраняются.
+Для принятого medium/priority профиля используйте настройки из [README](../README.md).
 
 ## Совместимость существующей коллекции и reindex
+
+**Результат 21.10:** действующая коллекция уже согласована с каталогом и
+исходниками, `reindex_required=false`. Описанные ниже случаи legacy repair
+условны и не требуют переиндексировать принятый стенд.
 
 Коллекция без новых `product`/`page` payload продолжает работать. Для legacy
 points query pipeline выводит продукт из `file_name`, `source`, `file_path` и

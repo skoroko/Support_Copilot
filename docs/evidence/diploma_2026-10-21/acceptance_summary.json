@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "run_id": "d4cd162ca324431481b866dee81704ea",
+  "baseline_code": "df9694191224929a1c37fe854bed0ec784b338b5",
+  "scope": "Collected before the later narrow cold-clarification correction; no responses regenerated or overwritten.",
+  "scenarios": 43,
+  "completed": 43,
+  "expansions": 5,
+  "source_transport_all_match": true,
+  "groups": {
+    "clarification": {
+      "n": 1,
+      "correctness": {
+        "n": 1,
+        "mean": 0.5,
+        "full": 0,
+        "partial": 1,
+        "zero": 0,
+        "not_applicable": 0
+      },
+      "grounding": {
+        "n": 1,
+        "mean": 1,
+        "full": 1,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 0
+      }
+    },
+    "followup": {
+      "n": 3,
+      "correctness": {
+        "n": 3,
+        "mean": 1,
+        "full": 3,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 0
+      },
+      "grounding": {
+        "n": 3,
+        "mean": 1,
+        "full": 3,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 0
+      }
+    },
+    "followup_seed": {
+      "n": 3,
+      "correctness": {
+        "n": 3,
+        "mean": 0.8333333333333334,
+        "full": 2,
+        "partial": 1,
+        "zero": 0,
+        "not_applicable": 0
+      },
+      "grounding": {
+        "n": 3,
+        "mean": 0.8333333333333334,
+        "full": 2,
+        "partial": 1,
+        "zero": 0,
+        "not_applicable": 0
+      }
+    },
+    "golden": {
+      "n": 34,
+      "correctness": {
+        "n": 34,
+        "mean": 0.8970588235294118,
+        "full": 27,
+        "partial": 7,
+        "zero": 0,
+        "not_applicable": 0
+      },
+      "grounding": {
+        "n": 33,
+        "mean": 1,
+        "full": 33,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 1
+      }
+    },
+    "refusal": {
+      "n": 2,
+      "correctness": {
+        "n": 2,
+        "mean": 1,
+        "full": 2,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 0
+      },
+      "grounding": {
+        "n": 0,
+        "mean": null,
+        "full": 0,
+        "partial": 0,
+        "zero": 0,
+        "not_applicable": 2
+      }
+    }
+  },
+  "expanded": {
+    "n": 5,
+    "correctness": {
+      "n": 5,
+      "mean": 0.9,
+      "full": 4,
+      "partial": 1,
+      "zero": 0,
+      "not_applicable": 0
+    },
+    "grounding": {
+      "n": 5,
+      "mean": 1,
+      "full": 5,
+      "partial": 0,
+      "zero": 0,
+      "not_applicable": 0
+    }
+  },
+  "latency_seconds": {
+    "n": 43,
+    "median": 7.629345500001364,
+    "mean": 8.890223165116643,
+    "p95_nearest_rank": 14.273188000002847,
+    "max": 24.027011099999072
+  },
+  "partial_or_zero": [
+    {
+      "id": "golden-01",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Верно названы 3 поступательные и 3 вращательные DOF и r/theta/z. Но нет требуемого DOF1..6 и есть избыточная оговорка о невозможности подтвердить соответствие: исходная цитируемая глава2 PDF p3 (печатная10) содержит текстом DOF1=r,2=theta,3=z,4=поворот r,5=поворот theta,6=поворот z. Это пропуск доступной информации, а не неподтверждённая инженерная рекомендация."
+    },
+    {
+      "id": "golden-01",
+      "mode": "expanded",
+      "correctness": 0.5,
+      "grounding": 1,
+      "detail_gain": "mostly_repetition",
+      "notes": "Добавлены верные DX/DY/DZ/RX/RY/RZ по Analysis Method PDF p34 и ссылка на узловую СК p32, но это декартова таблица вместо ответа о r/theta/z. Expansion отзывает правильное соответствие из brief как якобы неподтверждаемое, хотя глава2 p3 прямо его перечисляет. Запрошенная детализация не получена."
+    },
+    {
+      "id": "golden-02",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Объяснение pressure DOF и связанного расчёта согласуется с главой3 p104/p108. Однако на прямой вопрос о независимости от СК дан осторожный вывод вместо ясного ответа. Глава2 p1 последним абзацем прямо говорит: поровое давление не имеет направления и определяется безотносительно узловой СК. Наличие этого текста проверено по исходному PDF."
+    },
+    {
+      "id": "golden-03",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Типы прямоугольная/цилиндрическая названы верно; NDCS подтверждается главой2 p4. Вторая половина вопроса фактически отклонена. Радиальное/окружное/осевое соответствие можно подтвердить соседней исходной p3 с таблицей DOF; это неполнота retrieval/ответа, а не выдумка."
+    },
+    {
+      "id": "golden-09",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "c/phi, упругопластичность, ограниченный диапазон confining pressure и tension cutoff подтверждены исходным CHM Mohr-Coulmb. Но фраза о среднем главном напряжении воспроизводит неоднозначный русский перевод: английский Mesh PDF p10 говорит intermediate principal stress, то есть промежуточное главное, а не mean stress. Поэтому полноценно правильным инженерное объяснение назвать нельзя, хотя оно следует процитированному русскому источнику."
+    },
+    {
+      "id": "golden-10",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Основной обзор и c/phi верны по исходному CHM. То же ограничение терминологии: русское 'среднее главное' может быть прочитано как mean principal stress; английский Mesh p10 содержит intermediate. В brief расхождение не оговорено. Модифицированная модель корректно отделена."
+    },
+    {
+      "id": "golden-11",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Обзор c/phi и зависимости точности от confining pressure верен; расхождение stress terminology честно оговорено по English Mesh p10/Russian CHM. Однако reference ожидает дополнительную возможность изменения сцепления/модуля по глубине, а ответ уходит к modified model; хотя исходный CHM содержит отдельный раздел Increment of Cohesion Reference Height. Неполный ответ, без опасной рекомендации."
+    },
+    {
+      "id": "golden-12",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Опечатка запроса корректно понята, упругопластичность и intermediate principal stress/linear envelope/pressure range подтверждены English Mesh p10. Однако обзор не раскрывает изменение параметров по глубине из reference и вместо него добавляет отдельную modified model. Оценка снижена за полноту относительно ожидаемого содержания, не за термин intermediate, который физически точнее русского перевода."
+    },
+    {
+      "id": "followup-01-seed",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 0.5,
+      "notes": "Верно называет три перемещения и три поворота, но ложно заявляет, что точный порядок DOF в тексте не сохранился. В его собственном цитируемом оригинале PDF гл2 p3 явно напечатано DOF1=r,2=theta,3=z,4=rotation-r,5=rotation-theta,6=rotation-z. Неполный ответ и необоснованный отказ по подтверждаемой части."
+    },
+    {
+      "id": "ambiguous-cold",
+      "mode": "brief",
+      "correctness": 0.5,
+      "grounding": 1,
+      "notes": "Запрашивает уточнение, но затем до получения контекста предлагает нерелевантные конкретные модели и Width Factor >104. Это нарушает ожидаемое ask-before-specific-parameters и перегружает ответ. Число104 буквально содержится в исходном CHM Free_Field raw HTML без sup-разметки; текущая потеря экспоненты не доказана, числовая hallucination не заявляется. Все приведённые детали имеют оригинальные источники."
+    }
+  ],
+  "notes": [
+    "Refusals may use free phrasing; human refusal rubric retained grounding=null rather than forcing a score to satisfy canonical-text-only aggregator.",
+    "HTTP timings are not measured Telegram delivery timings.",
+    "Source presence and provenance are separate from semantic grounding."
+  ],
+  "artifact_sha256": {
+    "run.json": "691a321df09fef8c0eaf2a2f11f796341c14f37ed54286a6c985f274297c43d7",
+    "semantic_review.json": "78cb8ecdc336abf130a28a481e18b4b12fe64ca2f2e91dd29b0554fc42c1a22e",
+    "runtime_manifest.json": "912936a86ab0e45d40fac4fb6920f94e12c9a7356f8b2916a202a8002c6f60cd"
+  }
+}
