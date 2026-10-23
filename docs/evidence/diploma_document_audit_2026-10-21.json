@@ -1,6 +1,6 @@
 {
-  "checked_on": "2026-10-21",
-  "task": "S0-010 documentation follow-up",
+  "checked_on": "2026-10-23",
+  "task": "S0-011 documentation follow-up",
   "status": "PASS",
   "scope": "all portable docs files inventoried; all docs Markdown and homework Markdown plus subsystem guides checked for local linked paths",
   "docs_files_count": 104,
@@ -183,7 +183,7 @@
     "tests/eval/corpus_suite/review/README.md"
   ],
   "markdown_documents_checked": 124,
-  "local_link_paths_checked": 710,
+  "local_link_paths_checked": 709,
   "link_issues": [],
   "new_architecture_documents_external_urls": 0,
   "immutable_evidence_and_runtime_diff": [],

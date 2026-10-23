@@ -1,18 +1,26 @@
 """Verify diploma links, frozen evidence, runtime hashes and diagram consistency.
 
 Offline only. Refreshes two documentation audit JSON files; no external calls.
-Run from the repository: .venv/Scripts/python.exe scripts/verify_diploma_documentation.py
+Run from the repository; --checked-on YYYY-MM-DD records a later recheck.
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import re
 import subprocess
 import xml.etree.ElementTree as ET
+from datetime import date
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--checked-on", type=date.fromisoformat, default=date(2026, 10, 21))
+parser.add_argument("--task", default="S0-010")
+args = parser.parse_args()
+checked_on = args.checked_on.isoformat()
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = [
@@ -107,8 +115,8 @@ assert nodes == svg_nodes, nodes ^ svg_nodes
 assert len(nodes - {"__start__", "__end__"}) == 7
 
 result = {
-    "checked_on": "2026-10-21",
-    "task": "S0-010",
+    "checked_on": checked_on,
+    "task": args.task,
     "status": "PASS" if not issues else "FAIL",
     "scope_documents": len(DOCS),
     "relative_links_checked": link_count,
@@ -212,8 +220,8 @@ frozen_diff = (
 )
 assert not frozen_diff, frozen_diff
 result = {
-    "checked_on": "2026-10-21",
-    "task": "S0-010 documentation follow-up",
+    "checked_on": checked_on,
+    "task": f"{args.task} documentation follow-up",
     "status": "PASS" if not issues and not documentation_link_issues else "FAIL",
     "scope": "all portable docs files inventoried; all docs Markdown and homework Markdown plus subsystem guides checked for local linked paths",
     "docs_files_count": len(inventory),
