@@ -1,9 +1,9 @@
 {
-  "checked_on": "2026-10-21",
-  "task": "S0-010",
+  "checked_on": "2026-10-23",
+  "task": "S0-011",
   "status": "PASS",
   "scope_documents": 56,
-  "relative_links_checked": 686,
+  "relative_links_checked": 685,
   "documents": [
     "README.md",
     "docs/INDEX.md",
